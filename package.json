@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:up": "docker-compose -f ./docker-compose.dev.yml up",
+    "db:studio": "pnpm exec drizzle-kit studio",
+    "db:generate": "pnpm exec drizzle-kit generate",
+    "db:push": "pnpm exec drizzle-kit push",
+    "db:migrate": "pnpm exec drizzle-kit migrate"
   },
   "dependencies": {
     "better-auth": "^1.4.18",
