@@ -31,12 +31,6 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
-        <div className="mx-auto flex h-14 max-w-lg items-center px-4">
-          <h1 className="text-lg font-semibold">Analytics</h1>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Month Selector */}
         <div className="mb-6">
