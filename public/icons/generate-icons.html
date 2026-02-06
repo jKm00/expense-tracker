@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+</head>
+<body>
+  <canvas id="canvas192" width="192" height="192"></canvas>
+  <canvas id="canvas512" width="512" height="512"></canvas>
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const radius = size * 0.25;
+      
+      // Background
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, radius);
+      ctx.fill();
+      
+      // White circle
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size * 0.27, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Text
+      ctx.fillStyle = '#10B981';
+      ctx.font = `bold ${size * 0.25}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('kr', size/2, size/2 + size * 0.02);
+    }
+    
+    drawIcon(document.getElementById('canvas192'), 192);
+    drawIcon(document.getElementById('canvas512'), 512);
+    
+    // Download links
+    ['192', '512'].forEach(size => {
+      const canvas = document.getElementById('canvas' + size);
+      const link = document.createElement('a');
+      link.download = `icon-${size}x${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.textContent = `Download ${size}x${size}`;
+      document.body.appendChild(link);
+      document.body.appendChild(document.createElement('br'));
+    });
+  </script>
+</body>
+</html>

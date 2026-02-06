@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { deleteTransaction } from "@/actions/transactions";
+import { invalidateTransactions } from "@/hooks/use-data";
 import { useTransition } from "react";
 
 interface Transaction {
@@ -23,6 +24,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     if (confirm("Delete this transaction?")) {
       startTransition(async () => {
         await deleteTransaction(id);
+        invalidateTransactions();
       });
     }
   };

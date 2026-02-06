@@ -1,42 +1,34 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { format, addMonths, subMonths } from "date-fns";
 import { Button } from "./ui/button";
 
 interface MonthSelectorProps {
   year: number;
   month: number;
+  onMonthChange: (year: number, month: number) => void;
 }
 
-export function MonthSelector({ year, month }: MonthSelectorProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
+export function MonthSelector({ year, month, onMonthChange }: MonthSelectorProps) {
   const currentDate = new Date(year, month);
-
-  const navigateToMonth = (date: Date) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("year", date.getFullYear().toString());
-    params.set("month", date.getMonth().toString());
-    router.push(`/analytics?${params.toString()}`);
-  };
+  const now = new Date();
 
   const goToPrevMonth = () => {
-    navigateToMonth(subMonths(currentDate, 1));
+    const prev = subMonths(currentDate, 1);
+    onMonthChange(prev.getFullYear(), prev.getMonth());
   };
 
   const goToNextMonth = () => {
-    navigateToMonth(addMonths(currentDate, 1));
+    const next = addMonths(currentDate, 1);
+    onMonthChange(next.getFullYear(), next.getMonth());
   };
 
   const goToCurrentMonth = () => {
-    const now = new Date();
-    navigateToMonth(now);
+    onMonthChange(now.getFullYear(), now.getMonth());
   };
 
   const isCurrentMonth =
-    year === new Date().getFullYear() && month === new Date().getMonth();
+    year === now.getFullYear() && month === now.getMonth();
 
   return (
     <div className="flex items-center justify-between gap-2">

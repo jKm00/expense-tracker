@@ -1,5 +1,7 @@
-import { Suspense } from "react";
-import { Header } from "@/components/header";
+"use client";
+
+import { useState } from "react";
+import { BottomNav } from "@/components/bottom-nav";
 import { MonthSelector } from "@/components/month-selector";
 import { StatsCards } from "@/components/stats-cards";
 import { CategoryPieChart } from "@/components/category-pie-chart";
@@ -7,44 +9,55 @@ import { DailyBarChart } from "@/components/daily-bar-chart";
 import { TransactionsTable } from "@/components/transactions-table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
-  getMonthlyStats,
-  getTransactionsByMonth,
-} from "@/actions/transactions";
+  StatsCardsSkeleton,
+  ChartSkeleton,
+  TransactionListSkeleton,
+} from "@/components/ui/skeleton";
+import { useMonthlyStats, useMonthlyTransactions } from "@/hooks/use-data";
 
-interface PageProps {
-  searchParams: Promise<{ year?: string; month?: string }>;
-}
-
-export default async function AnalyticsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+export default function AnalyticsPage() {
   const now = new Date();
-  const year = params.year ? parseInt(params.year) : now.getFullYear();
-  const month = params.month ? parseInt(params.month) : now.getMonth();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
 
-  const [stats, transactions] = await Promise.all([
-    getMonthlyStats(year, month),
-    getTransactionsByMonth(year, month),
-  ]);
+  const { data: stats, isLoading: statsLoading } = useMonthlyStats(year, month);
+  const { data: transactions, isLoading: transactionsLoading } =
+    useMonthlyTransactions(year, month);
+
+  const handleMonthChange = (newYear: number, newMonth: number) => {
+    setYear(newYear);
+    setMonth(newMonth);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
+        <div className="mx-auto flex h-14 max-w-lg items-center px-4">
+          <h1 className="text-lg font-semibold">Analytics</h1>
+        </div>
+      </header>
 
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Month Selector */}
         <div className="mb-6">
-          <Suspense fallback={<div className="h-10" />}>
-            <MonthSelector year={year} month={month} />
-          </Suspense>
+          <MonthSelector
+            year={year}
+            month={month}
+            onMonthChange={handleMonthChange}
+          />
         </div>
 
         {/* Stats Cards */}
         <div className="mb-6">
-          <StatsCards
-            totalIncome={stats.totalIncome}
-            totalExpenses={stats.totalExpenses}
-            netBalance={stats.netBalance}
-          />
+          {statsLoading ? (
+            <StatsCardsSkeleton />
+          ) : (
+            <StatsCards
+              totalIncome={stats?.totalIncome || 0}
+              totalExpenses={stats?.totalExpenses || 0}
+              netBalance={stats?.netBalance || 0}
+            />
+          )}
         </div>
 
         {/* Category Breakdown */}
@@ -53,7 +66,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             <CardTitle>Expenses by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <CategoryPieChart data={stats.categoryBreakdown} />
+            {statsLoading ? (
+              <ChartSkeleton />
+            ) : (
+              <CategoryPieChart data={stats?.categoryBreakdown || []} />
+            )}
           </CardContent>
         </Card>
 
@@ -63,7 +80,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             <CardTitle>Daily Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <DailyBarChart data={stats.dailyBreakdown} />
+            {statsLoading ? (
+              <ChartSkeleton />
+            ) : (
+              <DailyBarChart data={stats?.dailyBreakdown || []} />
+            )}
           </CardContent>
         </Card>
 
@@ -72,16 +93,24 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           <CardHeader>
             <CardTitle>
               All Transactions
-              <span className="ml-2 text-sm font-normal text-gray-400">
-                ({stats.transactionCount})
-              </span>
+              {!transactionsLoading && (
+                <span className="ml-2 text-sm font-normal text-gray-400">
+                  ({transactions?.length || 0})
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TransactionsTable transactions={transactions} />
+            {transactionsLoading ? (
+              <TransactionListSkeleton count={5} />
+            ) : (
+              <TransactionsTable transactions={transactions || []} />
+            )}
           </CardContent>
         </Card>
       </main>
+
+      <BottomNav />
     </div>
   );
 }

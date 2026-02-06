@@ -46,3 +46,16 @@ html {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* Safe area for bottom nav on iOS */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  body {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+  }
+}
