@@ -13,7 +13,7 @@ export default function Home() {
       <div className="flex-1" />
 
       {/* Form at bottom for easy thumb reach */}
-      <main className="mx-auto w-full max-w-lg px-4 pb-28">
+      <main className="mx-auto w-full max-w-lg px-4 pb-32">
         <TransactionForm categories={categories || []} />
       </main>
 

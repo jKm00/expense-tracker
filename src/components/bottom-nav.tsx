@@ -92,7 +92,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e1e2e] bg-[#12121a]/95 backdrop-blur-lg safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e1e2e] bg-[#12121a]/95 backdrop-blur-lg pb-12">
       <div className="mx-auto flex h-16 max-w-lg items-center px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -102,14 +102,14 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col grow items-center justify-center gap-1 py-2 transition-all",
-                isActive ? "opacity-100" : "opacity-60 hover:opacity-100"
+                isActive ? "opacity-100" : "opacity-60 hover:opacity-100",
               )}
             >
               {item.icon(isActive)}
               <span
                 className={cn(
                   "text-xs font-medium",
-                  isActive ? "text-slate-100" : "text-slate-500"
+                  isActive ? "text-slate-100" : "text-slate-500",
                 )}
               >
                 {item.label}
