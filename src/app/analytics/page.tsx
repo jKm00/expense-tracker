@@ -53,14 +53,16 @@ export default function AnalyticsPage() {
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Month Selector */}
         <div
-          className="fixed bottom-12 bg-[#12121a]/95 backdrop-blur-lg p-4 rounded-xl border border-[#1e1e2e] mb-6 z-50 shadow-2xl shadow-black/50"
-          style={{ width: "min(100%, 30rem)" }}
+          className="fixed bottom-12 left-0 right-0 mx-auto z-50 px-4"
+          style={{ width: "min(100%, 32rem)" }}
         >
-          <MonthSelector
-            year={year}
-            month={month}
-            onMonthChange={handleMonthChange}
-          />
+          <div className="mx-auto bg-[#12121a]/95 backdrop-blur-lg p-4 rounded-2xl border border-[#1e1e2e] mb-6 shadow-2xl shadow-black/50">
+            <MonthSelector
+              year={year}
+              month={month}
+              onMonthChange={handleMonthChange}
+            />
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -80,7 +82,9 @@ export default function AnalyticsPage() {
         <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-200">Variable Expenses</CardTitle>
+              <CardTitle className="text-slate-200">
+                Variable Expenses
+              </CardTitle>
               {!statsLoading && (
                 <span className="text-sm font-semibold text-red-400">
                   {formatCurrency(stats?.totalExpenses || 0)}
@@ -105,7 +109,9 @@ export default function AnalyticsPage() {
         <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-200">Fixed Monthly Costs</CardTitle>
+              <CardTitle className="text-slate-200">
+                Fixed Monthly Costs
+              </CardTitle>
               {!fixedLoading && (
                 <span className="text-sm font-semibold text-indigo-400">
                   {formatCurrency(totalFixed || 0)}
