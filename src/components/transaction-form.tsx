@@ -73,7 +73,7 @@ export function TransactionForm({ categories }: TransactionFormProps) {
     <div className="space-y-3">
       {/* Amount Input */}
       <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-gray-400">
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-slate-500">
           kr
         </span>
         <input
@@ -85,7 +85,7 @@ export function TransactionForm({ categories }: TransactionFormProps) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="0"
-          className="h-14 w-full rounded-xl border-2 border-gray-200 bg-white pl-12 pr-4 text-2xl font-semibold transition-colors placeholder:text-gray-300 focus:border-gray-900 focus:outline-none"
+          className="h-14 w-full rounded-xl border-2 border-[#1e1e2e] bg-[#12121a] pl-12 pr-4 text-2xl font-semibold text-slate-100 transition-colors placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
         />
       </div>
 
@@ -124,8 +124,8 @@ export function TransactionForm({ categories }: TransactionFormProps) {
         <div
           className={`rounded-xl p-3 text-center text-sm font-medium ${
             message.type === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              : "bg-red-500/10 text-red-400 border border-red-500/20"
           }`}
         >
           {message.text}

@@ -12,17 +12,17 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Expense Tracker</h1>
-          <p className="mt-2 text-gray-500">
+          <h1 className="text-3xl font-bold gradient-text">Expense Tracker</h1>
+          <p className="mt-2 text-slate-500">
             Simple, fast expense tracking
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-6 text-center text-xl font-semibold text-gray-900">
+        <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-6 shadow-2xl shadow-black/50">
+          <h2 className="mb-6 text-center text-xl font-semibold text-slate-100">
             Sign in to continue
           </h2>
 

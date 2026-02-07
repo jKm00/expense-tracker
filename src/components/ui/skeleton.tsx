@@ -8,7 +8,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-lg bg-gray-200",
+        "animate-pulse rounded-lg bg-[#1e1e2e]",
         className
       )}
     />
@@ -32,7 +32,7 @@ export function TransactionSkeleton() {
 
 export function TransactionListSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="divide-y divide-[#1e1e2e]">
       {Array.from({ length: count }).map((_, i) => (
         <TransactionSkeleton key={i} />
       ))}
@@ -45,13 +45,13 @@ export function StatsCardsSkeleton() {
     <div className="grid grid-cols-3 gap-2">
       {/* Row 1: 3 cards */}
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-2xl border border-gray-100 bg-white p-3 text-center">
+        <div key={i} className="rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-3 text-center">
           <Skeleton className="h-3 w-12 mx-auto mb-2" />
           <Skeleton className="h-5 w-14 mx-auto" />
         </div>
       ))}
       {/* Row 2: Full width balance card */}
-      <div className="col-span-3 rounded-2xl border border-gray-100 bg-white p-3 text-center">
+      <div className="col-span-3 rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-3 text-center">
         <Skeleton className="h-3 w-12 mx-auto mb-2" />
         <Skeleton className="h-6 w-20 mx-auto" />
       </div>

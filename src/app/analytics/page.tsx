@@ -43,17 +43,17 @@ export default function AnalyticsPage() {
   const isLoading = statsLoading || fixedLoading || totalFixedLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32 relative">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
+    <div className="min-h-screen bg-[#0a0a0f] pb-32 relative">
+      <header className="sticky top-0 z-40 border-b border-[#1e1e2e] bg-[#12121a]/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center px-4">
-          <h1 className="text-lg font-semibold">Analytics</h1>
+          <h1 className="text-lg font-semibold text-slate-100">Analytics</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Month Selector */}
         <div
-          className="fixed bottom-12 bg-white/80 backdrop-blur-lg p-4 rounded-lg shadow mb-6 z-50"
+          className="fixed bottom-12 bg-[#12121a]/95 backdrop-blur-lg p-4 rounded-xl border border-[#1e1e2e] mb-6 z-50 shadow-2xl shadow-black/50"
           style={{ width: "min(100%, 30rem)" }}
         >
           <MonthSelector
@@ -77,12 +77,12 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Variable Expenses (moved above Fixed) */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Variable Expenses</CardTitle>
+              <CardTitle className="text-slate-200">Variable Expenses</CardTitle>
               {!statsLoading && (
-                <span className="text-sm font-semibold text-red-600">
+                <span className="text-sm font-semibold text-red-400">
                   {formatCurrency(stats?.totalExpenses || 0)}
                 </span>
               )}
@@ -102,12 +102,12 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Fixed Monthly Costs */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Fixed Monthly Costs</CardTitle>
+              <CardTitle className="text-slate-200">Fixed Monthly Costs</CardTitle>
               {!fixedLoading && (
-                <span className="text-sm font-semibold text-indigo-600">
+                <span className="text-sm font-semibold text-indigo-400">
                   {formatCurrency(totalFixed || 0)}
                 </span>
               )}
@@ -128,9 +128,9 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Daily Trend */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
-            <CardTitle>Daily Activity</CardTitle>
+            <CardTitle className="text-slate-200">Daily Activity</CardTitle>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
@@ -142,12 +142,12 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Transactions List */}
-        <Card>
+        <Card className="border-[#1e1e2e] bg-[#12121a]">
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="text-slate-200">
               All Transactions
               {!transactionsLoading && (
-                <span className="ml-2 text-sm font-normal text-gray-400">
+                <span className="ml-2 text-sm font-normal text-slate-500">
                   ({transactions?.length || 0})
                 </span>
               )}

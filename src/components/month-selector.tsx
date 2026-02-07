@@ -54,7 +54,7 @@ export function MonthSelector({ year, month, onMonthChange }: MonthSelectorProps
       </Button>
 
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold text-gray-900">
+        <span className="text-lg font-semibold text-slate-100">
           {format(currentDate, "MMMM yyyy")}
         </span>
         {!isCurrentMonth && (

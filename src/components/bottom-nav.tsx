@@ -13,7 +13,7 @@ export function BottomNav() {
       label: "Home",
       icon: (active: boolean) => (
         <svg
-          className={cn("h-6 w-6", active ? "text-gray-900" : "text-gray-400")}
+          className={cn("h-6 w-6", active ? "text-blue-400" : "text-slate-500")}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -32,7 +32,7 @@ export function BottomNav() {
       label: "Analytics",
       icon: (active: boolean) => (
         <svg
-          className={cn("h-6 w-6", active ? "text-gray-900" : "text-gray-400")}
+          className={cn("h-6 w-6", active ? "text-blue-400" : "text-slate-500")}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -51,7 +51,7 @@ export function BottomNav() {
       label: "Fixed",
       icon: (active: boolean) => (
         <svg
-          className={cn("h-6 w-6", active ? "text-gray-900" : "text-gray-400")}
+          className={cn("h-6 w-6", active ? "text-blue-400" : "text-slate-500")}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -70,7 +70,7 @@ export function BottomNav() {
       label: "Settings",
       icon: (active: boolean) => (
         <svg
-          className={cn("h-6 w-6", active ? "text-gray-900" : "text-gray-400")}
+          className={cn("h-6 w-6", active ? "text-blue-400" : "text-slate-500")}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -92,7 +92,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-lg safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e1e2e] bg-[#12121a]/95 backdrop-blur-lg safe-area-bottom">
       <div className="mx-auto flex h-16 max-w-lg items-center px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -109,7 +109,7 @@ export function BottomNav() {
               <span
                 className={cn(
                   "text-xs font-medium",
-                  isActive ? "text-gray-900" : "text-gray-500"
+                  isActive ? "text-slate-100" : "text-slate-500"
                 )}
               >
                 {item.label}

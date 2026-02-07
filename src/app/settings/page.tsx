@@ -19,25 +19,25 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#0a0a0f] pb-24">
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Profile */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
           <CardContent className="flex items-center gap-4 py-4">
             {session?.user?.image ? (
               <img
                 src={session.user.image}
                 alt=""
-                className="h-14 w-14 rounded-full"
+                className="h-14 w-14 rounded-full ring-2 ring-[#1e1e2e]"
               />
             ) : (
-              <div className="h-14 w-14 rounded-full bg-gray-200" />
+              <div className="h-14 w-14 rounded-full bg-[#1e1e2e] ring-2 ring-[#2e2e3e]" />
             )}
             <div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-slate-200">
                 {session?.user?.name || "User"}
               </p>
-              <p className="text-sm text-gray-500">{session?.user?.email}</p>
+              <p className="text-sm text-slate-500">{session?.user?.email}</p>
             </div>
           </CardContent>
         </Card>
@@ -45,7 +45,7 @@ export default function SettingsPage() {
         {/* Actions */}
         <Button
           onClick={handleSignOut}
-          className="flex w-full items-center justify-between py-3 text-left text-red-600"
+          className="flex w-full items-center justify-between py-3 text-left text-red-400 border-[#1e1e2e] bg-[#12121a] hover:bg-[#1e1e2e] hover:text-red-300"
           variant="outline"
         >
           <span className="font-medium">Sign Out</span>

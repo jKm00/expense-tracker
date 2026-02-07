@@ -18,7 +18,7 @@ interface DailyBarChartProps {
 export function DailyBarChart({ data }: DailyBarChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-400">
+      <div className="flex h-64 items-center justify-center text-slate-500">
         No transactions this month
       </div>
     );
@@ -35,31 +35,34 @@ export function DailyBarChart({ data }: DailyBarChartProps) {
             dataKey="day"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 12, fill: "#9ca3af" }}
+            tick={{ fontSize: 12, fill: "#64748b" }}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 12, fill: "#9ca3af" }}
-            tickFormatter={(value) => `$${value}`}
+            tick={{ fontSize: 12, fill: "#64748b" }}
+            tickFormatter={(value) => `${value}`}
           />
           <Tooltip
             formatter={(value) => formatCurrency(value as number)}
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid #e5e7eb",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              border: "1px solid #1e1e2e",
+              backgroundColor: "#12121a",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.5)",
             }}
+            itemStyle={{ color: "#f8fafc" }}
+            labelStyle={{ color: "#64748b" }}
           />
           <Legend
             wrapperStyle={{ fontSize: "12px" }}
             formatter={(value) => (
-              <span className="text-gray-600 capitalize">{value}</span>
+              <span className="text-slate-400 capitalize">{value}</span>
             )}
           />
           <Bar
             dataKey="income"
-            fill="#22c55e"
+            fill="#10b981"
             radius={[4, 4, 0, 0]}
             isAnimationActive={false}
           />

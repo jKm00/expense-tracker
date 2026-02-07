@@ -52,7 +52,7 @@ export function HorizontalBarChart({
 
   if (data.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-400">{emptyMessage}</div>
+      <div className="py-8 text-center text-slate-500">{emptyMessage}</div>
     );
   }
 
@@ -102,17 +102,17 @@ export function HorizontalBarChart({
                       )}
                     </span>
                   )}
-                  <span className="font-medium text-gray-700 truncate">
+                  <span className="font-medium text-slate-300 truncate">
                     {item.name}
                   </span>
                 </div>
-                <span className="text-gray-900 font-semibold whitespace-nowrap">
+                <span className="text-slate-100 font-semibold whitespace-nowrap">
                   {formatCurrency(item.value)}
                 </span>
               </div>
               
               {/* Bar - Either solid or stacked */}
-              <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-3 w-full rounded-full bg-[#1e1e2e] overflow-hidden">
                 {canDrillDown && isDrilledDown ? (
                   // Stacked bar with individual colors
                   <div className="flex h-full">
@@ -156,13 +156,13 @@ export function HorizontalBarChart({
                           className="h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: getColor(subIndex) }}
                         />
-                        <span className="text-gray-600">{subItem.name}</span>
+                        <span className="text-slate-400">{subItem.name}</span>
                       </div>
-                      <span className="text-gray-900 font-medium">
+                      <span className="text-slate-200 font-medium">
                         {formatCurrency(subItem.value)}
                       </span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden ml-4.5">
+                    <div className="h-1.5 w-full rounded-full bg-[#1e1e2e] overflow-hidden ml-4.5">
                       <div
                         className="h-full rounded-full transition-all duration-500 ease-out"
                         style={{
@@ -183,7 +183,7 @@ export function HorizontalBarChart({
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full pt-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+          className="w-full pt-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
         >
           {expanded ? "Show less" : `+${remaining} more`}
         </button>

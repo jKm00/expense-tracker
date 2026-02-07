@@ -72,7 +72,7 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
     <div className="space-y-4">
       {/* Name Input */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-600">
+        <label className="mb-2 block text-sm font-medium text-slate-400">
           Name
         </label>
         <input
@@ -80,13 +80,13 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g., Netflix, Rent, Phone"
-          className="flex h-12 w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-base transition-colors placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+          className="flex h-12 w-full rounded-xl border-2 border-[#1e1e2e] bg-[#0a0a0f] px-4 text-base text-slate-100 transition-colors placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
         />
       </div>
 
       {/* Category Select */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-600">
+        <label className="mb-2 block text-sm font-medium text-slate-400">
           Category
         </label>
         <CategorySelect
@@ -96,7 +96,7 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
           placeholder="Search or create category..."
         />
         {isNewCategory && categoryName && (
-          <p className="mt-1 text-sm text-emerald-600">
+          <p className="mt-1 text-sm text-emerald-400">
             New category will be created
           </p>
         )}
@@ -104,11 +104,11 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
 
       {/* Amount Input */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-600">
+        <label className="mb-2 block text-sm font-medium text-slate-400">
           Monthly Amount
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-gray-400">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-slate-500">
             kr
           </span>
           <input
@@ -119,7 +119,7 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            className="h-12 w-full rounded-xl border-2 border-gray-200 bg-white pl-12 pr-4 text-base font-medium transition-colors placeholder:text-gray-300 focus:border-gray-900 focus:outline-none"
+            className="h-12 w-full rounded-xl border-2 border-[#1e1e2e] bg-[#0a0a0f] pl-12 pr-4 text-base font-medium text-slate-100 transition-colors placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
           />
         </div>
       </div>
@@ -139,8 +139,8 @@ export function FixedExpenseForm({ categories }: FixedExpenseFormProps) {
         <div
           className={`rounded-xl p-3 text-center text-sm font-medium ${
             message.type === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              : "bg-red-500/10 text-red-400 border border-red-500/20"
           }`}
         >
           {message.text}

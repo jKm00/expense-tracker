@@ -89,20 +89,20 @@ export function CategorySelect({
         onFocus={() => setIsOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="flex h-12 w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-base transition-colors placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+        className="flex h-12 w-full rounded-xl border-2 border-[#1e1e2e] bg-[#12121a] px-4 text-base text-slate-100 transition-colors placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
       />
 
       {isOpen && (filteredCategories.length > 0 || showCreateOption) && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-lg max-h-[250px] overflow-auto">
+        <div className="absolute z-50 mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] py-1 shadow-2xl shadow-black/50 max-h-[250px] overflow-auto">
           {filteredCategories.map((category) => (
             <button
               key={category.id}
               type="button"
               onClick={() => handleSelect(category.name, false)}
               className={cn(
-                "w-full px-4 py-3 text-left text-base transition-colors hover:bg-gray-100",
+                "w-full px-4 py-3 text-left text-base text-slate-300 transition-colors hover:bg-[#1e1e2e] hover:text-slate-100",
                 category.name.toLowerCase() === search.toLowerCase() &&
-                  "bg-gray-50",
+                  "bg-[#1e1e2e] text-slate-100",
               )}
             >
               {category.name}
@@ -112,12 +112,12 @@ export function CategorySelect({
           {showCreateOption && (
             <>
               {filteredCategories.length > 0 && (
-                <div className="my-1 border-t border-gray-100" />
+                <div className="my-1 border-t border-[#1e1e2e]" />
               )}
               <button
                 type="button"
                 onClick={() => handleSelect(search.trim(), true)}
-                className="w-full px-4 py-3 text-left text-base text-emerald-600 transition-colors hover:bg-emerald-50"
+                className="w-full px-4 py-3 text-left text-base text-emerald-400 transition-colors hover:bg-emerald-500/10"
               >
                 Create &quot;{search.trim()}&quot;
               </button>

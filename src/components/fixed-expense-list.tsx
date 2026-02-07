@@ -30,7 +30,7 @@ export function FixedExpenseList({ expenses }: FixedExpenseListProps) {
 
   if (expenses.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-400">
+      <div className="py-8 text-center text-slate-500">
         No fixed expenses yet. Add your recurring costs above.
       </div>
     );
@@ -41,15 +41,15 @@ export function FixedExpenseList({ expenses }: FixedExpenseListProps) {
   return (
     <div>
       {/* Total */}
-      <div className="mb-4 flex items-center justify-between rounded-xl bg-gray-50 p-3">
-        <span className="text-sm font-medium text-gray-600">Monthly Total</span>
-        <span className="text-lg font-bold text-gray-900">
+      <div className="mb-4 flex items-center justify-between rounded-xl bg-[#1e1e2e] p-3">
+        <span className="text-sm font-medium text-slate-400">Monthly Total</span>
+        <span className="text-lg font-bold text-slate-100">
           {formatCurrency(total)}
         </span>
       </div>
 
       {/* List */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-[#1e1e2e]">
         {expenses.map((expense) => (
           <div
             key={expense.id}
@@ -59,20 +59,20 @@ export function FixedExpenseList({ expenses }: FixedExpenseListProps) {
             )}
           >
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">
+              <p className="font-medium text-slate-200 truncate">
                 {expense.name}
               </p>
-              <p className="text-sm text-gray-500">{expense.categoryName}</p>
+              <p className="text-sm text-slate-500">{expense.categoryName}</p>
             </div>
 
             <div className="flex items-center gap-3 ml-3">
-              <span className="font-semibold text-gray-900 whitespace-nowrap">
+              <span className="font-semibold text-slate-200 whitespace-nowrap">
                 {formatCurrency(expense.amount)}
               </span>
               <button
                 onClick={() => handleDelete(expense.id, expense.name)}
                 disabled={isPending}
-                className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                className="rounded p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
               >
                 <svg
                   className="h-4 w-4"

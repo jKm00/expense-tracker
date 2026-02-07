@@ -31,14 +31,14 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
 
   if (transactions.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-400">
+      <div className="py-8 text-center text-slate-500">
         No transactions this month
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="divide-y divide-[#1e1e2e]">
       {transactions.map((transaction) => (
         <div
           key={transaction.id}
@@ -52,17 +52,17 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-full text-sm",
                 transaction.type === "expense"
-                  ? "bg-red-100 text-red-600"
-                  : "bg-emerald-100 text-emerald-600"
+                  ? "bg-red-500/10 text-red-400"
+                  : "bg-emerald-500/10 text-emerald-400"
               )}
             >
               {transaction.type === "expense" ? "-" : "+"}
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-slate-200">
                 {transaction.categoryName}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-500">
                 {formatDate(transaction.createdAt)}
               </p>
             </div>
@@ -73,8 +73,8 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
               className={cn(
                 "font-medium",
                 transaction.type === "expense"
-                  ? "text-red-600"
-                  : "text-emerald-600"
+                  ? "text-red-400"
+                  : "text-emerald-400"
               )}
             >
               {transaction.type === "expense" ? "-" : "+"}
@@ -83,7 +83,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             <button
               onClick={() => handleDelete(transaction.id)}
               disabled={isPending}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500"
+              className="rounded p-1 text-slate-500 hover:bg-red-500/10 hover:text-red-400"
             >
               <svg
                 className="h-4 w-4"

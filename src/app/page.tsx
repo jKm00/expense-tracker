@@ -8,7 +8,7 @@ export default function Home() {
   const { data: categories } = useCategories();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-[#0a0a0f]">
       {/* Spacer to push form to bottom */}
       <div className="flex-1" />
 

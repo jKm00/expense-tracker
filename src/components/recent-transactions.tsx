@@ -16,14 +16,14 @@ interface RecentTransactionsProps {
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   if (transactions.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-400">
+      <div className="py-8 text-center text-slate-500">
         No transactions yet. Add your first one above!
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="divide-y divide-[#1e1e2e]">
       {transactions.map((transaction) => (
         <div
           key={transaction.id}
@@ -34,17 +34,17 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full text-lg",
                 transaction.type === "expense"
-                  ? "bg-red-100 text-red-600"
-                  : "bg-emerald-100 text-emerald-600"
+                  ? "bg-red-500/10 text-red-400"
+                  : "bg-emerald-500/10 text-emerald-400"
               )}
             >
               {transaction.type === "expense" ? "−" : "+"}
             </div>
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-slate-200">
                 {transaction.categoryName}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-slate-500">
                 {formatDate(transaction.createdAt)}
               </p>
             </div>
@@ -53,8 +53,8 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             className={cn(
               "font-semibold",
               transaction.type === "expense"
-                ? "text-red-600"
-                : "text-emerald-600"
+                ? "text-red-400"
+                : "text-emerald-400"
             )}
           >
             {transaction.type === "expense" ? "−" : "+"}
