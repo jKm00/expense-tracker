@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
   const isLoading = statsLoading || fixedLoading || totalFixedLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-32 relative">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center px-4">
           <h1 className="text-lg font-semibold">Analytics</h1>
@@ -52,7 +52,10 @@ export default function AnalyticsPage() {
 
       <main className="mx-auto max-w-lg px-4 py-6">
         {/* Month Selector */}
-        <div className="mb-6">
+        <div
+          className="fixed bottom-12 bg-white/80 backdrop-blur-lg p-4 rounded-lg shadow mb-6 z-50"
+          style={{ width: "min(100%, 30rem)" }}
+        >
           <MonthSelector
             year={year}
             month={month}
