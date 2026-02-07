@@ -17,18 +17,7 @@ export default function Home() {
             <CardTitle>Add Transaction</CardTitle>
           </CardHeader>
           <CardContent>
-            {categoriesLoading ? (
-              <div className="space-y-4">
-                <div className="h-16 animate-pulse rounded-xl bg-gray-200" />
-                <div className="h-12 animate-pulse rounded-xl bg-gray-200" />
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="h-14 animate-pulse rounded-xl bg-gray-200" />
-                  <div className="h-14 animate-pulse rounded-xl bg-gray-200" />
-                </div>
-              </div>
-            ) : (
-              <TransactionForm categories={categories || []} />
-            )}
+            <TransactionForm categories={categories || []} />
           </CardContent>
         </Card>
       </main>
