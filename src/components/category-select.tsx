@@ -23,11 +23,11 @@ export function CategorySelect({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
+    cat.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const exactMatch = categories.find(
-    (cat) => cat.name.toLowerCase() === search.toLowerCase()
+    (cat) => cat.name.toLowerCase() === search.toLowerCase(),
   );
 
   const showCreateOption = search.trim() && !exactMatch;
@@ -58,7 +58,7 @@ export function CategorySelect({
       setIsOpen(false);
       inputRef.current?.blur();
     },
-    [onChange]
+    [onChange],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -93,7 +93,7 @@ export function CategorySelect({
       />
 
       {isOpen && (filteredCategories.length > 0 || showCreateOption) && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+        <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-lg max-h-[250px] overflow-auto">
           {filteredCategories.map((category) => (
             <button
               key={category.id}
@@ -102,7 +102,7 @@ export function CategorySelect({
               className={cn(
                 "w-full px-4 py-3 text-left text-base transition-colors hover:bg-gray-100",
                 category.name.toLowerCase() === search.toLowerCase() &&
-                  "bg-gray-50"
+                  "bg-gray-50",
               )}
             >
               {category.name}
