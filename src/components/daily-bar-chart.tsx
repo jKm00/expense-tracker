@@ -27,7 +27,10 @@ export function DailyBarChart({ data }: DailyBarChartProps) {
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
           <XAxis
             dataKey="day"
             tickLine={false}
@@ -54,8 +57,18 @@ export function DailyBarChart({ data }: DailyBarChartProps) {
               <span className="text-gray-600 capitalize">{value}</span>
             )}
           />
-          <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey="income"
+            fill="#22c55e"
+            radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="expenses"
+            fill="#ef4444"
+            radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

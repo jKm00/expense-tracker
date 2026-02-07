@@ -46,6 +46,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
             outerRadius={80}
             paddingAngle={2}
             dataKey="value"
+            isAnimationActive={false}
           >
             {data.map((_, index) => (
               <Cell
