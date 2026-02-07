@@ -17,6 +17,7 @@ import {
   useMonthlyStats,
   useMonthlyTransactions,
   useFixedExpensesByCategory,
+  useFixedExpensesByCategoryDetailed,
   useTotalFixedExpenses,
 } from "@/hooks/use-data";
 import { formatCurrency } from "@/lib/utils";
@@ -30,7 +31,7 @@ export default function AnalyticsPage() {
   const { data: transactions, isLoading: transactionsLoading } =
     useMonthlyTransactions(year, month);
   const { data: fixedByCategory, isLoading: fixedLoading } =
-    useFixedExpensesByCategory();
+    useFixedExpensesByCategoryDetailed();
   const { data: totalFixed, isLoading: totalFixedLoading } =
     useTotalFixedExpenses();
 
@@ -117,6 +118,7 @@ export default function AnalyticsPage() {
                 data={fixedByCategory || []}
                 color="#6366f1"
                 emptyMessage="No fixed expenses set up"
+                drilldown
               />
             )}
           </CardContent>

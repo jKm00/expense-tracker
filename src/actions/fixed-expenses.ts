@@ -137,3 +137,61 @@ export async function getFixedExpensesByCategory(): Promise<
   // Sort by value descending
   return grouped.sort((a, b) => b.value - a.value);
 }
+
+export interface FixedExpenseItem {
+  name: string;
+  value: number;
+}
+
+export interface FixedExpenseCategory {
+  name: string;
+  value: number;
+  items: FixedExpenseItem[];
+}
+
+export async function getFixedExpensesByCategoryDetailed(): Promise<
+  FixedExpenseCategory[]
+> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    return [];
+  }
+
+  const expenses = await db
+    .select({
+      name: fixedExpense.name,
+      amount: fixedExpense.amount,
+      categoryName: category.name,
+    })
+    .from(fixedExpense)
+    .innerJoin(category, eq(fixedExpense.categoryId, category.id))
+    .where(eq(fixedExpense.userId, session.user.id));
+
+  // Group by category, keeping individual items
+  const grouped = expenses.reduce(
+    (acc, e) => {
+      const existing = acc.find((c) => c.name === e.categoryName);
+      if (existing) {
+        existing.value += parseFloat(e.amount);
+        existing.items.push({
+          name: e.name,
+          value: parseFloat(e.amount),
+        });
+      } else {
+        acc.push({
+          name: e.categoryName,
+          value: parseFloat(e.amount),
+          items: [{ name: e.name, value: parseFloat(e.amount) }],
+        });
+      }
+      return acc;
+    },
+    [] as FixedExpenseCategory[]
+  );
+
+  // Sort by value descending
+  return grouped.sort((a, b) => b.value - a.value);
+}

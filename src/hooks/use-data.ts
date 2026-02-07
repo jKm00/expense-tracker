@@ -10,6 +10,7 @@ import { getCategories } from "@/actions/categories";
 import {
   getFixedExpenses,
   getFixedExpensesByCategory,
+  getFixedExpensesByCategoryDetailed,
   getTotalFixedExpenses,
 } from "@/actions/fixed-expenses";
 
@@ -22,6 +23,7 @@ export const CACHE_KEYS = {
   monthlyStats: (year: number, month: number) => `stats-${year}-${month}`,
   fixedExpenses: "fixed-expenses",
   fixedExpensesByCategory: "fixed-expenses-by-category",
+  fixedExpensesByCategoryDetailed: "fixed-expenses-by-category-detailed",
   totalFixedExpenses: "total-fixed-expenses",
 };
 
@@ -52,6 +54,10 @@ export function useFixedExpenses() {
 
 export function useFixedExpensesByCategory() {
   return useSWR(CACHE_KEYS.fixedExpensesByCategory, getFixedExpensesByCategory);
+}
+
+export function useFixedExpensesByCategoryDetailed() {
+  return useSWR(CACHE_KEYS.fixedExpensesByCategoryDetailed, getFixedExpensesByCategoryDetailed);
 }
 
 export function useTotalFixedExpenses() {
