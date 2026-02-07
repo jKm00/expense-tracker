@@ -31,25 +31,27 @@ export function TransactionForm({ categories }: TransactionFormProps) {
     const amountNum = parseFloat(amount);
 
     if (!amountNum || amountNum <= 0) {
-      setMessage({ type: "error", text: "Please enter a valid amount" });
+      setMessage({ type: "error", text: "Enter an amount" });
+      setTimeout(() => setMessage(null), 2000);
       return;
     }
 
     if (!categoryName.trim()) {
-      setMessage({ type: "error", text: "Please select or enter a category" });
+      setMessage({ type: "error", text: "Select a category" });
+      setTimeout(() => setMessage(null), 2000);
       return;
     }
 
     startTransition(async () => {
       try {
         await createTransaction(amountNum, type, categoryName.trim());
-        
+
         // Invalidate caches
         invalidateTransactions();
         if (isNewCategory) {
           invalidateCategories();
         }
-        
+
         setAmount("");
         setCategoryName("");
         setIsNewCategory(false);
@@ -59,66 +61,50 @@ export function TransactionForm({ categories }: TransactionFormProps) {
         });
         amountRef.current?.focus();
 
-        // Clear message after 2 seconds
         setTimeout(() => setMessage(null), 2000);
       } catch {
         setMessage({ type: "error", text: "Something went wrong" });
+        setTimeout(() => setMessage(null), 2000);
       }
     });
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Amount Input */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-600">
-          Amount
-        </label>
-        <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-gray-400">
-            kr
-          </span>
-          <input
-            ref={amountRef}
-            type="number"
-            inputMode="decimal"
-            step="1"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0"
-            className="h-16 w-full rounded-xl border-2 border-gray-200 bg-white pl-12 pr-4 text-2xl font-medium transition-colors placeholder:text-gray-300 focus:border-gray-900 focus:outline-none"
-            autoFocus
-          />
-        </div>
+      <div className="relative">
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-medium text-gray-400">
+          kr
+        </span>
+        <input
+          ref={amountRef}
+          type="number"
+          inputMode="decimal"
+          step="1"
+          min="0"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0"
+          className="h-14 w-full rounded-xl border-2 border-gray-200 bg-white pl-12 pr-4 text-2xl font-semibold transition-colors placeholder:text-gray-300 focus:border-gray-900 focus:outline-none"
+        />
       </div>
 
       {/* Category Select */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-600">
-          Category
-        </label>
-        <CategorySelect
-          categories={categories}
-          value={categoryName}
-          onChange={handleCategoryChange}
-          placeholder="Search or create category..."
-        />
-        {isNewCategory && categoryName && (
-          <p className="mt-1 text-sm text-emerald-600">
-            New category will be created
-          </p>
-        )}
-      </div>
+      <CategorySelect
+        categories={categories}
+        value={categoryName}
+        onChange={handleCategoryChange}
+        placeholder="Category..."
+      />
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-3 pt-2">
+      <div className="grid grid-cols-2 gap-3">
         <Button
           variant="expense"
           size="lg"
           onClick={() => handleSubmit("expense")}
           disabled={isPending}
-          className="text-lg font-semibold"
+          className="text-base font-semibold"
         >
           {isPending ? "..." : "Expense"}
         </Button>
@@ -127,7 +113,7 @@ export function TransactionForm({ categories }: TransactionFormProps) {
           size="lg"
           onClick={() => handleSubmit("income")}
           disabled={isPending}
-          className="text-lg font-semibold"
+          className="text-base font-semibold"
         >
           {isPending ? "..." : "Income"}
         </Button>

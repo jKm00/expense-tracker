@@ -8,6 +8,13 @@
       "when": 1770417614911,
       "tag": "0000_exotic_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770459838639,
+      "tag": "0001_sudden_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

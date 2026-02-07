@@ -2,24 +2,19 @@
 
 import { BottomNav } from "@/components/bottom-nav";
 import { TransactionForm } from "@/components/transaction-form";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useCategories } from "@/hooks/use-data";
 
 export default function Home() {
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: categories } = useCategories();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-24">
-      <main className="grow flex flex-col justify-center mx-auto max-w-lg px-4 py-6">
-        {/* Transaction Form */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Add Transaction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TransactionForm categories={categories || []} />
-          </CardContent>
-        </Card>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Spacer to push form to bottom */}
+      <div className="flex-1" />
+
+      {/* Form at bottom for easy thumb reach */}
+      <main className="mx-auto w-full max-w-lg px-4 pb-28">
+        <TransactionForm categories={categories || []} />
       </main>
 
       <BottomNav />

@@ -42,21 +42,35 @@ export function TransactionListSkeleton({ count = 5 }: { count?: number }) {
 
 export function StatsCardsSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-2">
+      {/* Row 1: 3 cards */}
       {[1, 2, 3].map((i) => (
         <div key={i} className="rounded-2xl border border-gray-100 bg-white p-3 text-center">
           <Skeleton className="h-3 w-12 mx-auto mb-2" />
-          <Skeleton className="h-6 w-16 mx-auto" />
+          <Skeleton className="h-5 w-14 mx-auto" />
         </div>
       ))}
+      {/* Row 2: Full width balance card */}
+      <div className="col-span-3 rounded-2xl border border-gray-100 bg-white p-3 text-center">
+        <Skeleton className="h-3 w-12 mx-auto mb-2" />
+        <Skeleton className="h-6 w-20 mx-auto" />
+      </div>
     </div>
   );
 }
 
 export function ChartSkeleton() {
   return (
-    <div className="h-64 flex items-center justify-center">
-      <Skeleton className="h-40 w-40 rounded-full" />
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="h-3 w-full rounded-full" />
+        </div>
+      ))}
     </div>
   );
 }

@@ -47,6 +47,25 @@ export function BottomNav() {
       ),
     },
     {
+      href: "/fixed",
+      label: "Fixed",
+      icon: (active: boolean) => (
+        <svg
+          className={cn("h-6 w-6", active ? "text-gray-900" : "text-gray-400")}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={active ? 2.5 : 2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      ),
+    },
+    {
       href: "/settings",
       label: "Settings",
       icon: (active: boolean) => (
@@ -73,8 +92,8 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-lg pb-10">
-      <div className="mx-auto flex h-16 max-w-lg items-center px-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-lg safe-area-bottom">
+      <div className="mx-auto flex h-16 max-w-lg items-center px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -82,15 +101,15 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col grow items-center justify-center gap-1 px-4 py-2 transition-all",
-                isActive ? "opacity-100" : "opacity-60 hover:opacity-100",
+                "flex flex-col grow items-center justify-center gap-1 py-2 transition-all",
+                isActive ? "opacity-100" : "opacity-60 hover:opacity-100"
               )}
             >
               {item.icon(isActive)}
               <span
                 className={cn(
                   "text-xs font-medium",
-                  isActive ? "text-gray-900" : "text-gray-500",
+                  isActive ? "text-gray-900" : "text-gray-500"
                 )}
               >
                 {item.label}

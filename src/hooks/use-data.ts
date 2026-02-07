@@ -7,6 +7,11 @@ import {
   getMonthlyStats,
 } from "@/actions/transactions";
 import { getCategories } from "@/actions/categories";
+import {
+  getFixedExpenses,
+  getFixedExpensesByCategory,
+  getTotalFixedExpenses,
+} from "@/actions/fixed-expenses";
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -15,6 +20,9 @@ export const CACHE_KEYS = {
   monthlyTransactions: (year: number, month: number) =>
     `transactions-${year}-${month}`,
   monthlyStats: (year: number, month: number) => `stats-${year}-${month}`,
+  fixedExpenses: "fixed-expenses",
+  fixedExpensesByCategory: "fixed-expenses-by-category",
+  totalFixedExpenses: "total-fixed-expenses",
 };
 
 // Hooks
@@ -38,6 +46,18 @@ export function useMonthlyStats(year: number, month: number) {
   );
 }
 
+export function useFixedExpenses() {
+  return useSWR(CACHE_KEYS.fixedExpenses, getFixedExpenses);
+}
+
+export function useFixedExpensesByCategory() {
+  return useSWR(CACHE_KEYS.fixedExpensesByCategory, getFixedExpensesByCategory);
+}
+
+export function useTotalFixedExpenses() {
+  return useSWR(CACHE_KEYS.totalFixedExpenses, getTotalFixedExpenses);
+}
+
 // Invalidation helpers
 export function invalidateAll() {
   mutate(() => true, undefined, { revalidate: true });
@@ -57,4 +77,16 @@ export function invalidateTransactions() {
 
 export function invalidateCategories() {
   mutate(CACHE_KEYS.categories, undefined, { revalidate: true });
+}
+
+export function invalidateFixedExpenses() {
+  mutate(
+    (key) =>
+      typeof key === "string" &&
+      (key === CACHE_KEYS.fixedExpenses ||
+        key === CACHE_KEYS.fixedExpensesByCategory ||
+        key === CACHE_KEYS.totalFixedExpenses),
+    undefined,
+    { revalidate: true }
+  );
 }
