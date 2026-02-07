@@ -15,9 +15,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           {
             "bg-blue-500 text-white hover:bg-blue-600 focus-visible:ring-blue-500 shadow-lg shadow-blue-500/25":
               variant === "default",
-            "bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500 shadow-lg shadow-red-500/25":
+            "bg-gradient-to-r from-rose-500 to-rose-400 text-white hover:from-rose-600 hover:to-rose-500 focus-visible:ring-rose-400 shadow-lg shadow-rose-400/25":
               variant === "expense",
-            "bg-emerald-500 text-white hover:bg-emerald-600 focus-visible:ring-emerald-500 shadow-lg shadow-emerald-500/25":
+            "bg-gradient-to-r from-teal-400 to-emerald-400 text-white hover:from-teal-500 hover:to-emerald-500 focus-visible:ring-teal-400 shadow-lg shadow-teal-400/25":
               variant === "income",
             "border-2 border-[#1e1e2e] bg-[#12121a] text-slate-300 hover:bg-[#1e1e2e] hover:text-slate-100 focus-visible:ring-blue-500":
               variant === "outline",
@@ -29,13 +29,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "h-9 px-3 text-sm": size === "sm",
             "h-14 px-6 text-base": size === "lg",
           },
-          className
+          className,
         )}
         ref={ref}
         {...props}
       />
     );
-  }
+  },
 );
 
 Button.displayName = "Button";
