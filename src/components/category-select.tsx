@@ -93,7 +93,7 @@ export function CategorySelect({
       />
 
       {isOpen && (filteredCategories.length > 0 || showCreateOption) && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] py-1 shadow-2xl shadow-black/50 max-h-[250px] overflow-auto">
+        <div className="absolute z-50 bottom-full mb-2 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] py-1 shadow-2xl shadow-black/50 max-h-[250px] overflow-auto">
           {filteredCategories.map((category) => (
             <button
               key={category.id}
