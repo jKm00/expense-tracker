@@ -19,6 +19,8 @@ import {
   useFixedExpensesByCategory,
   useFixedExpensesByCategoryDetailed,
   useTotalFixedExpenses,
+  useFixedIncomeByCategoryDetailed,
+  useTotalFixedIncome,
 } from "@/hooks/use-data";
 import { formatCurrency } from "@/lib/utils";
 
@@ -34,13 +36,17 @@ export default function AnalyticsPage() {
     useFixedExpensesByCategoryDetailed();
   const { data: totalFixed, isLoading: totalFixedLoading } =
     useTotalFixedExpenses();
+  const { data: fixedIncomeByCategory, isLoading: fixedIncomeLoading } =
+    useFixedIncomeByCategoryDetailed();
+  const { data: totalFixedIncome, isLoading: totalFixedIncomeLoading } =
+    useTotalFixedIncome();
 
   const handleMonthChange = (newYear: number, newMonth: number) => {
     setYear(newYear);
     setMonth(newMonth);
   };
 
-  const isLoading = statsLoading || fixedLoading || totalFixedLoading;
+  const isLoading = statsLoading || fixedLoading || totalFixedLoading || fixedIncomeLoading || totalFixedIncomeLoading;
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] pb-48 relative">
@@ -71,7 +77,8 @@ export default function AnalyticsPage() {
             <StatsCardsSkeleton />
           ) : (
             <StatsCards
-              totalIncome={stats?.totalIncome || 0}
+              variableIncome={stats?.totalIncome || 0}
+              fixedIncome={totalFixedIncome || 0}
               variableExpenses={stats?.totalExpenses || 0}
               fixedExpenses={totalFixed || 0}
             />
@@ -127,6 +134,34 @@ export default function AnalyticsPage() {
                 data={fixedByCategory || []}
                 color="#6366f1"
                 emptyMessage="No fixed expenses set up"
+                drilldown
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Fixed Monthly Income */}
+        <Card className="mb-4 border-[#1e1e2e] bg-[#12121a]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-slate-200">
+                Fixed Monthly Income
+              </CardTitle>
+              {!fixedIncomeLoading && (
+                <span className="text-sm font-semibold text-emerald-400">
+                  {formatCurrency(totalFixedIncome || 0)}
+                </span>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {fixedIncomeLoading ? (
+              <ChartSkeleton />
+            ) : (
+              <HorizontalBarChart
+                data={fixedIncomeByCategory || []}
+                color="#10b981"
+                emptyMessage="No fixed income set up"
                 drilldown
               />
             )}

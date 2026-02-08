@@ -100,12 +100,27 @@ export const fixedExpense = pgTable("fixed_expense", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const fixedIncome = pgTable("fixed_income", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => category.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Type exports
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
 export type Category = typeof category.$inferSelect;
 export type Transaction = typeof transaction.$inferSelect;
 export type FixedExpense = typeof fixedExpense.$inferSelect;
+export type FixedIncome = typeof fixedIncome.$inferSelect;
 export type NewCategory = typeof category.$inferInsert;
 export type NewTransaction = typeof transaction.$inferInsert;
 export type NewFixedExpense = typeof fixedExpense.$inferInsert;
+export type NewFixedIncome = typeof fixedIncome.$inferInsert;

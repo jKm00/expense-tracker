@@ -15,6 +15,13 @@
       "when": 1770459838639,
       "tag": "0001_sudden_kinsey_walden",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770562845581,
+      "tag": "0002_fixed_maverick",
+      "breakpoints": true
     }
   ]
 }

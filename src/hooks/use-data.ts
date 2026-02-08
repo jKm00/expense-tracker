@@ -13,6 +13,12 @@ import {
   getFixedExpensesByCategoryDetailed,
   getTotalFixedExpenses,
 } from "@/actions/fixed-expenses";
+import {
+  getFixedIncome,
+  getFixedIncomeByCategory,
+  getFixedIncomeByCategoryDetailed,
+  getTotalFixedIncome,
+} from "@/actions/fixed-income";
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -25,6 +31,10 @@ export const CACHE_KEYS = {
   fixedExpensesByCategory: "fixed-expenses-by-category",
   fixedExpensesByCategoryDetailed: "fixed-expenses-by-category-detailed",
   totalFixedExpenses: "total-fixed-expenses",
+  fixedIncome: "fixed-income",
+  fixedIncomeByCategory: "fixed-income-by-category",
+  fixedIncomeByCategoryDetailed: "fixed-income-by-category-detailed",
+  totalFixedIncome: "total-fixed-income",
 };
 
 // Hooks
@@ -64,6 +74,22 @@ export function useTotalFixedExpenses() {
   return useSWR(CACHE_KEYS.totalFixedExpenses, getTotalFixedExpenses);
 }
 
+export function useFixedIncome() {
+  return useSWR(CACHE_KEYS.fixedIncome, getFixedIncome);
+}
+
+export function useFixedIncomeByCategory() {
+  return useSWR(CACHE_KEYS.fixedIncomeByCategory, getFixedIncomeByCategory);
+}
+
+export function useFixedIncomeByCategoryDetailed() {
+  return useSWR(CACHE_KEYS.fixedIncomeByCategoryDetailed, getFixedIncomeByCategoryDetailed);
+}
+
+export function useTotalFixedIncome() {
+  return useSWR(CACHE_KEYS.totalFixedIncome, getTotalFixedIncome);
+}
+
 // Invalidation helpers
 export function invalidateAll() {
   mutate(() => true, undefined, { revalidate: true });
@@ -91,7 +117,21 @@ export function invalidateFixedExpenses() {
       typeof key === "string" &&
       (key === CACHE_KEYS.fixedExpenses ||
         key === CACHE_KEYS.fixedExpensesByCategory ||
+        key === CACHE_KEYS.fixedExpensesByCategoryDetailed ||
         key === CACHE_KEYS.totalFixedExpenses),
+    undefined,
+    { revalidate: true }
+  );
+}
+
+export function invalidateFixedIncome() {
+  mutate(
+    (key) =>
+      typeof key === "string" &&
+      (key === CACHE_KEYS.fixedIncome ||
+        key === CACHE_KEYS.fixedIncomeByCategory ||
+        key === CACHE_KEYS.fixedIncomeByCategoryDetailed ||
+        key === CACHE_KEYS.totalFixedIncome),
     undefined,
     { revalidate: true }
   );
