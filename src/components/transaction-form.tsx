@@ -100,20 +100,18 @@ export function TransactionForm({ categories }: TransactionFormProps) {
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
         <Button
-          variant="expense"
           size="lg"
           onClick={() => handleSubmit("expense")}
           disabled={isPending}
-          className="text-base font-semibold"
+          className="bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/25 text-base font-semibold"
         >
           {isPending ? "..." : "Expense"}
         </Button>
         <Button
-          variant="income"
           size="lg"
           onClick={() => handleSubmit("income")}
           disabled={isPending}
-          className="text-base font-semibold"
+          className="bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25 text-base font-semibold"
         >
           {isPending ? "..." : "Income"}
         </Button>

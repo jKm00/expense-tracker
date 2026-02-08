@@ -43,7 +43,7 @@ export function useCategories() {
 }
 
 export function useRecentTransactions() {
-  return useSWR(CACHE_KEYS.recentTransactions, () => getRecentTransactions(5));
+  return useSWR(CACHE_KEYS.recentTransactions, () => getRecentTransactions(10));
 }
 
 export function useMonthlyTransactions(year: number, month: number) {
