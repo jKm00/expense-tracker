@@ -107,6 +107,8 @@ export default function AnalyticsPage() {
                 data={stats?.categoryBreakdown || []}
                 color="#ef4444"
                 emptyMessage="No variable expenses this month"
+                drilldown
+                compactDrilldown
               />
             )}
           </CardContent>

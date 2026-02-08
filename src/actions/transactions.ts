@@ -116,14 +116,33 @@ export async function getMonthlyStats(year: number, month: number) {
     .reduce(
       (acc, t) => {
         const existing = acc.find((c) => c.name === t.categoryName);
+        const amount = parseFloat(t.amount);
+        const date = t.createdAt.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        
         if (existing) {
-          existing.value += parseFloat(t.amount);
+          existing.value += amount;
+          existing.items.push({
+            name: date,
+            value: amount,
+            date,
+          });
         } else {
-          acc.push({ name: t.categoryName, value: parseFloat(t.amount) });
+          acc.push({
+            name: t.categoryName,
+            value: amount,
+            items: [{
+              name: date,
+              value: amount,
+              date,
+            }],
+          });
         }
         return acc;
       },
-      [] as { name: string; value: number }[]
+      [] as { name: string; value: number; items: { name: string; value: number; date: string }[] }[]
     )
     .sort((a, b) => b.value - a.value);
 
