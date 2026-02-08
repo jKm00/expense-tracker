@@ -4,9 +4,47 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { signOut, useSession } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    const checkInstalled = () => {
+      if (window.matchMedia("(display-mode: standalone)").matches) {
+        setIsInstalled(true);
+      }
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    checkInstalled();
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+    }
+  };
 
   const handleSignOut = () => {
     signOut({
@@ -43,6 +81,29 @@ export default function SettingsPage() {
         </Card>
 
         {/* Actions */}
+        {installPrompt && !isInstalled && (
+          <Button
+            onClick={handleInstall}
+            className="mb-3 flex w-full items-center justify-between py-3 text-left text-emerald-400 border-[#1e1e2e] bg-[#12121a] hover:bg-[#1e1e2e] hover:text-emerald-300"
+            variant="outline"
+          >
+            <span className="font-medium">Add to Home Screen</span>
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </Button>
+        )}
+        
         <Button
           onClick={handleSignOut}
           className="flex w-full items-center justify-between py-3 text-left text-red-400 border-[#1e1e2e] bg-[#12121a] hover:bg-[#1e1e2e] hover:text-red-300"
