@@ -70,7 +70,7 @@ export function QuickAddForm({ categories }: QuickAddFormProps) {
   };
 
   return (
-    <div className="bg-[#12121a]/95 backdrop-blur-xl rounded-2xl border border-[#1e1e2e] shadow-2xl shadow-black/50 overflow-hidden">
+    <div className="bg-[#12121a]/95 backdrop-blur-xl rounded-2xl border border-[#1e1e2e] shadow-2xl shadow-black/50">
       {/* Amount Input - Large and prominent */}
       <div className="p-4 pb-3">
         <div className="relative">
@@ -107,18 +107,28 @@ export function QuickAddForm({ categories }: QuickAddFormProps) {
           onClick={() => handleSubmit("expense")}
           disabled={isPending}
           className={cn(
-            "h-14 flex items-center justify-center gap-2 font-semibold text-base transition-all",
+            "h-14 flex items-center justify-center gap-2 rounded-bl-xl font-semibold text-base transition-all",
             "bg-indigo-600/90 text-white hover:bg-indigo-600 active:bg-indigo-700",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            "border-r border-[#1e1e2e]"
+            "border-r border-[#1e1e2e]",
           )}
         >
           {isPending ? (
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 12H4"
+                />
               </svg>
               Expense
             </>
@@ -128,17 +138,27 @@ export function QuickAddForm({ categories }: QuickAddFormProps) {
           onClick={() => handleSubmit("income")}
           disabled={isPending}
           className={cn(
-            "h-14 flex items-center justify-center gap-2 font-semibold text-base transition-all",
+            "h-14 flex items-center justify-center gap-2 rounded-br-xl font-semibold text-base transition-all",
             "bg-emerald-600/90 text-white hover:bg-emerald-600 active:bg-emerald-700",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
           {isPending ? (
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Income
             </>
@@ -153,7 +173,7 @@ export function QuickAddForm({ categories }: QuickAddFormProps) {
             "absolute -top-12 left-4 right-4 rounded-xl p-3 text-center text-sm font-medium animate-in slide-in-from-bottom-2 fade-in duration-200",
             message.type === "success"
               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-              : "bg-red-500/20 text-red-400 border border-red-500/30"
+              : "bg-red-500/20 text-red-400 border border-red-500/30",
           )}
         >
           {message.text}
