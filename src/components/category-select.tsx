@@ -89,7 +89,7 @@ export function CategorySelect({
         onFocus={() => setIsOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="flex h-12 w-full rounded-xl border-2 border-[#1e1e2e] bg-[#0a0a0f] px-4 text-base text-slate-100 transition-all placeholder:text-slate-600 focus:border-indigo-500/50 focus:outline-none focus:bg-[#0f0f15]"
+        className="flex h-12 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] px-4 text-base text-slate-100 transition-all placeholder:text-slate-600 focus:border-slate-700 focus:outline-none"
       />
 
       {isOpen && (filteredCategories.length > 0 || showCreateOption) && (
