@@ -30,8 +30,8 @@ export function FixedIncomeList({ income }: FixedIncomeListProps) {
 
   if (income.length === 0) {
     return (
-      <div className="py-8 text-center text-slate-500">
-        No fixed income yet. Add your recurring income above.
+      <div className="py-12 text-center text-slate-500">
+        No fixed income yet
       </div>
     );
   }
@@ -39,22 +39,24 @@ export function FixedIncomeList({ income }: FixedIncomeListProps) {
   const total = income.reduce((sum, i) => sum + parseFloat(i.amount), 0);
 
   return (
-    <div>
+    <div className="space-y-3">
       {/* Total */}
-      <div className="mb-4 flex items-center justify-between rounded-xl bg-[#1e1e2e] p-3">
-        <span className="text-sm font-medium text-slate-400">Monthly Total</span>
-        <span className="text-lg font-bold text-emerald-400">
+      <div className="rounded-xl bg-emerald-500/10 p-4 text-center">
+        <p className="text-xs font-medium uppercase tracking-wider text-emerald-400/70">
+          Monthly Total
+        </p>
+        <p className="mt-1 text-2xl font-bold text-emerald-400">
           {formatCurrency(total)}
-        </span>
+        </p>
       </div>
 
       {/* List */}
-      <div className="divide-y divide-[#1e1e2e]">
+      <div className="space-y-2">
         {income.map((item) => (
           <div
             key={item.id}
             className={cn(
-              "flex items-center justify-between py-3",
+              "flex items-center justify-between rounded-xl border border-[#1e1e2e] bg-[#12121a] p-4",
               isPending && "opacity-50"
             )}
           >
@@ -72,7 +74,7 @@ export function FixedIncomeList({ income }: FixedIncomeListProps) {
               <button
                 onClick={() => handleDelete(item.id, item.name)}
                 disabled={isPending}
-                className="rounded p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                className="rounded-lg p-2 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
               >
                 <svg
                   className="h-4 w-4"

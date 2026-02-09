@@ -9,6 +9,7 @@ interface CategorySelectProps {
   value: string;
   onChange: (value: string, isNew: boolean) => void;
   placeholder?: string;
+  dropdownPosition?: "top" | "bottom";
 }
 
 export function CategorySelect({
@@ -16,6 +17,7 @@ export function CategorySelect({
   value,
   onChange,
   placeholder = "Category",
+  dropdownPosition = "top",
 }: CategorySelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState(value);
@@ -93,7 +95,10 @@ export function CategorySelect({
       />
 
       {isOpen && (filteredCategories.length > 0 || showCreateOption) && (
-        <div className="absolute z-50 bottom-full mb-2 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] py-1 shadow-2xl shadow-black/50 max-h-[250px] overflow-auto">
+        <div className={cn(
+          "absolute z-50 w-full rounded-xl border border-[#1e1e2e] bg-[#12121a] py-1 shadow-2xl shadow-black/50 max-h-[250px] overflow-auto",
+          dropdownPosition === "top" ? "bottom-full mb-2" : "top-full mt-2"
+        )}>
           {filteredCategories.map((category) => (
             <button
               key={category.id}
