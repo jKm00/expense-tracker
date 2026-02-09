@@ -15,55 +15,78 @@ export function StatsCards({
   fixedExpenses,
 }: StatsCardsProps) {
   const totalIncome = variableIncome + fixedIncome;
-  const netBalance = totalIncome - variableExpenses - fixedExpenses;
+  const totalExpenses = variableExpenses + fixedExpenses;
+  const balance = totalIncome - totalExpenses;
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {/* Row 1: Income Cards */}
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Fixed Inc.</p>
-        <p className="mt-0.5 text-base font-bold text-emerald-400">
-          {formatCurrency(fixedIncome)}
-        </p>
-      </Card>
+    <div className="space-y-2">
+      {/* Income Row */}
+      <div className="grid grid-cols-3 gap-2">
+        <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
+          <p className="text-[11px] font-medium text-slate-500">Fixed</p>
+          <p className="mt-0.5 text-base font-bold text-emerald-400">
+            {formatCurrency(fixedIncome)}
+          </p>
+        </Card>
 
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Variable Inc.</p>
-        <p className="mt-0.5 text-base font-bold text-emerald-400">
-          {formatCurrency(variableIncome)}
-        </p>
-      </Card>
+        <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
+          <p className="text-[11px] font-medium text-slate-500">Variable</p>
+          <p className="mt-0.5 text-base font-bold text-emerald-400">
+            {formatCurrency(variableIncome)}
+          </p>
+        </Card>
 
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Total Income</p>
-        <p className="mt-0.5 text-base font-bold text-emerald-400">
-          {formatCurrency(totalIncome)}
-        </p>
-      </Card>
+        <Card className="p-3 text-center border-[#1e1e2e] bg-emerald-500/10">
+          <p className="text-[11px] font-medium text-emerald-400/70">Total Income</p>
+          <p className="mt-0.5 text-base font-bold text-emerald-400">
+            {formatCurrency(totalIncome)}
+          </p>
+        </Card>
+      </div>
 
-      {/* Row 2: Expenses + Balance */}
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Variable Exp.</p>
-        <p className="mt-0.5 text-base font-bold text-red-400">
-          {formatCurrency(variableExpenses)}
-        </p>
-      </Card>
+      {/* Expenses Row */}
+      <div className="grid grid-cols-3 gap-2">
+        <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
+          <p className="text-[11px] font-medium text-slate-500">Fixed</p>
+          <p className="mt-0.5 text-base font-bold text-red-400">
+            {formatCurrency(fixedExpenses)}
+          </p>
+        </Card>
 
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Fixed Exp.</p>
-        <p className="mt-0.5 text-base font-bold text-red-400">
-          {formatCurrency(fixedExpenses)}
-        </p>
-      </Card>
+        <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
+          <p className="text-[11px] font-medium text-slate-500">Variable</p>
+          <p className="mt-0.5 text-base font-bold text-red-400">
+            {formatCurrency(variableExpenses)}
+          </p>
+        </Card>
 
-      <Card className="p-3 text-center border-[#1e1e2e] bg-[#12121a]">
-        <p className="text-[11px] font-medium text-slate-500">Balance</p>
+        <Card className="p-3 text-center border-[#1e1e2e] bg-red-500/10">
+          <p className="text-[11px] font-medium text-red-400/70">Total Expenses</p>
+          <p className="mt-0.5 text-base font-bold text-red-400">
+            {formatCurrency(totalExpenses)}
+          </p>
+        </Card>
+      </div>
+
+      {/* Balance Row */}
+      <Card
+        className={`p-4 text-center border-[#1e1e2e] ${
+          balance >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"
+        }`}
+      >
         <p
-          className={`mt-0.5 text-base font-bold ${
-            netBalance >= 0 ? "text-emerald-400" : "text-red-400"
+          className={`text-[11px] font-medium ${
+            balance >= 0 ? "text-emerald-400/70" : "text-red-400/70"
           }`}
         >
-          {formatCurrency(netBalance)}
+          Balance
+        </p>
+        <p
+          className={`mt-0.5 text-xl font-bold ${
+            balance >= 0 ? "text-emerald-400" : "text-red-400"
+          }`}
+        >
+          {formatCurrency(balance)}
         </p>
       </Card>
     </div>
