@@ -9,6 +9,13 @@ interface BalanceOverviewProps {
   isLoading: boolean;
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export function BalanceOverview({
   balance,
   totalIncome,
@@ -16,48 +23,52 @@ export function BalanceOverview({
   isLoading,
 }: BalanceOverviewProps) {
   const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" });
+  const greeting = getGreeting();
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center space-y-6">
-        <div className="h-16 w-48 animate-pulse rounded-lg bg-[#1e1e2e]" />
-        <div className="flex gap-8">
-          <div className="h-12 w-24 animate-pulse rounded-lg bg-[#1e1e2e]" />
-          <div className="h-12 w-24 animate-pulse rounded-lg bg-[#1e1e2e]" />
+      <div className="w-full space-y-8">
+        <div className="space-y-2">
+          <div className="h-4 w-32 animate-pulse rounded bg-[#1e1e2e]" />
+          <div className="h-14 w-56 animate-pulse rounded-lg bg-[#1e1e2e]" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-20 animate-pulse rounded-2xl bg-[#1e1e2e]" />
+          <div className="h-20 animate-pulse rounded-2xl bg-[#1e1e2e]" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col items-center text-center">
-      <p className="mb-2 text-sm font-medium text-slate-500">{currentMonth}</p>
-      
-      <h1
-        className={`text-5xl font-bold tracking-tight ${
-          balance >= 0 ? "text-white" : "text-red-400"
-        }`}
-      >
-        {formatCurrency(balance)}
-      </h1>
+  const isPositive = balance >= 0;
 
-      <div className="mt-8 flex gap-8">
-        <div className="flex flex-col items-center">
-          <span className="text-2xl font-semibold text-emerald-400">
-            {formatCurrency(totalIncome)}
-          </span>
-          <span className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
-            Income
-          </span>
+  return (
+    <div className="w-full">
+      {/* Greeting */}
+      <p className="text-slate-500">{greeting}</p>
+      
+      {/* Balance */}
+      <div className="mt-1 mb-8">
+        <h1
+          className={`text-6xl font-bold tracking-tight ${
+            isPositive ? "text-white" : "text-red-400"
+          }`}
+        >
+          {formatCurrency(balance)}
+        </h1>
+        <p className="mt-2 text-sm text-slate-600">{currentMonth} balance</p>
+      </div>
+
+      {/* Income & Expenses Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-4">
+          <p className="text-xs text-slate-500 mb-1">Income</p>
+          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totalIncome)}</p>
         </div>
-        <div className="h-12 w-px bg-[#1e1e2e]" />
-        <div className="flex flex-col items-center">
-          <span className="text-2xl font-semibold text-red-400">
-            {formatCurrency(totalExpenses)}
-          </span>
-          <span className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
-            Expenses
-          </span>
+        
+        <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-4">
+          <p className="text-xs text-slate-500 mb-1">Expenses</p>
+          <p className="text-2xl font-bold text-red-400">{formatCurrency(totalExpenses)}</p>
         </div>
       </div>
     </div>

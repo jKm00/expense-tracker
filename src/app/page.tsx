@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-[#0a0a0f]">
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4">
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center">
           <BalanceOverview
             balance={balance}
             totalIncome={totalIncome}
