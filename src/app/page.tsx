@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { QuickAddForm } from "@/components/quick-add-form";
 import { BalanceOverview } from "@/components/balance-overview";
@@ -9,9 +10,16 @@ import {
   useTotalFixedExpenses,
   useTotalFixedIncome,
 } from "@/hooks/use-data";
+import { ensurePreviousMonthSnapshot } from "@/actions/monthly-fixed";
 
 export default function Home() {
   const now = new Date();
+
+  // On app open, ensure the previous month's fixed data is snapshotted.
+  // This runs once per mount — idempotent if snapshot already exists.
+  useEffect(() => {
+    ensurePreviousMonthSnapshot();
+  }, []);
   const { data: categories } = useCategories();
   const { data: stats, isLoading: statsLoading } = useMonthlyStats(
     now.getFullYear(),

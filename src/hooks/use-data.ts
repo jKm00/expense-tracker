@@ -19,6 +19,12 @@ import {
   getFixedIncomeByCategoryDetailed,
   getTotalFixedIncome,
 } from "@/actions/fixed-income";
+import {
+  getTotalFixedExpensesForMonth,
+  getTotalFixedIncomeForMonth,
+  getFixedExpensesByCategoryForMonth,
+  getFixedIncomeByCategoryForMonth,
+} from "@/actions/monthly-fixed";
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -35,6 +41,15 @@ export const CACHE_KEYS = {
   fixedIncomeByCategory: "fixed-income-by-category",
   fixedIncomeByCategoryDetailed: "fixed-income-by-category-detailed",
   totalFixedIncome: "total-fixed-income",
+  // Month-aware fixed data (for analytics)
+  monthlyFixedExpensesTotal: (year: number, month: number) =>
+    `monthly-fixed-expenses-total-${year}-${month}`,
+  monthlyFixedIncomeTotal: (year: number, month: number) =>
+    `monthly-fixed-income-total-${year}-${month}`,
+  monthlyFixedExpensesByCategory: (year: number, month: number) =>
+    `monthly-fixed-expenses-by-category-${year}-${month}`,
+  monthlyFixedIncomeByCategory: (year: number, month: number) =>
+    `monthly-fixed-income-by-category-${year}-${month}`,
 };
 
 // Hooks
@@ -90,6 +105,31 @@ export function useTotalFixedIncome() {
   return useSWR(CACHE_KEYS.totalFixedIncome, getTotalFixedIncome);
 }
 
+// Month-aware fixed data hooks (for analytics — current month uses live template, past months use snapshots)
+export function useMonthlyTotalFixedExpenses(year: number, month: number) {
+  return useSWR(CACHE_KEYS.monthlyFixedExpensesTotal(year, month), () =>
+    getTotalFixedExpensesForMonth(year, month)
+  );
+}
+
+export function useMonthlyTotalFixedIncome(year: number, month: number) {
+  return useSWR(CACHE_KEYS.monthlyFixedIncomeTotal(year, month), () =>
+    getTotalFixedIncomeForMonth(year, month)
+  );
+}
+
+export function useMonthlyFixedExpensesByCategory(year: number, month: number) {
+  return useSWR(CACHE_KEYS.monthlyFixedExpensesByCategory(year, month), () =>
+    getFixedExpensesByCategoryForMonth(year, month)
+  );
+}
+
+export function useMonthlyFixedIncomeByCategory(year: number, month: number) {
+  return useSWR(CACHE_KEYS.monthlyFixedIncomeByCategory(year, month), () =>
+    getFixedIncomeByCategoryForMonth(year, month)
+  );
+}
+
 // Invalidation helpers
 export function invalidateAll() {
   mutate(() => true, undefined, { revalidate: true });
@@ -118,7 +158,8 @@ export function invalidateFixedExpenses() {
       (key === CACHE_KEYS.fixedExpenses ||
         key === CACHE_KEYS.fixedExpensesByCategory ||
         key === CACHE_KEYS.fixedExpensesByCategoryDetailed ||
-        key === CACHE_KEYS.totalFixedExpenses),
+        key === CACHE_KEYS.totalFixedExpenses ||
+        key.startsWith("monthly-fixed-expenses-")),
     undefined,
     { revalidate: true }
   );
@@ -131,7 +172,8 @@ export function invalidateFixedIncome() {
       (key === CACHE_KEYS.fixedIncome ||
         key === CACHE_KEYS.fixedIncomeByCategory ||
         key === CACHE_KEYS.fixedIncomeByCategoryDetailed ||
-        key === CACHE_KEYS.totalFixedIncome),
+        key === CACHE_KEYS.totalFixedIncome ||
+        key.startsWith("monthly-fixed-income-")),
     undefined,
     { revalidate: true }
   );

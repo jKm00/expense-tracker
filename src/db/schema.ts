@@ -6,6 +6,8 @@ import {
   uuid,
   decimal,
   pgEnum,
+  integer,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Better Auth tables
@@ -113,6 +115,39 @@ export const fixedIncome = pgTable("fixed_income", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const fixedSnapshotTypeEnum = pgEnum("fixed_snapshot_type", [
+  "expense",
+  "income",
+]);
+
+export const monthlyFixedSnapshot = pgTable(
+  "monthly_fixed_snapshot",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    month: integer("month").notNull(), // 0-11 (JS month)
+    type: fixedSnapshotTypeEnum("type").notNull(),
+    name: text("name").notNull(),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => category.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("monthly_fixed_snapshot_unique").on(
+      table.userId,
+      table.year,
+      table.month,
+      table.type,
+      table.name
+    ),
+  ]
+);
+
 // Type exports
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
@@ -124,3 +159,5 @@ export type NewCategory = typeof category.$inferInsert;
 export type NewTransaction = typeof transaction.$inferInsert;
 export type NewFixedExpense = typeof fixedExpense.$inferInsert;
 export type NewFixedIncome = typeof fixedIncome.$inferInsert;
+export type MonthlyFixedSnapshot = typeof monthlyFixedSnapshot.$inferSelect;
+export type NewMonthlyFixedSnapshot = typeof monthlyFixedSnapshot.$inferInsert;

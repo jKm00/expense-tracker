@@ -16,11 +16,10 @@ import {
 import {
   useMonthlyStats,
   useMonthlyTransactions,
-  useFixedExpensesByCategory,
-  useFixedExpensesByCategoryDetailed,
-  useTotalFixedExpenses,
-  useFixedIncomeByCategoryDetailed,
-  useTotalFixedIncome,
+  useMonthlyTotalFixedExpenses,
+  useMonthlyTotalFixedIncome,
+  useMonthlyFixedExpensesByCategory,
+  useMonthlyFixedIncomeByCategory,
 } from "@/hooks/use-data";
 import { formatCurrency } from "@/lib/utils";
 
@@ -33,13 +32,13 @@ export default function AnalyticsPage() {
   const { data: transactions, isLoading: transactionsLoading } =
     useMonthlyTransactions(year, month);
   const { data: fixedByCategory, isLoading: fixedLoading } =
-    useFixedExpensesByCategoryDetailed();
+    useMonthlyFixedExpensesByCategory(year, month);
   const { data: totalFixed, isLoading: totalFixedLoading } =
-    useTotalFixedExpenses();
+    useMonthlyTotalFixedExpenses(year, month);
   const { data: fixedIncomeByCategory, isLoading: fixedIncomeLoading } =
-    useFixedIncomeByCategoryDetailed();
+    useMonthlyFixedIncomeByCategory(year, month);
   const { data: totalFixedIncome, isLoading: totalFixedIncomeLoading } =
-    useTotalFixedIncome();
+    useMonthlyTotalFixedIncome(year, month);
 
   const handleMonthChange = (newYear: number, newMonth: number) => {
     setYear(newYear);
