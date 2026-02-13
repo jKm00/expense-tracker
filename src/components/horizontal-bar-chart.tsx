@@ -137,13 +137,13 @@ export function HorizontalBarChart({
               {/* Bar - Either solid or stacked */}
               <div className="h-3 w-full rounded-full bg-[#1e1e2e] overflow-hidden">
                 {showSegments ? (
-                  // Stacked bar with individual colors, sorted by date ascending
+                  // Stacked bar with individual colors, sorted by date descending (newest first)
                   <div className="flex h-full">
                     {[...item.items!]
                       .sort((a, b) => {
-                        // Sort by date ascending if date field exists
+                        // Sort by date descending if date field exists
                         if ('date' in a && 'date' in b) {
-                          return new Date(a.date as string).getTime() - new Date(b.date as string).getTime();
+                          return new Date(b.date as string).getTime() - new Date(a.date as string).getTime();
                         }
                         return 0;
                       })
@@ -182,13 +182,13 @@ export function HorizontalBarChart({
             {/* Expanded Items */}
             {canExpand && isExpanded && (
               compactDrilldown ? (
-                // Compact view - just labels with colored dots, sorted by date ascending
+                // Compact view - just labels with colored dots, sorted by date descending (newest first)
                 <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 ml-5 animate-in fade-in duration-200">
                   {[...item.items!]
                     .sort((a, b) => {
-                      // Sort by date ascending if date field exists
+                      // Sort by date descending if date field exists
                       if (a.date && b.date) {
-                        return new Date(a.date).getTime() - new Date(b.date).getTime();
+                        return new Date(b.date).getTime() - new Date(a.date).getTime();
                       }
                       return 0;
                     })

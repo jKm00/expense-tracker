@@ -124,11 +124,17 @@ export async function getMonthlyStats(year: number, month: number) {
         
         if (existing) {
           existing.value += amount;
-          existing.items.push({
-            name: date,
-            value: amount,
-            date,
-          });
+          // Check if an item with this date already exists
+          const existingItem = existing.items.find((i) => i.date === date);
+          if (existingItem) {
+            existingItem.value += amount;
+          } else {
+            existing.items.push({
+              name: date,
+              value: amount,
+              date,
+            });
+          }
         } else {
           acc.push({
             name: t.categoryName,
