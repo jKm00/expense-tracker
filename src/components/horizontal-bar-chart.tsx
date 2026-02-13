@@ -137,25 +137,33 @@ export function HorizontalBarChart({
               {/* Bar - Either solid or stacked */}
               <div className="h-3 w-full rounded-full bg-[#1e1e2e] overflow-hidden">
                 {showSegments ? (
-                  // Stacked bar with individual colors
+                  // Stacked bar with individual colors, sorted by date ascending
                   <div className="flex h-full">
-                    {item.items!.map((subItem, subIndex) => {
-                      const width = (subItem.value / item.value) * 100;
-                      const segmentColor = compactDrilldown
-                        ? getCompactColor(subIndex)
-                        : getColor(subIndex);
-                      return (
-                        <div
-                          key={`${subItem.name}-${subIndex}`}
-                          className="h-full transition-all duration-500 ease-out"
-                          style={{
-                            width: `${width}%`,
-                            backgroundColor: segmentColor,
-                          }}
-                          title={`${subItem.name}: ${formatCurrency(subItem.value)}`}
-                        />
-                      );
-                    })}
+                    {[...item.items!]
+                      .sort((a, b) => {
+                        // Sort by date ascending if date field exists
+                        if ('date' in a && 'date' in b) {
+                          return new Date(a.date as string).getTime() - new Date(b.date as string).getTime();
+                        }
+                        return 0;
+                      })
+                      .map((subItem, subIndex) => {
+                        const width = (subItem.value / item.value) * 100;
+                        const segmentColor = compactDrilldown
+                          ? getCompactColor(subIndex)
+                          : getColor(subIndex);
+                        return (
+                          <div
+                            key={`${subItem.name}-${subIndex}`}
+                            className="h-full transition-all duration-500 ease-out"
+                            style={{
+                              width: `${width}%`,
+                              backgroundColor: segmentColor,
+                            }}
+                            title={`${subItem.name}: ${formatCurrency(subItem.value)}`}
+                          />
+                        );
+                      })}
                   </div>
                 ) : (
                   // Regular bar
