@@ -21,10 +21,9 @@ interface HorizontalBarChartProps {
   maxItems?: number;
   emptyMessage?: string;
   drilldown?: boolean;
-  compactDrilldown?: boolean; // Show only labels without sub-bars
 }
 
-// Harmonious color palette for full drill-down (fixed costs)
+// Harmonious color palette for drill-down sub-items
 const COLOR_PALETTE = [
   "#3b82f6", // blue-500
   "#06b6d4", // cyan-500
@@ -42,32 +41,12 @@ function getColor(index: number): string {
   return COLOR_PALETTE[index % COLOR_PALETTE.length];
 }
 
-// Warm color palette for compact drill-down (variable expenses)
-// Red-adjacent hues that feel cohesive with a red (#ef4444) parent bar
-const COMPACT_COLOR_PALETTE = [
-  "#ef4444", // red-500
-  "#f97316", // orange-500
-  "#f59e0b", // amber-500
-  "#e11d48", // rose-600
-  "#dc2626", // red-600
-  "#fb923c", // orange-400
-  "#fbbf24", // amber-400
-  "#f43f5e", // rose-500
-  "#b91c1c", // red-700
-  "#ea580c", // orange-600
-];
-
-function getCompactColor(index: number): string {
-  return COMPACT_COLOR_PALETTE[index % COMPACT_COLOR_PALETTE.length];
-}
-
 export function HorizontalBarChart({
   data,
   color = "#ef4444",
   maxItems = 5,
   emptyMessage = "No data",
   drilldown = false,
-  compactDrilldown = false,
 }: HorizontalBarChartProps) {
   const [expanded, setExpanded] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -149,9 +128,7 @@ export function HorizontalBarChart({
                       })
                       .map((subItem, subIndex) => {
                         const width = (subItem.value / item.value) * 100;
-                        const segmentColor = compactDrilldown
-                          ? getCompactColor(subIndex)
-                          : getColor(subIndex);
+                        const segmentColor = getColor(subIndex);
                         return (
                           <div
                             key={`${subItem.name}-${subIndex}`}
@@ -181,67 +158,40 @@ export function HorizontalBarChart({
 
             {/* Expanded Items */}
             {canExpand && isExpanded && (
-              compactDrilldown ? (
-                // Compact view - just labels with colored dots, sorted by date descending (newest first)
-                <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 ml-5 animate-in fade-in duration-200">
-                  {[...item.items!]
-                    .sort((a, b) => {
-                      // Sort by date descending if date field exists
-                      if (a.date && b.date) {
-                        return new Date(b.date).getTime() - new Date(a.date).getTime();
-                      }
-                      return 0;
-                    })
-                    .map((subItem, subIndex) => (
-                    <div
-                      key={`${subItem.name}-${subIndex}`}
-                      className="flex items-center gap-1.5 text-xs"
-                    >
-                      <div
-                        className="h-2 w-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: getCompactColor(subIndex) }}
-                      />
-                      <span className="text-slate-400">{subItem.name}</span>
-                      <span className="text-slate-500">{formatCurrency(subItem.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // Full view - with sub-bars, sorted by value descending
-                <div className="ml-5 space-y-2 pt-1 animate-in slide-in-from-top-2 duration-200">
-                  {[...item.items!]
-                    .sort((a, b) => b.value - a.value)
-                    .map((subItem, subIndex) => {
-                    const subMaxValue = Math.max(...item.items!.map((i) => i.value));
-                    return (
-                      <div key={`${subItem.name}-${subIndex}`} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: getColor(subIndex) }}
-                            />
-                            <span className="text-slate-400 truncate">{subItem.name}</span>
-                          </div>
-                          <span className="text-slate-200 font-medium whitespace-nowrap ml-2">
-                            {formatCurrency(subItem.value)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-[#1e1e2e] overflow-hidden ml-[18px]">
+              // Full view - with sub-bars, sorted by value descending
+              <div className="ml-5 space-y-2 pt-1 animate-in slide-in-from-top-2 duration-200">
+                {[...item.items!]
+                  .sort((a, b) => b.value - a.value)
+                  .map((subItem, subIndex) => {
+                  const subMaxValue = Math.max(...item.items!.map((i) => i.value));
+                  return (
+                    <div key={`${subItem.name}-${subIndex}`} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
                           <div
-                            className="h-full rounded-full transition-all duration-500 ease-out"
-                            style={{
-                              width: `${(subItem.value / subMaxValue) * 100}%`,
-                              backgroundColor: getColor(subIndex),
-                              opacity: 0.7,
-                            }}
+                            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: getColor(subIndex) }}
                           />
+                          <span className="text-slate-400 truncate">{subItem.name}</span>
                         </div>
+                        <span className="text-slate-200 font-medium whitespace-nowrap ml-2">
+                          {formatCurrency(subItem.value)}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-              )
+                      <div className="h-1.5 rounded-full bg-[#1e1e2e] overflow-hidden ml-[18px]">
+                        <div
+                          className="h-full rounded-full transition-all duration-500 ease-out"
+                          style={{
+                            width: `${(subItem.value / subMaxValue) * 100}%`,
+                            backgroundColor: getColor(subIndex),
+                            opacity: 0.7,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         );
