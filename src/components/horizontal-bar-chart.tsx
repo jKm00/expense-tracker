@@ -23,22 +23,55 @@ interface HorizontalBarChartProps {
   drilldown?: boolean;
 }
 
-// Harmonious color palette for drill-down sub-items
-const COLOR_PALETTE = [
-  "#3b82f6", // blue-500
-  "#06b6d4", // cyan-500
-  "#8b5cf6", // violet-500
-  "#ec4899", // pink-500
-  "#10b981", // emerald-500
-  "#f59e0b", // amber-500
-  "#6366f1", // indigo-500
-  "#14b8a6", // teal-500
-  "#f97316", // orange-500
-  "#84cc16", // lime-500
-];
+// Color palettes for drill-down sub-items, keyed by parent bar color
+const PALETTES: Record<string, string[]> = {
+  // Red (Variable Expenses) - Modern sunset/warm vibe (Red -> Rose -> Pink -> Violet -> Orange)
+  "#ef4444": [
+    "#f43f5e", // rose-500
+    "#ec4899", // pink-500
+    "#8b5cf6", // violet-500
+    "#f97316", // orange-500
+    "#d946ef", // fuchsia-500
+    "#e11d48", // rose-600
+    "#db2777", // pink-600
+    "#7c3aed", // violet-600
+    "#ea580c", // orange-600
+    "#c026d3", // fuchsia-600
+  ],
+  // Indigo (Fixed Monthly Costs) - blues, cyans, violets
+  "#6366f1": [
+    "#3b82f6", // blue-500
+    "#06b6d4", // cyan-500
+    "#8b5cf6", // violet-500
+    "#818cf8", // indigo-400
+    "#38bdf8", // sky-400
+    "#a78bfa", // violet-400
+    "#67e8f9", // cyan-300
+    "#c084fc", // purple-400
+    "#7dd3fc", // sky-300
+    "#93c5fd", // blue-300
+  ],
+  // Green (Fixed Monthly Income) - greens, teals, emeralds
+  "#10b981": [
+    "#34d399", // emerald-400
+    "#2dd4bf", // teal-400
+    "#4ade80", // green-400
+    "#a3e635", // lime-400
+    "#5eead4", // teal-300
+    "#6ee7b7", // emerald-300
+    "#86efac", // green-300
+    "#14b8a6", // teal-500
+    "#22d3ee", // cyan-400
+    "#059669", // emerald-600
+  ],
+};
 
-function getColor(index: number): string {
-  return COLOR_PALETTE[index % COLOR_PALETTE.length];
+// Fallback palette
+const DEFAULT_PALETTE = PALETTES["#6366f1"];
+
+function getColor(index: number, parentColor: string): string {
+  const palette = PALETTES[parentColor] || DEFAULT_PALETTE;
+  return palette[index % palette.length];
 }
 
 export function HorizontalBarChart({
@@ -116,19 +149,13 @@ export function HorizontalBarChart({
               {/* Bar - Either solid or stacked */}
               <div className="h-3 w-full rounded-full bg-[#1e1e2e] overflow-hidden">
                 {showSegments ? (
-                  // Stacked bar with individual colors, sorted by date descending (newest first)
+                  // Stacked bar with individual colors, sorted by value descending
                   <div className="flex h-full">
                     {[...item.items!]
-                      .sort((a, b) => {
-                        // Sort by date descending if date field exists
-                        if ('date' in a && 'date' in b) {
-                          return new Date(b.date as string).getTime() - new Date(a.date as string).getTime();
-                        }
-                        return 0;
-                      })
+                      .sort((a, b) => b.value - a.value)
                       .map((subItem, subIndex) => {
                         const width = (subItem.value / item.value) * 100;
-                        const segmentColor = getColor(subIndex);
+                        const segmentColor = getColor(subIndex, color);
                         return (
                           <div
                             key={`${subItem.name}-${subIndex}`}
@@ -170,7 +197,7 @@ export function HorizontalBarChart({
                         <div className="flex items-center gap-2">
                           <div
                             className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: getColor(subIndex) }}
+                            style={{ backgroundColor: getColor(subIndex, color) }}
                           />
                           <span className="text-slate-400 truncate">{subItem.name}</span>
                         </div>
@@ -183,7 +210,7 @@ export function HorizontalBarChart({
                           className="h-full rounded-full transition-all duration-500 ease-out"
                           style={{
                             width: `${(subItem.value / subMaxValue) * 100}%`,
-                            backgroundColor: getColor(subIndex),
+                            backgroundColor: getColor(subIndex, color),
                             opacity: 0.7,
                           }}
                         />
