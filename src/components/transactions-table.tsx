@@ -1,7 +1,10 @@
 "use client";
 
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
-import { deleteTransaction, updateTransactionDate } from "@/actions/transactions";
+import {
+  deleteTransaction,
+  updateTransactionDate,
+} from "@/actions/transactions";
 import { invalidateTransactions } from "@/hooks/use-data";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,38 +36,45 @@ interface EditDateDialogProps {
   isPending: boolean;
 }
 
-function EditDateDialog({ transaction, onSave, onClose, isPending }: EditDateDialogProps) {
+function EditDateDialog({
+  transaction,
+  onSave,
+  onClose,
+  isPending,
+}: EditDateDialogProps) {
   const [date, setDate] = useState(toDateInputValue(transaction.createdAt));
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
-        className="mx-4 grid w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-4 shadow-2xl shadow-black/50"
+        className="grid grid-cols-2 gap-4 w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-4 shadow-2xl shadow-black/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-1 text-base font-semibold text-slate-100">Update Date</h2>
-        <p className="mb-4 text-sm text-slate-500">{transaction.categoryName}</p>
+        <div className="col-span-2">
+          <h2 className="text-base font-semibold text-slate-100">
+            Update Date
+          </h2>
+          <p className="text-sm text-slate-500">{transaction.categoryName}</p>
+        </div>
         <Input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full"
+          className="col-span-2"
         />
-        <div className="mt-4 flex gap-3">
-          <Button
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-            onClick={() => onSave(transaction.id, date)}
-            disabled={isPending || !date}
-          >
-            {isPending ? "Saving…" : "Save"}
-          </Button>
-          <Button variant="outline" className="flex-1" onClick={onClose} disabled={isPending}>
-            Cancel
-          </Button>
-        </div>
+        <Button
+          className="bg-indigo-600 hover:bg-indigo-700"
+          onClick={() => onSave(transaction.id, date)}
+          disabled={isPending || !date}
+        >
+          {isPending ? "Saving…" : "Save"}
+        </Button>
+        <Button variant="outline" onClick={onClose} disabled={isPending}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
@@ -72,7 +82,8 @@ function EditDateDialog({ transaction, onSave, onClose, isPending }: EditDateDia
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
   const [isPending, startTransition] = useTransition();
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -111,7 +122,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             key={transaction.id}
             className={cn(
               "flex cursor-pointer items-center justify-between py-3 transition-colors hover:bg-white/[0.02] rounded-lg px-1 -mx-1",
-              isPending && "opacity-50"
+              isPending && "opacity-50",
             )}
             onClick={() => setEditingTransaction(transaction)}
           >
@@ -121,7 +132,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm",
                   transaction.type === "expense"
                     ? "bg-red-500/10 text-red-400"
-                    : "bg-emerald-500/10 text-emerald-400"
+                    : "bg-emerald-500/10 text-emerald-400",
                 )}
               >
                 {transaction.type === "expense" ? "-" : "+"}
@@ -142,7 +153,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   "font-medium",
                   transaction.type === "expense"
                     ? "text-red-400"
-                    : "text-emerald-400"
+                    : "text-emerald-400",
                 )}
               >
                 {transaction.type === "expense" ? "-" : "+"}
