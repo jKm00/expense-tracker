@@ -190,6 +190,26 @@ export async function getMonthlyStats(year: number, month: number) {
   };
 }
 
+export async function updateTransactionDate(id: string, date: Date) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  await db
+    .update(transaction)
+    .set({ createdAt: date })
+    .where(
+      and(eq(transaction.id, id), eq(transaction.userId, session.user.id))
+    );
+
+  revalidatePath("/");
+  revalidatePath("/analytics");
+}
+
 export async function deleteTransaction(id: string) {
   const session = await auth.api.getSession({
     headers: await headers(),
