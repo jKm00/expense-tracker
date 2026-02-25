@@ -42,7 +42,7 @@ function EditDateDialog({ transaction, onSave, onClose, isPending }: EditDateDia
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-6 shadow-2xl shadow-black/50"
+        className="mx-4 w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-6 shadow-2xl shadow-black/50"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-1 text-base font-semibold text-slate-100">Update Date</h2>
@@ -51,7 +51,6 @@ function EditDateDialog({ transaction, onSave, onClose, isPending }: EditDateDia
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          autoFocus
         />
         <div className="mt-4 flex gap-3">
           <Button
