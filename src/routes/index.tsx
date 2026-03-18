@@ -1,5 +1,5 @@
 import { SignInButton } from "@/features/auth/component/sign-in.button";
-import { authClient } from "@/features/auth/lib/auth.client";
+import { authClient } from "@/features/auth/auth.client";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: App });

@@ -1,4 +1,4 @@
-import { authClient } from "@/features/auth/lib/auth.client";
+import { authClient } from "@/features/auth/auth.client";
 
 export function SignInButton({ redirect }: { redirect?: string }) {
   return (

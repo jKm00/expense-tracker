@@ -4,7 +4,7 @@ export function ok<S>(data: S): Result<never, S> {
   return [null, data];
 }
 
-export function error<const R extends string, E extends { reason: R }>(
+export function err<const R extends string, E extends { reason: R }>(
   error: E,
 ): Result<E, never> {
   return [error, null];

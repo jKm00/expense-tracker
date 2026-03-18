@@ -1,2 +1,2 @@
-export * from "@/features/auth/lib/auth.schema";
-export * from "@/features/items/lib/item.schema";
+export * from "@/features/auth/auth.schema";
+export * from "@/features/items/item.schema";

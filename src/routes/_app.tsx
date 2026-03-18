@@ -1,4 +1,5 @@
-import { getSession } from "@/features/auth/lib/auth.utils";
+import { AuthProvider } from "@/features/auth/auth.provider";
+import { getSession } from "@/features/auth/auth.utils";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app")({
@@ -14,5 +15,13 @@ export const Route = createFileRoute("/_app")({
 
     return { user: session.user };
   },
-  component: () => <Outlet />,
+  component: AppLayout,
 });
+
+function AppLayout() {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
+}

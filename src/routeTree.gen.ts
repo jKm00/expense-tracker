@@ -13,8 +13,9 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/_auth.login'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppDashboardIndexRouteImport } from './routes/_app.dashboard.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppDashboardItemsRouteImport } from './routes/_app.dashboard.items'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -34,9 +35,9 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
   getParentRoute: () => AppRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -44,41 +45,50 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppDashboardItemsRoute = AppDashboardItemsRouteImport.update({
+  id: '/dashboard/items',
+  path: '/dashboard/items',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
+  '/dashboard/items': typeof AppDashboardItemsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/': typeof AppDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
+  '/dashboard/items': typeof AppDashboardItemsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard': typeof AppDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
-  '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/_app/dashboard/items': typeof AppDashboardItemsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_app/dashboard/': typeof AppDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/api/auth/$'
+  fullPaths: '/' | '/login' | '/dashboard/items' | '/api/auth/$' | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/api/auth/$'
+  to: '/' | '/login' | '/dashboard/items' | '/api/auth/$' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/_auth'
-    | '/_app/dashboard'
     | '/_auth/login'
+    | '/_app/dashboard/items'
     | '/api/auth/$'
+    | '/_app/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,11 +128,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
+    '/_app/dashboard/': {
+      id: '/_app/dashboard/'
       path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AppDashboardIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/api/auth/$': {
@@ -132,15 +142,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/dashboard/items': {
+      id: '/_app/dashboard/items'
+      path: '/dashboard/items'
+      fullPath: '/dashboard/items'
+      preLoaderRoute: typeof AppDashboardItemsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
-  AppDashboardRoute: typeof AppDashboardRoute
+  AppDashboardItemsRoute: typeof AppDashboardItemsRoute
+  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppDashboardRoute: AppDashboardRoute,
+  AppDashboardItemsRoute: AppDashboardItemsRoute,
+  AppDashboardIndexRoute: AppDashboardIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
