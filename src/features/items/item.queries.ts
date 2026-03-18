@@ -4,10 +4,9 @@ import { itemController } from "./item.controller";
 export const QUERY_KEY = "items";
 
 export const itemQueries = {
-  getItemsOptions: (userId?: string) =>
+  getItemsOptions: () =>
     queryOptions({
-      queryKey: ["item", userId],
+      queryKey: [QUERY_KEY],
       queryFn: () => itemController.getAll(),
-      enabled: !!userId,
     }),
 };

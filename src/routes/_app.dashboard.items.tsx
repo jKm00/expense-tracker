@@ -1,10 +1,12 @@
-import { useAuth } from "@/features/auth/auth.provider";
 import { itemQueries } from "@/features/items/item.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/items")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(itemQueries.getItemsOptions());
+  },
   component: RouteComponent,
 });
 
@@ -20,10 +22,7 @@ function RouteComponent() {
 }
 
 function ItemList() {
-  const { user } = useAuth();
-  const { data, error } = useSuspenseQuery(
-    itemQueries.getItemsOptions(user?.id),
-  );
+  const { data, error } = useSuspenseQuery(itemQueries.getItemsOptions());
 
   if (error) return <p>error 1</p>;
 
