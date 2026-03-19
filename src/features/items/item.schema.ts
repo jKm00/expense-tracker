@@ -1,4 +1,3 @@
-import { defineRelations } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -10,14 +9,21 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "../auth/auth.schema";
 
-export const item = pgTable("item", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id").notNull(),
-  name: text("name").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const item = pgTable(
+  "item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("item_user_id_idx").on(table.userId)]
+);
 
 export const intervalTypes = pgEnum("interval", [
   "weekly",
@@ -41,17 +47,23 @@ export const recurringItem = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("recurring_item_item_id_idx").on(table.itemId)],
+  (table) => [index("recurring_item_item_id_idx").on(table.itemId)]
 );
 
-export const tag = pgTable("tag", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id").notNull(),
-  name: text("name").notNull(),
-  color: text("color"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const tag = pgTable(
+  "tag",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("tag_user_id_idx").on(table.userId)]
+);
 
 export const itemTag = pgTable(
   "item_tag",
@@ -67,33 +79,5 @@ export const itemTag = pgTable(
     primaryKey({ columns: [table.itemId, table.tagId] }),
     index("item_tag_item_id_idx").on(table.itemId),
     index("item_tag_tag_id_idx").on(table.tagId),
-  ],
-);
-
-export const relations = defineRelations(
-  { item, recurringItem, tag, itemTag },
-  (r) => ({
-    item: {
-      recurringItem: r.one.recurringItem({
-        from: r.item.id,
-        to: r.recurringItem.itemId,
-      }),
-      tags: r.many.tag({
-        from: r.item.id.through(r.itemTag.itemId),
-        to: r.tag.id.through(r.itemTag.tagId),
-      }),
-    },
-    recurringItem: {
-      item: r.one.item({
-        from: r.recurringItem.itemId,
-        to: r.item.id,
-      }),
-    },
-    tag: {
-      items: r.many.item({
-        from: r.tag.id.through(r.itemTag.tagId),
-        to: r.item.id.through(r.itemTag.itemId),
-      }),
-    },
-  }),
+  ]
 );

@@ -4,7 +4,8 @@ import { authenticated } from "../auth/auth.utils";
 import { transactionService } from "./transaction.service";
 
 const NewTransactionSchema = z.object({
-  product: z.string().min(1),
+  itemName: z.string().min(1),
+  description: z.string().optional(),
   price: z.number().min(0),
   type: z.enum(["expense", "income"]),
 });

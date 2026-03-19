@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_app/dashboard/")({
 
 function RouteComponent() {
   const [product, setProduct] = useState("");
+  const [desc, setDesc] = useState("");
   const [price, setPrice] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -20,13 +21,15 @@ function RouteComponent() {
 
     mutation.mutate(
       {
-        product,
+        itemName: product,
+        description: desc,
         price: Number(price),
         type,
       },
       {
         onSuccess: () => {
           setProduct("");
+          setDesc("");
           setPrice("");
         },
       },
@@ -64,6 +67,13 @@ function RouteComponent() {
           className="border"
           value={product}
           onChange={(e) => setProduct(e.target.value)}
+        />
+        <input
+          type="string"
+          placeholder="description..."
+          className="border"
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
         />
         <input
           type="string"

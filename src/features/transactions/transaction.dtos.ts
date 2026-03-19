@@ -1,7 +1,8 @@
 import { TransactionType } from "./transaction.models";
 
 export type NewTransaction = {
-  product: string;
+  itemName: string;
+  description?: string;
   price: number;
   type: TransactionType;
 };
