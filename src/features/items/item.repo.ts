@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { Item } from "./item.models";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ilike } from "drizzle-orm";
 import { item } from "./item.schema";
 
 async function get(id: string) {
@@ -15,7 +15,7 @@ async function getByName(userId: string, name: string) {
   const res = await db
     .select()
     .from(item)
-    .where(and(eq(item.userId, userId), eq(item.name, name)));
+    .where(and(eq(item.userId, userId), ilike(item.name, name)));
 
   if (res.length === 0) return undefined;
 

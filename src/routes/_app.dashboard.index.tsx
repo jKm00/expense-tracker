@@ -25,6 +25,7 @@ function RouteComponent() {
         description: desc,
         price: Number(price),
         type,
+        source: "manual",
       },
       {
         onSuccess: () => {

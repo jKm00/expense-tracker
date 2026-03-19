@@ -1,9 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
-import { NewTransaction } from "./transaction.dtos";
+import { CreateTransactionInput } from "./transaction.dtos";
+import { transactionController } from "./transaction.controller";
 
 function addTransaction() {
   return useMutation({
-    mutationFn: async (data: NewTransaction) => console.log(data),
+    mutationFn: async (data: CreateTransactionInput) =>
+      await transactionController.addTransaction({ data }),
   });
 }
 

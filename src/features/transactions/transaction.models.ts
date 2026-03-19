@@ -1,15 +1,8 @@
-export type TransactionType = "expense" | "income";
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { transaction, transactionType, transactionSource } from "./transaction.schema";
 
-export type TransactionSource = "reciept" | "recurring" | "manual";
+export type Transaction = InferSelectModel<typeof transaction>;
+export type NewTransaction = InferInsertModel<typeof transaction>;
 
-export type Transaction = {
-  id: string;
-  userId: string;
-  itemId: string;
-  price: number;
-  type: TransactionType;
-  source: TransactionSource;
-  date: Date;
-  description: string;
-  createdAt: Date;
-};
+export type TransactionType = (typeof transactionType.enumValues)[number];
+export type TransactionSource = (typeof transactionSource.enumValues)[number];

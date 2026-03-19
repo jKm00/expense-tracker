@@ -1,14 +1,25 @@
-import { err } from "@/utils/result";
+import { err, ok } from "@/utils/result";
 import { itemService } from "../items/item.service";
-import { NewTransaction } from "./transaction.dtos";
+import { CreateTransactionInput } from "./transaction.dtos";
 import { transactionRepo } from "./transaction.repo";
 
-async function addTransaction(userId: string, data: NewTransaction) {
+async function getTransactions(userId: string) {
+  try {
+    return ok(await transactionRepo.getAll(userId));
+  } catch (error) {
+    return err({
+      reason: "TRANSACTION_DB_ERROR",
+      error: JSON.stringify(error),
+    });
+  }
+}
+
+async function addTransaction(userId: string, data: CreateTransactionInput) {
   let [foundError, found] = await itemService.getByName(userId, data.itemName);
 
   if (foundError) {
     return err({
-      reason: "FAILED_ITEM_FIND",
+      reason: "ITEM_SEARCH_ERROR",
       error: foundError,
     });
   }
@@ -20,16 +31,33 @@ async function addTransaction(userId: string, data: NewTransaction) {
     );
     if (createError) {
       return err({
-        reason: "FAILED_ITEM_CREATION",
+        reason: "ITEM_CREATION_ERROR",
         error: createError,
       });
     }
     found = created;
   }
 
-  await transactionRepo.save();
+  try {
+    const res = await transactionRepo.save({
+      userId,
+      itemId: found.id,
+      price: data.price.toString(),
+      type: data.type,
+      source: data.source,
+      date: new Date().toISOString().split("T")[0],
+      description: data.description,
+    });
+    return ok(res);
+  } catch (error) {
+    return err({
+      reason: "TRANSACTION_CREATION_ERROR",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export const transactionService = {
+  getTransactions,
   addTransaction,
 };

@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/_auth.login'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app.dashboard.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppDashboardTransactionsRouteImport } from './routes/_app.dashboard.transactions'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app.dashboard.profile'
 import { Route as AppDashboardItemsRouteImport } from './routes/_app.dashboard.items'
 
@@ -46,6 +47,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppDashboardTransactionsRoute =
+  AppDashboardTransactionsRouteImport.update({
+    id: '/dashboard/transactions',
+    path: '/dashboard/transactions',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardProfileRoute = AppDashboardProfileRouteImport.update({
   id: '/dashboard/profile',
   path: '/dashboard/profile',
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/dashboard/items': typeof AppDashboardItemsRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
+  '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof AppDashboardIndexRoute
 }
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/dashboard/items': typeof AppDashboardItemsRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
+  '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof AppDashboardIndexRoute
 }
@@ -81,6 +90,7 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_app/dashboard/items': typeof AppDashboardItemsRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
+  '/_app/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/dashboard/': typeof AppDashboardIndexRoute
 }
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/items'
     | '/dashboard/profile'
+    | '/dashboard/transactions'
     | '/api/auth/$'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
@@ -99,6 +110,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/items'
     | '/dashboard/profile'
+    | '/dashboard/transactions'
     | '/api/auth/$'
     | '/dashboard'
   id:
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_app/dashboard/items'
     | '/_app/dashboard/profile'
+    | '/_app/dashboard/transactions'
     | '/api/auth/$'
     | '/_app/dashboard/'
   fileRoutesById: FileRoutesById
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/dashboard/transactions': {
+      id: '/_app/dashboard/transactions'
+      path: '/dashboard/transactions'
+      fullPath: '/dashboard/transactions'
+      preLoaderRoute: typeof AppDashboardTransactionsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/profile': {
       id: '/_app/dashboard/profile'
       path: '/dashboard/profile'
@@ -184,12 +204,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDashboardItemsRoute: typeof AppDashboardItemsRoute
   AppDashboardProfileRoute: typeof AppDashboardProfileRoute
+  AppDashboardTransactionsRoute: typeof AppDashboardTransactionsRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardItemsRoute: AppDashboardItemsRoute,
   AppDashboardProfileRoute: AppDashboardProfileRoute,
+  AppDashboardTransactionsRoute: AppDashboardTransactionsRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
 }
 

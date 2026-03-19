@@ -30,6 +30,10 @@ function AppLayout() {
       href: "/dashboard",
     },
     {
+      label: "Transactions",
+      href: "/dashboard/transactions",
+    },
+    {
       label: "Profile",
       href: "/dashboard/profile",
     },
