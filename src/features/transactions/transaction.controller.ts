@@ -14,7 +14,7 @@ const addTransaction = createServerFn({ method: "POST" })
   .inputValidator(NewTransactionSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
-    await transactionService.addTransaction(userId, data);
+    return await transactionService.addTransaction(userId, data);
   });
 
 export const transactionController = {
