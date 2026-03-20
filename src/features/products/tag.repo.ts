@@ -26,6 +26,15 @@ async function save(data: Omit<Tag, "id" | "createdAt" | "updatedAt">) {
   return (await db.insert(tag).values(data).returning())[0];
 }
 
+async function getLinkedTag(tagId: string, productId: string) {
+  return await db.query.productTag.findFirst({
+    where: {
+      tagId,
+      productId,
+    },
+  });
+}
+
 async function linkToProduct(tagId: string, productId: string) {
   return (
     await db
@@ -57,6 +66,7 @@ export const tagRepo = {
   getByName,
   getAll,
   save,
+  getLinkedTag,
   linkToProduct,
   update,
   deleteTag,

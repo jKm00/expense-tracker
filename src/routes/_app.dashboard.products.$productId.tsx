@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AddProductTagDialog } from "@/features/products/components/add-product-tag.dialog";
 import { AddTagDialog } from "@/features/products/components/add-tag.dialog";
+import { LinkTagToProductDialog } from "@/features/products/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
-import { Tag } from "@/features/products/tag.models";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -34,14 +33,9 @@ function Product() {
   );
 
   const [err, product] = data;
+  const tags = product?.tags ?? [];
 
   const [edited, setEdited] = useState(false);
-  const [tags, setTags] = useState<Tag[]>(product?.tags || []);
-
-  function handleTagRemove(tagId: string) {
-    setEdited(true);
-    setTags((prev) => prev.filter((tag) => tag.id !== tagId));
-  }
 
   if (err) {
     const reason = err.reason;
@@ -63,19 +57,14 @@ function Product() {
         {tags.map((tag) => (
           <Badge key={tag.id} variant="outline">
             {tag.name}
-            <Button
-              variant="ghost"
-              size="xs"
-              className="px-0"
-              onClick={() => handleTagRemove(tag.id)}
-            >
+            <Button variant="ghost" size="xs" className="px-0">
               <X />
             </Button>
           </Badge>
         ))}
       </div>
       <div className="flex gap-2">
-        <AddProductTagDialog productId={product.id} />
+        <LinkTagToProductDialog productId={product.id} />
         <AddTagDialog />
         <Button
           disabled={!edited}

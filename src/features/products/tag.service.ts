@@ -3,6 +3,26 @@ import { tagRepo } from "./tag.repo";
 import { Tag } from "./tag.models";
 import { productService } from "./product.service";
 
+async function getTag(userId: string, tagId: string) {
+  const tag = await tagRepo.get(tagId);
+
+  if (!tag) {
+    return err({
+      reason: "TAG_NOT_FOUND",
+      message: `Tag with id ${tagId} not found`,
+    });
+  }
+
+  if (tag.userId !== userId) {
+    return err({
+      reason: "TAG_FORBIDDEN",
+      message: `Tag with id ${tagId} is not a tag of user with id ${userId}`,
+    });
+  }
+
+  return ok(tag);
+}
+
 async function getTags(userId: string) {
   try {
     const tags = await tagRepo.getAll(userId);
@@ -40,28 +60,26 @@ async function linkTagToProduct(
   tagId: string,
   productId: string,
 ) {
-  const foundTag = await tagRepo.get(tagId);
-
-  if (!foundTag) {
-    return err({
-      reason: "TAG_NOT_FOUND",
-      message: `Tag with id ${tagId} not found`,
-    });
-  }
-
-  if (foundTag.userId !== userId) {
-    return err({
-      reason: "TAG_FORBIDDEN",
-      message: `User with id ${userId} does not own tag with id ${tagId}`,
-    });
+  const [tagError] = await getTag(userId, tagId);
+  if (tagError) {
+    return err(tagError);
   }
 
   const [productError] = await productService.getProduct(userId, productId);
   if (productError) {
-    return productError;
+    return err(productError);
   }
 
-  return await tagRepo.linkToProduct(tagId, productId);
+  const link = await tagRepo.getLinkedTag(tagId, productId);
+  if (link) {
+    return err({
+      reason: "TAG_ALREADY_LINKED",
+      message: `Tag with id ${tagId} is already linked to product with id ${productId}`,
+    });
+  }
+
+  const linked = await tagRepo.linkToProduct(tagId, productId);
+  return ok(linked);
 }
 
 export const tagService = {

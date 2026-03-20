@@ -17,7 +17,7 @@ function addTag() {
   });
 }
 
-function linkTagToProduct(productId: string) {
+function linkTagToProduct() {
   const qc = useQueryClient();
 
   return useMutation({
@@ -25,7 +25,7 @@ function linkTagToProduct(productId: string) {
       await tagController.linkTagToProduct({ data }),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: [PRODUCT_QUERY_KEY, productId],
+        queryKey: [PRODUCT_QUERY_KEY],
       });
     },
   });

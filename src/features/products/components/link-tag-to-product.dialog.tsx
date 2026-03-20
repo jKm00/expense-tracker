@@ -15,14 +15,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Tag } from "../tag.models";
 import { tagMutations } from "../tag.mutations";
 
-export function AddProductTagDialog({ productId }: { productId: string }) {
+export function LinkTagToProductDialog({ productId }: { productId: string }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Tag | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const { data } = useQuery(tagQueries.getTagsOptions());
   const [_, tags] = data || [null, []];
 
-  const mutation = tagMutations.linkTagToProduct(productId);
+  const mutation = tagMutations.linkTagToProduct();
 
   function handleOpenChange(isOpen: boolean) {
     setSelected(null);
@@ -31,6 +32,7 @@ export function AddProductTagDialog({ productId }: { productId: string }) {
 
   function handleSubmit() {
     if (!selected) return;
+    setError(null);
 
     mutation.mutate(
       {
@@ -38,9 +40,14 @@ export function AddProductTagDialog({ productId }: { productId: string }) {
         productId,
       },
       {
-        onSuccess: () => {
-          setSelected(null);
-          setOpen(false);
+        onSuccess: (data) => {
+          const [err] = data;
+          if (err) {
+            setError(err.message);
+          } else {
+            setSelected(null);
+            setOpen(false);
+          }
         },
       },
     );
@@ -56,16 +63,19 @@ export function AddProductTagDialog({ productId }: { productId: string }) {
           <DialogTitle>Add tag</DialogTitle>
           <DialogDescription>Add tag to product</DialogDescription>
         </DialogHeader>
-        <div className="flex gap-1">
-          {tags?.map((tag) => (
-            <Button
-              key={tag.id}
-              onClick={() => setSelected(tag)}
-              variant={selected?.id === tag.id ? "default" : "outline"}
-            >
-              {tag.name}
-            </Button>
-          ))}
+        <div>
+          <div className="flex gap-1">
+            {tags?.map((tag) => (
+              <Button
+                key={tag.id}
+                onClick={() => setSelected(tag)}
+                variant={selected?.id === tag.id ? "default" : "outline"}
+              >
+                {tag.name}
+              </Button>
+            ))}
+          </div>
+          {error && <p className="text-red-400 text-xs">{error}</p>}
         </div>
         <DialogFooter>
           <DialogClose asChild>
