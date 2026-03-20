@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { tag } from "./item.schema";
+import { tag } from "./product.schema";
 import { eq } from "drizzle-orm";
-import type { Tag } from "./item.models";
+import type { Tag } from "./product.models";
 
 export const tagRepo = {
   get: async (id: string) => {

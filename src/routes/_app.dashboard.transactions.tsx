@@ -35,12 +35,12 @@ function TransactionsList() {
 
   return (
     <ul>
-      {data.map((item) => (
+      {data.map((row) => (
         <li
-          key={item.transaction.id}
-          className={`${item.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
+          key={row.transaction.id}
+          className={`${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
         >
-          {item.item?.name} - {item.transaction.price}
+          {row.product?.name} - {row.transaction.price}
         </li>
       ))}
     </ul>

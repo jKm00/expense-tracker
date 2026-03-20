@@ -1,10 +1,18 @@
 import { err, ok } from "@/utils/result";
-import { itemRepo } from "./item.repo";
+import { productRepo } from "./product.repo";
 
-async function getAll(userId: string) {
+async function getAll(
+  userId: string,
+  filters?: {
+    excludeTaggedProducts?: boolean;
+  },
+) {
   try {
-    const found = await itemRepo.getAll(userId);
-    return ok(found);
+    const products = filters?.excludeTaggedProducts
+      ? await productRepo.getProductsWithoutAnyTags(userId)
+      : await productRepo.getAll(userId);
+
+    return ok(products);
   } catch (error) {
     return err({
       reason: "DB_ERROR",
@@ -15,7 +23,7 @@ async function getAll(userId: string) {
 
 async function getByName(userId: string, name: string) {
   try {
-    const found = await itemRepo.getByName(userId, name);
+    const found = await productRepo.getByName(userId, name);
     return ok(found);
   } catch (error) {
     return err({
@@ -25,9 +33,9 @@ async function getByName(userId: string, name: string) {
   }
 }
 
-async function create(userId: string, item: string) {
+async function create(userId: string, product: string) {
   try {
-    const saved = await itemRepo.save({ userId, name: item });
+    const saved = await productRepo.save({ userId, name: product });
     return ok(saved);
   } catch (error) {
     return err({
@@ -37,7 +45,7 @@ async function create(userId: string, item: string) {
   }
 }
 
-export const itemService = {
+export const productService = {
   getAll,
   getByName,
   create,

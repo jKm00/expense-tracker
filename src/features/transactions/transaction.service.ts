@@ -1,5 +1,5 @@
 import { err, ok } from "@/utils/result";
-import { itemService } from "../items/item.service";
+import { productService } from "../products/product.service";
 import { CreateTransactionInput } from "./transaction.dtos";
 import { transactionRepo } from "./transaction.repo";
 
@@ -15,23 +15,23 @@ async function getTransactions(userId: string) {
 }
 
 async function addTransaction(userId: string, data: CreateTransactionInput) {
-  let [foundError, found] = await itemService.getByName(userId, data.itemName);
+  let [foundError, found] = await productService.getByName(userId, data.productName);
 
   if (foundError) {
     return err({
-      reason: "ITEM_SEARCH_ERROR",
+      reason: "PRODUCT_SEARCH_ERROR",
       error: foundError,
     });
   }
 
   if (!found) {
-    const [createError, created] = await itemService.create(
+    const [createError, created] = await productService.create(
       userId,
-      data.itemName,
+      data.productName,
     );
     if (createError) {
       return err({
-        reason: "ITEM_CREATION_ERROR",
+        reason: "PRODUCT_CREATION_ERROR",
         error: createError,
       });
     }
@@ -41,7 +41,7 @@ async function addTransaction(userId: string, data: CreateTransactionInput) {
   try {
     const res = await transactionRepo.save({
       userId,
-      itemId: found.id,
+      productId: found.id,
       price: data.price.toString(),
       type: data.type,
       source: data.source,

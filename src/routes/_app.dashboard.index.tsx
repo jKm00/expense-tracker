@@ -21,7 +21,7 @@ function RouteComponent() {
 
     mutation.mutate(
       {
-        itemName: product,
+        productName: product,
         description: desc,
         price: Number(price),
         type,

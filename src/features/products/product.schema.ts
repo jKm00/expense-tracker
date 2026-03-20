@@ -11,8 +11,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "../auth/auth.schema";
 
-export const item = pgTable(
-  "item",
+export const product = pgTable(
+  "product",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id")
@@ -22,7 +22,7 @@ export const item = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("item_user_id_idx").on(table.userId)]
+  (table) => [index("product_user_id_idx").on(table.userId)]
 );
 
 export const intervalTypes = pgEnum("interval", [
@@ -31,14 +31,14 @@ export const intervalTypes = pgEnum("interval", [
   "yearly",
 ]);
 
-export const recurringItem = pgTable(
-  "recurring_item",
+export const recurringProduct = pgTable(
+  "recurring_product",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    itemId: uuid("item_id")
+    productId: uuid("product_id")
       .notNull()
       .unique()
-      .references(() => item.id, { onDelete: "cascade" }),
+      .references(() => product.id, { onDelete: "cascade" }),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     interval: intervalTypes().notNull(),
     startDate: timestamp("start_date").notNull(),
@@ -47,7 +47,7 @@ export const recurringItem = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("recurring_item_item_id_idx").on(table.itemId)]
+  (table) => [index("recurring_product_product_id_idx").on(table.productId)]
 );
 
 export const tag = pgTable(
@@ -65,19 +65,19 @@ export const tag = pgTable(
   (table) => [index("tag_user_id_idx").on(table.userId)]
 );
 
-export const itemTag = pgTable(
-  "item_tag",
+export const productTag = pgTable(
+  "product_tag",
   {
-    itemId: uuid("item_id")
+    productId: uuid("product_id")
       .notNull()
-      .references(() => item.id, { onDelete: "cascade" }),
+      .references(() => product.id, { onDelete: "cascade" }),
     tagId: uuid("tag_id")
       .notNull()
       .references(() => tag.id, { onDelete: "cascade" }),
   },
   (table) => [
-    primaryKey({ columns: [table.itemId, table.tagId] }),
-    index("item_tag_item_id_idx").on(table.itemId),
-    index("item_tag_tag_id_idx").on(table.tagId),
+    primaryKey({ columns: [table.productId, table.tagId] }),
+    index("product_tag_product_id_idx").on(table.productId),
+    index("product_tag_tag_id_idx").on(table.tagId),
   ]
 );

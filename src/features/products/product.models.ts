@@ -1,4 +1,4 @@
-export type Item = {
+export type Product = {
   id: string;
   userId: string;
   name: string;
@@ -10,7 +10,9 @@ export type Tag = {
   id: string;
   userId: string;
   name: string;
-  color: string;
+  color: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type ProductWithTags = Product & { tags: Tag[] };

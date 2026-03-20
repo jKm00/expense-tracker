@@ -1,7 +1,7 @@
 import { TransactionSource, TransactionType } from "./transaction.models";
 
 export type CreateTransactionInput = {
-  itemName: string;
+  productName: string;
   description?: string;
   price: number;
   type: TransactionType;

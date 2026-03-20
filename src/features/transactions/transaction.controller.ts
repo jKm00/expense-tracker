@@ -12,7 +12,7 @@ const getTransactions = createServerFn({ method: "GET" })
   });
 
 const NewTransactionSchema = z.object({
-  itemName: z.string().min(1),
+  productName: z.string().min(1),
   description: z.string().optional(),
   price: z.number().min(0),
   type: z.enum(["expense", "income"]),

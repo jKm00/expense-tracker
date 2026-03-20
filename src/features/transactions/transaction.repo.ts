@@ -2,14 +2,14 @@ import { db } from "@/lib/db";
 import { NewTransaction } from "./transaction.models";
 import { transaction } from "./transaction.schema";
 import { eq } from "drizzle-orm";
-import { item } from "../items/item.schema";
+import { product } from "../products/product.schema";
 
 async function getAll(userId: string) {
   return await db
     .select()
     .from(transaction)
     .where(eq(transaction.userId, userId))
-    .leftJoin(item, eq(item.id, transaction.itemId));
+    .leftJoin(product, eq(product.id, transaction.productId));
 }
 
 async function save(data: NewTransaction) {

@@ -6,11 +6,11 @@ import {
   verification,
 } from "@/features/auth/auth.schema";
 import {
-  item,
-  recurringItem,
+  product,
+  recurringProduct,
   tag,
-  itemTag,
-} from "@/features/items/item.schema";
+  productTag,
+} from "@/features/products/product.schema";
 import { transaction } from "@/features/transactions/transaction.schema";
 
 export const relations = defineRelations(
@@ -20,11 +20,11 @@ export const relations = defineRelations(
     session,
     account,
     verification,
-    // Item tables
-    item,
-    recurringItem,
+    // Product tables
+    product,
+    recurringProduct,
     tag,
-    itemTag,
+    productTag,
     // Transaction table
     transaction,
   },
@@ -33,7 +33,7 @@ export const relations = defineRelations(
     user: {
       sessions: r.many.session(),
       accounts: r.many.account(),
-      items: r.many.item(),
+      products: r.many.product(),
       tags: r.many.tag(),
       transactions: r.many.transaction(),
     },
@@ -54,28 +54,28 @@ export const relations = defineRelations(
       }),
     },
 
-    // Item relations
-    item: {
+    // Product relations
+    product: {
       user: r.one.user({
-        from: r.item.userId,
+        from: r.product.userId,
         to: r.user.id,
       }),
-      recurringItem: r.one.recurringItem({
-        from: r.item.id,
-        to: r.recurringItem.itemId,
+      recurringProduct: r.one.recurringProduct({
+        from: r.product.id,
+        to: r.recurringProduct.productId,
       }),
       tags: r.many.tag({
-        from: r.item.id.through(r.itemTag.itemId),
-        to: r.tag.id.through(r.itemTag.tagId),
+        from: r.product.id.through(r.productTag.productId),
+        to: r.tag.id.through(r.productTag.tagId),
       }),
       transactions: r.many.transaction(),
     },
 
-    // Recurring item relations
-    recurringItem: {
-      item: r.one.item({
-        from: r.recurringItem.itemId,
-        to: r.item.id,
+    // Recurring product relations
+    recurringProduct: {
+      product: r.one.product({
+        from: r.recurringProduct.productId,
+        to: r.product.id,
       }),
     },
 
@@ -85,9 +85,9 @@ export const relations = defineRelations(
         from: r.tag.userId,
         to: r.user.id,
       }),
-      items: r.many.item({
-        from: r.tag.id.through(r.itemTag.tagId),
-        to: r.item.id.through(r.itemTag.itemId),
+      products: r.many.product({
+        from: r.tag.id.through(r.productTag.tagId),
+        to: r.product.id.through(r.productTag.productId),
       }),
     },
 
@@ -97,9 +97,9 @@ export const relations = defineRelations(
         from: r.transaction.userId,
         to: r.user.id,
       }),
-      item: r.one.item({
-        from: r.transaction.itemId,
-        to: r.item.id,
+      product: r.one.product({
+        from: r.transaction.productId,
+        to: r.product.id,
       }),
     },
   })
