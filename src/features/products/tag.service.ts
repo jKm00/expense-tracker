@@ -1,6 +1,7 @@
 import { err, ok } from "@/utils/result";
 import { tagRepo } from "./tag.repo";
 import { Tag } from "./tag.models";
+import { productService } from "./product.service";
 
 async function getTags(userId: string) {
   try {
@@ -34,7 +35,37 @@ async function addTag(
   return ok(created);
 }
 
+async function linkTagToProduct(
+  userId: string,
+  tagId: string,
+  productId: string,
+) {
+  const foundTag = await tagRepo.get(tagId);
+
+  if (!foundTag) {
+    return err({
+      reason: "TAG_NOT_FOUND",
+      message: `Tag with id ${tagId} not found`,
+    });
+  }
+
+  if (foundTag.userId !== userId) {
+    return err({
+      reason: "TAG_FORBIDDEN",
+      message: `User with id ${userId} does not own tag with id ${tagId}`,
+    });
+  }
+
+  const [productError] = await productService.getProduct(userId, productId);
+  if (productError) {
+    return productError;
+  }
+
+  return await tagRepo.linkToProduct(tagId, productId);
+}
+
 export const tagService = {
   getTags,
   addTag,
+  linkTagToProduct,
 };

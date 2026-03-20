@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { tag } from "./product.schema";
+import { productTag, tag } from "./product.schema";
 import { eq } from "drizzle-orm";
 import type { Tag } from "./tag.models";
 
@@ -26,6 +26,18 @@ async function save(data: Omit<Tag, "id" | "createdAt" | "updatedAt">) {
   return (await db.insert(tag).values(data).returning())[0];
 }
 
+async function linkToProduct(tagId: string, productId: string) {
+  return (
+    await db
+      .insert(productTag)
+      .values({
+        tagId,
+        productId,
+      })
+      .returning()
+  )[0];
+}
+
 async function update(
   id: string,
   data: Partial<Omit<Tag, "id" | "userId" | "createdAt" | "updatedAt">>,
@@ -45,6 +57,7 @@ export const tagRepo = {
   getByName,
   getAll,
   save,
+  linkToProduct,
   update,
   deleteTag,
 };

@@ -26,7 +26,25 @@ const addTag = createServerFn()
     });
   });
 
+const LinkTagToProductSchema = z.object({
+  tagId: z.string(),
+  productId: z.string(),
+});
+
+const linkTagToProduct = createServerFn()
+  .middleware([authenticated])
+  .inputValidator(LinkTagToProductSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await tagService.linkTagToProduct(
+      userId,
+      data.tagId,
+      data.productId,
+    );
+  });
+
 export const tagController = {
   getTags,
   addTag,
+  linkTagToProduct,
 };

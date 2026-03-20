@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tagController } from "./tag.controller";
-import { QUERY_KEY } from "./tag.queries";
+import { QUERY_KEY as TAG_QUERY_KEY } from "./tag.queries";
+import { QUERY_KEY as PRODUCT_QUERY_KEY } from "./product.queries";
 
 function addTag() {
   const qc = useQueryClient();
@@ -10,7 +11,21 @@ function addTag() {
       await tagController.addTag({ data }),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: [QUERY_KEY],
+        queryKey: [TAG_QUERY_KEY],
+      });
+    },
+  });
+}
+
+function linkTagToProduct(productId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { tagId: string; productId: string }) =>
+      await tagController.linkTagToProduct({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY, productId],
       });
     },
   });
@@ -18,4 +33,5 @@ function addTag() {
 
 export const tagMutations = {
   addTag,
+  linkTagToProduct,
 };

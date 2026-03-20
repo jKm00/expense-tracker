@@ -33,7 +33,7 @@ async function getProduct(userId: string, productId: string) {
 
   if (product.userId !== userId) {
     return err({
-      reason: "FORBIDDEN",
+      reason: "PRODUCT_FORBIDDEN",
       message: `Product with id ${productId} is not a product of user with id ${userId}`,
     });
   }

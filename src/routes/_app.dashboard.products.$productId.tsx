@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AddProductTagDialog } from "@/features/products/components/add-product-tag.dialog";
 import { AddTagDialog } from "@/features/products/components/add-tag.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { Tag } from "@/features/products/tag.models";
@@ -47,7 +48,7 @@ function Product() {
     switch (reason) {
       case "PRODUCT_NOT_FOUND":
         return <p>Product with id {productId} not found</p>;
-      case "FORBIDDEN":
+      case "PRODUCT_FORBIDDEN":
         return <p>You do not have access to product with id {productId}</p>;
       default:
         return <p>Unknown error: {reason satisfies never}</p>;
@@ -73,13 +74,16 @@ function Product() {
           </Badge>
         ))}
       </div>
-      <AddTagDialog />
-      <Button
-        disabled={!edited}
-        onClick={() => console.log("TODO: Save new tags")}
-      >
-        Save
-      </Button>
+      <div className="flex gap-2">
+        <AddProductTagDialog productId={product.id} />
+        <AddTagDialog />
+        <Button
+          disabled={!edited}
+          onClick={() => console.log("TODO: Save new tags")}
+        >
+          Save
+        </Button>
+      </div>
     </div>
   );
 }
