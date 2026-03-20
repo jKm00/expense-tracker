@@ -1,8 +1,5 @@
-export type Tag = {
-  id: string;
-  userId: string;
-  name: string;
-  color: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { tag } from "./product.schema";
+
+export type Tag = InferSelectModel<typeof tag>;
+export type NewTag = InferInsertModel<typeof tag>;

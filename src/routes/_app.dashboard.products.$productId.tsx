@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AddTagDialog } from "@/features/products/components/add-tag.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { Tag } from "@/features/products/tag.models";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -72,6 +73,7 @@ function Product() {
           </Badge>
         ))}
       </div>
+      <AddTagDialog />
       <Button
         disabled={!edited}
         onClick={() => console.log("TODO: Save new tags")}

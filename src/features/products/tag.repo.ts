@@ -9,12 +9,21 @@ async function get(id: string) {
   return res[0];
 }
 
+async function getByName(userId: string, name: string) {
+  return await db.query.tag.findFirst({
+    where: {
+      userId,
+      name,
+    },
+  });
+}
+
 async function getAll(userId: string) {
   return await db.select().from(tag).where(eq(tag.userId, userId));
 }
 
 async function save(data: Omit<Tag, "id" | "createdAt" | "updatedAt">) {
-  return await db.insert(tag).values(data);
+  return (await db.insert(tag).values(data).returning())[0];
 }
 
 async function update(
@@ -33,6 +42,7 @@ async function deleteTag(id: string) {
 
 export const tagRepo = {
   get,
+  getByName,
   getAll,
   save,
   update,

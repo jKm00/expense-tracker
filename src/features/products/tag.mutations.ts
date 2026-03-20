@@ -1,0 +1,21 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { tagController } from "./tag.controller";
+import { QUERY_KEY } from "./tag.queries";
+
+function addTag() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { name: string; color?: string }) =>
+      await tagController.addTag({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [QUERY_KEY],
+      });
+    },
+  });
+}
+
+export const tagMutations = {
+  addTag,
+};
