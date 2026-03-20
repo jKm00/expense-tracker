@@ -16,6 +16,19 @@ const getAll = createServerFn({ method: "GET" })
     });
   });
 
+const ProductIdSchema = z.object({
+  productId: z.string(),
+});
+
+const getProduct = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(ProductIdSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await productService.getProduct(userId, data.productId);
+  });
+
 export const productController = {
   getAll,
+  getProduct,
 };

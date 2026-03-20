@@ -1,15 +1,15 @@
 import { ProductWithTags } from "@/features/products/product.models";
 import { productQueries } from "@/features/products/product.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/products")({
+export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(
+    await context.queryClient.prefetchQuery(
       productQueries.getProductsOptions(),
     );
-    await context.queryClient.ensureQueryData(
+    await context.queryClient.prefetchQuery(
       productQueries.getProductsOptions({
         excludeTaggedProducts: true,
       }),
@@ -70,12 +70,16 @@ function ProductList({ data, error }: ProductListProps) {
   if (err || !products) return <p>error 2: {JSON.stringify(err)}</p>;
 
   return (
-    <ul>
+    <div className="flex flex-col">
       {products.map((product) => (
-        <li key={product.id}>
-          {product.name} ({product.tags.length})
-        </li>
+        <Link
+          key={product.id}
+          to="/dashboard/products/$productId"
+          params={{ productId: product.id }}
+        >
+          {product.name}
+        </Link>
       ))}
-    </ul>
+    </div>
   );
 }

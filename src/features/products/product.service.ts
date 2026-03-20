@@ -21,6 +21,26 @@ async function getAll(
   }
 }
 
+async function getProduct(userId: string, productId: string) {
+  const product = await productRepo.get(productId);
+
+  if (!product) {
+    return err({
+      reason: "PRODUCT_NOT_FOUND",
+      message: `Product with id ${productId} not found`,
+    });
+  }
+
+  if (product.userId !== userId) {
+    return err({
+      reason: "FORBIDDEN",
+      message: `Product with id ${productId} is not a product of user with id ${userId}`,
+    });
+  }
+
+  return ok(product);
+}
+
 async function getByName(userId: string, name: string) {
   try {
     const found = await productRepo.getByName(userId, name);
@@ -47,6 +67,7 @@ async function create(userId: string, product: string) {
 
 export const productService = {
   getAll,
+  getProduct,
   getByName,
   create,
 };

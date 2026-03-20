@@ -5,11 +5,14 @@ import { product, productTag, tag } from "./product.schema";
 import { productMappers } from "./product.mappers";
 
 async function get(id: string) {
-  const res = await db.select().from(product).where(eq(product.id, id));
-
-  if (res.length === 0) return undefined;
-
-  return res[0];
+  return await db.query.product.findFirst({
+    with: {
+      tags: true,
+    },
+    where: {
+      id,
+    },
+  });
 }
 
 async function getByName(userId: string, name: string) {
