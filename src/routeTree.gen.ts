@@ -17,6 +17,7 @@ import { Route as AppDashboardIndexRouteImport } from './routes/_app.dashboard.i
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDashboardTransactionsRouteImport } from './routes/_app.dashboard.transactions'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app.dashboard.profile'
+import { Route as AppDashboardProductsRouteImport } from './routes/_app.dashboard.products'
 import { Route as AppDashboardItemsRouteImport } from './routes/_app.dashboard.items'
 
 const AuthRoute = AuthRouteImport.update({
@@ -58,6 +59,11 @@ const AppDashboardProfileRoute = AppDashboardProfileRouteImport.update({
   path: '/dashboard/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDashboardProductsRoute = AppDashboardProductsRouteImport.update({
+  id: '/dashboard/products',
+  path: '/dashboard/products',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardItemsRoute = AppDashboardItemsRouteImport.update({
   id: '/dashboard/items',
   path: '/dashboard/items',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/items': typeof AppDashboardItemsRoute
+  '/dashboard/products': typeof AppDashboardProductsRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/items': typeof AppDashboardItemsRoute
+  '/dashboard/products': typeof AppDashboardProductsRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_app/dashboard/items': typeof AppDashboardItemsRoute
+  '/_app/dashboard/products': typeof AppDashboardProductsRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
   '/_app/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/items'
+    | '/dashboard/products'
     | '/dashboard/profile'
     | '/dashboard/transactions'
     | '/api/auth/$'
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/items'
+    | '/dashboard/products'
     | '/dashboard/profile'
     | '/dashboard/transactions'
     | '/api/auth/$'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_auth/login'
     | '/_app/dashboard/items'
+    | '/_app/dashboard/products'
     | '/_app/dashboard/profile'
     | '/_app/dashboard/transactions'
     | '/api/auth/$'
@@ -191,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/products': {
+      id: '/_app/dashboard/products'
+      path: '/dashboard/products'
+      fullPath: '/dashboard/products'
+      preLoaderRoute: typeof AppDashboardProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/items': {
       id: '/_app/dashboard/items'
       path: '/dashboard/items'
@@ -203,6 +222,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardItemsRoute: typeof AppDashboardItemsRoute
+  AppDashboardProductsRoute: typeof AppDashboardProductsRoute
   AppDashboardProfileRoute: typeof AppDashboardProfileRoute
   AppDashboardTransactionsRoute: typeof AppDashboardTransactionsRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
@@ -210,6 +230,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardItemsRoute: AppDashboardItemsRoute,
+  AppDashboardProductsRoute: AppDashboardProductsRoute,
   AppDashboardProfileRoute: AppDashboardProfileRoute,
   AppDashboardTransactionsRoute: AppDashboardTransactionsRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,

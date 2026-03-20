@@ -33,6 +33,7 @@ function AppLayout() {
       label: "Transactions",
       href: "/dashboard/transactions",
     },
+    { label: "Products", href: "/dashboard/products" },
     {
       label: "Profile",
       href: "/dashboard/profile",
