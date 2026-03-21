@@ -64,7 +64,7 @@ export function LinkTagToProductDialog({ productId }: { productId: string }) {
           <DialogDescription>Add tag to product</DialogDescription>
         </DialogHeader>
         <div>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {tags?.map((tag) => (
               <Button
                 key={tag.id}

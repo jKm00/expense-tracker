@@ -82,8 +82,36 @@ async function linkTagToProduct(
   return ok(linked);
 }
 
+async function unlinkTagFromProduct(
+  userId: string,
+  tagId: string,
+  productId: string,
+) {
+  const [tagError] = await getTag(userId, tagId);
+  if (tagError) {
+    return err(tagError);
+  }
+
+  const [productError] = await productService.getProduct(userId, productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  const link = await tagRepo.getLinkedTag(tagId, productId);
+  if (!link) {
+    return err({
+      reason: "TAG_LINK_NOT_FOUND",
+      message: `Tag with id ${tagId} is not linked to product with id ${productId}`,
+    });
+  }
+
+  const res = await tagRepo.unlinkFromProduct(tagId, productId);
+  return ok(res);
+}
+
 export const tagService = {
   getTags,
   addTag,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

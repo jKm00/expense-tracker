@@ -34,15 +34,18 @@ function TransactionsList() {
   }
 
   return (
-    <ul>
-      {data.map((row) => (
-        <li
-          key={row.transaction.id}
-          className={`${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
-        >
-          {row.product?.name} - {row.transaction.price}
-        </li>
-      ))}
-    </ul>
+    <div>
+      <h2>Transactions</h2>
+      <ul>
+        {data.map((row) => (
+          <li
+            key={row.transaction.id}
+            className={`${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
+          >
+            {row.product?.name} - {row.transaction.price}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

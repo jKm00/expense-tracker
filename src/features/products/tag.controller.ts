@@ -43,8 +43,26 @@ const linkTagToProduct = createServerFn()
     );
   });
 
+const UnlinkTagToProductSchema = z.object({
+  tagId: z.string(),
+  productId: z.string(),
+});
+
+const unlinkTagFromProduct = createServerFn()
+  .middleware([authenticated])
+  .inputValidator(UnlinkTagToProductSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await tagService.unlinkTagFromProduct(
+      userId,
+      data.tagId,
+      data.productId,
+    );
+  });
+
 export const tagController = {
   getTags,
   addTag,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

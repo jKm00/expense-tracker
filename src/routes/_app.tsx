@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { AuthProvider } from "@/features/auth/auth.provider";
 import { getSession } from "@/features/auth/auth.utils";
 import {
@@ -5,7 +6,25 @@ import {
   Link,
   Outlet,
   redirect,
+  useLocation,
 } from "@tanstack/react-router";
+
+const links = [
+  {
+    label: "Home",
+    href: "/dashboard",
+  },
+  {
+    label: "Transactions",
+    href: "/dashboard/transactions",
+  },
+  { label: "Products", href: "/dashboard/products" },
+  { label: "Recurring Transactions", href: "/dashboard/recurring" },
+  {
+    label: "Profile",
+    href: "/dashboard/profile",
+  },
+] as const;
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -24,22 +43,8 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const links = [
-    {
-      label: "Home",
-      href: "/dashboard",
-    },
-    {
-      label: "Transactions",
-      href: "/dashboard/transactions",
-    },
-    { label: "Products", href: "/dashboard/products" },
-    {
-      label: "Profile",
-      href: "/dashboard/profile",
-    },
-  ] as const;
-
+  const location = useLocation();
+  console.log(location.pathname);
   return (
     <AuthProvider>
       <div
@@ -48,13 +53,20 @@ function AppLayout() {
       >
         <Outlet />
         <nav className="absolute bottom-0 left-0 right-0">
-          <ul className="flex gap-2">
+          <div className="flex gap-2">
             {links.map((link) => (
-              <li key={link.label} className="grow text-center">
+              <Button
+                key={link.label}
+                variant={
+                  location.pathname === link.href ? "default" : "outline"
+                }
+                className="grow text-center"
+                asChild
+              >
                 <Link to={link.href}>{link.label}</Link>
-              </li>
+              </Button>
             ))}
-          </ul>
+          </div>
         </nav>
       </div>
     </AuthProvider>

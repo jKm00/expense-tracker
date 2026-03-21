@@ -31,7 +31,22 @@ function linkTagToProduct() {
   });
 }
 
+function unlinkTagFromProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { tagId: string; productId: string }) =>
+      await tagController.unlinkTagFromProduct({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+  });
+}
+
 export const tagMutations = {
   addTag,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

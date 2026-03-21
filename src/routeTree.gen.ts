@@ -16,6 +16,7 @@ import { Route as AuthLoginRouteImport } from './routes/_auth.login'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app.dashboard.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDashboardTransactionsRouteImport } from './routes/_app.dashboard.transactions'
+import { Route as AppDashboardRecurringRouteImport } from './routes/_app.dashboard.recurring'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app.dashboard.profile'
 import { Route as AppDashboardProductsIndexRouteImport } from './routes/_app.dashboard.products.index'
 import { Route as AppDashboardProductsProductIdRouteImport } from './routes/_app.dashboard.products.$productId'
@@ -54,6 +55,11 @@ const AppDashboardTransactionsRoute =
     path: '/dashboard/transactions',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDashboardRecurringRoute = AppDashboardRecurringRouteImport.update({
+  id: '/dashboard/recurring',
+  path: '/dashboard/recurring',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardProfileRoute = AppDashboardProfileRouteImport.update({
   id: '/dashboard/profile',
   path: '/dashboard/profile',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
+  '/dashboard/recurring': typeof AppDashboardRecurringRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof AppDashboardIndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
+  '/dashboard/recurring': typeof AppDashboardRecurringRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof AppDashboardIndexRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
+  '/_app/dashboard/recurring': typeof AppDashboardRecurringRoute
   '/_app/dashboard/transactions': typeof AppDashboardTransactionsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/dashboard/': typeof AppDashboardIndexRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/profile'
+    | '/dashboard/recurring'
     | '/dashboard/transactions'
     | '/api/auth/$'
     | '/dashboard/'
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/profile'
+    | '/dashboard/recurring'
     | '/dashboard/transactions'
     | '/api/auth/$'
     | '/dashboard'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_auth/login'
     | '/_app/dashboard/profile'
+    | '/_app/dashboard/recurring'
     | '/_app/dashboard/transactions'
     | '/api/auth/$'
     | '/_app/dashboard/'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardTransactionsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/recurring': {
+      id: '/_app/dashboard/recurring'
+      path: '/dashboard/recurring'
+      fullPath: '/dashboard/recurring'
+      preLoaderRoute: typeof AppDashboardRecurringRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/profile': {
       id: '/_app/dashboard/profile'
       path: '/dashboard/profile'
@@ -224,6 +243,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardProfileRoute: typeof AppDashboardProfileRoute
+  AppDashboardRecurringRoute: typeof AppDashboardRecurringRoute
   AppDashboardTransactionsRoute: typeof AppDashboardTransactionsRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppDashboardProductsProductIdRoute: typeof AppDashboardProductsProductIdRoute
@@ -232,6 +252,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardProfileRoute: AppDashboardProfileRoute,
+  AppDashboardRecurringRoute: AppDashboardRecurringRoute,
   AppDashboardTransactionsRoute: AppDashboardTransactionsRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppDashboardProductsProductIdRoute: AppDashboardProductsProductIdRoute,

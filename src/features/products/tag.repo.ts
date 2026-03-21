@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { productTag, tag } from "./product.schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Tag } from "./tag.models";
 
 async function get(id: string) {
@@ -47,6 +47,15 @@ async function linkToProduct(tagId: string, productId: string) {
   )[0];
 }
 
+async function unlinkFromProduct(tagId: string, productId: string) {
+  return await db
+    .delete(productTag)
+    .where(
+      and(eq(productTag.tagId, tagId), eq(productTag.productId, productId)),
+    )
+    .returning();
+}
+
 async function update(
   id: string,
   data: Partial<Omit<Tag, "id" | "userId" | "createdAt" | "updatedAt">>,
@@ -68,6 +77,7 @@ export const tagRepo = {
   save,
   getLinkedTag,
   linkToProduct,
+  unlinkFromProduct,
   update,
   deleteTag,
 };

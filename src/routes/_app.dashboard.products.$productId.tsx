@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { AddTagDialog } from "@/features/products/components/add-tag.dialog";
 import { LinkTagToProductDialog } from "@/features/products/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
+import { tagMutations } from "@/features/products/tag.mutations";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { Suspense, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/dashboard/products/$productId")({
   loader: ({ params, context }) => {
@@ -31,11 +33,31 @@ function Product() {
   const { data } = useSuspenseQuery(
     productQueries.getProductOptions(productId),
   );
+  const mutation = tagMutations.unlinkTagFromProduct();
 
   const [err, product] = data;
   const tags = product?.tags ?? [];
 
   const [edited, setEdited] = useState(false);
+
+  function unlinkTag(tagId: string) {
+    mutation.mutate(
+      {
+        tagId,
+        productId,
+      },
+      {
+        onSuccess: (data) => {
+          const [err] = data;
+          if (err) {
+            toast(err.message);
+          } else {
+            setEdited(false);
+          }
+        },
+      },
+    );
+  }
 
   if (err) {
     const reason = err.reason;
@@ -57,7 +79,12 @@ function Product() {
         {tags.map((tag) => (
           <Badge key={tag.id} variant="outline">
             {tag.name}
-            <Button variant="ghost" size="xs" className="px-0">
+            <Button
+              onClick={() => unlinkTag(tag.id)}
+              variant="ghost"
+              size="xs"
+              className="px-0"
+            >
               <X />
             </Button>
           </Badge>
