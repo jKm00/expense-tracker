@@ -1,11 +1,11 @@
-import { RecurringItemDialog } from "@/features/products/components/recurring-item.dialog";
+import { Button } from "@/components/ui/button";
+import { RecurringItemDialog } from "@/features/products/components/recurring-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
-import { CreateRecurringTransactionDialog } from "@/features/transactions/components/create-recurring-transaction.dialog";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/recurring")({
+export const Route = createFileRoute("/_app/dashboard/recurring/")({
   loader: async ({ context }) => {
     context.queryClient.prefetchQuery(productQueries.getRecurringOptions());
   },
@@ -17,7 +17,9 @@ function RouteComponent() {
     <div>
       <div className="flex justify-between">
         <h2>Recurring Transactions</h2>
-        <CreateRecurringTransactionDialog />
+        <Button asChild variant="outline">
+          <Link to="/dashboard/recurring/new">Create</Link>
+        </Button>
       </div>
       <Suspense fallback={<p>Loading recurring products...</p>}>
         <RecurringList />
