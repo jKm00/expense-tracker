@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { RecurringItemDialog } from "@/features/products/components/recurring-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -7,7 +6,9 @@ import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/")({
   loader: async ({ context }) => {
-    context.queryClient.prefetchQuery(productQueries.getRecurringOptions());
+    context.queryClient.prefetchQuery(
+      productQueries.getRecurringProductsOptions(),
+    );
   },
   component: RouteComponent,
 });
@@ -29,7 +30,9 @@ function RouteComponent() {
 }
 
 function RecurringList() {
-  const { data } = useSuspenseQuery(productQueries.getRecurringOptions());
+  const { data } = useSuspenseQuery(
+    productQueries.getRecurringProductsOptions(),
+  );
 
   const [error, recurring] = data;
 
@@ -46,7 +49,11 @@ function RecurringList() {
   return (
     <div>
       {recurring.map((item) => (
-        <RecurringItemDialog key={item.id} item={item} />
+        <Button key={item.id} asChild variant="outline">
+          <Link to="/dashboard/recurring/$id" params={{ id: item.id }}>
+            {item.product.name}
+          </Link>
+        </Button>
       ))}
     </div>
   );

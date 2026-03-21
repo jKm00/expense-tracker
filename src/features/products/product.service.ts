@@ -66,6 +66,25 @@ async function getAllRecurringProducts(userId: string) {
   }
 }
 
+async function getRecurringProduct(userId: string, id: string) {
+  const found = await productRepo.getRecurring(id);
+  if (!found) {
+    return err({
+      reason: "RECURRING_PRODUCT_NOT_FOUND",
+      message: `Recurring product with id ${id} was not found`,
+    });
+  }
+
+  if (found.product.userId !== userId) {
+    return err({
+      reason: "RECURRING_PRODUCT_FORBIDDEN",
+      message: `User with id ${userId} does not have access to recurring product with id ${id}`,
+    });
+  }
+
+  return ok(found);
+}
+
 async function create(userId: string, product: string) {
   try {
     const saved = await productRepo.save({ userId, name: product });
@@ -103,6 +122,7 @@ export const productService = {
   getProduct,
   getByName,
   getAllRecurringProducts,
+  getRecurringProduct,
   create,
   createRecurringProduct,
 };

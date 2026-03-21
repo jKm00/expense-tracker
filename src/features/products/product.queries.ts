@@ -18,15 +18,26 @@ function getProductOptions(productId: string) {
   });
 }
 
-function getRecurringOptions() {
+function getRecurringProductsOptions() {
   return queryOptions({
     queryKey: [RECURRING_QUERY_KEY],
-    queryFn: () => productController.getAllRecurrintProducts(),
+    queryFn: () => productController.getAllRecurringProducts(),
+  });
+}
+
+function getRecurringProductOptions(id: string) {
+  return queryOptions({
+    queryKey: [RECURRING_QUERY_KEY, id],
+    queryFn: () =>
+      productController.getRecurringProduct({
+        data: { id },
+      }),
   });
 }
 
 export const productQueries = {
   getProductsOptions,
   getProductOptions,
-  getRecurringOptions,
+  getRecurringProductsOptions,
+  getRecurringProductOptions,
 };

@@ -28,11 +28,23 @@ const getProduct = createServerFn({ method: "GET" })
     return await productService.getProduct(userId, data.productId);
   });
 
-const getAllRecurrintProducts = createServerFn({ method: "GET" })
+const getAllRecurringProducts = createServerFn({ method: "GET" })
   .middleware([authenticated])
   .handler(async ({ context }) => {
     const userId = context.user.id;
     return await productService.getAllRecurringProducts(userId);
+  });
+
+const RecurringIdSchema = z.object({
+  id: z.string(),
+});
+
+const getRecurringProduct = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(RecurringIdSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await productService.getRecurringProduct(userId, data.id);
   });
 
 const NewRecurringProductSchema = z.object({
@@ -59,6 +71,7 @@ const addRecurringProduct = createServerFn({ method: "POST" })
 export const productController = {
   getAll,
   getProduct,
-  getAllRecurrintProducts,
+  getAllRecurringProducts,
+  getRecurringProduct,
   addRecurringProduct,
 };

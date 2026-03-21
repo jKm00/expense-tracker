@@ -74,6 +74,18 @@ async function getAllRecurring(userId: string) {
   return recurring.map(productMappers.mapToRecurringWithProduct);
 }
 
+async function getRecurring(id: string) {
+  const recurring = await db
+    .select({
+      recurringProduct,
+      product,
+    })
+    .from(recurringProduct)
+    .innerJoin(product, eq(recurringProduct.productId, product.id))
+    .where(eq(recurringProduct.id, id));
+  return productMappers.mapToRecurringWithProduct(recurring[0]);
+}
+
 async function save(data: Omit<Product, "id" | "createdAt" | "updatedAt">) {
   return (await db.insert(product).values(data).returning())[0];
 }
@@ -102,6 +114,7 @@ export const productRepo = {
   getAll,
   getUntaggedProducts,
   getAllRecurring,
+  getRecurring,
   save,
   saveRecurringProduct,
   update,
