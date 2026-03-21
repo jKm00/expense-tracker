@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tagController } from "./tag.controller";
 import { QUERY_KEY as TAG_QUERY_KEY } from "./tag.queries";
-import { QUERY_KEY as PRODUCT_QUERY_KEY } from "./product.queries";
+import { PRODUCT_QUERY_KEY } from "./product.queries";
 
 function addTag() {
   const qc = useQueryClient();

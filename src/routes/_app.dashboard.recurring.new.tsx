@@ -9,7 +9,10 @@ import {
 } from "@/components/ui/combobox";
 import { useQuery } from "@tanstack/react-query";
 import { productQueries } from "@/features/products/product.queries";
-import { ProductWithTags } from "@/features/products/product.models";
+import {
+  ProductWithTags,
+  RecurringInterval,
+} from "@/features/products/product.models";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +34,7 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
+import { productMutations } from "@/features/products/product.mutations";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/new")({
   component: RouteComponent,
@@ -39,7 +43,9 @@ export const Route = createFileRoute("/_app/dashboard/recurring/new")({
 function RouteComponent() {
   const [product, setProduct] = useState<ProductWithTags | null>(null);
   const [price, setPrice] = useState<string>("");
-  const [interval, setInterval] = useState<string>("");
+  const [interval, setInterval] = useState<RecurringInterval | undefined>(
+    undefined,
+  );
   const [start, setStart] = useState<Date | undefined>(undefined);
   const [end, setEnd] = useState<Date | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +54,58 @@ function RouteComponent() {
   const [_, res] = data ?? [null, null];
   const products = res ?? [];
 
+  const mutation = productMutations.addRecurringProduct();
+
   function handleSubmit() {
     setError(null);
+
+    if (!product) {
+      setError("Enter product");
+      return;
+    }
+
+    if (price.length === 0) {
+      setError("Enter price");
+      return;
+    }
+
+    if (!interval) {
+      setError("Enter interval");
+      return;
+    }
+
+    if (!start) {
+      setError("Enter start");
+      return;
+    }
+
+    mutation.mutate(
+      {
+        productId: product.id,
+        price: Number(price),
+        interval,
+        startDate: start,
+        endDate: end,
+      },
+      {
+        onSuccess: (data) => {
+          const [err] = data;
+          if (err) {
+            console.log(err);
+            console.log(err);
+          } else {
+            setProduct(null);
+            setPrice("");
+            setInterval(undefined);
+            setStart(undefined);
+            setEnd(undefined);
+          }
+        },
+        onError: (error) => {
+          console.log(error);
+        },
+      },
+    );
   }
 
   return (
@@ -83,7 +139,10 @@ function RouteComponent() {
         onChange={(e) => setPrice(e.target.value)}
       />
       <Label>Interval</Label>
-      <Select value={interval} onValueChange={(v) => setInterval(v)}>
+      <Select
+        value={interval}
+        onValueChange={(v: RecurringInterval) => setInterval(v)}
+      >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select interval" />
         </SelectTrigger>

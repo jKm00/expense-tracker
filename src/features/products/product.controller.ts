@@ -35,8 +35,30 @@ const getAllRecurrintProducts = createServerFn({ method: "GET" })
     return await productService.getAllRecurringProducts(userId);
   });
 
+const NewRecurringProductSchema = z.object({
+  productId: z.string(),
+  price: z.number(),
+  interval: z.enum(["weekly", "monthly", "yearly"]),
+  startDate: z.date(),
+  endDate: z.date().optional(),
+});
+
+export type NewRecurringProductDto = z.infer<typeof NewRecurringProductSchema>;
+
+const addRecurringProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(NewRecurringProductSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await productService.createRecurringProduct(userId, {
+      ...data,
+      price: `${data.price}`,
+    });
+  });
+
 export const productController = {
   getAll,
   getProduct,
   getAllRecurrintProducts,
+  addRecurringProduct,
 };

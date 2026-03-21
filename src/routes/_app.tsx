@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   const location = useLocation();
-  console.log(location.pathname);
+
   return (
     <AuthProvider>
       <div

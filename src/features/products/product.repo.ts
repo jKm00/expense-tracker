@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { Product } from "./product.models";
+import type { NewRecurringProduct, Product } from "./product.models";
 import { and, eq, ilike, notExists } from "drizzle-orm";
 import { product, productTag, recurringProduct, tag } from "./product.schema";
 import { productMappers } from "./product.mappers";
@@ -78,6 +78,10 @@ async function save(data: Omit<Product, "id" | "createdAt" | "updatedAt">) {
   return (await db.insert(product).values(data).returning())[0];
 }
 
+async function saveRecurringProduct(data: NewRecurringProduct) {
+  return (await db.insert(recurringProduct).values(data).returning())[0];
+}
+
 async function update(
   id: string,
   data: Partial<Omit<Product, "id" | "userId" | "createdAt" | "updatedAt">>,
@@ -99,6 +103,7 @@ export const productRepo = {
   getUntaggedProducts,
   getAllRecurring,
   save,
+  saveRecurringProduct,
   update,
   deleteProduct,
 };

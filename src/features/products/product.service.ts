@@ -1,5 +1,6 @@
 import { err, ok } from "@/utils/result";
 import { productRepo } from "./product.repo";
+import { NewRecurringProduct } from "./product.models";
 
 async function getAll(
   userId: string,
@@ -77,10 +78,31 @@ async function create(userId: string, product: string) {
   }
 }
 
+async function createRecurringProduct(
+  userId: string,
+  data: NewRecurringProduct,
+) {
+  const [productError] = await getProduct(userId, data.productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  try {
+    const saved = await productRepo.saveRecurringProduct(data);
+    return ok(saved);
+  } catch (error) {
+    return err({
+      reason: "RECURRING_SAVE_ERROR",
+      error: error instanceof Error ? error.message : JSON.stringify(error),
+    });
+  }
+}
+
 export const productService = {
   getAll,
   getProduct,
   getByName,
   getAllRecurringProducts,
   create,
+  createRecurringProduct,
 };

@@ -1,25 +1,26 @@
 import { queryOptions } from "@tanstack/react-query";
 import { productController } from "./product.controller";
 
-export const QUERY_KEY = "products";
+export const PRODUCT_QUERY_KEY = "products";
+export const RECURRING_QUERY_KEY = "recurring";
 
 function getProductsOptions(filters?: { excludeTaggedProducts?: boolean }) {
   return queryOptions({
-    queryKey: [QUERY_KEY, filters],
+    queryKey: [PRODUCT_QUERY_KEY, filters],
     queryFn: () => productController.getAll({ data: filters ?? {} }),
   });
 }
 
 function getProductOptions(productId: string) {
   return queryOptions({
-    queryKey: [QUERY_KEY, productId],
+    queryKey: [PRODUCT_QUERY_KEY, productId],
     queryFn: () => productController.getProduct({ data: { productId } }),
   });
 }
 
 function getRecurringOptions() {
   return queryOptions({
-    queryKey: [QUERY_KEY, "recurring"],
+    queryKey: [RECURRING_QUERY_KEY],
     queryFn: () => productController.getAllRecurrintProducts(),
   });
 }
