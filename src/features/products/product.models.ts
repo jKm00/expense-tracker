@@ -1,4 +1,6 @@
+import { InferSelectModel } from "drizzle-orm";
 import { Tag } from "./tag.models";
+import { recurringProduct } from "./product.schema";
 
 export type Product = {
   id: string;
@@ -9,3 +11,7 @@ export type Product = {
 };
 
 export type ProductWithTags = Product & { tags: Tag[] };
+
+export type RecurringProduct = InferSelectModel<typeof recurringProduct>;
+
+export type RecurringWithProduct = RecurringProduct & { product: Product };

@@ -9,7 +9,7 @@ async function getAll(
 ) {
   try {
     const products = filters?.excludeTaggedProducts
-      ? await productRepo.getProductsWithoutAnyTags(userId)
+      ? await productRepo.getUntaggedProducts(userId)
       : await productRepo.getAll(userId);
 
     return ok(products);
@@ -53,6 +53,18 @@ async function getByName(userId: string, name: string) {
   }
 }
 
+async function getAllRecurringProducts(userId: string) {
+  try {
+    const found = await productRepo.getAllRecurring(userId);
+    return ok(found);
+  } catch (error) {
+    return err({
+      reason: "FETCH_RECURRING_ERROR",
+      error: error instanceof Error ? error.message : JSON.stringify(error),
+    });
+  }
+}
+
 async function create(userId: string, product: string) {
   try {
     const saved = await productRepo.save({ userId, name: product });
@@ -69,5 +81,6 @@ export const productService = {
   getAll,
   getProduct,
   getByName,
+  getAllRecurringProducts,
   create,
 };

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import type { Product } from "./product.models";
 import { and, eq, ilike, notExists } from "drizzle-orm";
-import { product, productTag, tag } from "./product.schema";
+import { product, productTag, recurringProduct, tag } from "./product.schema";
 import { productMappers } from "./product.mappers";
 
 async function get(id: string) {
@@ -39,7 +39,7 @@ async function getAll(userId: string) {
   return productMappers.mapToProductsWithTags(products);
 }
 
-async function getProductsWithoutAnyTags(userId: string) {
+async function getUntaggedProducts(userId: string) {
   const products = await db
     .select({
       product,
@@ -60,6 +60,18 @@ async function getProductsWithoutAnyTags(userId: string) {
       ),
     );
   return productMappers.mapToProductsWithTags(products);
+}
+
+async function getAllRecurring(userId: string) {
+  const recurring = await db
+    .select({
+      recurringProduct,
+      product,
+    })
+    .from(recurringProduct)
+    .innerJoin(product, eq(recurringProduct.productId, product.id))
+    .where(eq(product.userId, userId));
+  return recurring.map(productMappers.mapToRecurringWithProduct);
 }
 
 async function save(data: Omit<Product, "id" | "createdAt" | "updatedAt">) {
@@ -84,7 +96,8 @@ export const productRepo = {
   get,
   getByName,
   getAll,
-  getProductsWithoutAnyTags,
+  getUntaggedProducts,
+  getAllRecurring,
   save,
   update,
   deleteProduct,

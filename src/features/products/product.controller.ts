@@ -28,7 +28,15 @@ const getProduct = createServerFn({ method: "GET" })
     return await productService.getProduct(userId, data.productId);
   });
 
+const getAllRecurrintProducts = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    const userId = context.user.id;
+    return await productService.getAllRecurringProducts(userId);
+  });
+
 export const productController = {
   getAll,
   getProduct,
+  getAllRecurrintProducts,
 };

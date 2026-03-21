@@ -17,7 +17,15 @@ function getProductOptions(productId: string) {
   });
 }
 
+function getRecurringOptions() {
+  return queryOptions({
+    queryKey: [QUERY_KEY, "recurring"],
+    queryFn: () => productController.getAllRecurrintProducts(),
+  });
+}
+
 export const productQueries = {
   getProductsOptions,
   getProductOptions,
+  getRecurringOptions,
 };
