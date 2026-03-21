@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_product" RENAME COLUMN "interval" TO "recurring_interval";

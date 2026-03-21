@@ -22,14 +22,8 @@ export const product = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("product_user_id_idx").on(table.userId)]
+  (table) => [index("product_user_id_idx").on(table.userId)],
 );
-
-export const intervalTypes = pgEnum("interval", [
-  "weekly",
-  "monthly",
-  "yearly",
-]);
 
 export const recurringProduct = pgTable(
   "recurring_product",
@@ -40,14 +34,14 @@ export const recurringProduct = pgTable(
       .unique()
       .references(() => product.id, { onDelete: "cascade" }),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-    interval: intervalTypes().notNull(),
+    interval: text("recurring_interval").notNull(),
     startDate: timestamp("start_date").notNull(),
     endDate: timestamp("end_date"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("recurring_product_product_id_idx").on(table.productId)]
+  (table) => [index("recurring_product_product_id_idx").on(table.productId)],
 );
 
 export const tag = pgTable(
@@ -62,7 +56,7 @@ export const tag = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("tag_user_id_idx").on(table.userId)]
+  (table) => [index("tag_user_id_idx").on(table.userId)],
 );
 
 export const productTag = pgTable(
@@ -79,5 +73,5 @@ export const productTag = pgTable(
     primaryKey({ columns: [table.productId, table.tagId] }),
     index("product_tag_product_id_idx").on(table.productId),
     index("product_tag_tag_id_idx").on(table.tagId),
-  ]
+  ],
 );

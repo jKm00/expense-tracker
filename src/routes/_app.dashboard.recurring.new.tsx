@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Combobox,
   ComboboxContent,
@@ -50,6 +50,8 @@ function RouteComponent() {
   const [end, setEnd] = useState<Date | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
+  const navigate = useNavigate();
+
   const { data } = useQuery(productQueries.getProductsOptions());
   const [_, res] = data ?? [null, null];
   const products = res ?? [];
@@ -91,18 +93,13 @@ function RouteComponent() {
         onSuccess: (data) => {
           const [err] = data;
           if (err) {
-            console.log(err);
-            console.log(err);
+            setError(err.reason);
           } else {
-            setProduct(null);
-            setPrice("");
-            setInterval(undefined);
-            setStart(undefined);
-            setEnd(undefined);
+            navigate({ to: "/dashboard/recurring" });
           }
         },
         onError: (error) => {
-          console.log(error);
+          setError(error.message);
         },
       },
     );

@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_product" ALTER COLUMN "recurring_interval" SET DATA TYPE text USING "recurring_interval"::text;
