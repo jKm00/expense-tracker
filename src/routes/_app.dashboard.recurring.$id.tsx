@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/product.queries";
+import { EditRecurringForm } from "@/features/recurring/components/edit-recurring.form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/$id")({
   loader: async ({ context, params }) => {
@@ -28,8 +28,6 @@ function RecurringProduct() {
     productQueries.getRecurringProductOptions(id),
   );
 
-  const [edited, setEdited] = useState(false);
-
   const [err, recurring] = data;
 
   if (err) {
@@ -39,8 +37,7 @@ function RecurringProduct() {
 
   return (
     <div>
-      <h2>{recurring.product.name}</h2>
-      <Button disabled={!edited}>Save Changes</Button>
+      <EditRecurringForm recurring={recurring} />
     </div>
   );
 }

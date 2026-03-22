@@ -116,9 +116,9 @@ function RouteComponent() {
         value={product}
         onValueChange={(v) => setProduct(v)}
       >
-        <ComboboxInput placeholder="Search countries..." />
+        <ComboboxInput placeholder="Search product..." />
         <ComboboxContent>
-          <ComboboxEmpty>No countries found.</ComboboxEmpty>
+          <ComboboxEmpty>No product found.</ComboboxEmpty>
           <ComboboxList>
             {(p: ProductWithTags) => (
               <ComboboxItem key={p.id} value={p}>
