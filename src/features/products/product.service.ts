@@ -65,9 +65,67 @@ async function create(userId: string, product: string) {
   }
 }
 
+async function updateProduct(
+  userId: string,
+  productId: string,
+  data: { name: string },
+) {
+  const [productError] = await getProduct(userId, productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  try {
+    const updated = await productRepo.update(productId, data);
+    return ok(updated);
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_UPDATE_ERROR" as const,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function deleteProduct(userId: string, productId: string) {
+  const [productError] = await getProduct(userId, productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  try {
+    const deleted = await productRepo.deleteProduct(productId);
+    return ok(deleted);
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DELETE_ERROR" as const,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function getProductUsage(userId: string, productId: string) {
+  const [productError] = await getProduct(userId, productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  try {
+    const usage = await productRepo.getUsage(productId);
+    return ok(usage);
+  } catch (error) {
+    return err({
+      reason: "DB_ERROR" as const,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 export const productService = {
   getAll,
   getProduct,
   getByName,
   create,
+  updateProduct,
+  deleteProduct,
+  getProductUsage,
 };
