@@ -24,7 +24,7 @@ async function getTransaction(userId: string, id: string) {
     });
   }
 
-  if (found.userId !== userId) {
+  if (found.transaction.userId !== userId) {
     return err({
       reason: "TRANSACTION_FORBIDDEN" as const,
       message: `User with id ${userId} does not have access to transaction with id ${id}`,

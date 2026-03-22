@@ -41,7 +41,7 @@ const addTransaction = createServerFn({ method: "POST" })
 
 const UpdateTransactionSchema = z.object({
   id: z.string(),
-  price: z.number().min(0),
+  price: z.number(),
   type: z.enum(["expense", "income"]),
   date: z.string(),
   description: z.string().optional(),

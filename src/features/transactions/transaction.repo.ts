@@ -16,7 +16,8 @@ async function get(id: string) {
   const rows = await db
     .select()
     .from(transaction)
-    .where(eq(transaction.id, id));
+    .where(eq(transaction.id, id))
+    .leftJoin(product, eq(product.id, transaction.productId));
   return rows[0] ?? null;
 }
 

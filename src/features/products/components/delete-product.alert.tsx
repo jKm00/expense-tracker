@@ -56,8 +56,12 @@ export function DeleteProductDialog({ productId }: { productId: string }) {
         onSuccess: (data) => {
           const [err] = data;
           if (err) {
-            const errorMsg =
-              "message" in err ? err.message : "error" in err ? err.error : "Failed to delete product";
+            const errorMsg: string =
+              "message" in err
+                ? String(err.message)
+                : "error" in err
+                  ? String(err.error)
+                  : "Failed to delete product";
             toast.error(errorMsg);
           } else {
             toast.success("Product deleted");

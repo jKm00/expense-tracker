@@ -26,10 +26,18 @@ function updateTransaction() {
   return useMutation({
     mutationFn: (data: UpdateTransactionDTO) =>
       transactionController.updateTransaction({ data }),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const [error, transaction] = data;
+      // Invalidate both list and detail queries
       qc.invalidateQueries({
         queryKey: [QUERY_KEY],
       });
+      if (!error && transaction) {
+        // Invalidate the specific transaction detail query
+        qc.invalidateQueries({
+          queryKey: [QUERY_KEY, transaction.id],
+        });
+      }
     },
   });
 }

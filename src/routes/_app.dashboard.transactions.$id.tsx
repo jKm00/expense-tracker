@@ -29,7 +29,7 @@ function TransactionDetail() {
   const { data } = useSuspenseQuery(
     transactionQueries.getTransactionOptions(id),
   );
-  const [err, transaction] = data;
+  const [err, transactionWithProduct] = data;
 
   if (err) {
     const reason = err.reason;
@@ -43,6 +43,9 @@ function TransactionDetail() {
     }
   }
 
+  const transaction = transactionWithProduct.transaction;
+  const product = transactionWithProduct.product;
+
   return (
     <div>
       <h2>Edit Transaction</h2>
@@ -51,6 +54,9 @@ function TransactionDetail() {
       <div>
         <p>
           <strong>Source:</strong> {transaction.source}
+        </p>
+        <p>
+          <strong>Product:</strong> {product?.name || "Unknown"}
         </p>
       </div>
 

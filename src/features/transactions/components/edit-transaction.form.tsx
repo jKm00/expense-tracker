@@ -40,7 +40,7 @@ export function EditTransactionForm({
       description: transaction.description ?? "",
     },
     validators: {
-      onBlur: transactionValidators.editFormValidation,
+      onBlur: transactionValidators.editFormValidation as any,
     },
     onSubmit: ({ value }) => {
       mutation.mutate(
@@ -55,11 +55,11 @@ export function EditTransactionForm({
           onSuccess: (data) => {
             const [err] = data;
             if (err) {
-              const errorMsg =
+              const errorMsg: string =
                 "message" in err
-                  ? err.message
+                  ? String(err.message)
                   : "error" in err
-                    ? err.error
+                    ? String(err.error)
                     : "Failed to update transaction";
               toast.error(errorMsg);
             } else {

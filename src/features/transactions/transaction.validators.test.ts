@@ -19,6 +19,15 @@ describe("transactionValidators.editFormValidation", () => {
       price: "10",
       type: "income",
       date: "2026-03-01",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts edit data with empty description string", () => {
+    const result = schema.safeParse({
+      price: "10",
+      type: "income",
+      date: "2026-03-01",
       description: "",
     });
     expect(result.success).toBe(true);

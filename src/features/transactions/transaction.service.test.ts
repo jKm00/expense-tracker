@@ -31,7 +31,7 @@ describe("transactionService", () => {
 
   describe("getTransaction", () => {
     it("returns error when transaction not found", async () => {
-      mockRepo.get.mockResolvedValue(null);
+      mockRepo.get.mockResolvedValue(null as any);
 
       const [err, data] = await transactionService.getTransaction(
         "user-1",
@@ -45,15 +45,18 @@ describe("transactionService", () => {
 
     it("returns error when user does not own transaction", async () => {
       mockRepo.get.mockResolvedValue({
-        id: "txn-1",
-        userId: "other-user",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense",
-        source: "manual",
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "other-user",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense",
+          source: "manual",
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       });
 
       const [err, data] = await transactionService.getTransaction(
@@ -68,15 +71,18 @@ describe("transactionService", () => {
 
     it("returns transaction when user owns it", async () => {
       const mockTransaction = {
-        id: "txn-1",
-        userId: "user-1",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense" as const,
-        source: "manual" as const,
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "user-1",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense" as const,
+          source: "manual" as const,
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       };
       mockRepo.get.mockResolvedValue(mockTransaction);
 
@@ -92,7 +98,7 @@ describe("transactionService", () => {
 
   describe("updateTransaction", () => {
     it("returns error when transaction not found", async () => {
-      mockRepo.get.mockResolvedValue(null);
+      mockRepo.get.mockResolvedValue(null as any);
 
       const [err] = await transactionService.updateTransaction(
         "user-1",
@@ -107,15 +113,18 @@ describe("transactionService", () => {
 
     it("returns error when user does not own transaction", async () => {
       mockRepo.get.mockResolvedValue({
-        id: "txn-1",
-        userId: "other-user",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense",
-        source: "manual",
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "other-user",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense",
+          source: "manual",
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       });
 
       const [err] = await transactionService.updateTransaction(
@@ -131,20 +140,26 @@ describe("transactionService", () => {
 
     it("updates and returns transaction when user owns it", async () => {
       const existing = {
-        id: "txn-1",
-        userId: "user-1",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense" as const,
-        source: "manual" as const,
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "user-1",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense" as const,
+          source: "manual" as const,
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       };
-      const updated = { ...existing, price: "20.00" };
+      const updated = {
+        ...existing,
+        transaction: { ...existing.transaction, price: "20.00" },
+      };
 
       mockRepo.get.mockResolvedValue(existing);
-      mockRepo.update.mockResolvedValue(updated);
+      mockRepo.update.mockResolvedValue(updated.transaction);
 
       const [err, data] = await transactionService.updateTransaction(
         "user-1",
@@ -153,7 +168,7 @@ describe("transactionService", () => {
       );
 
       expect(err).toBeNull();
-      expect(data).toEqual(updated);
+      expect(data).toEqual(updated.transaction);
       expect(mockRepo.update).toHaveBeenCalledWith("txn-1", {
         price: "20.00",
       });
@@ -162,7 +177,7 @@ describe("transactionService", () => {
 
   describe("deleteTransaction", () => {
     it("returns error when transaction not found", async () => {
-      mockRepo.get.mockResolvedValue(null);
+      mockRepo.get.mockResolvedValue(null as any);
 
       const [err] = await transactionService.deleteTransaction(
         "user-1",
@@ -176,15 +191,18 @@ describe("transactionService", () => {
 
     it("returns error when user does not own transaction", async () => {
       mockRepo.get.mockResolvedValue({
-        id: "txn-1",
-        userId: "other-user",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense",
-        source: "manual",
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "other-user",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense",
+          source: "manual",
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       });
 
       const [err] = await transactionService.deleteTransaction(
@@ -199,19 +217,22 @@ describe("transactionService", () => {
 
     it("deletes and returns transaction when user owns it", async () => {
       const existing = {
-        id: "txn-1",
-        userId: "user-1",
-        productId: "prod-1",
-        price: "10.00",
-        type: "expense" as const,
-        source: "manual" as const,
-        date: "2026-01-01",
-        description: null,
-        createdAt: new Date(),
+        transaction: {
+          id: "txn-1",
+          userId: "user-1",
+          productId: "prod-1",
+          price: "10.00",
+          type: "expense" as const,
+          source: "manual" as const,
+          date: "2026-01-01",
+          description: null,
+          createdAt: new Date(),
+        },
+        product: null,
       };
 
       mockRepo.get.mockResolvedValue(existing);
-      mockRepo.remove.mockResolvedValue(existing);
+      mockRepo.remove.mockResolvedValue(existing.transaction);
 
       const [err, data] = await transactionService.deleteTransaction(
         "user-1",
@@ -219,7 +240,7 @@ describe("transactionService", () => {
       );
 
       expect(err).toBeNull();
-      expect(data).toEqual(existing);
+      expect(data).toEqual(existing.transaction);
       expect(mockRepo.remove).toHaveBeenCalledWith("txn-1");
     });
   });

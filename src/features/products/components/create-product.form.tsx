@@ -25,7 +25,13 @@ export function CreateProductForm() {
           onSuccess: (data) => {
             const [err, product] = data;
             if (err) {
-              toast.error("Failed to create product");
+              const errorMsg: string =
+                "message" in err
+                  ? String(err.message)
+                  : "error" in err
+                    ? String(err.error)
+                    : "Failed to create product";
+              toast.error(errorMsg);
             } else {
               toast.success("Product created");
               navigate({

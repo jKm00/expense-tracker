@@ -26,10 +26,22 @@ function updateProduct() {
   return useMutation({
     mutationFn: (data: UpdateProductDTO) =>
       productController.updateProduct({ data }),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const [error, product] = data;
+      // Invalidate list query
       qc.invalidateQueries({
         queryKey: [PRODUCT_QUERY_KEY],
       });
+      if (!error && product) {
+        // Invalidate the specific product detail query
+        qc.invalidateQueries({
+          queryKey: [PRODUCT_QUERY_KEY, product.id],
+        });
+        // Invalidate the product usage query
+        qc.invalidateQueries({
+          queryKey: [PRODUCT_QUERY_KEY, product.id, "usage"],
+        });
+      }
     },
   });
 }
@@ -40,9 +52,19 @@ function deleteProduct() {
   return useMutation({
     mutationFn: (data: { productId: string }) =>
       productController.deleteProduct({ data }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const productId = variables.productId;
+      // Invalidate list query
       qc.invalidateQueries({
         queryKey: [PRODUCT_QUERY_KEY],
+      });
+      // Invalidate the product usage query (even though product is deleted, clear the cache)
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY, productId, "usage"],
+      });
+      // Invalidate the specific product detail query
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY, productId],
       });
     },
   });

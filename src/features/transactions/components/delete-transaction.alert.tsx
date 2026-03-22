@@ -25,11 +25,11 @@ export function DeleteTransactionDialog({ id }: { id: string }) {
         onSuccess: (data) => {
           const [err] = data;
           if (err) {
-            const errorMsg =
+            const errorMsg: string =
               "message" in err
-                ? err.message
+                ? String(err.message)
                 : "error" in err
-                  ? err.error
+                  ? String(err.error)
                   : "Failed to delete transaction";
             toast.error(errorMsg);
           } else {
@@ -66,3 +66,4 @@ export function DeleteTransactionDialog({ id }: { id: string }) {
     </AlertDialog>
   );
 }
+
