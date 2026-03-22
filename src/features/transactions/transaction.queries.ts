@@ -8,6 +8,17 @@ const getTransactionsOptions = queryOptions({
   queryFn: async () => await transactionController.getTransactions(),
 });
 
+function getTransactionOptions(id: string) {
+  return queryOptions({
+    queryKey: [QUERY_KEY, id],
+    queryFn: () =>
+      transactionController.getTransaction({
+        data: { id },
+      }),
+  });
+}
+
 export const transactionQueries = {
   getTransactionsOptions,
+  getTransactionOptions,
 };
