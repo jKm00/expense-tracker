@@ -4,6 +4,8 @@ import { CreateTagDialog } from "@/features/tags/components/create-tag.dialog";
 import { LinkTagToProductDialog } from "@/features/tags/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { tagMutations } from "@/features/tags/tag.mutations";
+import { EditProductForm } from "@/features/products/components/edit-product.form";
+import { DeleteProductDialog } from "@/features/products/components/delete-product.alert";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -15,6 +17,9 @@ export const Route = createFileRoute("/_app/dashboard/products/$productId")({
     const productId = params.productId;
     context.queryClient.ensureQueryData(
       productQueries.getProductOptions(productId),
+    );
+    context.queryClient.prefetchQuery(
+      productQueries.getProductUsageOptions(productId),
     );
   },
   component: RouteComponent,
@@ -73,7 +78,11 @@ function Product() {
 
   return (
     <div>
-      <h2>Product: {product.name}</h2>
+      {/* Edit Product Name */}
+      <h2>Edit Product</h2>
+      <EditProductForm product={product} />
+
+      {/* Tags Section */}
       <h3>Tags</h3>
       <div className="flex gap-2">
         {tags.map((tag) => (
@@ -99,6 +108,12 @@ function Product() {
         >
           Save
         </Button>
+      </div>
+
+      {/* Danger Zone */}
+      <div>
+        <h3>Danger Zone</h3>
+        <DeleteProductDialog productId={productId} />
       </div>
     </div>
   );
