@@ -19,6 +19,7 @@ describe("transactionValidators.editFormValidation", () => {
       price: "10",
       type: "income",
       date: "2026-03-01",
+      description: "",
     });
     expect(result.success).toBe(true);
   });
@@ -64,6 +65,7 @@ describe("transactionValidators.editFormValidation", () => {
       price: "-5.00",
       type: "expense",
       date: "2026-01-15",
+      description: "",
     });
     expect(result.success).toBe(true);
   });
