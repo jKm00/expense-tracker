@@ -65,10 +65,10 @@ src/features/transactions/transaction.service.ts     # Add update, delete method
 src/features/transactions/transaction.repo.ts        # Add update, delete methods
 src/features/transactions/transaction.mutations.ts   # Add update, delete mutation hooks
 src/features/transactions/transaction.queries.ts     # Add getTransactionOptions (single)
-src/features/products/product.controller.ts          # Add createProduct, updateProduct, deleteProduct
-src/features/products/product.service.ts             # Add update, delete methods
+src/features/products/product.controller.ts          # Add createProduct, updateProduct, deleteProduct, getProductUsage
+src/features/products/product.service.ts             # Add update, delete, getProductUsage methods
 src/routes/_app.dashboard.transactions.tsx            # Add links to transaction detail pages
-src/routes/_app.dashboard.products.$productId.tsx     # Add edit form + delete dialog
+src/routes/_app.dashboard.products.$productId.tsx     # Add edit form + delete dialog, prefetch product usage
 ```
 
 ### Data Flow
@@ -234,6 +234,66 @@ const updateProduct = createServerFn({ method: "POST" })
 
 Same AlertDialog pattern as recurring delete. Service checks ownership before deletion. Navigates to products list on success.
 
+**Product usage query (for delete warning):**
+
+The delete confirmation dialog needs to warn about cascade-deleted dependents. A dedicated server function fetches the dependency counts:
+
+```ts
+// product.controller.ts
+const getProductUsage = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(ProductIdSchema)
+  .handler(async ({ context, data }) => {
+    return await productService.getProductUsage(context.user.id, data.productId);
+  });
+```
+
+```ts
+// product.service.ts
+async function getProductUsage(userId: string, productId: string) {
+  const [productError] = await getProduct(userId, productId);
+  if (productError) return err(productError);
+
+  try {
+    const usage = await productRepo.getUsage(productId);
+    return ok(usage); // { transactionCount: number, hasRecurring: boolean }
+  } catch (error) {
+    return err({ reason: "DB_ERROR", error: ... });
+  }
+}
+```
+
+```ts
+// product.repo.ts
+async function getUsage(productId: string) {
+  const transactionCount = await db
+    .select({ count: count() })
+    .from(transaction)
+    .where(eq(transaction.productId, productId))
+    .then(r => r[0].count);
+
+  const hasRecurring = await db
+    .select({ id: recurringProduct.id })
+    .from(recurringProduct)
+    .where(eq(recurringProduct.productId, productId))
+    .then(r => r.length > 0);
+
+  return { transactionCount, hasRecurring };
+}
+```
+
+```ts
+// product.queries.ts
+function getProductUsageOptions(productId: string) {
+  return queryOptions({
+    queryKey: [PRODUCT_QUERY_KEY, productId, "usage"],
+    queryFn: () => productController.getProductUsage({ data: { productId } }),
+  });
+}
+```
+
+This query is prefetched in the product detail page route loader alongside the existing `getProductOptions`, so the data is available immediately when the user opens the delete dialog.
+
 ### UX/Interaction Patterns
 
 **Transaction detail page (`/dashboard/transactions/$id`):**
@@ -279,10 +339,11 @@ Same AlertDialog pattern as recurring delete. Service checks ownership before de
 
 1. **Transaction edit excludes productId and source** — these are core identity fields that shouldn't change. If a user needs a different product, they delete the transaction and create a new one.
 
-2. **Product delete cascades to transactions and recurring items** — the database schema uses `onDelete: "cascade"` on both `transaction.productId → product.id` and `recurring_product.productId → product.id` foreign keys. Deleting a product automatically deletes all associated transactions and the recurring configuration. The delete confirmation dialog must warn about this clearly. The service layer should check what will be cascade-deleted before showing the dialog:
-   - If the product has transactions: "This will permanently delete the product and all **N transactions** associated with it."
-   - If the product is also used in a recurring configuration: "This will permanently delete the product, all **N transactions**, and the **recurring configuration** associated with it."
-   - If the product has no dependents: "This will permanently delete the product."
+2. **Product delete cascades to transactions and recurring items** — the database schema uses `onDelete: "cascade"` on both `transaction.productId → product.id` and `recurring_product.productId → product.id` foreign keys. Deleting a product automatically deletes all associated transactions and the recurring configuration. The `getProductUsage` server function (see Product Delete data flow above) provides `{ transactionCount, hasRecurring }` so the delete dialog can show a contextual warning:
+   - If `transactionCount > 0` and `hasRecurring`: "This will also delete **N transactions** and its **recurring configuration**."
+   - If `transactionCount > 0` only: "This will also delete **N transactions** associated with it."
+   - If `hasRecurring` only: "This will also remove its **recurring configuration**."
+   - If neither: "This action cannot be undone."
 
 3. **Follow `edit-recurring.form.tsx` as the reference** — all new forms use `useForm` from `@tanstack/react-form-start`, Zod validators on `onBlur`, `<FieldError>` component, and `<LoaderButton>` for submit.
 
@@ -310,7 +371,8 @@ public/
 │   ├── icon-512x512.png
 │   └── apple-touch-icon.png
 src/
-├── service-worker.ts                # Service worker for offline caching
+├── service-worker.ts                # Service worker for offline caching (static assets only)
+├── lib/tanstack-query/persister.ts  # TanStack Query cache persister (localStorage)
 ```
 
 #### Modified Files
@@ -318,25 +380,48 @@ src/
 ```
 src/routes/__root.tsx                # Add manifest link + meta tags in head()
 src/routes/index.tsx                 # Add PWA standalone detection → redirect to /dashboard
-vite.config.ts                       # Add service worker build config (or vite-plugin-pwa)
+src/router.tsx                       # Wrap with PersistQueryClientProvider
+vite.config.ts                       # Add service worker build config (vite-plugin-pwa)
 ```
 
 ### Data Flow
 
 No new server functions or database changes. PWA is purely a client-side infrastructure concern.
 
-**Service worker strategy (via `vite-plugin-pwa` runtime caching):**
+**Offline strategy — two layers:**
 
-App shell and static assets — **CacheFirst**:
-- Matches: `.html`, `.js`, `.css`, image files, fonts, icons
-- These rarely change between deploys; serve from cache, update in background
+**1. Service worker (static assets only):**
+- `vite-plugin-pwa` generates the service worker with precaching for the app shell
+- **CacheFirst** for static assets: `.html`, `.js`, `.css`, image files, fonts, icons
+- The service worker does **not** cache `/_server` requests — TanStack Start server functions use POST requests, which Workbox runtime caching cannot cache by default
 
-TanStack server functions — **NetworkFirst**:
-- Matches: URLs starting with `/_server` (TanStack Start's server function endpoint prefix)
-- Tries network first; if offline, serves cached response from last successful fetch
-- If no cached response exists, the query will error and the UI shows an "offline" state via the existing `[err, data]` result handling
+**2. TanStack Query `persistQueryClient` (data persistence):**
+- Persists the TanStack Query cache to `localStorage` (or `IndexedDB` for larger datasets) so cached query results survive page reloads and app restarts
+- New dependencies: `@tanstack/query-persist-client-core` + `@tanstack/query-sync-storage-persister`
+- When the app loads offline, `useQuery` serves stale data from the persisted cache — users see last-known data immediately
+- When online, queries revalidate normally (stale-while-revalidate behavior TanStack Query already provides)
 
-**Offline mode is READ-ONLY:** Cached query data is shown when available. All mutations show an error toast: "You're offline. Please reconnect to save changes." No offline mutation queue — full offline sync is a separate future effort.
+```ts
+// src/lib/tanstack-query/persister.ts
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+
+export const queryPersister = createSyncStoragePersister({
+  storage: window.localStorage,
+});
+```
+
+```ts
+// src/router.tsx (or wherever QueryClient is created)
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryPersister } from "@/lib/tanstack-query/persister";
+
+// Wrap the app with PersistQueryClientProvider instead of QueryClientProvider
+<PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister }}>
+  {children}
+</PersistQueryClientProvider>
+```
+
+**Offline mode is READ-ONLY:** Persisted query data is shown when available. All mutations while offline show an error toast: "You're offline. Please reconnect to save changes." No offline mutation queue — full offline sync is a separate future effort.
 
 ### UX/Interaction Patterns
 
@@ -397,13 +482,15 @@ function App() {
 
 ### Key Implementation Decisions
 
-1. **Use `vite-plugin-pwa`** — handles service worker generation, manifest injection, and update prompts. Avoids manually wiring up workbox. Configure runtime caching rules for `/_server` URLs (NetworkFirst) and static assets (CacheFirst).
+1. **Use `vite-plugin-pwa`** — handles service worker generation, manifest injection, and update prompts. The service worker caches **static assets only** (CacheFirst). It does not cache `/_server` POST requests because Workbox runtime caching does not support POST by default.
 
-2. **`start_url: "/dashboard"` is the primary PWA entry** — the manifest points directly to `/dashboard`. The existing auth guard on the `/_app` route handles unauthenticated users by redirecting to `/login`. Client-side standalone detection in `index.tsx` is a fallback only.
+2. **TanStack Query `persistQueryClient` for offline reads** — persists the query cache to `localStorage` so data survives reloads and offline launches. This is the correct layer for offline data: TanStack Query already manages staleness and revalidation, and `persistQueryClient` extends that across sessions. New dependencies: `@tanstack/query-persist-client-core`, `@tanstack/query-sync-storage-persister`.
 
-3. **Offline is read-only** — no offline mutation queue. If the user is offline and tries to mutate, show an error toast. This keeps complexity low; full offline sync is a separate future effort.
+3. **`start_url: "/dashboard"` is the primary PWA entry** — the manifest points directly to `/dashboard`. The existing auth guard on the `/_app` route handles unauthenticated users by redirecting to `/login`. Client-side standalone detection in `index.tsx` is a fallback only.
 
-4. **Dark background/theme color** — uses dark mode colors for the PWA chrome since Phase 3 makes dark mode the primary theme.
+4. **Offline is read-only** — no offline mutation queue. If the user is offline and tries to mutate, show an error toast. This keeps complexity low; full offline sync is a separate future effort.
+
+5. **Dark background/theme color** — uses dark mode colors for the PWA chrome since Phase 3 makes dark mode the primary theme.
 
 ### Manual Verification
 
