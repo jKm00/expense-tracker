@@ -266,11 +266,13 @@ async function getProductUsage(userId: string, productId: string) {
 ```ts
 // product.repo.ts
 async function getUsage(productId: string) {
+  // Note: Drizzle's count() may return a string from some DB drivers.
+  // Coerce to Number() to avoid string values leaking to the UI.
   const transactionCount = await db
     .select({ count: count() })
     .from(transaction)
     .where(eq(transaction.productId, productId))
-    .then(r => r[0].count);
+    .then(r => Number(r[0].count));
 
   const hasRecurring = await db
     .select({ id: recurringProduct.id })
@@ -405,9 +407,12 @@ No new server functions or database changes. PWA is purely a client-side infrast
 // src/lib/tanstack-query/persister.ts
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
-export const queryPersister = createSyncStoragePersister({
-  storage: window.localStorage,
-});
+// Guard for SSR: window.localStorage doesn't exist during server-side rendering
+// in TanStack Start. The persister must only be created on the client.
+export const queryPersister =
+  typeof window !== "undefined"
+    ? createSyncStoragePersister({ storage: window.localStorage })
+    : null;
 ```
 
 ```ts
@@ -415,8 +420,12 @@ export const queryPersister = createSyncStoragePersister({
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryPersister } from "@/lib/tanstack-query/persister";
 
-// Wrap the app with PersistQueryClientProvider instead of QueryClientProvider
-<PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister }}>
+// Only pass persistOptions when the persister exists (client-side).
+// On the server, this renders a regular QueryClientProvider equivalent.
+<PersistQueryClientProvider
+  client={queryClient}
+  persistOptions={queryPersister ? { persister: queryPersister } : undefined}
+>
   {children}
 </PersistQueryClientProvider>
 ```
