@@ -28,7 +28,57 @@ const getProduct = createServerFn({ method: "GET" })
     return await productService.getProduct(userId, data.productId);
   });
 
+const CreateProductSchema = z.object({
+  name: z.string().min(1),
+});
+
+export type CreateProductDTO = z.infer<typeof CreateProductSchema>;
+
+const createProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(CreateProductSchema)
+  .handler(async ({ context, data }) => {
+    return await productService.create(context.user.id, data.name);
+  });
+
+const UpdateProductSchema = z.object({
+  productId: z.string(),
+  name: z.string().min(1),
+});
+
+export type UpdateProductDTO = z.infer<typeof UpdateProductSchema>;
+
+const updateProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(UpdateProductSchema)
+  .handler(async ({ context, data }) => {
+    return await productService.updateProduct(context.user.id, data.productId, {
+      name: data.name,
+    });
+  });
+
+const deleteProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(ProductIdSchema)
+  .handler(async ({ context, data }) => {
+    return await productService.deleteProduct(context.user.id, data.productId);
+  });
+
+const getProductUsage = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(ProductIdSchema)
+  .handler(async ({ context, data }) => {
+    return await productService.getProductUsage(
+      context.user.id,
+      data.productId,
+    );
+  });
+
 export const productController = {
   getAll,
   getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProductUsage,
 };
