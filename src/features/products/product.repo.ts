@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import type { NewRecurringProduct, Product } from "./product.models";
+import type { Product } from "./product.models";
 import { and, eq, ilike, notExists } from "drizzle-orm";
-import { product, productTag, recurringProduct, tag } from "./product.schema";
+import { product } from "./product.schema";
+import { productTag, tag } from "../tags/tag.schema";
 import { productMappers } from "./product.mappers";
 
 async function get(id: string) {
@@ -62,36 +63,8 @@ async function getUntaggedProducts(userId: string) {
   return productMappers.mapToProductsWithTags(products);
 }
 
-async function getAllRecurring(userId: string) {
-  const recurring = await db
-    .select({
-      recurringProduct,
-      product,
-    })
-    .from(recurringProduct)
-    .innerJoin(product, eq(recurringProduct.productId, product.id))
-    .where(eq(product.userId, userId));
-  return recurring.map(productMappers.mapToRecurringWithProduct);
-}
-
-async function getRecurring(id: string) {
-  const recurring = await db
-    .select({
-      recurringProduct,
-      product,
-    })
-    .from(recurringProduct)
-    .innerJoin(product, eq(recurringProduct.productId, product.id))
-    .where(eq(recurringProduct.id, id));
-  return productMappers.mapToRecurringWithProduct(recurring[0]);
-}
-
 async function save(data: Omit<Product, "id" | "createdAt" | "updatedAt">) {
   return (await db.insert(product).values(data).returning())[0];
-}
-
-async function saveRecurringProduct(data: NewRecurringProduct) {
-  return (await db.insert(recurringProduct).values(data).returning())[0];
 }
 
 async function update(
@@ -113,10 +86,7 @@ export const productRepo = {
   getByName,
   getAll,
   getUntaggedProducts,
-  getAllRecurring,
-  getRecurring,
   save,
-  saveRecurringProduct,
   update,
   deleteProduct,
 };

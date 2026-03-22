@@ -5,12 +5,9 @@ import {
   account,
   verification,
 } from "@/features/auth/auth.schema";
-import {
-  product,
-  recurringProduct,
-  tag,
-  productTag,
-} from "@/features/products/product.schema";
+import { product } from "@/features/products/product.schema";
+import { recurringProduct } from "@/features/recurring/recurring.schema";
+import { tag, productTag } from "@/features/tags/tag.schema";
 import { transaction } from "@/features/transactions/transaction.schema";
 
 export const relations = defineRelations(

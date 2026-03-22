@@ -1,4 +1,4 @@
-import { productQueries } from "@/features/products/product.queries";
+import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { EditRecurringForm } from "@/features/recurring/components/edit-recurring.form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/dashboard/recurring/$id")({
   loader: async ({ context, params }) => {
     const id = params.id;
     context.queryClient.prefetchQuery(
-      productQueries.getRecurringProductOptions(id),
+      recurringQueries.getRecurringProductOptions(id),
     );
   },
   component: RouteComponent,
@@ -25,7 +25,7 @@ function RouteComponent() {
 function RecurringProduct() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(
-    productQueries.getRecurringProductOptions(id),
+    recurringQueries.getRecurringProductOptions(id),
   );
 
   const [err, recurring] = data;

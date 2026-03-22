@@ -1,11 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 import { tagController } from "./tag.controller";
 
-export const QUERY_KEY = "tags";
+export const TAG_QUERY_KEY = "tags";
 
 function getTagsOptions() {
   return queryOptions({
-    queryKey: [QUERY_KEY],
+    queryKey: [TAG_QUERY_KEY],
     queryFn: () => tagController.getTags(),
   });
 }

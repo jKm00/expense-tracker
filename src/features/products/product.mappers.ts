@@ -1,10 +1,5 @@
-import {
-  Product,
-  ProductWithTags,
-  RecurringProduct,
-  RecurringWithProduct,
-} from "./product.models";
-import { Tag } from "./tag.models";
+import { Product, ProductWithTags } from "./product.models";
+import { Tag } from "../tags/tag.models";
 
 function mapToProductsWithTags(
   rows: { product: Product; tag: Tag | null }[],
@@ -29,17 +24,6 @@ function mapToProductsWithTags(
   return Array.from(productMap.values());
 }
 
-function mapToRecurringWithProduct(rows: {
-  recurringProduct: RecurringProduct;
-  product: Product;
-}): RecurringWithProduct {
-  return {
-    ...rows.recurringProduct,
-    product: rows.product,
-  };
-}
-
 export const productMappers = {
   mapToProductsWithTags,
-  mapToRecurringWithProduct,
 };

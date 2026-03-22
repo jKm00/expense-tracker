@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AddTagDialog } from "@/features/products/components/add-tag.dialog";
-import { LinkTagToProductDialog } from "@/features/products/components/link-tag-to-product.dialog";
+import { AddTagDialog } from "@/features/tags/components/add-tag.dialog";
+import { LinkTagToProductDialog } from "@/features/tags/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
-import { tagMutations } from "@/features/products/tag.mutations";
+import { tagMutations } from "@/features/tags/tag.mutations";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";

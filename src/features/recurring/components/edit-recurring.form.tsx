@@ -1,7 +1,5 @@
-import {
-  ProductWithTags,
-  RecurringWithProduct,
-} from "@/features/products/product.models";
+import { ProductWithTags } from "@/features/products/product.models";
+import { RecurringInterval, RecurringWithProduct } from "../recurring.models";
 import { useForm } from "@tanstack/react-form-start";
 import { recurringValidators } from "../recurring.validators";
 import { Input } from "@/components/ui/input";
@@ -36,12 +34,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { productQueries } from "@/features/products/product.queries";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { recurringMutations } from "../recurring.mutations";
 
 export function EditRecurringForm({
   recurring,
 }: {
   recurring: RecurringWithProduct;
 }) {
+  const mutation = recurringMutations.updateRecurringProduct();
   const form = useForm({
     defaultValues: {
       productId: recurring.productId,
@@ -55,7 +55,23 @@ export function EditRecurringForm({
       onBlur: recurringValidators.formValidation,
     },
     onSubmit: ({ value }) => {
-      console.log(value);
+      mutation.mutate(
+        {
+          ...value,
+          interval: value.interval as RecurringInterval,
+          price: Number(value.price),
+          id: recurring.id,
+        },
+        {
+          onSuccess: (data) => {
+            const [err] = data;
+            if (err) {
+              // TODO: Handle error
+              console.log(err.message);
+            }
+          },
+        },
+      );
     },
   });
 
@@ -245,9 +261,10 @@ export function EditRecurringForm({
           state.canSubmit,
           state.isSubmitting,
           state.isTouched,
+          state.isPristine,
         ]}
-        children={([canSubmit, isSubmitting, isTouched]) => (
-          <Button type="submit" disabled={!canSubmit || !isTouched}>
+        children={([canSubmit, isSubmitting, isPristine]) => (
+          <Button type="submit" disabled={!canSubmit || isPristine}>
             {isSubmitting ? "..." : "Submit"}
           </Button>
         )}

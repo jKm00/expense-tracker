@@ -9,10 +9,8 @@ import {
 } from "@/components/ui/combobox";
 import { useQuery } from "@tanstack/react-query";
 import { productQueries } from "@/features/products/product.queries";
-import {
-  ProductWithTags,
-  RecurringInterval,
-} from "@/features/products/product.models";
+import { ProductWithTags } from "@/features/products/product.models";
+import { RecurringInterval } from "@/features/recurring/recurring.models";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +32,7 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
-import { productMutations } from "@/features/products/product.mutations";
+import { recurringMutations } from "@/features/recurring/recurring.mutations";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/new")({
   component: RouteComponent,
@@ -56,7 +54,7 @@ function RouteComponent() {
   const [_, res] = data ?? [null, null];
   const products = res ?? [];
 
-  const mutation = productMutations.addRecurringProduct();
+  const mutation = recurringMutations.addRecurringProduct();
 
   function handleSubmit() {
     setError(null);

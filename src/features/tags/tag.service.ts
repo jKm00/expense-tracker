@@ -1,7 +1,7 @@
 import { err, ok } from "@/utils/result";
 import { tagRepo } from "./tag.repo";
 import { Tag } from "./tag.models";
-import { productService } from "./product.service";
+import { productService } from "../products/product.service";
 
 async function getTag(userId: string, tagId: string) {
   const tag = await tagRepo.get(tagId);

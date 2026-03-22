@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { productTag, tag } from "./product.schema";
+import { productTag, tag } from "./tag.schema";
 import { and, eq } from "drizzle-orm";
 import type { Tag } from "./tag.models";
 

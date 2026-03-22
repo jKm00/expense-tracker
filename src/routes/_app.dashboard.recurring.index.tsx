@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { productQueries } from "@/features/products/product.queries";
+import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -7,7 +7,7 @@ import { Suspense } from "react";
 export const Route = createFileRoute("/_app/dashboard/recurring/")({
   loader: async ({ context }) => {
     context.queryClient.prefetchQuery(
-      productQueries.getRecurringProductsOptions(),
+      recurringQueries.getRecurringProductsOptions(),
     );
   },
   component: RouteComponent,
@@ -31,7 +31,7 @@ function RouteComponent() {
 
 function RecurringList() {
   const { data } = useSuspenseQuery(
-    productQueries.getRecurringProductsOptions(),
+    recurringQueries.getRecurringProductsOptions(),
   );
 
   const [error, recurring] = data;
