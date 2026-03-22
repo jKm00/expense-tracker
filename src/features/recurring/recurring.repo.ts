@@ -49,9 +49,19 @@ async function update(id: string, data: UpdateRecurringProduct) {
   )[0];
 }
 
+async function deleteRecurring(id: string) {
+  return (
+    await db
+      .delete(recurringProduct)
+      .where(eq(recurringProduct.id, id))
+      .returning()
+  )[0];
+}
+
 export const recurringRepo = {
   getAll,
   get,
   save,
   update,
+  deleteRecurring,
 };

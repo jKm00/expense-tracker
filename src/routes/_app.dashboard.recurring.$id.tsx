@@ -3,6 +3,7 @@ import { EditRecurringForm } from "@/features/recurring/components/edit-recurrin
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
+import { DeleteRecurringProductDialog } from "@/features/recurring/components/delete-recurring.alert";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/$id")({
   loader: async ({ context, params }) => {
@@ -24,10 +25,10 @@ function RouteComponent() {
 
 function RecurringProduct() {
   const { id } = Route.useParams();
+
   const { data } = useSuspenseQuery(
     recurringQueries.getRecurringProductOptions(id),
   );
-
   const [err, recurring] = data;
 
   if (err) {
@@ -38,6 +39,10 @@ function RecurringProduct() {
   return (
     <div>
       <EditRecurringForm recurring={recurring} />
+      <div>
+        <h3>Danger Zone</h3>
+        <DeleteRecurringProductDialog id={id} />
+      </div>
     </div>
   );
 }

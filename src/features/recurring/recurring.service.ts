@@ -74,9 +74,20 @@ async function updateRecurringProduct(
   return ok(updated);
 }
 
+async function deleteRecurringProduct(userId: string, id: string) {
+  const [foundError] = await getRecurringProduct(userId, id);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  const deleted = await recurringRepo.deleteRecurring(id);
+  return ok(deleted);
+}
+
 export const recurringService = {
   getAllRecurringProducts,
   getRecurringProduct,
   createRecurringProduct,
   updateRecurringProduct,
+  deleteRecurringProduct,
 };

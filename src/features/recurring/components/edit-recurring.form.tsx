@@ -35,6 +35,7 @@ import { productQueries } from "@/features/products/product.queries";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { recurringMutations } from "../recurring.mutations";
+import { LoaderButton } from "@/components/custom/loader.button";
 
 export function EditRecurringForm({
   recurring,
@@ -260,13 +261,16 @@ export function EditRecurringForm({
         selector={(state) => [
           state.canSubmit,
           state.isSubmitting,
-          state.isTouched,
-          state.isPristine,
+          state.isDefaultValue,
         ]}
-        children={([canSubmit, isSubmitting, isPristine]) => (
-          <Button type="submit" disabled={!canSubmit || isPristine}>
+        children={([canSubmit, isSubmitting, isDefaultValue]) => (
+          <LoaderButton
+            type="submit"
+            disabled={!canSubmit || isDefaultValue || mutation.isPending}
+            isLoading={mutation.isPending}
+          >
             {isSubmitting ? "..." : "Submit"}
-          </Button>
+          </LoaderButton>
         )}
       />
     </form>

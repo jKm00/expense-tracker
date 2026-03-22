@@ -68,9 +68,18 @@ const updateRecurringProduct = createServerFn({ method: "POST" })
     });
   });
 
+const deleteRecurringProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(RecurringIdSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await recurringService.deleteRecurringProduct(userId, data.id);
+  });
+
 export const recurringController = {
   getAllRecurringProducts,
   getRecurringProduct,
   addRecurringProduct,
   updateRecurringProduct,
+  deleteRecurringProduct,
 };

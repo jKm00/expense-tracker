@@ -34,7 +34,22 @@ function updateRecurringProduct() {
   });
 }
 
+function deleteRecurringProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { id: string }) =>
+      recurringController.deleteRecurringProduct({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [RECURRING_QUERY_KEY],
+      });
+    },
+  });
+}
+
 export const recurringMutations = {
   addRecurringProduct,
   updateRecurringProduct,
+  deleteRecurringProduct,
 };
