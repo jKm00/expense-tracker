@@ -9,19 +9,29 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { tagQueries } from "../tag.queries";
 import { useQuery } from "@tanstack/react-query";
 import { Tag } from "../tag.models";
 import { tagMutations } from "../tag.mutations";
+import { ProductWithTags } from "@/features/products/product.models";
 
-export function LinkTagToProductDialog({ productId }: { productId: string }) {
+export function LinkTagToProductDialog({
+  product,
+}: {
+  product: ProductWithTags;
+}) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Tag | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data } = useQuery(tagQueries.getTagsOptions());
-  const [_, tags] = data || [null, []];
+  const { data: tagsReponse } = useQuery(tagQueries.getTagsOptions());
+  const [_, tags] = useMemo(() => tagsReponse || [null, []], [tagsReponse]);
+  const filteredTags = useMemo(() => {
+    if (!tags) return [];
+    const mappedProductTags = product.tags.map((t) => t.id);
+    return tags.filter((tag) => !mappedProductTags.includes(tag.id));
+  }, [tags, product]);
 
   const mutation = tagMutations.linkTagToProduct();
 
@@ -37,7 +47,7 @@ export function LinkTagToProductDialog({ productId }: { productId: string }) {
     mutation.mutate(
       {
         tagId: selected.id,
-        productId,
+        productId: product.id,
       },
       {
         onSuccess: (data) => {
@@ -65,7 +75,7 @@ export function LinkTagToProductDialog({ productId }: { productId: string }) {
         </DialogHeader>
         <div>
           <div className="flex flex-wrap gap-1">
-            {tags?.map((tag) => (
+            {filteredTags.map((tag) => (
               <Button
                 key={tag.id}
                 onClick={() => setSelected(tag)}

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { tagMutations } from "../tag.mutations";
 
-export function AddTagDialog() {
+export function CreateTagDialog() {
   const [open, setOpen] = useState(false);
   const [tagName, setTagName] = useState("");
   const [error, setError] = useState("");

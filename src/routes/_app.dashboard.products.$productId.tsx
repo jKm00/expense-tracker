@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AddTagDialog } from "@/features/tags/components/add-tag.dialog";
+import { CreateTagDialog } from "@/features/tags/components/create-tag.dialog";
 import { LinkTagToProductDialog } from "@/features/tags/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { tagMutations } from "@/features/tags/tag.mutations";
@@ -91,8 +91,8 @@ function Product() {
         ))}
       </div>
       <div className="flex gap-2">
-        <LinkTagToProductDialog productId={product.id} />
-        <AddTagDialog />
+        <LinkTagToProductDialog product={product} />
+        <CreateTagDialog />
         <Button
           disabled={!edited}
           onClick={() => console.log("TODO: Save new tags")}
