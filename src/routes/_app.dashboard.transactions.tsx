@@ -1,6 +1,6 @@
 import { transactionQueries } from "@/features/transactions/transaction.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions")({
@@ -38,11 +38,15 @@ function TransactionsList() {
       <h2>Transactions</h2>
       <ul>
         {data.map((row) => (
-          <li
-            key={row.transaction.id}
-            className={`${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
-          >
-            {row.product?.name} - {row.transaction.price}
+          <li key={row.transaction.id}>
+            <Link
+              to="/dashboard/transactions/$id"
+              params={{ id: row.transaction.id }}
+              className={`block ${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
+            >
+              {row.product?.name} - {row.transaction.price} -{" "}
+              {row.transaction.date}
+            </Link>
           </li>
         ))}
       </ul>
