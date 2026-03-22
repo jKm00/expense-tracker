@@ -279,7 +279,10 @@ Same AlertDialog pattern as recurring delete. Service checks ownership before de
 
 1. **Transaction edit excludes productId and source** — these are core identity fields that shouldn't change. If a user needs a different product, they delete the transaction and create a new one.
 
-2. **Product delete cascades to transactions** — the `product.schema.ts` already has `onDelete: "cascade"` on the transaction→product FK. The delete confirmation dialog must warn about this: "This will also delete all transactions associated with this product."
+2. **Product delete cascades to transactions and recurring items** — the database schema uses `onDelete: "cascade"` on both `transaction.productId → product.id` and `recurring_product.productId → product.id` foreign keys. Deleting a product automatically deletes all associated transactions and the recurring configuration. The delete confirmation dialog must warn about this clearly. The service layer should check what will be cascade-deleted before showing the dialog:
+   - If the product has transactions: "This will permanently delete the product and all **N transactions** associated with it."
+   - If the product is also used in a recurring configuration: "This will permanently delete the product, all **N transactions**, and the **recurring configuration** associated with it."
+   - If the product has no dependents: "This will permanently delete the product."
 
 3. **Follow `edit-recurring.form.tsx` as the reference** — all new forms use `useForm` from `@tanstack/react-form-start`, Zod validators on `onBlur`, `<FieldError>` component, and `<LoaderButton>` for submit.
 
@@ -293,7 +296,7 @@ Same AlertDialog pattern as recurring delete. Service checks ownership before de
 
 ### What's Changing
 
-Add Progressive Web App capabilities so the app can be installed on mobile devices and has basic offline support. When opened from PWA (standalone mode), the user lands on `/dashboard` directly. Regular browser visitors still see the landing page at `/`.
+Add Progressive Web App capabilities so the app can be installed on mobile devices and has basic offline support. The PWA manifest sets `start_url` to `/dashboard`, so opening the PWA always goes directly to the dashboard. The existing auth guard on the `/_app` route handles unauthenticated users — they get redirected to `/login`, never seeing the marketing landing page. Regular browser visitors still see the landing page at `/`.
 
 ### Component Architecture
 
@@ -322,14 +325,24 @@ vite.config.ts                       # Add service worker build config (or vite-
 
 No new server functions or database changes. PWA is purely a client-side infrastructure concern.
 
-**Service worker strategy:**
-- **Cache-first** for static assets (JS, CSS, fonts, icons)
-- **Network-first** for API calls (server functions) — if offline, show cached data or a "You're offline" message
-- Precache the app shell on install
+**Service worker strategy (via `vite-plugin-pwa` runtime caching):**
+
+App shell and static assets — **CacheFirst**:
+- Matches: `.html`, `.js`, `.css`, image files, fonts, icons
+- These rarely change between deploys; serve from cache, update in background
+
+TanStack server functions — **NetworkFirst**:
+- Matches: URLs starting with `/_server` (TanStack Start's server function endpoint prefix)
+- Tries network first; if offline, serves cached response from last successful fetch
+- If no cached response exists, the query will error and the UI shows an "offline" state via the existing `[err, data]` result handling
+
+**Offline mode is READ-ONLY:** Cached query data is shown when available. All mutations show an error toast: "You're offline. Please reconnect to save changes." No offline mutation queue — full offline sync is a separate future effort.
 
 ### UX/Interaction Patterns
 
-**PWA detection in landing page:**
+**PWA detection in landing page (fallback):**
+
+The manifest `start_url: "/dashboard"` is the primary mechanism — PWA users never hit `/` in normal use. This client-side redirect exists only as a fallback for edge cases (e.g., user navigates to `/` manually within the PWA):
 
 ```ts
 // index.tsx
@@ -342,14 +355,23 @@ function App() {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as any).standalone === true;
 
-    if (isStandalone && isLoggedIn) {
+    if (isStandalone) {
+      // In PWA mode, always redirect away from landing page.
+      // If logged in → dashboard. If not → /login (auth guard handles it).
       navigate({ to: "/dashboard" });
     }
-  }, [isLoggedIn, navigate]);
+  }, [navigate]);
 
-  // ... existing landing page
+  // ... existing landing page (only shown in regular browser)
 }
 ```
+
+**Auth flow for PWA users:**
+- PWA opens → `start_url: "/dashboard"` → `/_app` route's `beforeLoad` runs
+- If authenticated → renders dashboard
+- If not authenticated → existing auth guard redirects to `/login` with return URL
+- After login → redirected back to `/dashboard`
+- PWA users **never** see the marketing landing page at `/`
 
 **Manifest configuration:**
 
@@ -357,7 +379,7 @@ function App() {
 {
   "name": "JKM Expense Tracker",
   "short_name": "Expenses",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
@@ -369,19 +391,30 @@ function App() {
 
 ### Error Handling
 
-- Offline mutations: show toast "You're offline. Please try again when connected."
+- Offline mutations: show toast "You're offline. Please reconnect to save changes."
 - Stale cache: serve cached data but show a subtle indicator that data may be outdated
 - Service worker update: on new version detected, show "Update available" toast with refresh action
 
 ### Key Implementation Decisions
 
-1. **Use `vite-plugin-pwa`** — handles service worker generation, manifest injection, and update prompts. Avoids manually wiring up workbox.
+1. **Use `vite-plugin-pwa`** — handles service worker generation, manifest injection, and update prompts. Avoids manually wiring up workbox. Configure runtime caching rules for `/_server` URLs (NetworkFirst) and static assets (CacheFirst).
 
-2. **PWA redirect is client-side only** — the `/` route loader doesn't redirect server-side for standalone mode because the server can't detect `display-mode`. The redirect happens in a `useEffect` after hydration.
+2. **`start_url: "/dashboard"` is the primary PWA entry** — the manifest points directly to `/dashboard`. The existing auth guard on the `/_app` route handles unauthenticated users by redirecting to `/login`. Client-side standalone detection in `index.tsx` is a fallback only.
 
-3. **Offline is read-only** — no offline mutation queue. If the user is offline and tries to mutate, show an error. This keeps complexity low; full offline sync is a separate future effort.
+3. **Offline is read-only** — no offline mutation queue. If the user is offline and tries to mutate, show an error toast. This keeps complexity low; full offline sync is a separate future effort.
 
 4. **Dark background/theme color** — uses dark mode colors for the PWA chrome since Phase 3 makes dark mode the primary theme.
+
+### Manual Verification
+
+After implementation, manually verify the following:
+
+1. **Install PWA from browser** — use Chrome/Safari "Add to Home Screen" or "Install App"
+2. **Open as standalone** — confirm the app opens directly to `/dashboard` (not the landing page)
+3. **Logged-out PWA launch** — clear session, re-open PWA. Confirm redirect to `/login`, then after login lands on `/dashboard`
+4. **Go offline** — disable network in DevTools or airplane mode. Confirm offline banner appears at top of app
+5. **Mutation while offline** — try adding/editing a transaction while offline. Confirm error toast: "You're offline. Please reconnect to save changes."
+6. **Reconnect** — re-enable network. Confirm offline banner disappears and data refreshes
 
 ---
 
