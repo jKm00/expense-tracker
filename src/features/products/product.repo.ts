@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
 import type { Product } from "./product.models";
-import { and, eq, ilike, notExists } from "drizzle-orm";
+import { and, count, eq, ilike, notExists } from "drizzle-orm";
 import { product } from "./product.schema";
 import { productTag, tag } from "../tags/tag.schema";
 import { productMappers } from "./product.mappers";
+import { transaction } from "../transactions/transaction.schema";
+import { recurringProduct } from "../recurring/recurring.schema";
 
 async function get(id: string) {
   return await db.query.product.findFirst({
@@ -71,14 +73,35 @@ async function update(
   id: string,
   data: Partial<Omit<Product, "id" | "userId" | "createdAt" | "updatedAt">>,
 ) {
-  await db
-    .update(product)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(product.id, id));
+  return (
+    await db
+      .update(product)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(product.id, id))
+      .returning()
+  )[0];
 }
 
 async function deleteProduct(id: string) {
-  await db.delete(product).where(eq(product.id, id));
+  return (
+    await db.delete(product).where(eq(product.id, id)).returning()
+  )[0];
+}
+
+async function getUsage(productId: string) {
+  const transactionCount = await db
+    .select({ count: count() })
+    .from(transaction)
+    .where(eq(transaction.productId, productId))
+    .then((r) => Number(r[0].count));
+
+  const hasRecurring = await db
+    .select({ id: recurringProduct.id })
+    .from(recurringProduct)
+    .where(eq(recurringProduct.productId, productId))
+    .then((r) => r.length > 0);
+
+  return { transactionCount, hasRecurring };
 }
 
 export const productRepo = {
@@ -89,4 +112,5 @@ export const productRepo = {
   save,
   update,
   deleteProduct,
+  getUsage,
 };
