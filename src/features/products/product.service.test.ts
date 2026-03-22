@@ -127,6 +127,19 @@ describe("productService", () => {
       expect(err!.reason).toBe("PRODUCT_NOT_FOUND");
     });
 
+    it("returns error when user does not own product", async () => {
+      mockRepo.get.mockResolvedValue({
+        ...mockProduct,
+        userId: "other-user",
+      });
+
+      const [err] = await productService.getProductUsage("user-1", "prod-1");
+
+      expect(err).not.toBeNull();
+      expect(err!.reason).toBe("PRODUCT_FORBIDDEN");
+      expect(mockRepo.getUsage).not.toHaveBeenCalled();
+    });
+
     it("returns usage data when product exists and user owns it", async () => {
       const usage = { transactionCount: 5, hasRecurring: true };
       mockRepo.get.mockResolvedValue(mockProduct);
