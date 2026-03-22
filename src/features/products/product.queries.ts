@@ -17,7 +17,16 @@ function getProductOptions(productId: string) {
   });
 }
 
+function getProductUsageOptions(productId: string) {
+  return queryOptions({
+    queryKey: [PRODUCT_QUERY_KEY, productId, "usage"],
+    queryFn: () =>
+      productController.getProductUsage({ data: { productId } }),
+  });
+}
+
 export const productQueries = {
   getProductsOptions,
   getProductOptions,
+  getProductUsageOptions,
 };
