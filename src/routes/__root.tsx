@@ -30,11 +30,31 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: "JKM Expense Tracker",
       },
+      {
+        name: "theme-color",
+        content: "#0a0a0a",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "black-translucent",
+      },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/icons/apple-touch-icon.png",
       },
     ],
   }),
