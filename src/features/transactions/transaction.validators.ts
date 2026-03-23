@@ -8,6 +8,14 @@ const editFormValidation = z.object({
   description: z.string().optional(),
 });
 
+const addFormValidation = z.object({
+  productName: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
+  price: numberInputValidator,
+  type: z.enum(["expense", "income"]),
+});
+
 export const transactionValidators = {
+  addFormValidation,
   editFormValidation,
 };

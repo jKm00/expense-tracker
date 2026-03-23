@@ -79,3 +79,53 @@ describe("transactionValidators.editFormValidation", () => {
     expect(result.success).toBe(true);
   });
 });
+
+describe("transactionValidators.addFormValidation", () => {
+  const schema = transactionValidators.addFormValidation;
+
+  it("accepts valid add transaction data", () => {
+    const result = schema.safeParse({
+      productName: "Groceries",
+      description: "Weekly shopping",
+      price: "42.50",
+      type: "expense",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts data without description", () => {
+    const result = schema.safeParse({
+      productName: "Coffee",
+      price: "5",
+      type: "income",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty product name", () => {
+    const result = schema.safeParse({
+      productName: "",
+      price: "10",
+      type: "expense",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-numeric price", () => {
+    const result = schema.safeParse({
+      productName: "Coffee",
+      price: "abc",
+      type: "expense",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid type", () => {
+    const result = schema.safeParse({
+      productName: "Coffee",
+      price: "5",
+      type: "refund",
+    });
+    expect(result.success).toBe(false);
+  });
+});
