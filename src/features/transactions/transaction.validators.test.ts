@@ -128,4 +128,13 @@ describe("transactionValidators.addFormValidation", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects empty price", () => {
+    const result = schema.safeParse({
+      productName: "Coffee",
+      price: "",
+      type: "expense",
+    });
+    expect(result.success).toBe(false);
+  });
 });
