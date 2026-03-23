@@ -6,7 +6,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/transactions")({
+export const Route = createFileRoute("/_app/dashboard/transactions/")({
   loader: async ({ context }) => {
     context.queryClient.prefetchQuery(
       transactionQueries.getTransactionsOptions,
