@@ -1,106 +1,180 @@
-import { transactionMutations } from "@/features/transactions/transaction.mutations";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { transactionQueries } from "@/features/transactions/transaction.queries";
+import { AddTransactionForm } from "@/features/transactions/components/add-transaction.form";
+import { PageHeader } from "@/components/custom/page-header";
+import { SkeletonPage } from "@/components/custom/skeleton-page";
+import { SkeletonCard } from "@/components/custom/skeleton-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_app/dashboard/")({
+  loader: async ({ context }) => {
+    context.queryClient.prefetchQuery(
+      transactionQueries.getTransactionsOptions,
+    );
+  },
   component: RouteComponent,
 });
 
+function DashboardSkeleton() {
+  return (
+    <SkeletonPage>
+      <div className="grid grid-cols-3 gap-4">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <Skeleton className="h-64 w-full rounded-lg" />
+      <Skeleton className="h-48 w-full rounded-lg" />
+    </SkeletonPage>
+  );
+}
+
 function RouteComponent() {
-  const [product, setProduct] = useState("");
-  const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Dashboard" />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardContent />
+      </Suspense>
+    </div>
+  );
+}
 
-  const mutation = transactionMutations.addTransaction();
+function DashboardContent() {
+  const { data } = useSuspenseQuery(transactionQueries.getTransactionsOptions);
+  const [err, transactions] = data;
 
-  function handleTransaction(type: "income" | "expense") {
-    if (!validate()) {
-      return;
-    }
-
-    mutation.mutate(
-      {
-        productName: product,
-        description: desc,
-        price: Number(price),
-        type,
-        source: "manual",
-      },
-      {
-        onSuccess: () => {
-          setProduct("");
-          setDesc("");
-          setPrice("");
-        },
-      },
-    );
+  if (err) {
+    return <p className="text-muted-foreground">Failed to load dashboard data.</p>;
   }
 
-  function validate() {
-    setError(null);
+  // Calculate balance summary
+  const totalIncome = transactions
+    .filter((t) => t.transaction.type === "income")
+    .reduce((sum, t) => sum + Number(t.transaction.price), 0);
 
-    if (product.length < 1) {
-      setError("Product must be 1 char");
-      return false;
-    }
+  const totalExpenses = transactions
+    .filter((t) => t.transaction.type === "expense")
+    .reduce((sum, t) => sum + Number(t.transaction.price), 0);
 
-    if (price.length < 1) {
-      setError("Must enter a price");
-      return false;
-    }
+  const netBalance = totalIncome - totalExpenses;
 
-    const num = Number(price);
-    if (Number.isNaN(num)) {
-      setError("Must be a valid number for price");
-      return;
-    }
-
-    return true;
-  }
+  // Recent transactions (last 10)
+  const recentTransactions = transactions.slice(0, 10);
 
   return (
-    <div>
-      <form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="string"
-          placeholder="product..."
-          className="border"
-          value={product}
-          onChange={(e) => setProduct(e.target.value)}
-        />
-        <input
-          type="string"
-          placeholder="description..."
-          className="border"
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-        />
-        <input
-          type="string"
-          placeholder="price..."
-          className="border"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-        {error && <p>{error}</p>}
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="grow"
-            onClick={() => handleTransaction("expense")}
+    <div className="space-y-6">
+      {/* Balance summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Income
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-500">
+              {totalIncome.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Expenses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-red-500">
+              {totalExpenses.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Net Balance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p
+              className={`text-2xl font-bold ${netBalance >= 0 ? "text-green-500" : "text-red-500"}`}
+            >
+              {netBalance.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Add transaction form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Transaction</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AddTransactionForm />
+        </CardContent>
+      </Card>
+
+      {/* Recent transactions */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent Transactions</h2>
+          <Link
+            to="/dashboard/transactions"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Expense
-          </button>
-          <button
-            type="submit"
-            className="grow"
-            onClick={() => handleTransaction("income")}
-          >
-            Income
-          </button>
+            View all
+          </Link>
         </div>
-      </form>
+        {recentTransactions.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No transactions yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {recentTransactions.map((row) => (
+              <Link
+                key={row.transaction.id}
+                to="/dashboard/transactions/$id"
+                params={{ id: row.transaction.id }}
+                className="block"
+              >
+                <Card className="hover:bg-accent/50 transition-colors">
+                  <CardContent className="flex items-center justify-between py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">
+                        {row.product?.name ?? "Unknown"}
+                      </p>
+                      {row.transaction.description && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          {row.transaction.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right ml-4 shrink-0">
+                      <p
+                        className={`font-semibold ${
+                          row.transaction.type === "income"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {row.transaction.type === "income" ? "+" : "-"}
+                        {Number(row.transaction.price).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {row.transaction.date}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
