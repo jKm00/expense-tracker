@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { AuthProvider } from "@/features/auth/auth.provider";
 import { getSession } from "@/features/auth/auth.utils";
+import { OfflineBanner } from "@/components/custom/offline-banner";
 import {
   createFileRoute,
   Link,
@@ -47,6 +48,7 @@ function AppLayout() {
 
   return (
     <AuthProvider>
+      <OfflineBanner />
       <div
         className="mx-auto relative min-h-screen"
         style={{ width: "min(100%, 500px)" }}

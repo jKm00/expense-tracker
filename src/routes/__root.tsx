@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
+import { ReloadPrompt } from "@/components/custom/reload-prompt";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -30,11 +31,31 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: "JKM Expense Tracker",
       },
+      {
+        name: "theme-color",
+        content: "#0a0a0a",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "black-translucent",
+      },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/icons/apple-touch-icon.png",
       },
     ],
   }),
@@ -51,6 +72,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body suppressHydrationWarning>
         {children}
         <Toaster />
+        <ReloadPrompt />
         <TanStackDevtools
           config={{
             position: "bottom-right",

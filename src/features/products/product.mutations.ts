@@ -1,21 +1,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   CreateProductDTO,
   UpdateProductDTO,
   productController,
 } from "./product.controller";
 import { PRODUCT_QUERY_KEY } from "./product.queries";
+import { assertOnline } from "@/lib/offline-guard";
 
 function createProduct() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateProductDTO) =>
-      productController.createProduct({ data }),
+    mutationFn: async (data: CreateProductDTO) => {
+      assertOnline();
+      return await productController.createProduct({ data });
+    },
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: [PRODUCT_QUERY_KEY],
       });
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 }
@@ -24,8 +31,10 @@ function updateProduct() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateProductDTO) =>
-      productController.updateProduct({ data }),
+    mutationFn: async (data: UpdateProductDTO) => {
+      assertOnline();
+      return await productController.updateProduct({ data });
+    },
     onSuccess: (data) => {
       const [error, product] = data;
       // Invalidate list query
@@ -43,6 +52,9 @@ function updateProduct() {
         });
       }
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -50,8 +62,10 @@ function deleteProduct() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { productId: string }) =>
-      productController.deleteProduct({ data }),
+    mutationFn: async (data: { productId: string }) => {
+      assertOnline();
+      return await productController.deleteProduct({ data });
+    },
     onSuccess: (_, variables) => {
       const productId = variables.productId;
       // Invalidate list query
@@ -66,6 +80,9 @@ function deleteProduct() {
       qc.invalidateQueries({
         queryKey: [PRODUCT_QUERY_KEY, productId],
       });
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 }
