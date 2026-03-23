@@ -77,6 +77,15 @@ function Product() {
     );
   }
 
+  if (!product) {
+    return (
+      <EmptyState
+        message="Product not found."
+        icon={AlertTriangleIcon}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Edit Product Name */}
