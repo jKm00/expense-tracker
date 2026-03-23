@@ -1,8 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
+import { RecurringList } from "@/features/recurring/components/recurring-list";
+import { PageHeader } from "@/components/custom/page-header";
+import { SkeletonList } from "@/components/custom/skeleton-list";
+import { EmptyState } from "@/components/custom/empty-state";
+import { Button } from "@/components/ui/button";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
+import { PlusIcon, AlertTriangleIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/")({
   loader: async ({ context }) => {
@@ -15,46 +20,49 @@ export const Route = createFileRoute("/_app/dashboard/recurring/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="flex justify-between">
-        <h2>Recurring Transactions</h2>
-        <Button asChild variant="outline">
-          <Link to="/dashboard/recurring/new">Create</Link>
-        </Button>
-      </div>
-      <Suspense fallback={<p>Loading recurring products...</p>}>
-        <RecurringList />
+    <div className="space-y-6">
+      <PageHeader
+        title="Recurring"
+        action={
+          <Button asChild size="sm">
+            <Link to="/dashboard/recurring/new">
+              <PlusIcon className="size-4 mr-2" />
+              Create
+            </Link>
+          </Button>
+        }
+      />
+      <Suspense fallback={<SkeletonList rows={5} />}>
+        <RecurringListSection />
       </Suspense>
     </div>
   );
 }
 
-function RecurringList() {
-  const { data } = useSuspenseQuery(
+function RecurringListSection() {
+  const { data, error } = useSuspenseQuery(
     recurringQueries.getRecurringProductsOptions(),
   );
 
-  const [error, recurring] = data;
-
   if (error) {
-    const reason = error.reason;
-    switch (reason) {
-      case "FETCH_RECURRING_ERROR":
-        return <p>Failed to fetch recurring items, please try again</p>;
-      default:
-        return <p>Unkown error: {reason satisfies never}</p>;
-    }
+    return (
+      <EmptyState
+        message="Failed to load recurring transactions."
+        icon={AlertTriangleIcon}
+      />
+    );
   }
 
-  return (
-    <div>
-      {recurring.map((item) => (
-        <Button key={item.id} asChild variant="outline">
-          <Link to="/dashboard/recurring/$id" params={{ id: item.id }}>
-            {item.product.name}
-          </Link>
-        </Button>
-      ))}
-    </div>
-  );
+  const [err, recurring] = data;
+
+  if (err) {
+    return (
+      <EmptyState
+        message="Failed to load recurring transactions. Please try again."
+        icon={AlertTriangleIcon}
+      />
+    );
+  }
+
+  return <RecurringList items={recurring} />;
 }
