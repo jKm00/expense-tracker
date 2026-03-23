@@ -1,8 +1,12 @@
-import { ProductWithTags } from "@/features/products/product.models";
 import { productQueries } from "@/features/products/product.queries";
+import { ProductList } from "@/features/products/components/product-list";
+import { PageHeader } from "@/components/custom/page-header";
+import { SkeletonList } from "@/components/custom/skeleton-list";
+import { Button } from "@/components/ui/button";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
+import { PlusIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
@@ -20,13 +24,26 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
 
 function RouteComponent() {
   return (
-    <div className="grid gap-4">
-      <Suspense fallback={<p>Loading untagged products...</p>}>
-        <UntaggedProductList />
-      </Suspense>
-      <Suspense fallback={<p>Loading all products...</p>}>
-        <AllProductList />
-      </Suspense>
+    <div className="space-y-6">
+      <PageHeader
+        title="Products"
+        action={
+          <Button asChild size="sm">
+            <Link to="/dashboard/products/new">
+              <PlusIcon className="size-4 mr-2" />
+              Create Product
+            </Link>
+          </Button>
+        }
+      />
+      <div className="space-y-8">
+        <Suspense fallback={<SkeletonList rows={3} />}>
+          <UntaggedProductList />
+        </Suspense>
+        <Suspense fallback={<SkeletonList rows={5} />}>
+          <AllProductList />
+        </Suspense>
+      </div>
     </div>
   );
 }
@@ -38,48 +55,31 @@ function UntaggedProductList() {
     }),
   );
 
-  return (
-    <div>
-      <h2>Untagged products</h2>
-      <ProductList data={data} error={error} />
-    </div>
-  );
+  if (error) {
+    return <p className="text-muted-foreground">Failed to load untagged products.</p>;
+  }
+
+  const [err, products] = data;
+
+  if (err || !products) {
+    return <p className="text-muted-foreground">Failed to load untagged products.</p>;
+  }
+
+  return <ProductList products={products} title="Untagged Products" />;
 }
 
 function AllProductList() {
   const { data, error } = useSuspenseQuery(productQueries.getProductsOptions());
 
-  return (
-    <div>
-      <h2>All products</h2>
-      <ProductList data={data} error={error} />
-    </div>
-  );
-}
-
-type ProductListProps = {
-  data: [{ reason: string } | null, ProductWithTags[] | null];
-  error: Error | null;
-};
-
-function ProductList({ data, error }: ProductListProps) {
-  if (error) return <p>error 1</p>;
+  if (error) {
+    return <p className="text-muted-foreground">Failed to load products.</p>;
+  }
 
   const [err, products] = data;
 
-  if (err || !products) return <p>error 2: {JSON.stringify(err)}</p>;
+  if (err || !products) {
+    return <p className="text-muted-foreground">Failed to load products.</p>;
+  }
 
-  return (
-    <div className="flex flex-col">
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          to="/dashboard/products/$productId"
-          params={{ productId: product.id }}
-        >
-          {product.name}
-        </Link>
-      ))}
-    </div>
-  );
+  return <ProductList products={products} title="All Products" />;
 }
