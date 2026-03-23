@@ -1,6 +1,6 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Registers the service worker and shows a Sonner toast when a new version
@@ -10,6 +10,10 @@ import { useEffect } from "react";
  * and triggers toasts as side effects.
  */
 export function ReloadPrompt() {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
+
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -19,7 +23,7 @@ export function ReloadPrompt() {
 
       // Check for updates every hour
       if (registration) {
-        setInterval(
+        intervalRef.current = setInterval(
           () => {
             registration.update();
           },
@@ -31,6 +35,15 @@ export function ReloadPrompt() {
       console.error("SW registration error:", error);
     },
   });
+
+  // Clean up the polling interval when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current !== undefined) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (needRefresh) {
