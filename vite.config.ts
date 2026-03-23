@@ -12,6 +12,14 @@ const config = defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+    dedupe: ['react', 'react-dom'],
+  },
+  test: {
+    environment: 'node',
+    globals: false,
+    // Ensure React module instance is shared between ESM imports and CJS requires.
+    // See src/test-setup.ts for the explanation.
+    setupFiles: ['./src/test-setup.ts'],
   },
   plugins: [
     devtools(),
