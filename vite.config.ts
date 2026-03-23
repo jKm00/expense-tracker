@@ -13,6 +13,9 @@ const config = defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  test: {
+    exclude: ['.worktrees/**', 'node_modules/**', '.opencode/**'],
+  },
   plugins: [
     devtools(),
     // this is the plugin that enables path aliases
