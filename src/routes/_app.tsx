@@ -1,31 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { AuthProvider } from "@/features/auth/auth.provider";
-import { getSession } from "@/features/auth/auth.utils";
 import { OfflineBanner } from "@/components/custom/offline-banner";
+import { getSession } from "@/features/auth/auth.utils";
+import { MobileNav } from "@/components/custom/mobile-nav";
+import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
 import {
   createFileRoute,
-  Link,
   Outlet,
   redirect,
-  useLocation,
 } from "@tanstack/react-router";
-
-const links = [
-  {
-    label: "Home",
-    href: "/dashboard",
-  },
-  {
-    label: "Transactions",
-    href: "/dashboard/transactions",
-  },
-  { label: "Products", href: "/dashboard/products" },
-  { label: "Recurring Transactions", href: "/dashboard/recurring" },
-  {
-    label: "Profile",
-    href: "/dashboard/profile",
-  },
-] as const;
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -44,32 +26,27 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const location = useLocation();
-
   return (
     <AuthProvider>
       <OfflineBanner />
-      <div
-        className="mx-auto relative min-h-screen"
-        style={{ width: "min(100%, 500px)" }}
-      >
-        <Outlet />
-        <nav className="absolute bottom-0 left-0 right-0">
-          <div className="flex gap-2">
-            {links.map((link) => (
-              <Button
-                key={link.label}
-                variant={
-                  location.pathname === link.href ? "default" : "outline"
-                }
-                className="grow text-center"
-                asChild
-              >
-                <Link to={link.href}>{link.label}</Link>
-              </Button>
-            ))}
-          </div>
-        </nav>
+      <div className="min-h-screen bg-background">
+        {/* Desktop: sidebar + content */}
+        <div className="hidden md:flex">
+          <DesktopSidebar />
+          <main className="flex-1 p-6">
+            <div className="mx-auto max-w-3xl">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+
+        {/* Mobile: content + bottom nav */}
+        <div className="md:hidden flex flex-col min-h-screen">
+          <main className="flex-1 p-4 pb-20">
+            <Outlet />
+          </main>
+          <MobileNav />
+        </div>
       </div>
     </AuthProvider>
   );
