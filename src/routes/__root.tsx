@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
+import { ReloadPrompt } from "@/components/custom/reload-prompt";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -71,6 +72,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body suppressHydrationWarning>
         {children}
         <Toaster />
+        <ReloadPrompt />
         <TanStackDevtools
           config={{
             position: "bottom-right",
