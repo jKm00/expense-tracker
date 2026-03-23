@@ -17,6 +17,7 @@ const config = defineConfig({
   test: {
     environment: 'node',
     globals: false,
+    exclude: ['.worktrees/**', 'node_modules/**', '.opencode/**'],
     // Ensure React module instance is shared between ESM imports and CJS requires.
     // See src/test-setup.ts for the explanation.
     setupFiles: ['./src/test-setup.ts'],
