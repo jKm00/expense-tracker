@@ -1,15 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTagDialog } from "@/features/tags/components/create-tag.dialog";
 import { LinkTagToProductDialog } from "@/features/tags/components/link-tag-to-product.dialog";
 import { productQueries } from "@/features/products/product.queries";
 import { tagMutations } from "@/features/tags/tag.mutations";
 import { EditProductForm } from "@/features/products/components/edit-product.form";
 import { DeleteProductDialog } from "@/features/products/components/delete-product.alert";
+import { PageHeader } from "@/components/custom/page-header";
+import { SkeletonForm } from "@/components/custom/skeleton-form";
+import { EmptyState } from "@/components/custom/empty-state";
+import { getErrorMessage } from "@/utils/error-messages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { X } from "lucide-react";
-import { Suspense, useState } from "react";
+import { X, AlertTriangleIcon } from "lucide-react";
+import { Suspense } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/dashboard/products/$productId")({
@@ -27,9 +32,12 @@ export const Route = createFileRoute("/_app/dashboard/products/$productId")({
 
 function RouteComponent() {
   return (
-    <Suspense fallback={<p>Loading product...</p>}>
-      <Product />
-    </Suspense>
+    <div className="space-y-6">
+      <PageHeader title="Product Details" />
+      <Suspense fallback={<SkeletonForm fields={3} />}>
+        <Product />
+      </Suspense>
+    </div>
   );
 }
 
@@ -43,8 +51,6 @@ function Product() {
   const [err, product] = data;
   const tags = product?.tags ?? [];
 
-  const [edited, setEdited] = useState(false);
-
   function unlinkTag(tagId: string) {
     mutation.mutate(
       {
@@ -55,9 +61,7 @@ function Product() {
         onSuccess: (data) => {
           const [err] = data;
           if (err) {
-            toast(err.message);
-          } else {
-            setEdited(false);
+            toast.error(err.message);
           }
         },
       },
@@ -65,56 +69,67 @@ function Product() {
   }
 
   if (err) {
-    const reason = err.reason;
-    switch (reason) {
-      case "PRODUCT_NOT_FOUND":
-        return <p>Product with id {productId} not found</p>;
-      case "PRODUCT_FORBIDDEN":
-        return <p>You do not have access to product with id {productId}</p>;
-      default:
-        return <p>Unknown error: {reason satisfies never}</p>;
-    }
+    return (
+      <EmptyState
+        message={getErrorMessage(err)}
+        icon={AlertTriangleIcon}
+      />
+    );
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Edit Product Name */}
-      <h2>Edit Product</h2>
-      <EditProductForm product={product} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Product</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EditProductForm product={product} />
+        </CardContent>
+      </Card>
 
       {/* Tags Section */}
-      <h3>Tags</h3>
-      <div className="flex gap-2">
-        {tags.map((tag) => (
-          <Badge key={tag.id} variant="outline">
-            {tag.name}
-            <Button
-              onClick={() => unlinkTag(tag.id)}
-              variant="ghost"
-              size="xs"
-              className="px-0"
-            >
-              <X />
-            </Button>
-          </Badge>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <LinkTagToProductDialog product={product} />
-        <CreateTagDialog />
-        <Button
-          disabled={!edited}
-          onClick={() => console.log("TODO: Save new tags")}
-        >
-          Save
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tags</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {tags.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tags assigned.</p>
+            ) : (
+              tags.map((tag) => (
+                <Badge key={tag.id} variant="outline">
+                  {tag.name}
+                  <Button
+                    onClick={() => unlinkTag(tag.id)}
+                    variant="ghost"
+                    size="xs"
+                    className="px-0 ml-1"
+                  >
+                    <X className="size-3" />
+                  </Button>
+                </Badge>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2">
+            <LinkTagToProductDialog product={product} />
+            <CreateTagDialog />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Danger Zone */}
-      <div>
-        <h3>Danger Zone</h3>
-        <DeleteProductDialog productId={productId} />
-      </div>
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DeleteProductDialog productId={productId} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
