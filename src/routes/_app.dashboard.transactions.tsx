@@ -1,6 +1,9 @@
 import { transactionQueries } from "@/features/transactions/transaction.queries";
+import { TransactionList } from "@/features/transactions/components/transaction-list";
+import { PageHeader } from "@/components/custom/page-header";
+import { SkeletonList } from "@/components/custom/skeleton-list";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions")({
@@ -14,42 +17,22 @@ export const Route = createFileRoute("/_app/dashboard/transactions")({
 
 function RouteComponent() {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
-      <TransactionsList />
-    </Suspense>
+    <div className="space-y-6">
+      <PageHeader title="Transactions" />
+      <Suspense fallback={<SkeletonList rows={8} />}>
+        <TransactionsContent />
+      </Suspense>
+    </div>
   );
 }
 
-function TransactionsList() {
-  const result = useSuspenseQuery(transactionQueries.getTransactionsOptions);
-
-  if (result.error) {
-    return <p>{result.error.message}</p>;
-  }
-
-  const [err, data] = result.data;
+function TransactionsContent() {
+  const { data } = useSuspenseQuery(transactionQueries.getTransactionsOptions);
+  const [err, transactions] = data;
 
   if (err) {
-    return <p>{err.reason}</p>;
+    return <p className="text-muted-foreground">Failed to load transactions.</p>;
   }
 
-  return (
-    <div>
-      <h2>Transactions</h2>
-      <ul>
-        {data.map((row) => (
-          <li key={row.transaction.id}>
-            <Link
-              to="/dashboard/transactions/$id"
-              params={{ id: row.transaction.id }}
-              className={`block ${row.transaction.type === "income" ? "text-green-400" : "text-red-400"}`}
-            >
-              {row.product?.name} - {row.transaction.price} -{" "}
-              {row.transaction.date}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <TransactionList transactions={transactions} />;
 }
