@@ -1,1 +1,0 @@
-ALTER TYPE "interval" RENAME TO "recurring_interval";

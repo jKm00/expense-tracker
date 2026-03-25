@@ -1,21 +1,11 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "50c7e300-cd49-42ac-b8cc-4bd1dd847942",
+  "id": "2c29fd35-3a75-4ca0-899e-e7e6385c9a2e",
   "prevIds": [
-    "bbb56c74-aede-418b-84cf-205c8440ed23"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
-    {
-      "values": [
-        "weekly",
-        "monthly",
-        "yearly"
-      ],
-      "name": "recurring_interval",
-      "entityType": "enums",
-      "schema": "public"
-    },
     {
       "values": [
         "receipt",
@@ -67,13 +57,13 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "product_tag",
+      "name": "recurring_product",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "recurring_product",
+      "name": "product_tag",
       "entityType": "tables",
       "schema": "public"
     },
@@ -601,32 +591,6 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "product_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "product_tag"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tag_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "product_tag"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
       "default": "gen_random_uuid()",
       "generated": null,
       "identity": null,
@@ -662,14 +626,27 @@
       "table": "recurring_product"
     },
     {
-      "type": "recurring_interval",
-      "typeSchema": "public",
+      "type": "text",
+      "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "interval",
+      "name": "recurring_interval",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "recurring_product"
+    },
+    {
+      "type": "transaction_type",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'expense'",
+      "generated": null,
+      "identity": null,
+      "name": "type",
       "entityType": "columns",
       "schema": "public",
       "table": "recurring_product"
@@ -738,6 +715,32 @@
       "entityType": "columns",
       "schema": "public",
       "table": "recurring_product"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "product_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "product_tag"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tag_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "product_tag"
     },
     {
       "type": "uuid",
@@ -971,6 +974,27 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "recurring_product_product_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "recurring_product"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "product_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "product_tag_product_id_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -996,27 +1020,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "product_tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "product_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "recurring_product_product_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "recurring_product"
     },
     {
       "nameExplicit": true,
@@ -1162,7 +1165,7 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "item_user_id_user_id_fkey",
+      "name": "product_user_id_user_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "product"
@@ -1179,7 +1182,24 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "item_tag_item_id_item_id_fkey",
+      "name": "recurring_product_product_id_product_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "recurring_product"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "product_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "product",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "product_tag_product_id_product_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "product_tag"
@@ -1196,27 +1216,10 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "item_tag_tag_id_tag_id_fkey",
+      "name": "product_tag_tag_id_tag_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "product_tag"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "product_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "product",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "recurring_item_item_id_item_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "recurring_product"
     },
     {
       "nameExplicit": false,
@@ -1264,7 +1267,7 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "transaction_item_id_item_id_fkey",
+      "name": "transaction_product_id_product_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "transaction"
@@ -1275,7 +1278,7 @@
         "tag_id"
       ],
       "nameExplicit": false,
-      "name": "item_tag_pkey",
+      "name": "product_tag_pkey",
       "entityType": "pks",
       "schema": "public",
       "table": "product_tag"
@@ -1325,7 +1328,7 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "item_pkey",
+      "name": "product_pkey",
       "schema": "public",
       "table": "product",
       "entityType": "pks"
@@ -1335,7 +1338,7 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "recurring_item_pkey",
+      "name": "recurring_product_pkey",
       "schema": "public",
       "table": "recurring_product",
       "entityType": "pks"
@@ -1388,13 +1391,11 @@
         "product_id"
       ],
       "nullsNotDistinct": false,
-      "name": "recurring_item_item_id_key",
+      "name": "recurring_product_product_id_key",
       "schema": "public",
       "table": "recurring_product",
       "entityType": "uniques"
     }
   ],
-  "renames": [
-    "public.interval->public.recurring_interval"
-  ]
+  "renames": []
 }
