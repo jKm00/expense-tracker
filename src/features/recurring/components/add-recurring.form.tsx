@@ -3,7 +3,7 @@ import { recurringValidators } from "../recurring.validators";
 import { recurringMutations } from "../recurring.mutations";
 import { productQueries } from "@/features/products/product.queries";
 import { ProductWithTags } from "@/features/products/product.models";
-import { RecurringInterval } from "../recurring.models";
+import { RecurringInterval, RecurringType } from "../recurring.models";
 import { getErrorMessage } from "@/utils/error-messages";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,6 +49,7 @@ export function AddRecurringForm() {
       productId: "",
       price: "",
       interval: "" as string,
+      type: "expense" as string,
       startDate: undefined as Date | undefined,
       endDate: undefined as Date | undefined,
     },
@@ -62,6 +63,7 @@ export function AddRecurringForm() {
           productId: value.productId,
           price: Number(value.price),
           interval: value.interval as RecurringInterval,
+          type: value.type as RecurringType,
           startDate: value.startDate!,
           endDate: value.endDate,
         },
@@ -167,6 +169,29 @@ export function AddRecurringForm() {
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldError field={field} />
+          </FormField>
+        )}
+      />
+      <form.Field
+        name="type"
+        children={(field) => (
+          <FormField label="Type">
+            <Select
+              value={field.state.value}
+              onValueChange={(v) => field.handleChange(v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Type</SelectLabel>
+                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
