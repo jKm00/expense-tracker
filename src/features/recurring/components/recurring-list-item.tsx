@@ -15,7 +15,7 @@ export function RecurringListItem({
       className="block"
     >
       <Card className="hover:bg-accent/50 transition-colors">
-        <CardContent className="flex items-center justify-between py-3">
+        <CardContent className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <span
               className={`size-2 rounded-full shrink-0 ${
