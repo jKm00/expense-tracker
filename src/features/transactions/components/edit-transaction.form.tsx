@@ -77,6 +77,7 @@ export function EditTransactionForm({
         e.preventDefault();
         form.handleSubmit();
       }}
+      className="space-y-4"
     >
       <form.Field
         name="price"
@@ -101,7 +102,9 @@ export function EditTransactionForm({
             <label>Type</label>
             <Select
               value={field.state.value}
-              onValueChange={(v) => field.handleChange(v as "income" | "expense")}
+              onValueChange={(v) =>
+                field.handleChange(v as "income" | "expense")
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select type" />
@@ -123,44 +126,11 @@ export function EditTransactionForm({
         children={(field) => (
           <>
             <label>Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-empty={!field.state.value}
-                  className="w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                >
-                  {field.state.value ? (
-                    format(new Date(field.state.value + "T00:00:00"), "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                  <ChevronDownIcon />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={
-                    field.state.value
-                      ? new Date(field.state.value + "T00:00:00")
-                      : undefined
-                  }
-                  onSelect={(v) => {
-                    if (v) {
-                      // Format as YYYY-MM-DD string
-                      const dateStr = v.toISOString().split("T")[0];
-                      field.handleChange(dateStr);
-                    }
-                  }}
-                  defaultMonth={
-                    field.state.value
-                      ? new Date(field.state.value + "T00:00:00")
-                      : new Date()
-                  }
-                />
-              </PopoverContent>
-            </Popover>
+            <Input
+              type="date"
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
             <FieldError field={field} />
           </>
         )}
@@ -169,7 +139,10 @@ export function EditTransactionForm({
         name="description"
         children={(field) => (
           <>
-            <label>Description</label>
+            <label>
+              Description{" "}
+              <span className="text-muted-foreground">(Optional)</span>
+            </label>
             <Input
               name={field.name}
               type="text"
