@@ -15,6 +15,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Tag } from "../tag.models";
 import { tagMutations } from "../tag.mutations";
 import { ProductWithTags } from "@/features/products/product.models";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export function LinkTagToProductDialog({
   product,
@@ -22,45 +24,51 @@ export function LinkTagToProductDialog({
   product: ProductWithTags;
 }) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Tag | null>(null);
+  const [selected, setSelected] = useState<Tag[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
 
   const { data: tagsReponse } = useQuery(tagQueries.getTagsOptions());
   const [_, tags] = useMemo(() => tagsReponse || [null, []], [tagsReponse]);
   const filteredTags = useMemo(() => {
     if (!tags) return [];
     const mappedProductTags = product.tags.map((t) => t.id);
-    return tags.filter((tag) => !mappedProductTags.includes(tag.id));
-  }, [tags, product]);
+    return tags
+      .filter((tag) => !mappedProductTags.includes(tag.id))
+      .filter((tag) => tag.name.toLowerCase().includes(filter.toLowerCase()));
+  }, [tags, product, filter]);
 
   const mutation = tagMutations.linkTagToProduct();
 
   function handleOpenChange(isOpen: boolean) {
-    setSelected(null);
+    setSelected([]);
     setOpen(isOpen);
   }
 
-  function handleSubmit() {
-    if (!selected) return;
+  async function handleSubmit() {
+    if (selected.length === 0) {
+      toast.error("Select at least one tag before submitting...");
+      return;
+    }
+
     setError(null);
 
-    mutation.mutate(
-      {
-        tagId: selected.id,
-        productId: product.id,
-      },
-      {
-        onSuccess: (data) => {
-          const [err] = data;
-          if (err) {
-            setError(err.message);
-          } else {
-            setSelected(null);
-            setOpen(false);
-          }
-        },
-      },
-    );
+    try {
+      await Promise.all(
+        selected.map((tag) =>
+          mutation.mutateAsync({
+            tagId: tag.id,
+            productId: product.id,
+          }),
+        ),
+      );
+    } catch (error) {
+      // TODO: Better error handling
+      toast.error("Something went wrong...");
+    }
+
+    setSelected([]);
+    setOpen(false);
   }
 
   return (
@@ -73,17 +81,31 @@ export function LinkTagToProductDialog({
           <DialogTitle>Add tag</DialogTitle>
           <DialogDescription>Add tag to product</DialogDescription>
         </DialogHeader>
-        <div>
+        <div className="space-y-4">
+          <Input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Search..."
+          />
           <div className="flex flex-wrap gap-1">
-            {filteredTags.map((tag) => (
-              <Button
-                key={tag.id}
-                onClick={() => setSelected(tag)}
-                variant={selected?.id === tag.id ? "default" : "outline"}
-              >
-                {tag.name}
-              </Button>
-            ))}
+            {filteredTags.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No tags found...</p>
+            ) : (
+              filteredTags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  onClick={() => setSelected((prev) => [...prev, tag])}
+                  variant={
+                    selected.map((s) => s.id).includes(tag.id)
+                      ? "default"
+                      : "outline"
+                  }
+                >
+                  {tag.name}
+                </Button>
+              ))
+            )}
           </div>
           {error && <p className="text-red-400 text-xs">{error}</p>}
         </div>

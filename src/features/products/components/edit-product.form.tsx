@@ -49,6 +49,7 @@ export function EditProductForm({ product }: { product: ProductWithTags }) {
         e.preventDefault();
         form.handleSubmit();
       }}
+      className="space-y-4"
     >
       <form.Field
         name="name"

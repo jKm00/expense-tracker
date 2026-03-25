@@ -3,11 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "@tanstack/react-router";
 import type { ProductWithTags } from "../product.models";
 
-export function ProductListItem({
-  product,
-}: {
-  product: ProductWithTags;
-}) {
+export function ProductListItem({ product }: { product: ProductWithTags }) {
   return (
     <Link
       to="/dashboard/products/$productId"
@@ -15,7 +11,7 @@ export function ProductListItem({
       className="block"
     >
       <Card className="hover:bg-accent/50 transition-colors">
-        <CardContent className="flex items-center justify-between py-3">
+        <CardContent className="flex items-center justify-between">
           <p className="font-medium truncate">{product.name}</p>
           {product.tags.length > 0 && (
             <div className="flex gap-1 ml-2 shrink-0">

@@ -70,20 +70,12 @@ function Product() {
 
   if (err) {
     return (
-      <EmptyState
-        message={getErrorMessage(err)}
-        icon={AlertTriangleIcon}
-      />
+      <EmptyState message={getErrorMessage(err)} icon={AlertTriangleIcon} />
     );
   }
 
   if (!product) {
-    return (
-      <EmptyState
-        message="Product not found."
-        icon={AlertTriangleIcon}
-      />
-    );
+    return <EmptyState message="Product not found." icon={AlertTriangleIcon} />;
   }
 
   return (
@@ -114,7 +106,6 @@ function Product() {
                   <Button
                     onClick={() => unlinkTag(tag.id)}
                     variant="ghost"
-                    size="xs"
                     className="px-0 ml-1"
                   >
                     <X className="size-3" />
