@@ -8,6 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { product } from "../products/product.schema";
+import { transactionType } from "../transactions/transaction.schema";
 
 export const recurringProduct = pgTable(
   "recurring_product",
@@ -19,6 +20,7 @@ export const recurringProduct = pgTable(
       .references(() => product.id, { onDelete: "cascade" }),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     interval: text("recurring_interval").notNull(),
+    type: transactionType().notNull().default("expense"),
     startDate: timestamp("start_date").notNull(),
     endDate: timestamp("end_date"),
     isActive: boolean("is_active").notNull().default(true),
