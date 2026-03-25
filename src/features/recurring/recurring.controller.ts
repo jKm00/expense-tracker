@@ -26,6 +26,7 @@ const NewRecurringProductSchema = z.object({
   productId: z.string(),
   price: z.number(),
   interval: z.enum(["weekly", "monthly", "yearly"]),
+  type: z.enum(["expense", "income"]),
   startDate: z.date(),
   endDate: z.date().optional(),
 });
@@ -48,6 +49,7 @@ const UpdateRecurringProductSchema = z.object({
   productId: z.string(),
   price: z.number(),
   interval: z.enum(["weekly", "monthly", "yearly"]),
+  type: z.enum(["expense", "income"]),
   startDate: z.date(),
   endDate: z.date().nullable(),
   isActive: z.boolean(),
