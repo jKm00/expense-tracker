@@ -8,6 +8,8 @@ export function RecurringListItem({
 }: {
   recurring: RecurringWithProduct;
 }) {
+  const isIncome = recurring.type === "income";
+
   return (
     <Link
       to="/dashboard/recurring/$id"
@@ -29,7 +31,22 @@ export function RecurringListItem({
             <Badge variant="secondary" className="text-xs capitalize">
               {recurring.interval}
             </Badge>
-            <p className="font-semibold text-red-500">
+            <Badge
+              variant="outline"
+              className={`text-xs capitalize ${
+                isIncome
+                  ? "border-green-500/30 text-green-600 dark:text-green-400"
+                  : "border-red-500/30 text-red-600 dark:text-red-400"
+              }`}
+            >
+              {recurring.type}
+            </Badge>
+            <p
+              className={`font-semibold ${
+                isIncome ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {isIncome ? "+" : "-"}
               {Number(recurring.price).toFixed(2)}
             </p>
           </div>
