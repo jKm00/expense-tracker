@@ -8,6 +8,9 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/custom/empty-state";
+import { ReceiptTextIcon } from "lucide-react";
+import { TransactionListItem } from "@/features/transactions/components/transaction-list-item";
 
 export const Route = createFileRoute("/_app/dashboard/")({
   loader: async ({ context }) => {
@@ -122,46 +125,14 @@ function DashboardContent() {
           </Link>
         </div>
         {recentTransactions.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No transactions yet.</p>
+          <EmptyState
+            message="No transacions yet. Add your first transaction using the form above"
+            icon={ReceiptTextIcon}
+          />
         ) : (
           <div className="space-y-2">
             {recentTransactions.map((row) => (
-              <Link
-                key={row.transaction.id}
-                to="/dashboard/transactions/$id"
-                params={{ id: row.transaction.id }}
-                className="block"
-              >
-                <Card className="hover:bg-accent/50 transition-colors">
-                  <CardContent className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">
-                        {row.product?.name ?? "Unknown"}
-                      </p>
-                      {row.transaction.description && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {row.transaction.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right ml-4 shrink-0">
-                      <p
-                        className={`font-semibold ${
-                          row.transaction.type === "income"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {row.transaction.type === "income" ? "+" : "-"}
-                        {Number(row.transaction.price).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {row.transaction.date}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <TransactionListItem key={row.transaction.id} row={row} />
             ))}
           </div>
         )}

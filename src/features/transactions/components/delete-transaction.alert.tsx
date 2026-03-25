@@ -14,7 +14,13 @@ import { transactionMutations } from "../transaction.mutations";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-export function DeleteTransactionDialog({ id }: { id: string }) {
+export function DeleteTransactionDialog({
+  id,
+  children,
+}: {
+  id: string;
+  children?: React.ReactNode;
+}) {
   const navigate = useNavigate();
   const mutation = transactionMutations.deleteTransaction();
 
@@ -43,8 +49,12 @@ export function DeleteTransactionDialog({ id }: { id: string }) {
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive">Delete Transaction</Button>
+      <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+        {children ? (
+          children
+        ) : (
+          <Button variant="destructive">Delete Transaction</Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -66,4 +76,3 @@ export function DeleteTransactionDialog({ id }: { id: string }) {
     </AlertDialog>
   );
 }
-
