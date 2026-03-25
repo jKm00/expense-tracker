@@ -48,7 +48,9 @@ function DashboardContent() {
   const [err, transactions] = data;
 
   if (err) {
-    return <p className="text-muted-foreground">Failed to load dashboard data.</p>;
+    return (
+      <p className="text-muted-foreground">Failed to load dashboard data.</p>
+    );
   }
 
   // Calculate balance summary
@@ -66,49 +68,7 @@ function DashboardContent() {
   const recentTransactions = transactions.slice(0, 10);
 
   return (
-    <div className="space-y-6">
-      {/* Balance summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-500">
-              {totalIncome.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-500">
-              {totalExpenses.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Net Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p
-              className={`text-2xl font-bold ${netBalance >= 0 ? "text-green-500" : "text-red-500"}`}
-            >
-              {netBalance.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className="space-y-4">
       {/* Add transaction form */}
       <Card>
         <CardHeader>
@@ -118,6 +78,37 @@ function DashboardContent() {
           <AddTransactionForm />
         </CardContent>
       </Card>
+
+      {/* Balance summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent>
+            <h3 className="text-muted-foreground">Income</h3>
+            <p className="text-2xl font-bold text-green-400">
+              {totalIncome.toFixed(2)} ,-
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <h3 className="text-muted-foreground">Expenses</h3>
+            <p className="text-2xl font-bold text-red-400">
+              {totalExpenses.toFixed(2)} ,-
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <h3 className="text-muted-foreground">Net Balance</h3>
+            <p
+              className={`text-2xl font-bold ${netBalance >= 0 ? "text-green-400" : "text-red-400"}`}
+            >
+              {netBalance > 0 ? "+" : netBalance < 0 ? "-" : ""}
+              {netBalance.toFixed(2)} ,-
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent transactions */}
       <div className="space-y-3">
@@ -142,7 +133,7 @@ function DashboardContent() {
                 className="block"
               >
                 <Card className="hover:bg-accent/50 transition-colors">
-                  <CardContent className="flex items-center justify-between py-3">
+                  <CardContent className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">
                         {row.product?.name ?? "Unknown"}
@@ -157,8 +148,8 @@ function DashboardContent() {
                       <p
                         className={`font-semibold ${
                           row.transaction.type === "income"
-                            ? "text-green-500"
-                            : "text-red-500"
+                            ? "text-green-400"
+                            : "text-red-400"
                         }`}
                       >
                         {row.transaction.type === "income" ? "+" : "-"}
