@@ -1,5 +1,5 @@
 import { ProductWithTags } from "@/features/products/product.models";
-import { RecurringInterval, RecurringWithProduct } from "../recurring.models";
+import { RecurringInterval, RecurringType, RecurringWithProduct } from "../recurring.models";
 import { useForm } from "@tanstack/react-form-start";
 import { recurringValidators } from "../recurring.validators";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export function EditRecurringForm({
       productId: recurring.productId,
       price: recurring.price,
       interval: recurring.interval,
+      type: recurring.type,
       startDate: recurring.startDate,
       endDate: recurring.endDate,
       isActive: recurring.isActive,
@@ -60,6 +61,7 @@ export function EditRecurringForm({
         {
           ...value,
           interval: value.interval as RecurringInterval,
+          type: value.type as RecurringType,
           price: Number(value.price),
           id: recurring.id,
         },
@@ -169,6 +171,29 @@ export function EditRecurringForm({
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldError field={field} />
+          </>
+        )}
+      />
+      <form.Field
+        name="type"
+        children={(field) => (
+          <>
+            <Select
+              value={field.state.value}
+              onValueChange={(v) => field.handleChange(v as RecurringType)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Type</SelectLabel>
+                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
