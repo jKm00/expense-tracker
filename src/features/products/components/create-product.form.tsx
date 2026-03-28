@@ -51,6 +51,7 @@ export function CreateProductForm() {
         e.preventDefault();
         form.handleSubmit();
       }}
+      className="space-y-4"
     >
       <form.Field
         name="name"
