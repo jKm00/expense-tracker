@@ -1,5 +1,9 @@
 import { ProductWithTags } from "@/features/products/product.models";
-import { RecurringInterval, RecurringType, RecurringWithProduct } from "../recurring.models";
+import {
+  RecurringInterval,
+  RecurringType,
+  RecurringWithProduct,
+} from "../recurring.models";
 import { useForm } from "@tanstack/react-form-start";
 import { recurringValidators } from "../recurring.validators";
 import { Input } from "@/components/ui/input";
@@ -36,6 +40,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { recurringMutations } from "../recurring.mutations";
 import { LoaderButton } from "@/components/custom/loader.button";
+import { toast } from "sonner";
+import { FormField } from "@/components/custom/form-field";
 
 export function EditRecurringForm({
   recurring,
@@ -71,6 +77,8 @@ export function EditRecurringForm({
             if (err) {
               // TODO: Handle error
               console.log(err.message);
+            } else {
+              toast.success("Recurring transaction saved!");
             }
           },
         },
@@ -111,11 +119,12 @@ export function EditRecurringForm({
         e.preventDefault();
         form.handleSubmit();
       }}
+      className="space-y-4 @container"
     >
       <form.Field
         name="productId"
         children={(field) => (
-          <>
+          <FormField label="Product">
             <Combobox
               items={products}
               itemToStringValue={(p: (typeof products)[number]) => p.id}
@@ -136,13 +145,13 @@ export function EditRecurringForm({
               </ComboboxContent>
             </Combobox>
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="price"
         children={(field) => (
-          <>
+          <FormField label="Price">
             <Input
               name={field.name}
               type="text"
@@ -151,13 +160,13 @@ export function EditRecurringForm({
               onChange={(e) => field.handleChange(e.target.value)}
             />
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="interval"
         children={(field) => (
-          <>
+          <FormField label="Interval">
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v)}
@@ -175,13 +184,13 @@ export function EditRecurringForm({
               </SelectContent>
             </Select>
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="type"
         children={(field) => (
-          <>
+          <FormField label="Transcation Type">
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v as RecurringType)}
@@ -198,73 +207,75 @@ export function EditRecurringForm({
               </SelectContent>
             </Select>
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
-      <form.Field
-        name="startDate"
-        children={(field) => (
-          <>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-empty={!field.state.value}
-                  className="min-w-50 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                >
-                  {field.state.value ? (
-                    format(field.state.value, "PPP")
-                  ) : (
-                    <span>Pick start date</span>
-                  )}
-                  <ChevronDownIcon />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.state.value}
-                  onSelect={(v) => field.handleChange(v ?? new Date())}
-                  defaultMonth={field.state.value}
-                />
-              </PopoverContent>
-            </Popover>
-            <FieldError field={field} />
-          </>
-        )}
-      />
-      <form.Field
-        name="endDate"
-        children={(field) => (
-          <>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-empty={!field.state.value}
-                  className="min-w-50 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                >
-                  {field.state.value ? (
-                    format(field.state.value, "PPP")
-                  ) : (
-                    <span>Pick start end</span>
-                  )}
-                  <ChevronDownIcon />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.state.value ?? undefined}
-                  onSelect={(v) => field.handleChange(v ?? new Date())}
-                  defaultMonth={field.state.value ?? new Date()}
-                />
-              </PopoverContent>
-            </Popover>
-            <FieldError field={field} />
-          </>
-        )}
-      />
+      <div className="grid @lg:grid-cols-2 gap-4">
+        <form.Field
+          name="startDate"
+          children={(field) => (
+            <FormField label="Start Date">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    data-empty={!field.state.value}
+                    className="min-w-50 w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                  >
+                    {field.state.value ? (
+                      format(field.state.value, "PPP")
+                    ) : (
+                      <span>Pick start date</span>
+                    )}
+                    <ChevronDownIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.state.value}
+                    onSelect={(v) => field.handleChange(v ?? new Date())}
+                    defaultMonth={field.state.value}
+                  />
+                </PopoverContent>
+              </Popover>
+              <FieldError field={field} />
+            </FormField>
+          )}
+        />
+        <form.Field
+          name="endDate"
+          children={(field) => (
+            <FormField label="End Date (Optional)">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    data-empty={!field.state.value}
+                    className="min-w-50 w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                  >
+                    {field.state.value ? (
+                      format(field.state.value, "PPP")
+                    ) : (
+                      <span>Pick start end</span>
+                    )}
+                    <ChevronDownIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.state.value ?? undefined}
+                    onSelect={(v) => field.handleChange(v ?? new Date())}
+                    defaultMonth={field.state.value ?? new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+              <FieldError field={field} />
+            </FormField>
+          )}
+        />
+      </div>
       <form.Field
         name="isActive"
         children={(field) => (
