@@ -25,7 +25,15 @@ export function RecurringListItem({
               }`}
               title={recurring.isActive ? "Active" : "Inactive"}
             />
-            <p className="font-medium truncate">{recurring.product.name}</p>
+            <div className="flex flex-col">
+              <p className="font-medium truncate">{recurring.product.name}</p>
+              <p className="text-muted-foreground text-xs">
+                {recurring.startDate.toLocaleString("en-UK", {
+                  day: "numeric",
+                  month: "long",
+                })}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3 ml-4 shrink-0">
             <Badge variant="secondary" className="text-xs capitalize">
@@ -43,7 +51,7 @@ export function RecurringListItem({
             </Badge>
             <p
               className={`font-semibold ${
-                isIncome ? "text-green-500" : "text-red-500"
+                isIncome ? "text-green-400" : "text-red-400"
               }`}
             >
               {isIncome ? "+" : "-"}

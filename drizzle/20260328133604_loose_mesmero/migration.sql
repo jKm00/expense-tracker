@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_product" DROP CONSTRAINT "recurring_product_product_id_key";

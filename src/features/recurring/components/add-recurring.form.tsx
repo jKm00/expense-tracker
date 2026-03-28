@@ -48,13 +48,12 @@ export function AddRecurringForm() {
     defaultValues: {
       productId: "",
       price: "",
-      interval: "" as string,
+      interval: "monthly",
       type: "expense" as string,
-      startDate: undefined as Date | undefined,
+      startDate: new Date(),
       endDate: undefined as Date | undefined,
     },
     validators: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onBlur: recurringValidators.addFormValidation as any,
     },
     onSubmit: ({ value }) => {
@@ -70,6 +69,7 @@ export function AddRecurringForm() {
         {
           onSuccess: (data) => {
             const [err] = data;
+            console.log("Expected error:", err);
             if (err) {
               toast.error(getErrorMessage(err));
               return;
@@ -78,6 +78,7 @@ export function AddRecurringForm() {
           },
           onError: (error) => {
             toast.error(error.message);
+            console.log("Unexpected error:", error);
           },
         },
       );
@@ -87,15 +88,6 @@ export function AddRecurringForm() {
   const { data, isLoading } = useQuery(productQueries.getProductsOptions());
   const [_, res] = data ?? [null, null];
   const products = res ?? [];
-
-  const [selectedProduct, setSelectedProduct] =
-    useState<ProductWithTags | null>(null);
-
-  useEffect(() => {
-    if (selectedProduct) {
-      form.setFieldValue("productId", selectedProduct.id);
-    }
-  }, [selectedProduct, form]);
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading products...</p>;
@@ -117,8 +109,8 @@ export function AddRecurringForm() {
               items={products}
               itemToStringValue={(p: (typeof products)[number]) => p.id}
               itemToStringLabel={(p: (typeof products)[number]) => p.name}
-              value={selectedProduct}
-              onValueChange={(v) => setSelectedProduct(v)}
+              value={products.find((p) => p.id === field.state.value)}
+              onValueChange={(v) => field.handleChange(v?.id || "")}
             >
               <ComboboxInput placeholder="Search product..." />
               <ComboboxContent>
@@ -224,7 +216,10 @@ export function AddRecurringForm() {
                     <Calendar
                       mode="single"
                       selected={field.state.value}
-                      onSelect={(v) => field.handleChange(v ?? undefined)}
+                      onSelect={(v) => {
+                        console.log(v);
+                        field.handleChange(v ?? undefined);
+                      }}
                       defaultMonth={field.state.value}
                     />
                   </PopoverContent>

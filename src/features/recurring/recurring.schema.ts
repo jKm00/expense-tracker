@@ -16,7 +16,6 @@ export const recurringProduct = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     productId: uuid("product_id")
       .notNull()
-      .unique()
       .references(() => product.id, { onDelete: "cascade" }),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     interval: text("recurring_interval").notNull(),
