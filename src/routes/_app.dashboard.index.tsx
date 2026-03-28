@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/custom/empty-state";
 import { ReceiptTextIcon } from "lucide-react";
 import { TransactionListItem } from "@/features/transactions/components/transaction-list-item";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/dashboard/")({
   loader: async ({ context }) => {
@@ -78,7 +79,9 @@ function DashboardContent() {
           <CardTitle>Add Transaction</CardTitle>
         </CardHeader>
         <CardContent>
-          <AddTransactionForm />
+          <AddTransactionForm
+            onSuccess={() => toast.success("Transaction saved")}
+          />
         </CardContent>
       </Card>
 
@@ -106,7 +109,6 @@ function DashboardContent() {
             <p
               className={`text-2xl font-bold ${netBalance >= 0 ? "text-green-400" : "text-red-400"}`}
             >
-              {netBalance > 0 ? "+" : netBalance < 0 ? "-" : ""}
               {netBalance.toFixed(2)} ,-
             </p>
           </CardContent>
