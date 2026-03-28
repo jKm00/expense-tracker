@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { User } from "./auth.models";
 import { authClient } from "./auth-client";
+import { PiggyBank } from "lucide-react";
 
 export type AuthContextType = {
   user: User | null;
@@ -23,7 +24,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   if (isPending) {
-    return <p>Loading...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-card p-4 rounded-lg animate-pulse">
+          <PiggyBank className="text-muted-foreground" />
+        </div>
+      </div>
+    );
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
