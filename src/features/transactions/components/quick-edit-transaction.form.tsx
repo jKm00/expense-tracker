@@ -26,6 +26,7 @@ import {
 import { format } from "date-fns";
 import FieldError from "@/components/custom/field-error";
 import { Calendar } from "@/components/ui/calendar";
+import { FormField } from "@/components/custom/form-field";
 
 export function QuickEditTransactionForm({
   transaction,
@@ -33,6 +34,7 @@ export function QuickEditTransactionForm({
   transaction: Transaction;
 }) {
   const [open, setOpen] = useState(false);
+  const [openCalendar, setOpenCalendar] = useState(false);
 
   const mutation = transactionMutations.updateTransaction();
 
@@ -47,13 +49,12 @@ export function QuickEditTransactionForm({
       onBlur: transactionValidators.editFormValidation as any,
     },
     onSubmit: ({ value }) => {
-      console.log(value);
       mutation.mutate(
         {
           id: transaction.id,
           price: Number(value.price),
           type: value.type,
-          date: value.date,
+          date: value.date.toISOString(),
           description: value.description || undefined,
         },
         {
@@ -76,8 +77,16 @@ export function QuickEditTransactionForm({
       );
     },
   });
+
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+      form.reset();
+    }
+    setOpen(isOpen);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <SquarePen className="text-muted-foreground" />
@@ -98,15 +107,36 @@ export function QuickEditTransactionForm({
           <form.Field
             name="date"
             children={(field) => (
-              <>
-                <label>Date</label>
-                <Input
-                  type="date"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+              <FormField label="Date">
+                <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      data-empty={!field.state.value}
+                      className="min-w-50 w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                    >
+                      {field.state.value ? (
+                        format(field.state.value, "PPP")
+                      ) : (
+                        <span>Pick date</span>
+                      )}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.state.value}
+                      onSelect={(v) => {
+                        field.handleChange(v || new Date());
+                        setOpenCalendar(false);
+                      }}
+                      defaultMonth={field.state.value}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FieldError field={field} />
-              </>
+              </FormField>
             )}
           />
         </form>

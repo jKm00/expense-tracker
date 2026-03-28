@@ -1,5 +1,4 @@
 import {
-  date,
   index,
   numeric,
   pgEnum,
@@ -35,7 +34,7 @@ export const transaction = pgTable(
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     type: transactionType().notNull(),
     source: transactionSource().notNull(),
-    date: date("date").notNull(),
+    date: timestamp("date").notNull(),
     description: text("description"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

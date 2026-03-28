@@ -15,6 +15,16 @@ import {
 } from "@/components/ui/select";
 import { LoaderButton } from "@/components/custom/loader.button";
 import { toast } from "sonner";
+import { FormField } from "@/components/custom/form-field";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { ChevronDownIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 
 export function EditTransactionForm({
   transaction,
@@ -27,7 +37,7 @@ export function EditTransactionForm({
     defaultValues: {
       price: transaction.price,
       type: transaction.type,
-      date: transaction.date,
+      date: new Date(transaction.date),
       description: transaction.description ?? "",
     },
     validators: {
@@ -39,7 +49,7 @@ export function EditTransactionForm({
           id: transaction.id,
           price: Number(value.price),
           type: value.type,
-          date: value.date,
+          date: value.date.toISOString(),
           description: value.description || undefined,
         },
         {
@@ -73,8 +83,7 @@ export function EditTransactionForm({
       <form.Field
         name="price"
         children={(field) => (
-          <>
-            <label>Price</label>
+          <FormField label="Price">
             <Input
               name={field.name}
               type="text"
@@ -83,14 +92,13 @@ export function EditTransactionForm({
               onChange={(e) => field.handleChange(e.target.value)}
             />
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="type"
         children={(field) => (
-          <>
-            <label>Type</label>
+          <FormField label="Type">
             <Select
               value={field.state.value}
               onValueChange={(v) =>
@@ -109,31 +117,45 @@ export function EditTransactionForm({
               </SelectContent>
             </Select>
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="date"
         children={(field) => (
-          <>
-            <label>Date</label>
-            <Input
-              type="date"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
+          <FormField label="Start Date">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-empty={!field.state.value}
+                  className="min-w-50 w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                >
+                  {field.state.value ? (
+                    format(field.state.value, "PPP")
+                  ) : (
+                    <span>Pick start date</span>
+                  )}
+                  <ChevronDownIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={field.state.value}
+                  onSelect={(v) => field.handleChange(v ?? new Date())}
+                  defaultMonth={field.state.value}
+                />
+              </PopoverContent>
+            </Popover>
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Field
         name="description"
         children={(field) => (
-          <>
-            <label>
-              Description{" "}
-              <span className="text-muted-foreground">(Optional)</span>
-            </label>
+          <FormField label="Description (Optional)">
             <Input
               name={field.name}
               type="text"
@@ -143,7 +165,7 @@ export function EditTransactionForm({
               placeholder="Optional description..."
             />
             <FieldError field={field} />
-          </>
+          </FormField>
         )}
       />
       <form.Subscribe

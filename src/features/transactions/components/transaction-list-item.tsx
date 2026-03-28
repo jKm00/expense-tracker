@@ -36,7 +36,13 @@ export function TransactionListItem({ row }: { row: TransactionWithProduct }) {
               {transaction.type === "income" ? "+" : "-"}
               {Number(transaction.price).toFixed(2)}
             </p>
-            <p className="text-xs text-muted-foreground">{transaction.date}</p>
+            <p className="text-xs text-muted-foreground">
+              {transaction.date.toLocaleString("en-UK", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
           </div>
         </Link>
         <div className="flex gap-2">
