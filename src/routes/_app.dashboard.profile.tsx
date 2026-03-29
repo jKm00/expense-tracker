@@ -41,7 +41,7 @@ function RouteComponent() {
 
       {/* User Info Card */}
       <Card>
-        <CardContent className="flex items-center gap-4 pt-6">
+        <CardContent className="flex items-center gap-4">
           <Avatar className="size-16">
             {user?.image && (
               <AvatarImage src={user.image} alt={user.name ?? "User"} />
@@ -64,7 +64,7 @@ function RouteComponent() {
       {/* Preferences Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferences</CardTitle>
+          <CardTitle className="font-semibold">Preferences</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
