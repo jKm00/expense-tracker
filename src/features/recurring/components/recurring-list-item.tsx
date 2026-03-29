@@ -39,16 +39,6 @@ export function RecurringListItem({
             <Badge variant="secondary" className="text-xs capitalize">
               {recurring.interval}
             </Badge>
-            <Badge
-              variant="outline"
-              className={`text-xs capitalize ${
-                isIncome
-                  ? "border-green-500/30 text-green-600 dark:text-green-400"
-                  : "border-red-500/30 text-red-600 dark:text-red-400"
-              }`}
-            >
-              {recurring.type}
-            </Badge>
             <p
               className={`font-semibold ${
                 isIncome ? "text-green-400" : "text-red-400"
