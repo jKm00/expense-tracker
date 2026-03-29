@@ -2,17 +2,21 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
-  PackageIcon,
-  RepeatIcon,
   UserIcon,
+  ChartPie,
+  Ellipsis,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
-  { label: "Transactions", href: "/dashboard/transactions", icon: ReceiptTextIcon },
-  { label: "Products", href: "/dashboard/products", icon: PackageIcon },
-  { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
+  {
+    label: "Transactions",
+    href: "/dashboard/transactions",
+    icon: ReceiptTextIcon,
+  },
+  { label: "Analytics", href: "/dashboard/analytics", icon: ChartPie },
+  { label: "More", href: "/dashboard/more", icon: Ellipsis },
   { label: "Profile", href: "/dashboard/profile", icon: UserIcon },
 ] as const;
 
@@ -21,7 +25,10 @@ export function MobileNav() {
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
-      return location.pathname === "/dashboard" || location.pathname === "/dashboard/";
+      return (
+        location.pathname === "/dashboard" ||
+        location.pathname === "/dashboard/"
+      );
     }
     return location.pathname.startsWith(href);
   }
