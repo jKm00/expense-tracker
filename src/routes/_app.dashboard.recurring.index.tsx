@@ -27,7 +27,7 @@ function RouteComponent() {
           <Button asChild size="sm">
             <Link to="/dashboard/recurring/new">
               <PlusIcon className="size-4 mr-2" />
-              Create
+              New
             </Link>
           </Button>
         }

@@ -31,7 +31,7 @@ function RouteComponent() {
           <Button asChild size="sm">
             <Link to="/dashboard/products/new">
               <PlusIcon className="size-4 mr-2" />
-              Create Product
+              New
             </Link>
           </Button>
         }
@@ -56,13 +56,17 @@ function UntaggedProductList() {
   );
 
   if (error) {
-    return <p className="text-muted-foreground">Failed to load untagged products.</p>;
+    return (
+      <p className="text-muted-foreground">Failed to load untagged products.</p>
+    );
   }
 
   const [err, products] = data;
 
   if (err || !products) {
-    return <p className="text-muted-foreground">Failed to load untagged products.</p>;
+    return (
+      <p className="text-muted-foreground">Failed to load untagged products.</p>
+    );
   }
 
   return <ProductList products={products} title="Untagged Products" />;
