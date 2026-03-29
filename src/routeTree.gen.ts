@@ -16,6 +16,8 @@ import { Route as AuthLoginRouteImport } from './routes/_auth.login'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app.dashboard.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app.dashboard.profile'
+import { Route as AppDashboardMoreRouteImport } from './routes/_app.dashboard.more'
+import { Route as AppDashboardAnalyticsRouteImport } from './routes/_app.dashboard.analytics'
 import { Route as AppDashboardTransactionsIndexRouteImport } from './routes/_app.dashboard.transactions.index'
 import { Route as AppDashboardRecurringIndexRouteImport } from './routes/_app.dashboard.recurring.index'
 import { Route as AppDashboardProductsIndexRouteImport } from './routes/_app.dashboard.products.index'
@@ -56,6 +58,16 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 const AppDashboardProfileRoute = AppDashboardProfileRouteImport.update({
   id: '/dashboard/profile',
   path: '/dashboard/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardMoreRoute = AppDashboardMoreRouteImport.update({
+  id: '/dashboard/more',
+  path: '/dashboard/more',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardAnalyticsRoute = AppDashboardAnalyticsRouteImport.update({
+  id: '/dashboard/analytics',
+  path: '/dashboard/analytics',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardTransactionsIndexRoute =
@@ -108,6 +120,8 @@ const AppDashboardProductsProductIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
+  '/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof AppDashboardIndexRoute
@@ -123,6 +137,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
+  '/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof AppDashboardIndexRoute
@@ -141,6 +157,8 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
+  '/_app/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/_app/dashboard/more': typeof AppDashboardMoreRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/dashboard/': typeof AppDashboardIndexRoute
@@ -158,6 +176,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/dashboard/analytics'
+    | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
     | '/dashboard/'
@@ -173,6 +193,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/dashboard/analytics'
+    | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
     | '/dashboard'
@@ -190,6 +212,8 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_auth'
     | '/_auth/login'
+    | '/_app/dashboard/analytics'
+    | '/_app/dashboard/more'
     | '/_app/dashboard/profile'
     | '/api/auth/$'
     | '/_app/dashboard/'
@@ -261,6 +285,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/more': {
+      id: '/_app/dashboard/more'
+      path: '/dashboard/more'
+      fullPath: '/dashboard/more'
+      preLoaderRoute: typeof AppDashboardMoreRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard/analytics': {
+      id: '/_app/dashboard/analytics'
+      path: '/dashboard/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof AppDashboardAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/transactions/': {
       id: '/_app/dashboard/transactions/'
       path: '/dashboard/transactions'
@@ -321,6 +359,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppDashboardAnalyticsRoute: typeof AppDashboardAnalyticsRoute
+  AppDashboardMoreRoute: typeof AppDashboardMoreRoute
   AppDashboardProfileRoute: typeof AppDashboardProfileRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppDashboardProductsProductIdRoute: typeof AppDashboardProductsProductIdRoute
@@ -334,6 +374,8 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppDashboardAnalyticsRoute: AppDashboardAnalyticsRoute,
+  AppDashboardMoreRoute: AppDashboardMoreRoute,
   AppDashboardProfileRoute: AppDashboardProfileRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppDashboardProductsProductIdRoute: AppDashboardProductsProductIdRoute,
