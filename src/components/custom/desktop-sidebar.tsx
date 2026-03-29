@@ -1,18 +1,13 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
   PackageIcon,
   RepeatIcon,
-  UserIcon,
-  LogOutIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
-import { authClient } from "@/features/auth/auth-client";
-import { ThemeToggle } from "./theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
@@ -28,7 +23,6 @@ const navItems = [
 
 export function DesktopSidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   function isActive(href: string): boolean {
@@ -39,11 +33,6 @@ export function DesktopSidebar() {
       );
     }
     return location.pathname.startsWith(href);
-  }
-
-  async function handleSignOut() {
-    await authClient.signOut();
-    navigate({ to: "/" });
   }
 
   return (
