@@ -33,16 +33,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ChevronDownIcon, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import FieldError from "@/components/custom/field-error";
 import { FormField } from "@/components/custom/form-field";
 import { LoaderButton } from "@/components/custom/loader.button";
+import { useState } from "react";
 
 export function AddRecurringForm() {
   const navigate = useNavigate();
   const mutation = recurringMutations.addRecurringProduct();
+
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -99,7 +102,7 @@ export function AddRecurringForm() {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="space-y-4"
+      className="space-y-4 @container"
     >
       <form.Field
         name="productId"
@@ -191,13 +194,13 @@ export function AddRecurringForm() {
           </FormField>
         )}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid @lg:grid-cols-2 gap-4">
         <form.Field
           name="startDate"
           children={(field) => (
             <FormField label="Start Date">
               <div className="flex gap-2">
-                <Popover>
+                <Popover open={startOpen} onOpenChange={setStartOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -217,23 +220,13 @@ export function AddRecurringForm() {
                       mode="single"
                       selected={field.state.value}
                       onSelect={(v) => {
-                        console.log(v);
-                        field.handleChange(v ?? undefined);
+                        field.handleChange(v ?? new Date());
+                        setStartOpen(false);
                       }}
                       defaultMonth={field.state.value}
                     />
                   </PopoverContent>
                 </Popover>
-                {field.state.value && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => field.handleChange(undefined)}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
               </div>
               <FieldError field={field} />
             </FormField>
@@ -244,7 +237,7 @@ export function AddRecurringForm() {
           children={(field) => (
             <FormField label="End Date (optional)">
               <div className="flex gap-2">
-                <Popover>
+                <Popover open={endOpen} onOpenChange={setEndOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -263,7 +256,10 @@ export function AddRecurringForm() {
                     <Calendar
                       mode="single"
                       selected={field.state.value}
-                      onSelect={(v) => field.handleChange(v ?? undefined)}
+                      onSelect={(v) => {
+                        field.handleChange(v ?? undefined);
+                        setEndOpen(false);
+                      }}
                       defaultMonth={field.state.value}
                     />
                   </PopoverContent>
