@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { tagMutations } from "../tag.mutations";
+import { toast } from "sonner";
 
 export function CreateTagDialog() {
   const [open, setOpen] = useState(false);
@@ -43,6 +44,7 @@ export function CreateTagDialog() {
           } else {
             setTagName("");
             setOpen(false);
+            toast.success("Tag created!");
           }
         },
       },
