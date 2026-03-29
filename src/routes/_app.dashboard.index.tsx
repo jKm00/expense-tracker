@@ -12,13 +12,22 @@ import { EmptyState } from "@/components/custom/empty-state";
 import { ReceiptTextIcon } from "lucide-react";
 import { TransactionListItem } from "@/features/transactions/components/transaction-list-item";
 import { toast } from "sonner";
+import z from "zod";
+import { zodValidator } from "@tanstack/zod-adapter";
+
+const dashboardSearchSchema = z.object({
+  month: z.number().optional(),
+  year: z.number().optional(),
+});
 
 export const Route = createFileRoute("/_app/dashboard/")({
-  loader: async ({ context }) => {
+  loaderDeps: ({ search: { month, year } }) => ({ month, year }),
+  loader: async ({ context, deps }) => {
     context.queryClient.prefetchQuery(
-      transactionQueries.getTransactionsOptions,
+      transactionQueries.getTransactionsOptions(deps.month, deps.year),
     );
   },
+  validateSearch: zodValidator(dashboardSearchSchema),
   component: RouteComponent,
 });
 
@@ -48,7 +57,10 @@ function RouteComponent() {
 }
 
 function DashboardContent() {
-  const { data } = useSuspenseQuery(transactionQueries.getTransactionsOptions);
+  const { month, year } = Route.useSearch();
+  const { data } = useSuspenseQuery(
+    transactionQueries.getTransactionsOptions(month, year),
+  );
   const [err, transactions] = data;
 
   if (err) {

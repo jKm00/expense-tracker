@@ -1,14 +1,20 @@
 import { db } from "@/lib/db";
 import { NewTransaction, UpdateTransaction } from "./transaction.models";
 import { transaction } from "./transaction.schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lt } from "drizzle-orm";
 import { product } from "../products/product.schema";
 
-async function getAll(userId: string) {
+async function getAll(userId: string, start: Date, end: Date) {
   return await db
     .select()
     .from(transaction)
-    .where(eq(transaction.userId, userId))
+    .where(
+      and(
+        eq(transaction.userId, userId),
+        gte(transaction.date, start),
+        lt(transaction.date, end),
+      ),
+    )
     .leftJoin(product, eq(product.id, transaction.productId));
 }
 
@@ -37,10 +43,7 @@ async function update(id: string, data: UpdateTransaction) {
 
 async function remove(id: string) {
   return (
-    await db
-      .delete(transaction)
-      .where(eq(transaction.id, id))
-      .returning()
+    await db.delete(transaction).where(eq(transaction.id, id)).returning()
   )[0];
 }
 

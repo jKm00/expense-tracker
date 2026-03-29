@@ -4,9 +4,11 @@ import { CreateTransactionInput } from "./transaction.dtos";
 import { UpdateTransaction } from "./transaction.models";
 import { transactionRepo } from "./transaction.repo";
 
-async function getTransactions(userId: string) {
+async function getTransactions(userId: string, month: number, year: number) {
   try {
-    return ok(await transactionRepo.getAll(userId));
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 1);
+    return ok(await transactionRepo.getAll(userId, start, end));
   } catch (error) {
     return err({
       reason: "TRANSACTION_DB_ERROR" as const,
@@ -73,7 +75,10 @@ async function deleteTransaction(userId: string, id: string) {
 }
 
 async function addTransaction(userId: string, data: CreateTransactionInput) {
-  let [foundError, found] = await productService.getByName(userId, data.productName);
+  let [foundError, found] = await productService.getByName(
+    userId,
+    data.productName,
+  );
 
   if (foundError) {
     return err({

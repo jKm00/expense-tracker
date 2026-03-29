@@ -3,12 +3,21 @@ import z from "zod";
 import { authenticated } from "../auth/auth.utils";
 import { transactionService } from "./transaction.service";
 
-// TODO: Add pagination
+const GetTransactionsSchema = z.object({
+  month: z.number(),
+  year: z.number(),
+});
+
 const getTransactions = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .handler(async ({ context }) => {
+  .inputValidator(GetTransactionsSchema)
+  .handler(async ({ context, data }) => {
     const userId = context.user.id;
-    return await transactionService.getTransactions(userId);
+    return await transactionService.getTransactions(
+      userId,
+      data.month,
+      data.year,
+    );
   });
 
 const TransactionIdSchema = z.object({
