@@ -4,6 +4,7 @@ import {
   ReceiptTextIcon,
   PackageIcon,
   RepeatIcon,
+  ChartPie,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
@@ -16,6 +17,11 @@ const navItems = [
     label: "Transactions",
     href: "/dashboard/transactions",
     icon: ReceiptTextIcon,
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/analytics",
+    icon: ChartPie,
   },
   { label: "Products", href: "/dashboard/products", icon: PackageIcon },
   { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
