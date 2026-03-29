@@ -17,10 +17,13 @@ import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
-  { label: "Transactions", href: "/dashboard/transactions", icon: ReceiptTextIcon },
+  {
+    label: "Transactions",
+    href: "/dashboard/transactions",
+    icon: ReceiptTextIcon,
+  },
   { label: "Products", href: "/dashboard/products", icon: PackageIcon },
   { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
-  { label: "Profile", href: "/dashboard/profile", icon: UserIcon },
 ] as const;
 
 export function DesktopSidebar() {
@@ -30,7 +33,10 @@ export function DesktopSidebar() {
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
-      return location.pathname === "/dashboard" || location.pathname === "/dashboard/";
+      return (
+        location.pathname === "/dashboard" ||
+        location.pathname === "/dashboard/"
+      );
     }
     return location.pathname.startsWith(href);
   }
@@ -74,30 +80,21 @@ export function DesktopSidebar() {
       <Separator />
 
       {/* User info + actions */}
-      <div className="p-4 space-y-3">
+      <div className="p-4">
         {user && (
-          <div className="flex items-center gap-3">
+          <Link to="/dashboard/profile" className="flex items-center gap-3">
             <Avatar className="size-8">
-              <AvatarImage src={user.image ?? undefined} alt={user.name ?? ""} />
+              <AvatarImage
+                src={user.image ?? undefined}
+                alt={user.name ?? ""}
+              />
               <AvatarFallback>
                 {user.name?.charAt(0).toUpperCase() ?? "?"}
               </AvatarFallback>
             </Avatar>
             <span className="text-sm font-medium truncate">{user.name}</span>
-          </div>
+          </Link>
         )}
-        <div className="flex items-center justify-between">
-          <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <LogOutIcon className="size-4 mr-2" />
-            Sign out
-          </Button>
-        </div>
       </div>
     </aside>
   );

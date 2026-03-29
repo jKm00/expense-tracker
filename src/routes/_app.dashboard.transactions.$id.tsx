@@ -43,10 +43,7 @@ function TransactionDetail() {
 
   if (err) {
     return (
-      <EmptyState
-        message={getErrorMessage(err)}
-        icon={AlertTriangleIcon}
-      />
+      <EmptyState message={getErrorMessage(err)} icon={AlertTriangleIcon} />
     );
   }
 
@@ -57,7 +54,7 @@ function TransactionDetail() {
     <div className="space-y-6">
       {/* Read-only fields */}
       <Card>
-        <CardContent className="space-y-3 pt-4">
+        <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Product</span>
             <span className="font-medium">{product?.name || "Unknown"}</span>
