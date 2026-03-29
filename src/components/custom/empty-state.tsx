@@ -12,7 +12,7 @@ export function EmptyState({
 }) {
   return (
     <Card>
-      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+      <CardContent className="flex flex-col items-center justify-center py-6 text-center">
         <Icon className="size-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-sm">{message}</p>
         {action && <div className="mt-4">{action}</div>}
