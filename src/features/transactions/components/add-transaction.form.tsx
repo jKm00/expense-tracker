@@ -61,6 +61,7 @@ export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
       }}
       className="space-y-4"
     >
+      {/* TODO: Show dropdown with products. Filter when typing */}
       <form.Field
         name="productName"
         children={(field) => (
@@ -118,7 +119,9 @@ export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
               variant="destructive"
               className="flex-1"
               disabled={!canSubmit || mutation.isPending}
-              isLoading={mutation.isPending && form.state.values.type === "expense"}
+              isLoading={
+                mutation.isPending && form.state.values.type === "expense"
+              }
               onClick={() => handleSubmitWithType("expense")}
             >
               Expense
@@ -127,7 +130,9 @@ export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
               type="button"
               className="flex-1"
               disabled={!canSubmit || mutation.isPending}
-              isLoading={mutation.isPending && form.state.values.type === "income"}
+              isLoading={
+                mutation.isPending && form.state.values.type === "income"
+              }
               onClick={() => handleSubmitWithType("income")}
             >
               Income
