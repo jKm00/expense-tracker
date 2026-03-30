@@ -25,7 +25,7 @@ function RouteComponent() {
       <PageHeader title="More pages" />
       <ul className="space-y-2">
         {menuItems.map((item) => (
-          <li>
+          <li key={item.label}>
             <Link to={item.href}>
               <Card>
                 <CardContent className="flex justify-between items-center gap-4">
@@ -33,7 +33,7 @@ function RouteComponent() {
                     <item.icon className="size-5" />
                     <h3>{item.label}</h3>
                   </div>
-                  <ArrowRight />
+                  <ArrowRight className="size-5" />
                 </CardContent>
               </Card>
             </Link>
