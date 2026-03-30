@@ -7,9 +7,27 @@ import FieldError from "@/components/custom/field-error";
 import { FormField } from "@/components/custom/form-field";
 import { LoaderButton } from "@/components/custom/loader.button";
 import { toast } from "sonner";
+import { productQueries } from "@/features/products/product.queries";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { ProductWithTags } from "@/features/products/product.models";
+import { useState } from "react";
 
 export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
+  const {
+    data: [_, productsRes],
+  } = useSuspenseQuery(productQueries.getProductsOptions());
   const mutation = transactionMutations.addTransaction();
+  const products = productsRes ?? [];
+
+  const [productInput, setProductInput] = useState("");
 
   const form = useForm({
     defaultValues: {
@@ -66,14 +84,43 @@ export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
         name="productName"
         children={(field) => (
           <FormField label="Product">
-            <Input
-              name={field.name}
-              type="text"
-              placeholder="Product name..."
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
+            {/*<Input
+               name={field.name}
+               type="text"
+               placeholder="Product name..."
+               value={field.state.value}
+               onBlur={field.handleBlur}
+               onChange={(e) => field.handleChange(e.target.value)}
+             />*/}
+            <Combobox
+              items={products ?? []}
+              itemToStringValue={(p: (typeof products)[number]) => p.name}
+              itemToStringLabel={(p: (typeof products)[number]) => p.name}
+              value={products.find((p) => p.name === field.state.value)}
+              onValueChange={(v) => {
+                field.handleChange(v?.name || "");
+                setProductInput(v?.name || "");
+              }}
+            >
+              <ComboboxInput
+                value={productInput}
+                onChange={(e) => {
+                  field.handleChange(e.target.value);
+                  setProductInput(e.target.value);
+                }}
+                placeholder="Product..."
+              />
+              <ComboboxContent>
+                <ComboboxEmpty>TODO</ComboboxEmpty>
+                <ComboboxList>
+                  {(p: ProductWithTags) => (
+                    <ComboboxItem key={p.id} value={p}>
+                      {p.name}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
             <FieldError field={field} />
           </FormField>
         )}
