@@ -22,7 +22,7 @@ export function TransactionList({
 
     // Optional: sort the groups by date ascending
     return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => b.localeCompare(a))
       .map(([, group]) => group);
   }, [transactions]);
 

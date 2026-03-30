@@ -5,7 +5,13 @@ import { PageHeader } from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeleton-form";
 import { EmptyState } from "@/components/custom/empty-state";
 import { getErrorMessage } from "@/utils/error-messages";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -54,16 +60,14 @@ function TransactionDetail() {
     <div className="space-y-6">
       {/* Read-only fields */}
       <Card>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Product</span>
-            <span className="font-medium">{product?.name || "Unknown"}</span>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>{product?.name || "-"}</CardTitle>
+            <CardDescription>
+              <Badge variant="outline">{transaction.source}</Badge>
+            </CardDescription>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Source</span>
-            <Badge variant="outline">{transaction.source}</Badge>
-          </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* Editable form */}
