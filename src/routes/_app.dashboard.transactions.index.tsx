@@ -29,28 +29,23 @@ export const Route = createFileRoute("/_app/dashboard/transactions/")({
 
 function RouteComponent() {
   const { month, year } = Route.useSearch();
-  const date = month && year ? new Date(year, month, 1) : new Date();
+  const date =
+    month !== undefined && year !== undefined
+      ? dayjs().year(year).month(month).startOf("month")
+      : dayjs().startOf("month");
   const navigate = useNavigate();
 
-  function prevMonth() {
-    const newDate = dayjs(date).subtract(1, "month");
-    console.log(newDate);
+  function handleDateChange(direction: "prev" | "next") {
+    const dayJsDate = dayjs(date);
+    const newDate =
+      direction === "prev"
+        ? dayJsDate.subtract(1, "month")
+        : dayJsDate.add(1, "month");
     navigate({
       to: "/dashboard/transactions",
       search: {
-        month: newDate.get("month"),
-        year: newDate.get("year"),
-      },
-    });
-  }
-
-  function nextMonth() {
-    const newDate = dayjs(date).add(1, "month");
-    navigate({
-      to: "/dashboard/transactions",
-      search: {
-        month: newDate.get("month"),
-        year: newDate.get("year"),
+        month: newDate.month(),
+        year: newDate.year(),
       },
     });
   }
@@ -59,19 +54,19 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader title="Transactions">
         <div className="flex items-center gap-1">
-          <Button variant="outline" onClick={prevMonth}>
+          <Button variant="outline" onClick={() => handleDateChange("prev")}>
             <ChevronLeft />
           </Button>
           {/*<div className="flex items-center gap-2 py-2 px-4 border rounded-md">*/}
           <div className="flex gap-2 items-center border rounded-lg h-8 px-2.5 py-1 min-w-40">
             <Calendar className="size-4" />
             <p className="text-sm">
-              {date.toLocaleString("en-UK", {
+              {date.toDate().toLocaleString("en-UK", {
                 month: "long",
               })}
             </p>
           </div>
-          <Button variant="outline" onClick={nextMonth}>
+          <Button variant="outline" onClick={() => handleDateChange("next")}>
             <ChevronRight />
           </Button>
         </div>
