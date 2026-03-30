@@ -8,10 +8,12 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      {action}
-      {children}
+    <div className="@container">
+      <div className="flex @max-lg:flex-col gap-2 items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {action}
+        {children}
+      </div>
     </div>
   );
 }
