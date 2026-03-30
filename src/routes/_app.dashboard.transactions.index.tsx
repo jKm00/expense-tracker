@@ -10,6 +10,15 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dayjs from "dayjs";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const dashboardSearchSchema = z.object({
   month: z.number().optional(),
@@ -35,17 +44,31 @@ function RouteComponent() {
       : dayjs().startOf("month");
   const navigate = useNavigate();
 
-  function handleDateChange(direction: "prev" | "next") {
-    const dayJsDate = dayjs(date);
-    const newDate =
-      direction === "prev"
-        ? dayJsDate.subtract(1, "month")
-        : dayJsDate.add(1, "month");
+  function handlePrevMonth() {
+    const newDate = dayjs(date).subtract(1, "month");
+    handleNavigate(newDate.month(), newDate.year());
+  }
+
+  function handleNextMonth() {
+    const newDate = dayjs(date).add(1, "month");
+    handleNavigate(newDate.month(), newDate.year());
+  }
+
+  function handleMonthChange(month: number) {
+    handleNavigate(month, date.year());
+  }
+
+  function resetDate() {
+    const today = dayjs().startOf("month");
+    handleNavigate(today.month(), today.year());
+  }
+
+  function handleNavigate(month: number, year: number) {
     navigate({
       to: "/dashboard/transactions",
       search: {
-        month: newDate.month(),
-        year: newDate.year(),
+        month,
+        year,
       },
     });
   }
@@ -54,19 +77,50 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader title="Transactions">
         <div className="flex items-center gap-1">
-          <Button variant="outline" onClick={() => handleDateChange("prev")}>
+          {(date.month() !== dayjs().month() ||
+            date.year() !== dayjs().year()) && (
+            <Button variant="outline" onClick={resetDate}>
+              Today
+            </Button>
+          )}
+          <Button variant="outline" onClick={handlePrevMonth}>
             <ChevronLeft />
           </Button>
-          {/*<div className="flex items-center gap-2 py-2 px-4 border rounded-md">*/}
-          <div className="flex gap-2 items-center border rounded-lg h-8 px-2.5 py-1 min-w-40">
+          <Select
+            value={`${date.month()}`}
+            onValueChange={(v) => handleMonthChange(Number(v))}
+          >
+            <SelectTrigger className="w-full min-w-40 max-w-48">
+              <Calendar />
+              <SelectValue placeholder="Select a month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Months</SelectLabel>
+                <SelectItem value="0">January</SelectItem>
+                <SelectItem value="1">Febrary</SelectItem>
+                <SelectItem value="2">March</SelectItem>
+                <SelectItem value="3">April</SelectItem>
+                <SelectItem value="4">May</SelectItem>
+                <SelectItem value="5">June</SelectItem>
+                <SelectItem value="6">July</SelectItem>
+                <SelectItem value="7">August</SelectItem>
+                <SelectItem value="8">September</SelectItem>
+                <SelectItem value="9">October</SelectItem>
+                <SelectItem value="10">November</SelectItem>
+                <SelectItem value="11">December</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {/*}<div className="flex gap-2 items-center border rounded-lg h-8 px-2.5 py-1 min-w-40">
             <Calendar className="size-4" />
             <p className="text-sm">
               {date.toDate().toLocaleString("en-UK", {
                 month: "long",
               })}
             </p>
-          </div>
-          <Button variant="outline" onClick={() => handleDateChange("next")}>
+          </div> */}
+          <Button variant="outline" onClick={handleNextMonth}>
             <ChevronRight />
           </Button>
         </div>
