@@ -49,7 +49,7 @@ export function EditTransactionForm({
           id: transaction.id,
           price: Number(value.price),
           type: value.type,
-          date: value.date.toISOString(),
+          date: value.date,
           description: value.description || undefined,
         },
         {

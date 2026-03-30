@@ -9,8 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ChevronDownIcon, SquarePen } from "lucide-react";
 import { transactionMutations } from "../transaction.mutations";
 import { useForm } from "@tanstack/react-form-start";
@@ -54,7 +52,7 @@ export function QuickEditTransactionForm({
           id: transaction.id,
           price: Number(value.price),
           type: value.type,
-          date: value.date.toISOString(),
+          date: value.date,
           description: value.description || undefined,
         },
         {

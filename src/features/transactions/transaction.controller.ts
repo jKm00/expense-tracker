@@ -52,7 +52,7 @@ const UpdateTransactionSchema = z.object({
   id: z.string(),
   price: z.number(),
   type: z.enum(["expense", "income"]),
-  date: z.string(),
+  date: z.date(),
   description: z.string().optional(),
 });
 
