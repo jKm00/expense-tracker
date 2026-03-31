@@ -26,7 +26,7 @@ import { tagQueries } from "@/features/tags/tag.queries";
 import { transactionQueries } from "@/features/transactions/transaction.queries";
 import { productQueries } from "@/features/products/product.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import React, { Suspense } from "react";
 import z from "zod";
@@ -124,8 +124,21 @@ function AnalyticsContent() {
   } = useSuspenseQuery(tagQueries.getTagsOptions());
   const tags = tagsRes || [];
 
+  const { compare } = Route.useSearch();
+  const navigate = useNavigate();
+
   const includeAnchor = useComboboxAnchor();
   const excludeAnchor = useComboboxAnchor();
+
+  function handleCompareChange(value: string) {
+    navigate({
+      to: "/dashboard/analytics",
+      search: (prev) => ({
+        ...prev,
+        compare: value as "nothing" | "month" | "year",
+      }),
+    });
+  }
 
   return (
     <div>
@@ -198,7 +211,10 @@ function AnalyticsContent() {
           </Combobox>
         </FormField>
         <FormField label="Compare">
-          <Select value="nothing">
+          <Select
+            value={compare ?? "nothing"}
+            onValueChange={handleCompareChange}
+          >
             <SelectTrigger className="w-full min-w-40 max-w-48">
               <SelectValue />
             </SelectTrigger>
