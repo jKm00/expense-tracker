@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import type { ProductWithTags } from "../products/product.models";
+import type { TransactionWithProduct } from "../transactions/transaction.models";
 import type {
   AnalyticsMetrics,
   ComparisonDelta,
@@ -14,7 +15,7 @@ import type {
  * in the ProductWithTags array and copying over its tags.
  */
 export function enrichTransactionsWithTags(
-  transactions: { transaction: { productId: string } & Record<string, unknown>; product: unknown }[],
+  transactions: TransactionWithProduct[],
   products: ProductWithTags[],
 ): EnrichedTransaction[] {
   const productTagMap = new Map<string, ProductWithTags>();
@@ -23,8 +24,8 @@ export function enrichTransactionsWithTags(
   }
 
   return transactions.map((t) => ({
-    transaction: t.transaction as EnrichedTransaction["transaction"],
-    product: (t.product as EnrichedTransaction["product"]) ?? null,
+    transaction: t.transaction,
+    product: t.product,
     tags: productTagMap.get(t.transaction.productId)?.tags ?? [],
   }));
 }
