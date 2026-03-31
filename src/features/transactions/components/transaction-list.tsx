@@ -46,9 +46,11 @@ export function TransactionList({
               year: "numeric",
             })}
           </h4>
-          {group.map((row) => (
-            <TransactionListItem key={row.transaction.id} row={row} />
-          ))}
+          <div className="space-y-2">
+            {group.map((row) => (
+              <TransactionListItem key={row.transaction.id} row={row} />
+            ))}
+          </div>
         </div>
       ))}
     </div>
