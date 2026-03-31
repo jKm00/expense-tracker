@@ -50,10 +50,11 @@ export function MonthSelect({
   function handleNavigate(month: number, year: number) {
     navigate({
       to,
-      search: {
+      search: (prev) => ({
+        ...prev,
         month,
         year,
-      },
+      }),
     });
   }
   return (
