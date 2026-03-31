@@ -56,6 +56,7 @@ export function AddTransactionForm({ onSuccess }: { onSuccess?: () => void }) {
               return;
             }
             form.reset();
+            setProductInput("");
             onSuccess?.();
           },
           onError: (error) => {
