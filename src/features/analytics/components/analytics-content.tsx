@@ -18,8 +18,11 @@ import dayjs from "dayjs";
 
 export function AnalyticsContent() {
   // --- URL search params ---
-  const { month: monthParam, year: yearParam, compare: compareParam } =
-    Route.useSearch();
+  const {
+    month: monthParam,
+    year: yearParam,
+    compare: compareParam,
+  } = Route.useSearch();
 
   const month = monthParam ?? dayjs().month();
   const year = yearParam ?? dayjs().year();
@@ -121,7 +124,7 @@ export function AnalyticsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       {/* Filters */}
       <AnalyticsFilters
         tags={tags}
@@ -156,7 +159,6 @@ export function AnalyticsContent() {
         />
         <TopProductsChart data={productData} isComparing={isComparing} />
       </div>
-
     </div>
   );
 }

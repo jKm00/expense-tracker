@@ -47,7 +47,7 @@ export function AnalyticsFilters({
   const excludeAnchor = useComboboxAnchor();
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid gap-2 @md:grid-cols-3">
       <FormField label="Include tags">
         <Combobox
           multiple
@@ -58,7 +58,7 @@ export function AnalyticsFilters({
           itemToStringValue={(p: Tag) => p.id}
           itemToStringLabel={(p: Tag) => p.name}
         >
-          <ComboboxChips ref={includeAnchor} className="w-full max-w-xs">
+          <ComboboxChips ref={includeAnchor} className="w-full">
             <ComboboxValue placeholder="Include tags">
               {(values) => (
                 <React.Fragment>
@@ -92,7 +92,7 @@ export function AnalyticsFilters({
           itemToStringValue={(p: Tag) => p.id}
           itemToStringLabel={(p: Tag) => p.name}
         >
-          <ComboboxChips ref={excludeAnchor} className="w-full max-w-xs">
+          <ComboboxChips ref={excludeAnchor} className="w-full">
             <ComboboxValue placeholder="Exclude tags">
               {(values) => (
                 <React.Fragment>
@@ -121,7 +121,7 @@ export function AnalyticsFilters({
           value={compare}
           onValueChange={(v) => onCompareChange(v as ComparisonType)}
         >
-          <SelectTrigger className="w-full min-w-40 max-w-48">
+          <SelectTrigger className="w-full min-w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
