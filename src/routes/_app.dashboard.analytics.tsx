@@ -23,26 +23,83 @@ import {
 } from "@/components/ui/combobox";
 import { Tag } from "@/features/tags/tag.models";
 import { tagQueries } from "@/features/tags/tag.queries";
+import { transactionQueries } from "@/features/transactions/transaction.queries";
+import { productQueries } from "@/features/products/product.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import React, { Suspense } from "react";
 import z from "zod";
 import { FormField } from "@/components/custom/form-field";
+import dayjs from "dayjs";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 const analyticsSearchSchema = z.object({
   month: z.number().optional(),
   year: z.number().optional(),
+  compare: z.enum(["nothing", "month", "year"]).optional(),
 });
 
 export const Route = createFileRoute("/_app/dashboard/analytics")({
-  loaderDeps: ({ search: { month, year } }) => ({ month, year }),
+  loaderDeps: ({ search: { month, year, compare } }) => ({
+    month,
+    year,
+    compare,
+  }),
   loader: async ({ context, deps }) => {
+    const { month, year, compare } = deps;
+
+    // Always prefetch: tags, products, current month transactions
     context.queryClient.prefetchQuery(tagQueries.getTagsOptions());
+    context.queryClient.prefetchQuery(productQueries.getProductsOptions());
+    context.queryClient.prefetchQuery(
+      transactionQueries.getTransactionsOptions(month, year),
+    );
+
+    // Conditionally prefetch comparison period transactions
+    if (compare && compare !== "nothing") {
+      const selected = dayjs()
+        .year(year ?? dayjs().year())
+        .month(month ?? dayjs().month());
+      const compDate =
+        compare === "month"
+          ? selected.subtract(1, "month")
+          : selected.subtract(1, "year");
+      context.queryClient.prefetchQuery(
+        transactionQueries.getTransactionsOptions(
+          compDate.month(),
+          compDate.year(),
+        ),
+      );
+    }
   },
   validateSearch: zodValidator(analyticsSearchSchema),
   component: RouteComponent,
+  errorComponent: AnalyticsErrorComponent,
 });
+
+function AnalyticsErrorComponent({ error: _error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Analytics">
+        <MonthSelect
+          from="/_app/dashboard/analytics"
+          to="/dashboard/analytics"
+        />
+      </PageHeader>
+      <div className="flex flex-col items-center justify-center gap-4 py-12">
+        <AlertTriangle className="size-12 text-destructive" />
+        <p className="text-muted-foreground text-sm">
+          Failed to load analytics data. Please try again.
+        </p>
+        <Button variant="outline" onClick={reset}>
+          Retry
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function RouteComponent() {
   return (
