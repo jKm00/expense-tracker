@@ -1,13 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { productService } from "./products.service";
-import { addProductSchema } from "./products.dtos";
+import { addProductSchema, getProductSchema } from "./products.dtos";
 
 const getProducts = createServerFn({ method: "GET" })
   .middleware([authenticated])
   .handler(async ({ context }) => {
     const userId = context.user.id;
     return await productService.getProducts(userId);
+  });
+
+const getProduct = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(getProductSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const productId = data.productId;
+    return await productService.getProduct(userId, productId);
   });
 
 const addProduct = createServerFn({ method: "POST" })
@@ -23,5 +32,6 @@ const addProduct = createServerFn({ method: "POST" })
 
 export const productController = {
   getProducts,
+  getProduct,
   addProduct,
 };

@@ -1,5 +1,11 @@
 import z from "zod";
 
+export const getProductSchema = z.object({
+  productId: z.string(),
+});
+
+export type GetProductDTO = z.infer<typeof getProductSchema>;
+
 export const addProductSchema = z.object({
   product: z.object({
     name: z.string(),

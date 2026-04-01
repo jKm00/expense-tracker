@@ -10,6 +10,14 @@ function getProductsOptions() {
   });
 }
 
+function getProductOptions(productId: string) {
+  return queryOptions({
+    queryKey: [PRODUCT_QUERY_KEY, productId],
+    queryFn: () => productController.getProduct({ data: { productId } }),
+  });
+}
+
 export const productQueries = {
   getProductsOptions,
+  getProductOptions,
 };

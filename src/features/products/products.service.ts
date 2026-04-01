@@ -82,5 +82,6 @@ async function linkTagToProduct(
 
 export const productService = {
   getProducts,
+  getProduct,
   addProduct,
 };

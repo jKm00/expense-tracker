@@ -5,14 +5,7 @@ import {
 } from "@/components/custom/forms/form-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tag } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -21,14 +14,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import { productMutations } from "../products.mutations";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-
-const newProductSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-});
+import { productSchema } from "../products.validators";
 
 export function NewProductForm() {
   const {
@@ -51,7 +40,7 @@ export function NewProductForm() {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(newProductSchema),
+    resolver: zodResolver(productSchema),
   });
 
   const onSubmit = handleSubmit((data) => {
