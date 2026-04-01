@@ -111,8 +111,8 @@ function ProductsContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-3 gap-2">
+    <div className="space-y-8 @container">
+      <div className="grid @md:grid-cols-3 gap-2">
         <KpiCard
           title="Products"
           value={`${products.length}`}

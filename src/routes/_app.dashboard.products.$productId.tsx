@@ -5,5 +5,12 @@ export const Route = createFileRoute("/_app/dashboard/products/$productId")({
 });
 
 function RouteComponent() {
-  return <div>Product details page comming soon</div>;
+  return (
+    <div>
+      <h1 className="text-2xl font-bold">Edit Product</h1>
+      <p className="text-sm text-muted-foreground mb-4">
+        Edit the details of your product
+      </p>
+    </div>
+  );
 }

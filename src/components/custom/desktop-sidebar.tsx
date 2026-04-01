@@ -5,6 +5,7 @@ import {
   PackageIcon,
   RepeatIcon,
   ChartPie,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
@@ -25,6 +26,7 @@ const navItems = [
   },
   { label: "Products", href: "/dashboard/products", icon: PackageIcon },
   { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
+  { label: "Tags", href: "/dashboard/tags", icon: Tag },
 ] as const;
 
 export function DesktopSidebar() {
