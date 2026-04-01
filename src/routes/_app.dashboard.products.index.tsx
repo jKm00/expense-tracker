@@ -5,7 +5,7 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   ProductList,
   ProductListEmpty,
@@ -14,7 +14,8 @@ import {
 import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import { Suspense, useMemo } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
@@ -29,7 +30,14 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
 function RouteComponent() {
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Products</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold mb-4">Products</h1>
+        <Button asChild>
+          <Link to="/dashboard/products/new">
+            <Plus /> New product
+          </Link>
+        </Button>
+      </div>
       <Suspense fallback={<ProductsContentSkeleton />}>
         <ProductsContent />
       </Suspense>
