@@ -8,8 +8,8 @@ export function UnexpectedError() {
   }
 
   return (
-    <Card className="py-8 px-6">
-      <CardContent className="flex flex-col">
+    <Card className="py-8 px-2 max-md:text-center md:px-6">
+      <CardContent className="flex flex-col max-md:items-center">
         <CircleX className="size-10 mb-4" />
         <h2 className="text-2xl font-semibold mb-4">Unexpected error...</h2>
         <p className="text-muted-foreground text-sm mb-8">

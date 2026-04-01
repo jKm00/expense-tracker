@@ -21,8 +21,8 @@ function ExpectedError({
   }
 
   return (
-    <Card className="py-8 px-6">
-      <CardContent className="flex flex-col">
+    <Card className="py-8 px-2 max-md:text-center md:px-6">
+      <CardContent className="flex flex-col max-md:items-center">
         <Icon className="size-10 mb-4" />
         {children}
         <div className="flex gap-2">
