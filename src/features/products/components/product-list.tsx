@@ -6,42 +6,6 @@ import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { Package } from "lucide-react";
 import React from "react";
 
-// export function ProductList({
-//   title,
-//   notFound,
-//   products,
-// }: {
-//   title: string;
-//   notFound: string;
-//   products: ProductWithTag[];
-// }) {
-//   if (products.length === 0) {
-//     return <EmptyState />;
-//   }
-//   return (
-//     <div className="grid gap-2">
-//       <h2>{title}</h2>
-//       {products.map((product) => (
-//         <Link
-//           to="/dashboard/products/$productId"
-//           params={{ productId: product.id }}
-//         >
-//           <Card>
-//             <CardContent className="flex justify-between items-center gap-4">
-//               <h3 className="font-semibold">{product.name}</h3>
-//               <div className="space-x- space-x-2">
-//                 {product.tags.map((tag) => (
-//                   <Badge variant="outline">{tag.name}</Badge>
-//                 ))}
-//               </div>
-//             </CardContent>
-//           </Card>
-//         </Link>
-//       ))}
-//     </div>
-//   );
-// }
-
 function ProductList({
   products,
   children,
@@ -63,9 +27,10 @@ function ProductList({
     <div className="grid gap-2">
       {title}
       {hasProducts ? (
-        <div>
+        <div className="grid gap-2">
           {products.map((product) => (
             <Link
+              key={product.id}
               to="/dashboard/products/$productId"
               params={{ productId: product.id }}
             >
@@ -74,7 +39,9 @@ function ProductList({
                   <h3 className="font-semibold">{product.name}</h3>
                   <div className="space-x- space-x-2">
                     {product.tags.map((tag) => (
-                      <Badge variant="outline">{tag.name}</Badge>
+                      <Badge key={tag.id} variant="outline">
+                        {tag.name}
+                      </Badge>
                     ))}
                   </div>
                 </CardContent>

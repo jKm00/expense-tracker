@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { products } from "./products.schema";
+import { products, productTags } from "./products.schema";
 import { NewProduct, UpdateProduct } from "./products.models";
 import { eq } from "drizzle-orm";
 
@@ -29,6 +29,16 @@ async function save(product: NewProduct) {
   return await db.insert(products).values(product).returning();
 }
 
+async function saveTagLink(productId: string, tagId: string) {
+  return await db
+    .insert(productTags)
+    .values({
+      productId,
+      tagId,
+    })
+    .returning();
+}
+
 async function update(id: string, data: UpdateProduct) {
   return await db
     .update(products)
@@ -45,6 +55,7 @@ export const productRepo = {
   getAll,
   getOne,
   save,
+  saveTagLink,
   update,
   remove,
 };
