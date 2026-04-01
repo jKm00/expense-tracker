@@ -1,22 +1,28 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { InboxIcon } from "lucide-react";
 
-export function EmptyState({
-  message,
-  icon: Icon = InboxIcon,
-  action,
+function EmptyState({
+  icon: Icon,
+  children,
 }: {
-  message: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  action?: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
 }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-6 text-center">
         <Icon className="size-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-sm">{message}</p>
-        {action && <div className="mt-4">{action}</div>}
+        {children}
       </CardContent>
     </Card>
   );
 }
+
+function EmptyStateMessage({ children }: { children: React.ReactNode }) {
+  return <p className="text-muted-foreground text-sm">{children}</p>;
+}
+
+function EmptyStateAction({ children }: { children: React.ReactNode }) {
+  return <div className="mt-4">{children}</div>;
+}
+
+export { EmptyState, EmptyStateMessage, EmptyStateAction };

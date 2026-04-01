@@ -41,7 +41,7 @@ async function remove(id: string) {
   return await db.delete(products).where(eq(products.id, id)).returning();
 }
 
-export const productsRepo = {
+export const productRepo = {
   getAll,
   getOne,
   save,
