@@ -3,11 +3,7 @@ import { OfflineBanner } from "@/components/custom/offline-banner";
 import { getSession } from "@/features/auth/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
 import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -34,7 +30,7 @@ function AppLayout() {
         <div className="hidden md:flex">
           <DesktopSidebar />
           <main className="flex-1 p-6">
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto">
               <Outlet />
             </div>
           </main>

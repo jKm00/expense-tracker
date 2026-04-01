@@ -4,6 +4,7 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,7 @@ import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Package, PackageX, Plus, Tag } from "lucide-react";
 import { Suspense, useMemo } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
@@ -111,6 +112,26 @@ function ProductsContent() {
 
   return (
     <div className="space-y-8">
+      <div className="grid grid-cols-3 gap-2">
+        <KpiCard
+          title="Products"
+          value={`${products.length}`}
+          subtitle="Number of products"
+          icon={Package}
+        />
+        <KpiCard
+          title="Tagged"
+          value={`${taggedProducts.length}`}
+          subtitle="Number of tagged products"
+          icon={Tag}
+        />
+        <KpiCard
+          title="Untagged"
+          value={`${untaggedProducts.length}`}
+          subtitle="Number of untagged products"
+          icon={PackageX}
+        />
+      </div>
       <ProductList products={untaggedProducts}>
         <ProductListTitle>Untagged products</ProductListTitle>
         <ProductListEmpty>No untagged products found</ProductListEmpty>
