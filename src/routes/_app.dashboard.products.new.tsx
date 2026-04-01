@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { NewProductForm } from "@/features/products/components/new-product.form";
 import { tagsQueries } from "@/features/tags/tags.queries";
+import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 
 export const Route = createFileRoute("/_app/dashboard/products/new")({
   loader: async ({ context }) => {
@@ -17,7 +18,7 @@ function RouteComponent() {
       <p className="text-sm text-muted-foreground mb-4">
         Add a new product to your product bank
       </p>
-      <Suspense fallback={<p>TODO: form skeleton</p>}>
+      <Suspense fallback={<SkeletonForm fields={1} />}>
         <NewProductForm />
       </Suspense>
     </div>
