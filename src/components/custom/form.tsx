@@ -1,5 +1,19 @@
 import { Label } from "@/components/ui/label";
 
+function Form({
+  onSubmit,
+  children,
+}: {
+  onSubmit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="max-w-3xl">
+      {children}
+    </form>
+  );
+}
+
 function FormField({ children }: { children: React.ReactNode }) {
   return <div className="space-y-2">{children}</div>;
 }
@@ -23,4 +37,4 @@ function FormFieldError({ children }: { children: React.ReactNode }) {
   return <p className="text-destructive text-sm">{children}</p>;
 }
 
-export { FormField, FormFieldLabel, FormFieldError };
+export { Form, FormField, FormFieldLabel, FormFieldError };

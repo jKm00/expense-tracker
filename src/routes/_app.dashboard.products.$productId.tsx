@@ -4,6 +4,7 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { EditProductForm } from "@/features/products/components/edit-product.form";
 import { productQueries } from "@/features/products/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -21,7 +22,7 @@ function RouteComponent() {
       <p className="text-sm text-muted-foreground mb-4">
         Edit the details of your product
       </p>
-      <Suspense fallback={<p>TODO: Skeleton</p>}>
+      <Suspense fallback={<SkeletonForm fields={1} />}>
         <EditProductContent />
       </Suspense>
     </div>

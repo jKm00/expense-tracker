@@ -1,8 +1,9 @@
 import {
+  Form,
   FormField,
   FormFieldError,
   FormFieldLabel,
-} from "@/components/custom/forms/form-field";
+} from "@/components/custom/form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -54,7 +55,7 @@ export function NewProductForm() {
       },
       {
         onSuccess: (res) => {
-          const [error, product] = res;
+          const [error] = res;
           if (error) {
             let message: string;
             const reason = error.reason;
@@ -70,8 +71,7 @@ export function NewProductForm() {
             toast.error(message);
           } else {
             navigate({
-              to: "/dashboard/products/$productId",
-              params: { productId: product.id },
+              to: "/dashboard/products",
             });
           }
         },
@@ -88,7 +88,7 @@ export function NewProductForm() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
+    <Form onSubmit={onSubmit}>
       <Card>
         <CardContent>
           <FormField>
@@ -140,6 +140,6 @@ export function NewProductForm() {
           <Button type="submit">Add product</Button>
         </CardFooter>
       </Card>
-    </form>
+    </Form>
   );
 }

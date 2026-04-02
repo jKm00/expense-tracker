@@ -14,3 +14,10 @@ export const addProductSchema = z.object({
 });
 
 export type AddProductDTO = z.infer<typeof addProductSchema>;
+
+export const updateProductSchema = z.object({
+  productId: z.string(),
+  name: z.string().optional(),
+});
+
+export type UpdateProductDTO = z.infer<typeof updateProductSchema>;

@@ -1,6 +1,6 @@
 import { err, ok } from "@/utils/result";
 import { productRepo } from "./products.repo";
-import { NewProduct, Product } from "./products.models";
+import { NewProduct, Product, UpdateProduct } from "./products.models";
 
 async function getProducts(userId: string) {
   try {
@@ -67,6 +67,36 @@ async function addProduct(product: NewProduct, tagIds?: string[]) {
   return ok(saved);
 }
 
+async function updateProduct(
+  userId: string,
+  productId: string,
+  data: UpdateProduct,
+) {
+  const [foundError] = await getProduct(userId, productId);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  let updated: Product;
+  try {
+    const res = await productRepo.update(productId, data);
+    if (res.length === 0) {
+      return err({
+        reason: "PRODUCT_UPDATE_FAILED",
+        message: "Failed to update product. Received no returning products",
+      });
+    }
+    updated = res[0];
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR",
+      message: `Failed to update product (${productId}) in the DB`,
+    });
+  }
+
+  return ok(updated);
+}
+
 async function linkTagToProduct(
   userId: string,
   productId: string,
@@ -84,4 +114,5 @@ export const productService = {
   getProducts,
   getProduct,
   addProduct,
+  updateProduct,
 };
