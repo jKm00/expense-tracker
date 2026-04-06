@@ -35,7 +35,8 @@ function RouteComponent() {
         <h1 className="text-2xl font-bold">Products</h1>
         <Button asChild>
           <Link to="/dashboard/products/new">
-            <Plus /> New product
+            <Plus />
+            <span className="max-md:sr-only">New product</span>
           </Link>
         </Button>
       </div>

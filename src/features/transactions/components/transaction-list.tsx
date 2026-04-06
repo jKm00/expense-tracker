@@ -46,7 +46,8 @@ export function TransactionList({
                             {transaction.totalPrice}
                           </h3>
                           <p className="text-muted-foreground text-xs">
-                            {transaction.entries.length} items
+                            {transaction.entries.length} item
+                            {transaction.entries.length > 1 ? "s" : ""}
                           </p>
                         </div>
                         <ChevronRight className="text-muted-foreground size-5" />

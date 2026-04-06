@@ -75,6 +75,9 @@ function TransactionsContent() {
     if (!transactions) return 0;
 
     const totalTransactions = transactions.length;
+
+    if (totalTransactions === 0) return 0;
+
     const totalEntries = transactions.reduce(
       (acc, transaction) => acc + transaction.entries.length,
       0,
