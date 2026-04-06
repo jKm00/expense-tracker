@@ -112,7 +112,11 @@ export function NewProductForm() {
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {selectedTags.map((tag) => (
-                    <Badge key={tag.id} onClick={() => removeTag(tag)}>
+                    <Badge
+                      key={tag.id}
+                      onClick={() => removeTag(tag)}
+                      className="hover:cursor-pointer"
+                    >
                       <X />
                       {tag.name}
                     </Badge>
@@ -128,7 +132,11 @@ export function NewProductForm() {
             ) : (
               <div className="flex flex-wrap gap-1">
                 {unselectedTags.map((tag) => (
-                  <Badge key={tag.id} onClick={() => addTag(tag)}>
+                  <Badge
+                    key={tag.id}
+                    onClick={() => addTag(tag)}
+                    className="hover:cursor-pointer"
+                  >
                     {tag.name}
                   </Badge>
                 ))}
