@@ -33,10 +33,13 @@ async function saveTransaction({
   transaction: Omit<NewTransaction, "totalPrice">;
   entries: NewEntryDTO[];
 }) {
-  const totalPrice = entries.reduce(
-    (acc, curr) => acc + Number(curr.price) * Number(curr.quantity),
-    0,
-  );
+  const totalPrice = entries.reduce((acc, curr) => {
+    if (curr.type === "expense") {
+      return acc - Number(curr.price) * Number(curr.quantity);
+    } else {
+      return acc + Number(curr.price) * Number(curr.quantity);
+    }
+  }, 0);
 
   let savedTransactions: Transaction[];
   try {

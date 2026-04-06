@@ -1,6 +1,5 @@
 import { useAuth } from "@/features/auth/auth.provider";
 import { authClient } from "@/features/auth/auth-client";
-import { PageHeader } from "@/components/custom/page-header";
 import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +36,7 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Profile" />
+      <h1 className="text-2xl font-bold">Profile</h1>
 
       {/* User Info Card */}
       <Card>
