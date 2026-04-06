@@ -31,8 +31,8 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
 function RouteComponent() {
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold mb-4">Products</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Products</h1>
         <Button asChild>
           <Link to="/dashboard/products/new">
             <Plus /> New product

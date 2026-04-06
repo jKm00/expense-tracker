@@ -4,6 +4,13 @@ import { getSession } from "@/features/auth/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
 import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import z from "zod";
+import { zodValidator } from "@tanstack/zod-adapter";
+
+const appSearchSchema = z.object({
+  month: z.number().optional(),
+  year: z.number().optional(),
+});
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -18,6 +25,7 @@ export const Route = createFileRoute("/_app")({
 
     return { user: session.user };
   },
+  validateSearch: zodValidator(appSearchSchema),
   component: AppLayout,
 });
 

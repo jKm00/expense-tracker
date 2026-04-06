@@ -22,6 +22,7 @@ import { Route as AppDashboardTransactionsIndexRouteImport } from './routes/_app
 import { Route as AppDashboardTagsIndexRouteImport } from './routes/_app.dashboard.tags.index'
 import { Route as AppDashboardRecurringIndexRouteImport } from './routes/_app.dashboard.recurring.index'
 import { Route as AppDashboardProductsIndexRouteImport } from './routes/_app.dashboard.products.index'
+import { Route as AppDashboardTransactionsNewRouteImport } from './routes/_app.dashboard.transactions.new'
 import { Route as AppDashboardTransactionsIdRouteImport } from './routes/_app.dashboard.transactions.$id'
 import { Route as AppDashboardRecurringNewRouteImport } from './routes/_app.dashboard.recurring.new'
 import { Route as AppDashboardRecurringIdRouteImport } from './routes/_app.dashboard.recurring.$id'
@@ -94,6 +95,12 @@ const AppDashboardProductsIndexRoute =
     path: '/dashboard/products/',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDashboardTransactionsNewRoute =
+  AppDashboardTransactionsNewRouteImport.update({
+    id: '/dashboard/transactions/new',
+    path: '/dashboard/transactions/new',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardTransactionsIdRoute =
   AppDashboardTransactionsIdRouteImport.update({
     id: '/dashboard/transactions/$id',
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/recurring/$id': typeof AppDashboardRecurringIdRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/transactions/$id': typeof AppDashboardTransactionsIdRoute
+  '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/dashboard/products/': typeof AppDashboardProductsIndexRoute
   '/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/dashboard/tags/': typeof AppDashboardTagsIndexRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
   '/dashboard/recurring/$id': typeof AppDashboardRecurringIdRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/transactions/$id': typeof AppDashboardTransactionsIdRoute
+  '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/dashboard/products': typeof AppDashboardProductsIndexRoute
   '/dashboard/recurring': typeof AppDashboardRecurringIndexRoute
   '/dashboard/tags': typeof AppDashboardTagsIndexRoute
@@ -175,6 +184,7 @@ export interface FileRoutesById {
   '/_app/dashboard/recurring/$id': typeof AppDashboardRecurringIdRoute
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/_app/dashboard/transactions/$id': typeof AppDashboardTransactionsIdRoute
+  '/_app/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/_app/dashboard/products/': typeof AppDashboardProductsIndexRoute
   '/_app/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/_app/dashboard/tags/': typeof AppDashboardTagsIndexRoute
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/dashboard/recurring/$id'
     | '/dashboard/recurring/new'
     | '/dashboard/transactions/$id'
+    | '/dashboard/transactions/new'
     | '/dashboard/products/'
     | '/dashboard/recurring/'
     | '/dashboard/tags/'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/dashboard/recurring/$id'
     | '/dashboard/recurring/new'
     | '/dashboard/transactions/$id'
+    | '/dashboard/transactions/new'
     | '/dashboard/products'
     | '/dashboard/recurring'
     | '/dashboard/tags'
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/recurring/$id'
     | '/_app/dashboard/recurring/new'
     | '/_app/dashboard/transactions/$id'
+    | '/_app/dashboard/transactions/new'
     | '/_app/dashboard/products/'
     | '/_app/dashboard/recurring/'
     | '/_app/dashboard/tags/'
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/transactions/new': {
+      id: '/_app/dashboard/transactions/new'
+      path: '/dashboard/transactions/new'
+      fullPath: '/dashboard/transactions/new'
+      preLoaderRoute: typeof AppDashboardTransactionsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/transactions/$id': {
       id: '/_app/dashboard/transactions/$id'
       path: '/dashboard/transactions/$id'
@@ -387,6 +407,7 @@ interface AppRouteChildren {
   AppDashboardRecurringIdRoute: typeof AppDashboardRecurringIdRoute
   AppDashboardRecurringNewRoute: typeof AppDashboardRecurringNewRoute
   AppDashboardTransactionsIdRoute: typeof AppDashboardTransactionsIdRoute
+  AppDashboardTransactionsNewRoute: typeof AppDashboardTransactionsNewRoute
   AppDashboardProductsIndexRoute: typeof AppDashboardProductsIndexRoute
   AppDashboardRecurringIndexRoute: typeof AppDashboardRecurringIndexRoute
   AppDashboardTagsIndexRoute: typeof AppDashboardTagsIndexRoute
@@ -403,6 +424,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRecurringIdRoute: AppDashboardRecurringIdRoute,
   AppDashboardRecurringNewRoute: AppDashboardRecurringNewRoute,
   AppDashboardTransactionsIdRoute: AppDashboardTransactionsIdRoute,
+  AppDashboardTransactionsNewRoute: AppDashboardTransactionsNewRoute,
   AppDashboardProductsIndexRoute: AppDashboardProductsIndexRoute,
   AppDashboardRecurringIndexRoute: AppDashboardRecurringIndexRoute,
   AppDashboardTagsIndexRoute: AppDashboardTagsIndexRoute,

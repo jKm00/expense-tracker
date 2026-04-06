@@ -59,11 +59,6 @@ export function MonthSelect({
   }
   return (
     <div className="flex items-center gap-1">
-      {(date.month() !== dayjs().month() || date.year() !== dayjs().year()) && (
-        <Button variant="outline" onClick={resetDate}>
-          Today
-        </Button>
-      )}
       <Button variant="outline" onClick={handlePrevMonth}>
         <ChevronLeft />
       </Button>
@@ -96,6 +91,11 @@ export function MonthSelect({
       <Button variant="outline" onClick={handleNextMonth}>
         <ChevronRight />
       </Button>
+      {(date.month() !== dayjs().month() || date.year() !== dayjs().year()) && (
+        <Button variant="outline" onClick={resetDate}>
+          Today
+        </Button>
+      )}
     </div>
   );
 }

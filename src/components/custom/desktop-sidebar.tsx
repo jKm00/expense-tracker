@@ -66,6 +66,7 @@ export function DesktopSidebar() {
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
+              search={(prev) => prev}
             >
               <item.icon className="size-4" />
               {item.label}
