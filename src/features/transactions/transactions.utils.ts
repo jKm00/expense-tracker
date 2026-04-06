@@ -1,6 +1,11 @@
 import { FullTransaction } from "./transactions.models";
 
 function group(transactions: FullTransaction[]) {
+  // Sort transactions by createdAt descending
+  transactions.sort((txA, txB) => {
+    return txB.createdAt.getTime() - txA.createdAt.getTime();
+  });
+
   const map = new Map<string, FullTransaction[]>();
 
   for (const tx of transactions) {
@@ -11,7 +16,7 @@ function group(transactions: FullTransaction[]) {
     map.set(key, bucket);
   }
 
-  // Optional: sort the groups by date ascending
+  // Sort the groups by date descending
   return Array.from(map.entries())
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([, group]) => group);

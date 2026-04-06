@@ -23,7 +23,7 @@ export function TransactionList({
       {hasProducts ? (
         <div className="space-y-4">
           {grouped.map((group) => (
-            <div>
+            <div key={group[0].createdAt.toISOString()}>
               <h3 className="text-muted-foreground text-xs">
                 {group[0].createdAt.toLocaleString("en-UK", {
                   month: "long",

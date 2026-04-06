@@ -8,19 +8,19 @@ import { wait } from "@/utils";
 
 export function ProductSelect({
   products,
-  selectedProductId,
+  defaultValue,
   onValueChange,
 }: {
   products: Product[];
-  selectedProductId?: string;
+  defaultValue?: string;
   onValueChange?: (product: Product) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [value, setValue] = useState<Product | null>(() => {
-    if (!selectedProductId) return null;
+    if (!defaultValue) return null;
 
-    const found = products.find((p) => p.id === selectedProductId);
+    const found = products.find((p) => p.name === defaultValue);
     if (!found) return null;
     return found;
   });

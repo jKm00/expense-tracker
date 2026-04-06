@@ -133,7 +133,7 @@ function TransactionsContent() {
         <KpiCard
           title="Items / Transaction"
           value={`${averageItemsPerTransaction}`}
-          subtitle="Average transaction per day"
+          subtitle="Average items per transactions"
           icon={XLineTop}
         />
       </div>

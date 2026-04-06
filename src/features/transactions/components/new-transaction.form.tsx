@@ -11,9 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { entrySchema, transactionSchema } from "../transactions.validators";
-import { useState } from "react";
-import { EntryType, NewEntry } from "../transactions.models";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -22,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { X, Plus, SquarePen } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
   Dialog,
@@ -34,9 +32,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { transactionMutations } from "../transactions.mutations";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  NewEntryDTO,
+  saveEntrySchema,
+  saveTransactionSchema,
+} from "../transactions.dtos";
+import { EntryType } from "../transactions.models";
 
 export function NewTransactionForm({ products }: { products: Product[] }) {
-  const [entries, setEntries] = useState<NewEntry[]>([]);
+  const [entries, setEntries] = useState<NewEntryDTO[]>([]);
+
+  const navigate = useNavigate();
+  const mutation = transactionMutations.saveTransaction();
 
   const {
     register,
@@ -47,23 +56,36 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
     defaultValues: {
       entries: [],
     },
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(saveTransactionSchema),
   });
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    mutation.mutate(
+      {
+        ...data,
+      },
+      {
+        onSuccess: (data) => {
+          const [error, transaction] = data;
+          if (error) {
+            // TODO: Handle errors
+          } else {
+            navigate({
+              to: "/dashboard/transactions/$id",
+              params: {
+                id: transaction.id,
+              },
+            });
+          }
+        },
+      },
+    );
   });
 
-  function handleNewEntry(entry: NewEntry) {
+  function handleNewEntry(entry: NewEntryDTO) {
     setEntries((prev) => {
       const updated = [...prev, entry];
-      setValue(
-        "entries",
-        updated.map((entry) => ({
-          ...entry,
-          quantity: `${entry.quantity}`,
-        })),
-      );
+      setValue("entries", updated);
       return updated;
     });
   }
@@ -71,13 +93,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
   function handleRemoveEntry(index: number) {
     setEntries((prev) => {
       const rest = prev.filter((_, i) => i !== index);
-      setValue(
-        "entries",
-        rest.map((entry) => ({
-          ...entry,
-          quantity: `${entry.quantity}`,
-        })),
-      );
+      setValue("entries", rest);
       return rest;
     });
   }
@@ -91,7 +107,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Quantity</TableHead>
+                <TableHead>Qty</TableHead>
                 <TableHead className="text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -148,12 +164,13 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
               <span className="text-muted-foreground">(Optional)</span>
             </FormFieldLabel>
             <Textarea
-              {...register("store")}
+              {...register("description")}
               placeholder="Want to document more about the transaction?"
               className="resize-none"
             />
             <FormFieldError>{errors.description?.message}</FormFieldError>
           </FormField>
+          <Input {...register("source")} value="manual" className="hidden" />
         </CardContent>
         <CardFooter>
           <Button type="submit">Save transaction</Button>
@@ -168,7 +185,7 @@ function NewEntryDialog({
   onSave,
 }: {
   products: Product[];
-  onSave: (entry: NewEntry) => void;
+  onSave: (entry: NewEntryDTO) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -180,15 +197,14 @@ function NewEntryDialog({
     reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(entrySchema),
+    resolver: zodResolver(saveEntrySchema),
   });
 
   function addEntry(type: EntryType) {
+    setValue("type", type);
     handleSubmit((data) => {
       onSave({
-        product: data.product,
-        price: data.price,
-        quantity: Number(data.quantity),
+        ...data,
         type,
       });
       setOpen(false);
@@ -196,14 +212,11 @@ function NewEntryDialog({
     })();
   }
 
-  function handleProductChange(product: Product) {
+  function handleProductSelect(product: Product) {
     if (product.id.length === 0) {
-      setValue("product", {
-        id: null,
-        name: product.name,
-      });
+      setValue("product", { id: null, name: product.name });
     } else {
-      setValue("product", product);
+      setValue("product", { id: product.id, name: product.name });
     }
   }
 
@@ -246,10 +259,12 @@ function NewEntryDialog({
               <ProductSelect
                 {...register("product")}
                 products={products}
-                selectedProductId={getValues("product.id") || undefined}
-                onValueChange={(product) => handleProductChange(product)}
+                defaultValue={getValues("product.name") || undefined}
+                onValueChange={handleProductSelect}
               />
-              <FormFieldError>{errors.product?.message}</FormFieldError>
+              <FormFieldError>
+                {errors.product && "Must select a product"}
+              </FormFieldError>
             </FormField>
           </div>
           <FormField>
