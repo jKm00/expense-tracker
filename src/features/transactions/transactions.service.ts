@@ -1,15 +1,15 @@
 import { err, ok } from "@/utils/result";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
-import { NewEntryDTO, NewTransactionDTO } from "./transactions.dtos";
-import { NewEntry, NewTransaction, Transaction } from "./transactions.models";
+import { NewEntryDTO } from "./transactions.dtos";
+import { NewTransaction, Transaction } from "./transactions.models";
 import { productService } from "../products/products.service";
 import { Product } from "../products/products.models";
 
 async function getTransactions(userId: string, year?: number, month?: number) {
   try {
     let start: Date;
-    if (!year || !month) {
+    if (year === undefined || month === undefined) {
       start = dayjs().startOf("month").toDate();
     } else {
       start = new Date(year, month, 1);
