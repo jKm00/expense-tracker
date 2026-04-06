@@ -125,7 +125,10 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                 entries.map((entry, i) => (
                   <TableRow key={`${entry.product.id}-${entry.quantity}-${i}`}>
                     <TableCell>{entry.product.name}</TableCell>
-                    <TableCell>{entry.price}</TableCell>
+                    <TableCell>
+                      {entry.type === "expense" ? "-" : "+"}
+                      {entry.price}
+                    </TableCell>
                     <TableCell>{entry.quantity}</TableCell>
                     <TableCell className="text-center">
                       {/* TODO: Possibility to edit directly */}
