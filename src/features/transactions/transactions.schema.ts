@@ -11,6 +11,7 @@ import {
 import { user } from "../auth/auth.schema";
 import { products } from "../products/products.schema";
 import { tags } from "../tags/tags.schema";
+import { entryTypes } from "./transactions.models";
 
 export const transactionSource = pgEnum("transaction_source", [
   "manual",
@@ -18,7 +19,7 @@ export const transactionSource = pgEnum("transaction_source", [
   "scan",
 ]);
 
-export const entryType = pgEnum("entry_type", ["income", "expense"]);
+export const entryType = pgEnum("entry_type", entryTypes);
 
 export const transactions = pgTable("transactions", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -1,14 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "../ui/combobox";
 import { Product } from "@/features/products/products.models";
-import { useAuth } from "@/features/auth/auth.provider";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Check, ChevronRight } from "lucide-react";
@@ -17,14 +8,22 @@ import { wait } from "@/utils";
 
 export function ProductSelect({
   products,
+  selectedProductId,
   onValueChange,
 }: {
   products: Product[];
+  selectedProductId?: string;
   onValueChange?: (product: Product) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [value, setValue] = useState<Product | null>(null);
+  const [value, setValue] = useState<Product | null>(() => {
+    if (!selectedProductId) return null;
+
+    const found = products.find((p) => p.id === selectedProductId);
+    if (!found) return null;
+    return found;
+  });
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) =>
