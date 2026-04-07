@@ -5,6 +5,15 @@ import {
   positiveNumberValidator,
 } from "@/validators";
 
+export const getTransactionsSchema = z.object({
+  year: z.number().optional(),
+  month: z.number().optional(),
+});
+
+export const getTransactionSchema = z.object({
+  transactionId: z.string(),
+});
+
 export const saveEntrySchema = z.object({
   product: z.object({
     id: z.string().nullable(),

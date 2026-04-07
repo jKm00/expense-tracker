@@ -1,13 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { transactionService } from "./transactions.service";
-import z from "zod";
-import { saveTransactionSchema } from "./transactions.dtos";
-
-const getTransactionsSchema = z.object({
-  year: z.number().optional(),
-  month: z.number().optional(),
-});
+import {
+  getTransactionSchema,
+  getTransactionsSchema,
+  saveTransactionSchema,
+} from "./transactions.dtos";
 
 const getTransactions = createServerFn({ method: "GET" })
   .middleware([authenticated])
@@ -16,6 +14,15 @@ const getTransactions = createServerFn({ method: "GET" })
     const userId = context.user.id;
     const { year, month } = data;
     return await transactionService.getTransactions(userId, year, month);
+  });
+
+const getTransaction = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(getTransactionSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const transactionId = data.transactionId;
+    return await transactionService.getTransaction(userId, transactionId);
   });
 
 const saveTransaction = createServerFn({ method: "POST" })
@@ -36,5 +43,6 @@ const saveTransaction = createServerFn({ method: "POST" })
 
 export const transactionController = {
   getTransactions,
+  getTransaction,
   saveTransaction,
 };

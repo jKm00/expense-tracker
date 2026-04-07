@@ -12,15 +12,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/products/$productId")({
+  loader: async ({ context, params }) => {
+    context.queryClient.prefetchQuery(
+      productQueries.getProductOptions(params.productId),
+    );
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   return (
     <div>
-      <h1 className="text-2xl font-bold">Edit Product</h1>
+      <h1 className="text-2xl font-bold">Product Details</h1>
       <p className="text-sm text-muted-foreground mb-4">
-        Edit the details of your product
+        View and edit the details about the product
       </p>
       <Suspense fallback={<SkeletonForm fields={1} />}>
         <EditProductContent />
@@ -51,8 +56,8 @@ function EditProductContent() {
         message = `Product not found. Make sure the URL is correct with the correct product ID`;
         break;
       case "PRODUCT_UNAUTHORIZED":
-        ((title = "Unauthorized"),
-          (message = "You do not have permission to view this product!"));
+        title = "Unauthorized";
+        message = "You do not have permission to view this product!";
         break;
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";

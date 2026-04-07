@@ -18,6 +18,21 @@ async function getAll(userId: string, start: Date, end: Date) {
   });
 }
 
+async function getOne(id: string) {
+  return await db.query.transactions.findFirst({
+    with: {
+      entries: {
+        with: {
+          products: true,
+        },
+      },
+    },
+    where: {
+      id,
+    },
+  });
+}
+
 async function save(transaction: NewTransaction) {
   return await db.insert(transactions).values(transaction).returning();
 }
@@ -28,6 +43,7 @@ async function saveEntry(entry: NewEntry) {
 
 export const transactionRepo = {
   getAll,
+  getOne,
   save,
   saveEntry,
 };

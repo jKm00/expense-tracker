@@ -16,6 +16,15 @@ function getTransactionsOptions(year?: number, month?: number) {
   });
 }
 
+function getTransactionOptions(transactionId: string) {
+  return queryOptions({
+    queryKey: [TRANSACTION_QUERY_KEY, transactionId],
+    queryFn: () =>
+      transactionController.getTransaction({ data: { transactionId } }),
+  });
+}
+
 export const transactionQueries = {
   getTransactionsOptions,
+  getTransactionOptions,
 };

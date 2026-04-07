@@ -2,7 +2,11 @@ import { err, ok } from "@/utils/result";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
 import { NewEntryDTO } from "./transactions.dtos";
-import { NewTransaction, Transaction } from "./transactions.models";
+import {
+  FullTransaction,
+  NewTransaction,
+  Transaction,
+} from "./transactions.models";
 import { productService } from "../products/products.service";
 import { Product } from "../products/products.models";
 
@@ -22,6 +26,32 @@ async function getTransactions(userId: string, year?: number, month?: number) {
     return err({
       reason: "TRANSACTION_DB_ERROR",
       message: `Failed to fetch transactions for user ${userId}`,
+    });
+  }
+}
+
+async function getTransaction(userId: string, transactionId: string) {
+  try {
+    const transaction = await transactionRepo.getOne(transactionId);
+    if (!transaction) {
+      return err({
+        reason: "TRANSACTION_NOT_FOUND",
+        message: `Transaction with id ${transactionId} not found`,
+      });
+    }
+
+    if (transaction.userId !== userId) {
+      return err({
+        reason: "TRANSACTION_UNAUTHORIZED",
+        message: `User with id ${userId} does not have access to transaction with id ${transactionId}`,
+      });
+    }
+
+    return ok(transaction);
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR",
+      message: `Failed to fetch transaction (${transactionId}) for user ${userId}`,
     });
   }
 }
@@ -117,5 +147,6 @@ async function saveEntry(
 
 export const transactionService = {
   getTransactions,
+  getTransaction,
   saveTransaction,
 };
