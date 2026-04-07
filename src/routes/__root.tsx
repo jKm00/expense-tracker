@@ -12,7 +12,6 @@ import appCss from "../styles.css?url";
 
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
-import { ReloadPrompt } from "@/components/custom/reload-prompt";
 import { ThemeProvider } from "@/lib/theme";
 
 interface MyRouterContext {
@@ -74,7 +73,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
           <Toaster />
-          <ReloadPrompt />
         </ThemeProvider>
         <TanStackDevtools
           config={{
