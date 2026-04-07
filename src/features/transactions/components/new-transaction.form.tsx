@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
