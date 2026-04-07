@@ -7,6 +7,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { products } from "../products/products.schema";
+import { entryType } from "../transactions/transactions.schema";
 
 export const recurringInterval = pgEnum("recurring_interval", [
   "weekly",
@@ -21,6 +22,7 @@ export const recurring = pgTable("recurring", {
     .references(() => products.id, { onDelete: "cascade" }),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   interval: recurringInterval().notNull(),
+  type: entryType().notNull(),
   start: timestamp("start").notNull(),
   end: timestamp("end"),
   isActive: boolean("is_active").notNull(),

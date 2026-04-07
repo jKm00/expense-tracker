@@ -1,0 +1,1 @@
+ALTER TABLE "recurring" ADD COLUMN "type" "entry_type" NOT NULL;
