@@ -46,7 +46,7 @@ function AppLayout() {
 
         {/* Mobile: content + bottom nav */}
         <div className="md:hidden flex flex-col min-h-screen">
-          <main className="flex-1 p-4 pb-20">
+          <main className="flex-1 p-4 pb-26">
             <Outlet />
           </main>
           <MobileNav />
