@@ -54,10 +54,20 @@ const linkTagToProduct = createServerFn({ method: "POST" })
     return await productService.linkTagToProduct(userId, productId, tagId);
   });
 
+const unlinkTagFromProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(linkTagSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { tagId, productId } = data;
+    return await productService.unlinkTagFromProduct(userId, productId, tagId);
+  });
+
 export const productController = {
   getProducts,
   getProduct,
   addProduct,
   updateProduct,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

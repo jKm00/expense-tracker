@@ -120,10 +120,35 @@ async function linkTagToProduct(
   });
 }
 
+async function unlinkTagFromProduct(
+  userId: string,
+  productId: string,
+  tagId: string,
+) {
+  const [foundProductError] = await getProduct(userId, productId);
+  if (foundProductError) {
+    return err(foundProductError);
+  }
+
+  const removedLink = await productRepo.removeTagLink(productId, tagId);
+  if (removedLink.length === 0) {
+    return err({
+      reason: "TAG_PRODUCT_LINK_NOT_FOUND",
+      message: `Link between tag ${tagId} and product ${productId} not found and was not removed`,
+    });
+  }
+
+  return ok({
+    success: true as const,
+    message: `Tag ${tagId} unlinked from product ${productId}`,
+  });
+}
+
 export const productService = {
   getProducts,
   getProduct,
   addProduct,
   updateProduct,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

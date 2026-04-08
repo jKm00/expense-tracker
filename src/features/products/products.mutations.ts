@@ -68,8 +68,30 @@ function linkTagToProduct() {
   });
 }
 
+function unlinkTagFromProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagDTO) => {
+      assertOnline();
+      return await productController.unlinkTagFromProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to unlink tag from product. Please try again!",
+      );
+    },
+  });
+}
+
 export const productMutations = {
   createProduct,
   updateProduct,
   linkTagToProduct,
+  unlinkTagFromProduct,
 };

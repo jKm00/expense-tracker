@@ -25,6 +25,7 @@ export function LinkTagForm({
   const [search, setSearch] = useState("");
 
   const linkMutation = productMutations.linkTagToProduct();
+  const unlinkMutation = productMutations.unlinkTagFromProduct();
 
   const availableTags = useMemo(() => {
     const productTagIds = product.tags.map((t) => t.id);
@@ -38,7 +39,16 @@ export function LinkTagForm({
   }, [availableTags, search]);
 
   function handleLinkTag(tag: Tag) {
+    // TODO: Handle errors
     linkMutation.mutate({
+      tagId: tag.id,
+      productId: product.id,
+    });
+  }
+
+  function handleUnlinkTag(tag: Tag) {
+    // TODO: Handle errors
+    unlinkMutation.mutate({
       tagId: tag.id,
       productId: product.id,
     });
@@ -70,9 +80,10 @@ export function LinkTagForm({
               </EmptyState>
             ) : (
               <div className="flex flex-wrap gap-1">
-                {product.tags.map((t) => (
-                  <Badge>
-                    {t.name}
+                {product.tags.map((tag) => (
+                  <Badge onClick={() => handleUnlinkTag(tag)}>
+                    <TagIcon />
+                    {tag.name}
                     <X />
                   </Badge>
                 ))}
@@ -94,7 +105,11 @@ export function LinkTagForm({
             ) : (
               <div className="flex flex-wrap gap-1">
                 {filteredTags.map((tag) => (
-                  <Badge onClick={() => handleLinkTag(tag)}>{tag.name}</Badge>
+                  <Badge onClick={() => handleLinkTag(tag)}>
+                    <TagIcon />
+                    {tag.name}
+                    <Plus />
+                  </Badge>
                 ))}
               </div>
             )}
