@@ -8,6 +8,15 @@ async function getAll(userId: string) {
   });
 }
 
+async function getFirst(id: string) {
+  return await db.query.tags.findFirst({
+    where: {
+      id,
+    },
+  });
+}
+
 export const tagsRepo = {
   getAll,
+  getFirst,
 };

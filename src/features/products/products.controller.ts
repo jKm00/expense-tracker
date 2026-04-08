@@ -4,6 +4,7 @@ import { productService } from "./products.service";
 import {
   addProductSchema,
   getProductSchema,
+  linkTagSchema,
   updateProductSchema,
 } from "./products.dtos";
 
@@ -44,9 +45,19 @@ const updateProduct = createServerFn({ method: "POST" })
     return await productService.updateProduct(userId, productId, rest);
   });
 
+const linkTagToProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(linkTagSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { tagId, productId } = data;
+    return await productService.linkTagToProduct(userId, productId, tagId);
+  });
+
 export const productController = {
   getProducts,
   getProduct,
   addProduct,
   updateProduct,
+  linkTagToProduct,
 };

@@ -1,6 +1,6 @@
 import { assertOnline } from "@/lib/offline-guard";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AddProductDTO, UpdateProductDTO } from "./products.dtos";
+import { AddProductDTO, LinkTagDTO, UpdateProductDTO } from "./products.dtos";
 import { productController } from "./products.controller";
 import { PRODUCT_QUERY_KEY } from "./products.queries";
 import { toast } from "sonner";
@@ -47,7 +47,29 @@ function updateProduct() {
   });
 }
 
+function linkTagToProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagDTO) => {
+      assertOnline();
+      return await productController.linkTagToProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to link tag to product. Please try again!",
+      );
+    },
+  });
+}
+
 export const productMutations = {
   createProduct,
   updateProduct,
+  linkTagToProduct,
 };

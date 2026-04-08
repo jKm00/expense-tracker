@@ -121,8 +121,6 @@ function TransactionDetails() {
     );
   }
 
-  console.log(transaction);
-
   return (
     <div className="space-y-4 @container">
       <div className="grid gap-2 @lg:grid-cols-3">

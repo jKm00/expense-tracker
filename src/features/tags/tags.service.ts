@@ -14,6 +14,33 @@ async function getTags(userId: string) {
   }
 }
 
+async function getTag(userId: string, tagId: string) {
+  try {
+    const tag = await tagsRepo.getFirst(tagId);
+    if (!tag) {
+      return err({
+        reason: "TAG_NOT_FOUND",
+        message: `Tag with id ${tagId} not found`,
+      });
+    }
+
+    if (tag.userId !== userId) {
+      return err({
+        reason: "TAG_UNATHORIZED",
+        message: `User with id ${userId} does not have access to tag with id ${tagId}`,
+      });
+    }
+
+    return ok(tag);
+  } catch (error) {
+    return err({
+      reason: "TAG_DB_ERROR",
+      message: `Failed to fetch tag ${tagId} for user ${userId}`,
+    });
+  }
+}
+
 export const tagsService = {
   getTags,
+  getTag,
 };

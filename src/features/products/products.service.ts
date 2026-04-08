@@ -1,6 +1,7 @@
 import { err, ok } from "@/utils/result";
 import { productRepo } from "./products.repo";
 import { NewProduct, Product, UpdateProduct } from "./products.models";
+import { tagsService } from "../tags/tags.service";
 
 async function getProducts(userId: string) {
   try {
@@ -34,7 +35,7 @@ async function getProduct(userId: string, productId: string) {
     return ok(product);
   } catch (error) {
     return err({
-      reason: "UNEXPECTED_DB_ERROR",
+      reason: "PRODUCT_DB_ERROR",
       message: `Failed to fetch product (${productId}) for user ${userId}`,
     });
   }
@@ -102,12 +103,21 @@ async function linkTagToProduct(
   productId: string,
   tagId: string,
 ) {
-  const [foundError] = await getProduct(userId, productId);
-  if (foundError) {
-    return err(foundError);
+  const [foundProductError] = await getProduct(userId, productId);
+  if (foundProductError) {
+    return err(foundProductError);
+  }
+
+  const [foundTagError] = await tagsService.getTag(userId, tagId);
+  if (foundTagError) {
+    return err(foundTagError);
   }
 
   await productRepo.saveTagLink(productId, tagId);
+  return ok({
+    success: true as const,
+    message: `Tag ${tagId} linked to product ${productId}`,
+  });
 }
 
 export const productService = {
@@ -115,4 +125,5 @@ export const productService = {
   getProduct,
   addProduct,
   updateProduct,
+  linkTagToProduct,
 };

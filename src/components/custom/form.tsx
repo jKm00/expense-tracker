@@ -7,11 +7,7 @@ function Form({
   onSubmit: () => void;
   children: React.ReactNode;
 }) {
-  return (
-    <form onSubmit={onSubmit} className="max-w-3xl">
-      {children}
-    </form>
-  );
+  return <form onSubmit={onSubmit}>{children}</form>;
 }
 
 function FormField({ children }: { children: React.ReactNode }) {

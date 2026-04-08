@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function SkeletonForm({ fields = 4 }: { fields?: number }) {
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <CardContent className="space-y-4">
         {Array.from({ length: fields }).map((_, i) => (
           <div key={i} className="space-y-1">
