@@ -14,6 +14,7 @@ import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { useMemo, useState } from "react";
 import { productMutations } from "../products.mutations";
 import { Input } from "@/components/ui/input";
+import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 
 export function LinkTagForm({
   product,
@@ -64,10 +65,7 @@ export function LinkTagForm({
               Link tags to product for analytics
             </CardDescription>
           </div>
-          <Button>
-            <Plus />
-            <span className="max-md:sr-only">New tag</span>
-          </Button>
+          <NewTagDialog />
         </div>
       </CardHeader>
       <CardContent>
