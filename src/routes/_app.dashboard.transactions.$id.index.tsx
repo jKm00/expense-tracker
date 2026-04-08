@@ -25,14 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
+import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { SquarePen } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Braces, Calendar, Package, SquarePen, Trash } from "lucide-react";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/transactions/$id")({
+export const Route = createFileRoute("/_app/dashboard/transactions/$id/")({
   loader: async ({ context, params }) => {
     context.queryClient.prefetchQuery(
       transactionQueries.getTransactionOptions(params.id),
@@ -42,12 +44,30 @@ export const Route = createFileRoute("/_app/dashboard/transactions/$id")({
 });
 
 function RouteComponent() {
+  const { id } = Route.useParams();
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Transaction Details</h1>
-      <p className="text-sm text-muted-foreground mb-4">
-        View and edit details about the transaction
-      </p>
+    <div className="@container">
+      <div className="flex justify-between items-end mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Transaction Details</h1>
+          <p className="text-sm text-muted-foreground">
+            View and edit details about the transaction
+          </p>
+        </div>
+        <div className="flex gap-1">
+          <Button asChild>
+            <Link to="/dashboard/transactions/$id/edit" params={{ id }}>
+              <SquarePen />
+              <span className="@max-lg:sr-only">Edit</span>
+            </Link>
+          </Button>
+          <Button variant="destructive">
+            <Trash />
+            <span className="@max-lg:sr-only">Delete</span>
+          </Button>
+        </div>
+      </div>
       <Suspense fallback={<SkeletonForm fields={2} />}>
         <TransactionDetails />
       </Suspense>
@@ -104,20 +124,39 @@ function TransactionDetails() {
   console.log(transaction);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 @container">
+      <div className="grid gap-2 @lg:grid-cols-3">
+        <KpiCard
+          title="Date"
+          value={transaction.createdAt.toLocaleString("en-UK", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
+          subtitle="Transactions occurance"
+          icon={Calendar}
+        />
+        <KpiCard
+          title="Source"
+          value={toCapitalized(transaction.source)}
+          subtitle="Transactions creation"
+          icon={Braces}
+        />
+        <div className="@max-lg:hidden">
+          <KpiCard
+            title="Items"
+            value={`${transaction.entries.length}`}
+            subtitle="Number of items"
+            icon={Package}
+          />
+        </div>
+      </div>
       <Card>
         <CardHeader>
-          <div className="flex justify-between">
-            <div>
-              <CardTitle>General</CardTitle>
-              <CardDescription>
-                General information about the transaction
-              </CardDescription>
-            </div>
-            <Button variant="ghost">
-              <SquarePen />
-            </Button>
-          </div>
+          <CardTitle>General</CardTitle>
+          <CardDescription>
+            General information about the transaction
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -171,7 +210,7 @@ function TransactionDetails() {
                   <TableCell className="text-right">{entry.quantity}</TableCell>
                   <TableCell className="text-right">
                     {entry.type === "expense" ? "-" : ""}
-                    {Number(entry.price) * entry.quantity},-
+                    {(Number(entry.price) * entry.quantity).toFixed(2)},-
                   </TableCell>
                 </TableRow>
               ))}
