@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 import { productMutations } from "../products.mutations";
 import { Input } from "@/components/ui/input";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
+import { TagBadge } from "@/features/tags/components/tag";
 
 export function LinkTagForm({
   product,
@@ -78,11 +79,15 @@ export function LinkTagForm({
             ) : (
               <div className="flex flex-wrap gap-1">
                 {product.tags.map((tag) => (
-                  <Badge onClick={() => handleUnlinkTag(tag)}>
+                  <TagBadge
+                    key={tag.id}
+                    tag={tag}
+                    onClick={() => handleUnlinkTag(tag)}
+                  >
                     <TagIcon />
                     {tag.name}
                     <X />
-                  </Badge>
+                  </TagBadge>
                 ))}
               </div>
             )}
@@ -102,11 +107,15 @@ export function LinkTagForm({
             ) : (
               <div className="flex flex-wrap gap-1">
                 {filteredTags.map((tag) => (
-                  <Badge onClick={() => handleLinkTag(tag)}>
+                  <TagBadge
+                    key={tag.id}
+                    tag={tag}
+                    onClick={() => handleLinkTag(tag)}
+                  >
                     <TagIcon />
                     {tag.name}
                     <Plus />
-                  </Badge>
+                  </TagBadge>
                 ))}
               </div>
             )}
