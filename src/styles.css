@@ -178,3 +178,10 @@ code {
     @apply font-sans;
   }
 }
+
+/* Offset toast notifications above mobile tab bar */
+@media (max-width: 767px) {
+  [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: 96px !important;
+  }
+}
