@@ -2,6 +2,9 @@ import { db } from "@/lib/db";
 
 async function getAll(userId: string) {
   return await db.query.tags.findMany({
+    with: {
+      products: true,
+    },
     where: {
       userId,
     },
