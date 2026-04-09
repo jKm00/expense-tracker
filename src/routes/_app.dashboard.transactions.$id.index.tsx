@@ -123,16 +123,12 @@ function TransactionDetails() {
 
   return (
     <div className="space-y-4 @container">
-      <div className="grid gap-2 @lg:grid-cols-3">
+      <div className="grid gap-2 @md:grid-cols-2 @xl:grid-cols-3">
         <KpiCard
-          title="Date"
-          value={transaction.createdAt.toLocaleString("en-UK", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
-          subtitle="Transactions occurance"
-          icon={Calendar}
+          title="Items"
+          value={`${transaction.entries.length}`}
+          subtitle="Number of items"
+          icon={Package}
         />
         <KpiCard
           title="Source"
@@ -140,12 +136,16 @@ function TransactionDetails() {
           subtitle="Transactions creation"
           icon={Braces}
         />
-        <div className="@max-lg:hidden">
+        <div className="@md:col-span-2 @xl:col-span-1">
           <KpiCard
-            title="Items"
-            value={`${transaction.entries.length}`}
-            subtitle="Number of items"
-            icon={Package}
+            title="Date"
+            value={transaction.createdAt.toLocaleString("en-UK", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+            subtitle="Transactions occurance"
+            icon={Calendar}
           />
         </div>
       </div>

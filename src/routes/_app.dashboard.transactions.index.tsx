@@ -116,7 +116,7 @@ function TransactionsContent() {
 
   return (
     <div className="space-y-8 @container">
-      <div className="grid gap-2 @md:grid-cols-3">
+      <div className="grid gap-2 @xl:grid-cols-2 @2xl:grid-cols-3">
         <KpiCard
           title="Transactions"
           value={`${transactions.length}`}
@@ -129,12 +129,14 @@ function TransactionsContent() {
           subtitle="Average transaction per day"
           icon={XLineTop}
         />
-        <KpiCard
-          title="Items / Transaction"
-          value={`${averageItemsPerTransaction}`}
-          subtitle="Average items per transactions"
-          icon={XLineTop}
-        />
+        <div className="@xl:col-span-2 @2xl:col-span-1">
+          <KpiCard
+            title="Items / Transaction"
+            value={`${averageItemsPerTransaction}`}
+            subtitle="Average items per transactions"
+            icon={XLineTop}
+          />
+        </div>
       </div>
       <TransactionList transactions={transactions} />
     </div>

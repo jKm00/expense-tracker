@@ -113,13 +113,15 @@ function ProductsContent() {
 
   return (
     <div className="space-y-8 @container">
-      <div className="grid @md:grid-cols-3 gap-2">
-        <KpiCard
-          title="Products"
-          value={`${products.length}`}
-          subtitle="Number of products"
-          icon={Package}
-        />
+      <div className="grid gap-2 @lg:grid-cols-2 @xl:grid-cols-3">
+        <div className="@lg:col-span-2 @xl:col-span-1">
+          <KpiCard
+            title="Products"
+            value={`${products.length}`}
+            subtitle="Number of products"
+            icon={Package}
+          />
+        </div>
         <KpiCard
           title="Tagged"
           value={`${taggedProducts.length}`}
