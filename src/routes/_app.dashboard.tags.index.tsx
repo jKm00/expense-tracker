@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
+import { TagBadge } from "@/features/tags/components/tag";
 import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -106,7 +107,11 @@ function TagContent() {
             <TableBody>
               {tags.map((tag) => (
                 <TableRow key={tag.id}>
-                  <TableCell>{tag.name}</TableCell>
+                  <TableCell>
+                    <TagBadge tag={tag} variant="secondary">
+                      {tag.name}
+                    </TagBadge>
+                  </TableCell>
                   <TableCell>{tag.color || "-"}</TableCell>
                   <TableCell>{tag.products.length}</TableCell>
                   <TableCell className="flex justify-center">

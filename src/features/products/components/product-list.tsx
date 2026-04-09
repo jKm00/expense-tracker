@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { Package } from "lucide-react";
 import React from "react";
+import { TagBadge } from "@/features/tags/components/tag";
 
 function ProductList({
   products,
@@ -39,9 +40,9 @@ function ProductList({
                   <h3 className="font-semibold">{product.name}</h3>
                   <div className="space-x- space-x-2">
                     {product.tags.map((tag) => (
-                      <Badge key={tag.id} variant="outline">
+                      <TagBadge key={tag.id} tag={tag} variant="secondary">
                         {tag.name}
-                      </Badge>
+                      </TagBadge>
                     ))}
                   </div>
                 </CardContent>

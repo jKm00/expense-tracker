@@ -12,13 +12,14 @@ import { Tag } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Plus, Tag as TagIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { productMutations } from "../products.mutations";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { productSchema } from "../products.validators";
+import { TagBadge } from "@/features/tags/components/tag";
 
 export function NewProductForm() {
   const {
@@ -112,14 +113,17 @@ export function NewProductForm() {
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {selectedTags.map((tag) => (
-                    <Badge
+                    <TagBadge
                       key={tag.id}
+                      tag={tag}
                       onClick={() => removeTag(tag)}
                       className="hover:cursor-pointer"
+                      variant="secondary"
                     >
-                      <X />
+                      <TagIcon />
                       {tag.name}
-                    </Badge>
+                      <X />
+                    </TagBadge>
                   ))}
                 </div>
               )}
@@ -132,13 +136,17 @@ export function NewProductForm() {
             ) : (
               <div className="flex flex-wrap gap-1">
                 {unselectedTags.map((tag) => (
-                  <Badge
+                  <TagBadge
                     key={tag.id}
+                    tag={tag}
                     onClick={() => addTag(tag)}
-                    className="hover:cursor-pointer"
+                    className="hover:cursor-pointer space-x-1"
+                    variant="secondary"
                   >
+                    <TagIcon />
                     {tag.name}
-                  </Badge>
+                    <Plus />
+                  </TagBadge>
                 ))}
               </div>
             )}
