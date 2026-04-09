@@ -5,7 +5,6 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,19 +15,18 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
+import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Plus, Star, XLineTop } from "lucide-react";
+import { Ellipsis, Hash, Star, XLineTop } from "lucide-react";
 import { Suspense, useMemo } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
@@ -43,10 +41,7 @@ function RouteComponent() {
     <div>
       <div className="flex items-end justify-between mb-4">
         <h1 className="text-2xl font-bold">Tags</h1>
-        <Button>
-          <Plus />
-          <span className="max-md:sr-only">New tag</span>
-        </Button>
+        <NewTagDialog />
       </div>
       {/* TODO: Make and replace to skeleton table */}
       <Suspense fallback={<SkeletonForm />}>

@@ -1,5 +1,6 @@
 import { err, ok } from "@/utils/result";
 import { tagsRepo } from "./tags.repo";
+import { NewTag } from "./tags.models";
 
 async function getTags(userId: string) {
   try {
@@ -40,7 +41,57 @@ async function getTag(userId: string, tagId: string) {
   }
 }
 
+async function getTagByName(userId: string, tagName: string) {
+  try {
+    const tag = await tagsRepo.getFirstByName(userId, tagName);
+    if (!tag) {
+      return err({
+        reason: "TAG_NOT_FOUND",
+        message: `Tag with name ${tagName} not found for user ${userId}`,
+      });
+    }
+
+    if (tag.userId !== userId) {
+      return err({
+        reason: "TAG_UNATHORIZED",
+        message: `User with id ${userId} does not have access to tag with name ${tagName}`,
+      });
+    }
+
+    return ok(tag);
+  } catch (error) {
+    return err({
+      reason: "TAG_DB_ERROR",
+      message: `Failed to fetch tag ${tagName} for user ${userId}`,
+    });
+  }
+}
+
+async function addTag(tag: NewTag) {
+  const [foundError] = await getTagByName(tag.userId, tag.name);
+  if (foundError && foundError.reason !== "TAG_NOT_FOUND") {
+    return err(foundError);
+  }
+
+  try {
+    const saved = await tagsRepo.save(tag);
+    if (saved.length === 0) {
+      return err({
+        reason: "TAG_NOT_RETURNED",
+        message: `No tag returned after saving`,
+      });
+    }
+    return ok(saved[0]);
+  } catch (error) {
+    return err({
+      reason: "TAG_SAVE_DB_ERROR",
+      message: `Failed to save tag ${tag.name} to DB`,
+    });
+  }
+}
+
 export const tagsService = {
   getTags,
   getTag,
+  addTag,
 };
