@@ -38,7 +38,7 @@ function ProductList({
               <Card>
                 <CardContent className="flex justify-between items-center gap-4">
                   <h3 className="font-semibold">{product.name}</h3>
-                  <div className="space-x- space-x-2">
+                  <div className="flex flex-wrap gap-1 justify-end">
                     {product.tags.map((tag) => (
                       <TagBadge key={tag.id} tag={tag} variant="secondary">
                         {tag.name}
