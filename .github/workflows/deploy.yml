@@ -3,6 +3,7 @@ name: Build and Run DB Migrations
 on:
   push:
     branches:
+      - main
       - version-2-refined
 
 jobs:
