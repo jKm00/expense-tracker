@@ -27,7 +27,14 @@ import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Braces, Calendar, Package, SquarePen, Trash } from "lucide-react";
+import {
+  Braces,
+  Calendar,
+  CircleDollarSign,
+  Package,
+  SquarePen,
+  Trash,
+} from "lucide-react";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/")({
@@ -134,7 +141,7 @@ function TransactionDetails() {
           title="Price"
           value={transaction.totalPrice}
           subtitle="Total sum"
-          icon={Braces}
+          icon={CircleDollarSign}
         />
         <KpiCard
           title="Items"
