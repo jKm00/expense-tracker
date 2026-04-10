@@ -1,6 +1,6 @@
 import { err, ok } from "@/utils/result";
 import { tagsRepo } from "./tags.repo";
-import { NewTag } from "./tags.models";
+import { NewTag, UpdateTag } from "./tags.models";
 
 async function getTags(userId: string) {
   try {
@@ -90,6 +90,39 @@ async function addTag(tag: NewTag) {
   }
 }
 
+async function updateTag(userId: string, tagId: string, data: UpdateTag) {
+  const [foundError] = await getTag(userId, tagId);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  if (data.name) {
+    const [nameError, existingTag] = await getTagByName(userId, data.name);
+    if (!nameError && existingTag && existingTag.id !== tagId) {
+      return err({
+        reason: "TAG_ALREADY_EXISTS" as const,
+        message: `A tag with the name '${data.name}' already exists`,
+      });
+    }
+  }
+
+  try {
+    const updated = await tagsRepo.update(tagId, data);
+    if (updated.length === 0) {
+      return err({
+        reason: "TAG_NOT_RETURNED" as const,
+        message: `No tag returned after updating`,
+      });
+    }
+    return ok(updated[0]);
+  } catch (error) {
+    return err({
+      reason: "TAG_DB_ERROR" as const,
+      message: `Failed to update tag ${tagId} in DB`,
+    });
+  }
+}
+
 async function deleteTag(userId: string, tagId: string) {
   const [foundError] = await getTag(userId, tagId);
   if (foundError) {
@@ -117,5 +150,6 @@ export const tagsService = {
   getTags,
   getTag,
   addTag,
+  updateTag,
   deleteTag,
 };

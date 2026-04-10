@@ -12,7 +12,7 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Star, Trash, TrendingUp } from "lucide-react";
+import { Ellipsis, Hash, Pencil, Star, Trash, TrendingUp } from "lucide-react";
 import { Suspense, useMemo } from "react";
 import {
   DropdownMenu,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
+import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
@@ -112,7 +113,8 @@ function TagContent() {
                   </div>
                 </div>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {tag.products.length} ref{tag.products.length !== 1 ? "s" : ""}
+                  {tag.products.length} ref
+                  {tag.products.length !== 1 ? "s" : ""}
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -123,6 +125,13 @@ function TagContent() {
                   <DropdownMenuContent className="w-40" align="end">
                     <DropdownMenuGroup>
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={(e) => e.preventDefault()}>
+                        <EditTagDialog tag={tag}>
+                          <p>
+                            Edit <Pencil />
+                          </p>
+                        </EditTagDialog>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         variant="destructive"
                         onClick={(e) => e.preventDefault()}
