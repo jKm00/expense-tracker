@@ -23,7 +23,6 @@ import {
   EntryListTitle,
 } from "@/features/transactions/components/entry-list";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -50,23 +49,25 @@ function RouteComponent() {
   const { id } = Route.useParams();
 
   return (
-    <div className="@container">
-      <div className="flex justify-between items-end mb-4">
+    <div className="space-y-6 @container">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Transaction Details</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Transaction Details
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             View and edit details about the transaction
           </p>
         </div>
-        <div className="flex gap-1">
-          <Button asChild>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
             <Link to="/dashboard/transactions/$id/edit" params={{ id }}>
-              <SquarePen />
+              <SquarePen className="size-4" />
               <span className="@max-lg:sr-only">Edit</span>
             </Link>
           </Button>
-          <Button variant="destructive">
-            <Trash />
+          <Button variant="destructive" size="sm">
+            <Trash className="size-4" />
             <span className="@max-lg:sr-only">Delete</span>
           </Button>
         </div>
@@ -84,8 +85,6 @@ function TransactionDetails() {
     data: [expectedError, transaction],
     error: unexpectedError,
   } = useSuspenseQuery(transactionQueries.getTransactionOptions(id));
-
-  const isMobile = useBreakpoint(BREAKPOINTS.md);
 
   if (unexpectedError) {
     return <UnexpectedError />;
@@ -125,8 +124,8 @@ function TransactionDetails() {
   }
 
   return (
-    <div className="space-y-4 @container">
-      <div className="grid gap-2 @xl:grid-cols-2 @2xl:grid-cols-4">
+    <div className="space-y-6 @container">
+      <div className="grid gap-3 @xl:grid-cols-2 @2xl:grid-cols-4">
         <KpiCard
           title="Date"
           value={transaction.createdAt.toLocaleString("en-UK", {
@@ -134,13 +133,13 @@ function TransactionDetails() {
             month: "short",
             year: "numeric",
           })}
-          subtitle="Transactions occurance"
+          subtitle="Transaction date"
           icon={Calendar}
         />
         <KpiCard
-          title="Price"
+          title="Total"
           value={transaction.totalPrice}
-          subtitle="Total sum"
+          subtitle="Total amount"
           icon={CircleDollarSign}
         />
         <KpiCard
@@ -152,10 +151,11 @@ function TransactionDetails() {
         <KpiCard
           title="Source"
           value={toCapitalized(transaction.source)}
-          subtitle="Transactions creation"
+          subtitle="How it was created"
           icon={Braces}
         />
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>General</CardTitle>
@@ -164,16 +164,17 @@ function TransactionDetails() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Store</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Store</Label>
             <Input
               defaultValue={transaction.store || ""}
               readOnly
-              placeholder="Not specificed..."
+              placeholder="Not specified..."
+              className="bg-muted/30"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Description</Label>
             <Textarea
               defaultValue={transaction.description || ""}
               readOnly
@@ -183,6 +184,7 @@ function TransactionDetails() {
           </div>
         </CardContent>
       </Card>
+
       <EntryList entries={transaction.entries}>
         <EntryListTitle>Transaction Items</EntryListTitle>
         <EntryListEmpty>No transaction items found...</EntryListEmpty>

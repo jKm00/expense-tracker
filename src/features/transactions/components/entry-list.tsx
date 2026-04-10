@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
-import { Package } from "lucide-react";
+import { Package, ShoppingBag } from "lucide-react";
 import React from "react";
 import { EntryWithProduct } from "../transactions.models";
 
@@ -23,35 +22,33 @@ function EntryList({
   );
 
   return (
-    <div className="grid gap-2">
+    <div className="space-y-2">
       {title}
       {hasEntries ? (
-        <div className="grid gap-2">
-          {entries.map((entry) => (
+        <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+          {entries.map((entry, idx) => (
             <Link
               key={entry.id}
               to="/dashboard/products/$productId"
               params={{ productId: entry.productId }}
+              className="block"
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>{entry.product?.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>
-                    Quantity: <span>{entry.quantity}</span>
+              <div
+                className={`flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50 ${idx !== entries.length - 1 ? "border-b border-border/40" : ""}`}
+              >
+                <ShoppingBag className="size-4 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {entry.product?.name}
                   </p>
-                  <p>
-                    Price per unit: <span>{entry.price},-</span>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.quantity} x {entry.price},-
                   </p>
-                  <p>
-                    Total sum:{" "}
-                    <span>
-                      {(entry.quantity * Number(entry.price)).toFixed(2)},-
-                    </span>
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <span className="text-sm font-semibold tabular-nums text-foreground">
+                  {(entry.quantity * Number(entry.price)).toFixed(2)},-
+                </span>
+              </div>
             </Link>
           ))}
         </div>
@@ -63,7 +60,11 @@ function EntryList({
 }
 
 function EntryListTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-muted-foreground text-sm">{children}</h2>;
+  return (
+    <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      {children}
+    </h2>
+  );
 }
 
 function EntryListEmpty({ children }: { children: React.ReactNode }) {

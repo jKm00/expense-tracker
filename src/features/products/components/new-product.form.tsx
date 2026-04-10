@@ -4,9 +4,7 @@ import {
   FormFieldError,
   FormFieldLabel,
 } from "@/components/custom/form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tag } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -90,51 +88,53 @@ export function NewProductForm() {
 
   return (
     <Form onSubmit={onSubmit}>
-      <Card>
-        <CardContent>
-          <FormField>
-            <FormFieldLabel required>Product Name</FormFieldLabel>
-            <Input
-              {...register("name")}
-              placeholder="White Monster, Potato..."
-            />
-            <FormFieldError>{errors.name?.message}</FormFieldError>
-          </FormField>
-          <div className="mt-4">
-            <div className="mb-4">
-              <h3 className="mb-1">
-                Selected tags{" "}
-                <span className="text-muted-foreground">(optional)</span>
-              </h3>
-              {selectedTags.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No selected tags
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {selectedTags.map((tag) => (
-                    <TagBadge
-                      key={tag.id}
-                      tag={tag}
-                      onClick={() => removeTag(tag)}
-                      className="hover:cursor-pointer"
-                      variant="secondary"
-                    >
-                      <TagIcon />
-                      {tag.name}
-                      <X />
-                    </TagBadge>
-                  ))}
-                </div>
-              )}
-            </div>
-            <h3 className="mb-1">Available tags</h3>
+      <div className="space-y-6">
+        <FormField>
+          <FormFieldLabel required>Product Name</FormFieldLabel>
+          <Input
+            {...register("name")}
+            placeholder="White Monster, Potato..."
+          />
+          <FormFieldError>{errors.name?.message}</FormFieldError>
+        </FormField>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              Selected tags{" "}
+              <span className="text-muted-foreground">(optional)</span>
+            </p>
+            {selectedTags.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No selected tags
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedTags.map((tag) => (
+                  <TagBadge
+                    key={tag.id}
+                    tag={tag}
+                    onClick={() => removeTag(tag)}
+                    className="hover:cursor-pointer"
+                    variant="secondary"
+                  >
+                    <TagIcon />
+                    {tag.name}
+                    <X />
+                  </TagBadge>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              Available tags
+            </p>
             {unselectedTags.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No available tags left to select
               </p>
             ) : (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {unselectedTags.map((tag) => (
                   <TagBadge
                     key={tag.id}
@@ -151,11 +151,11 @@ export function NewProductForm() {
               </div>
             )}
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit">Add product</Button>
-        </CardFooter>
-      </Card>
+        </div>
+        <Button type="submit" className="w-full">
+          Add product
+        </Button>
+      </div>
     </Form>
   );
 }

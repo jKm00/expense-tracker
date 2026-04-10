@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, RefreshCcw } from "lucide-react";
 import {
-  Form,
   FormField,
   FormFieldError,
   FormFieldLabel,
@@ -61,7 +60,6 @@ export function NewTagDialog() {
           switch (reason) {
             case "TAG_NOT_RETURNED":
             case "TAG_DB_ERROR":
-            case "TAG_SAVE_DB_ERROR":
             case "TAG_UNATHORIZED":
               message = "Failed to save tag. Please try again";
               break;
@@ -100,7 +98,7 @@ export function NewTagDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button">
+        <Button type="button" size="sm" variant="outline">
           <Plus />
           <span className="max-md:sr-only">New tag</span>
         </Button>
@@ -124,7 +122,7 @@ export function NewTagDialog() {
               Tag color{" "}
               <span className="text-muted-foreground">(Optional)</span>
             </FormFieldLabel>
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               <Input
                 {...register("color")}
                 style={{
@@ -140,8 +138,9 @@ export function NewTagDialog() {
                 type="button"
                 onClick={handleRandomizeColor}
                 variant="outline"
+                size="icon"
               >
-                <RefreshCcw />
+                <RefreshCcw className="size-4" />
               </Button>
             </div>
           </FormField>

@@ -21,10 +21,10 @@ export const Route = createFileRoute("/_app/dashboard/transactions/new")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">New Transaction</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">New Transaction</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Document a new transaction
         </p>
       </div>

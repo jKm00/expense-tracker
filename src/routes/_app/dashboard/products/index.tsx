@@ -30,12 +30,17 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Products</h1>
-        <Button asChild>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Manage your product catalog
+          </p>
+        </div>
+        <Button asChild size="sm" variant="outline">
           <Link to="/dashboard/products/new">
-            <Plus />
+            <Plus className="size-4" />
             <span className="max-md:sr-only">New product</span>
           </Link>
         </Button>
@@ -112,26 +117,26 @@ function ProductsContent() {
   }
 
   return (
-    <div className="space-y-8 @container">
-      <div className="grid gap-2 @lg:grid-cols-2 @xl:grid-cols-3">
+    <div className="space-y-6 @container">
+      <div className="grid gap-3 @lg:grid-cols-2 @xl:grid-cols-3">
         <div className="@lg:col-span-2 @xl:col-span-1">
           <KpiCard
-            title="Products"
+            title="Total"
             value={`${products.length}`}
-            subtitle="Number of products"
+            subtitle="All products"
             icon={Package}
           />
         </div>
         <KpiCard
           title="Tagged"
           value={`${taggedProducts.length}`}
-          subtitle="Number of tagged products"
+          subtitle="With categories"
           icon={Tag}
         />
         <KpiCard
           title="Untagged"
           value={`${untaggedProducts.length}`}
-          subtitle="Number of untagged products"
+          subtitle="Needs categorizing"
           icon={PackageX}
         />
       </div>

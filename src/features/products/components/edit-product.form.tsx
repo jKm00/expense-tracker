@@ -4,7 +4,6 @@ import {
   FormFieldError,
   FormFieldLabel,
 } from "@/components/custom/form";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -50,6 +49,7 @@ export function EditProductForm({ product }: { product: Product }) {
               case "PRODUCT_UPDATE_FAILED":
                 message = "Failed to update product, please try again!";
                 break;
+              case "PRODUCT_DB_ERROR":
               case "UNEXPECTED_DB_ERROR":
                 message =
                   "Failed when trying to save to database. Please try again!";
@@ -68,27 +68,19 @@ export function EditProductForm({ product }: { product: Product }) {
 
   return (
     <Form onSubmit={onSubmit}>
-      <Card>
-        <CardContent>
-          <FormField>
-            <FormFieldLabel required>Product Name</FormFieldLabel>
-            <Input
-              {...register("name")}
-              placeholder="White Monster, Potato..."
-            />
-            <FormFieldError>{errors.name?.message}</FormFieldError>
-          </FormField>
-        </CardContent>
-        <CardFooter>
-          <LoaderButton
-            type="submit"
-            isLoading={mutation.isPending}
-            disabled={!isDirty || mutation.isPending}
-          >
-            Save changes
-          </LoaderButton>
-        </CardFooter>
-      </Card>
+      <FormField>
+        <FormFieldLabel required>Product Name</FormFieldLabel>
+        <Input {...register("name")} placeholder="White Monster, Potato..." />
+        <FormFieldError>{errors.name?.message}</FormFieldError>
+      </FormField>
+      <LoaderButton
+        type="submit"
+        isLoading={mutation.isPending}
+        disabled={!isDirty || mutation.isPending}
+        className="w-full"
+      >
+        Save changes
+      </LoaderButton>
     </Form>
   );
 }

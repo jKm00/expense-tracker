@@ -13,11 +13,13 @@ export const Route = createFileRoute("/_app/dashboard/products/new")({
 
 function RouteComponent() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">New Product</h1>
-      <p className="text-sm text-muted-foreground mb-4">
-        Add a new product to your product bank
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">New Product</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Add a new product to your product bank
+        </p>
+      </div>
       <Suspense fallback={<SkeletonForm fields={1} />}>
         <NewProductForm />
       </Suspense>

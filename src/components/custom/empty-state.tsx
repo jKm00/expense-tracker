@@ -1,5 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
-
 function EmptyState({
   icon: Icon,
   size,
@@ -10,19 +8,19 @@ function EmptyState({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center justify-center py-6 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
+      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
         <Icon
-          className={`${size === "sm" ? "size-3" : size === "md" ? "size-5" : size === "lg" ? "size-8" : size === "xl" ? "size-12" : "size-12"} text-muted-foreground mb-4`}
+          className={`${size === "sm" ? "size-3" : size === "md" ? "size-4" : size === "lg" ? "size-5" : "size-5"} text-muted-foreground`}
         />
-        {children}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
   );
 }
 
 function EmptyStateMessage({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground text-sm">{children}</p>;
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 }
 
 function EmptyStateAction({ children }: { children: React.ReactNode }) {

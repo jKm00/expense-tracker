@@ -5,21 +5,6 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 import { TagBadge } from "@/features/tags/components/tag";
@@ -27,7 +12,7 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Star, Trash, XLineTop } from "lucide-react";
+import { Ellipsis, Hash, Star, Trash, TrendingUp } from "lucide-react";
 import { Suspense, useMemo } from "react";
 import {
   DropdownMenu,
@@ -49,9 +34,14 @@ export const Route = createFileRoute("/_app/dashboard/tags/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="flex items-end justify-between mb-4">
-        <h1 className="text-2xl font-bold">Tags</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Tags</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Organize products with tags
+          </p>
+        </div>
         <NewTagDialog />
       </div>
       {/* TODO: Make and replace to skeleton table */}
@@ -97,63 +87,60 @@ function TagContent() {
   }
 
   return (
-    <div className="space-y-4 @container">
+    <div className="space-y-6 @container">
       <TagKpis tags={tags} />
-      <Card>
-        <CardHeader>
-          <CardTitle>Tags</CardTitle>
-          <CardDescription>All available tags</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tag</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead>References</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tags.map((tag) => (
-                <TableRow key={tag.id}>
-                  <TableCell>
+      <div>
+        <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          All tags
+        </h2>
+        {tags.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
+            <p className="text-sm text-muted-foreground">No tags created yet</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+            {tags.map((tag, idx) => (
+              <div
+                key={tag.id}
+                className={`flex items-center gap-4 px-4 py-3 ${idx !== tags.length - 1 ? "border-b border-border/40" : ""}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
                     <TagBadge tag={tag} variant="secondary">
                       {tag.name}
                     </TagBadge>
-                  </TableCell>
-                  <TableCell>{tag.color || "-"}</TableCell>
-                  <TableCell>{tag.products.length}</TableCell>
-                  <TableCell className="flex justify-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline">
-                          <Ellipsis />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-40" align="start">
-                        <DropdownMenuGroup>
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            <DeleteTagDialog tag={tag}>
-                              <p>
-                                Delete <Trash />
-                              </p>
-                            </DeleteTagDialog>
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </div>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {tag.products.length} ref{tag.products.length !== 1 ? "s" : ""}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <Ellipsis className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-40" align="end">
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <DeleteTagDialog tag={tag}>
+                          <p>
+                            Delete <Trash />
+                          </p>
+                        </DeleteTagDialog>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -182,23 +169,23 @@ function TagKpis({ tags }: { tags: TagWithProduct[] }) {
   }, [tags]);
 
   return (
-    <div className="grid gap-2 @md:grid-cols-2 @xl:grid-cols-3">
+    <div className="grid gap-3 @md:grid-cols-2 @xl:grid-cols-3">
       <KpiCard
         title="Count"
-        subtitle="Number of tags"
+        subtitle="Total tags"
         value={`${tags.length}`}
         icon={Hash}
       />
       <KpiCard
         title="References"
-        subtitle="Average references per tag"
+        subtitle="Average per tag"
         value={`${averageReferences}`}
-        icon={XLineTop}
+        icon={TrendingUp}
       />
       <div className="@md:col-span-2 @xl:col-span-1">
         <KpiCard
           title="Most used"
-          subtitle="Most used tag"
+          subtitle="Top tag"
           value={mostUsedTag?.name || "-"}
           icon={Star}
         />

@@ -1,10 +1,5 @@
 import { LucideIcon } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../../components/ui/card";
+import { Card, CardContent } from "../../../components/ui/card";
 
 export function KpiCard({
   title,
@@ -18,19 +13,19 @@ export function KpiCard({
   icon?: LucideIcon;
 }) {
   return (
-    <Card size="sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-muted-foreground text-xs font-medium">
+    <Card className="relative overflow-hidden">
+      <CardContent className="flex flex-col gap-1 py-2">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="size-4 text-primary" />}
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {title}
-          </CardTitle>
-          {Icon && <Icon className="text-muted-foreground size-4" />}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <p className="mt-1 text-2xl font-bold tracking-tight truncate">
+          {value}
+        </p>
         {subtitle && (
-          <p className="text-muted-foreground text-xs mt-1">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
         )}
       </CardContent>
     </Card>

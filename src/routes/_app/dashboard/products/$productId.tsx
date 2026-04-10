@@ -26,11 +26,13 @@ export const Route = createFileRoute("/_app/dashboard/products/$productId")({
 
 function RouteComponent() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Product Details</h1>
-      <p className="text-sm text-muted-foreground mb-4">
-        View and edit the details about the product
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          View and edit the details about the product
+        </p>
+      </div>
       <Suspense fallback={<SkeletonForm fields={1} />}>
         <EditProductContent />
       </Suspense>
@@ -83,7 +85,7 @@ function EditProductContent() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-8">
       <EditProductForm product={product} />
       <Suspense>
         <LinkTagContent product={product} />

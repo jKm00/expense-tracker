@@ -2,10 +2,16 @@ import { useAuth } from "@/features/auth/auth.provider";
 import { authClient } from "@/features/auth/auth-client";
 import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, Palette } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/profile")({
   component: RouteComponent,
@@ -36,21 +42,26 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Profile</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Manage your account settings
+        </p>
+      </div>
 
-      {/* User Info Card */}
+      {/* User Info */}
       <Card>
-        <CardContent className="flex items-center gap-4">
-          <Avatar className="size-16">
+        <CardContent className="flex items-center gap-4 py-2">
+          <Avatar className="size-14 ring-2 ring-border">
             {user?.image && (
               <AvatarImage src={user.image} alt={user.name ?? "User"} />
             )}
-            <AvatarFallback className="text-lg">
+            <AvatarFallback className="text-base font-semibold">
               {user?.name ? getInitials(user.name) : "?"}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="font-semibold text-lg truncate">
+            <p className="text-lg font-semibold truncate">
               {user?.name ?? "Unknown"}
             </p>
             <p className="text-sm text-muted-foreground truncate">
@@ -60,18 +71,22 @@ function RouteComponent() {
         </CardContent>
       </Card>
 
-      {/* Preferences Card */}
+      {/* Preferences */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-semibold">Preferences</CardTitle>
+          <CardTitle>Preferences</CardTitle>
+          <CardDescription>Customize your experience</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Theme</p>
-              <p className="text-sm text-muted-foreground">
-                Switch between dark and light mode
-              </p>
+            <div className="flex items-center gap-3">
+              <Palette className="size-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Theme</p>
+                <p className="text-xs text-muted-foreground">
+                  Dark or light mode
+                </p>
+              </div>
             </div>
             <ThemeToggle />
           </div>
@@ -79,15 +94,17 @@ function RouteComponent() {
       </Card>
 
       {/* Account Actions */}
-      <Card className="border-destructive/50">
+      <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-destructive">Account</CardTitle>
+          <CardTitle className="text-destructive">Danger zone</CardTitle>
+          <CardDescription>Irreversible account actions</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
             variant="destructive"
             onClick={handleSignOut}
             className="w-full"
+            size="sm"
           >
             <LogOutIcon className="size-4 mr-2" />
             Sign Out

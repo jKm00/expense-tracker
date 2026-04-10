@@ -1,13 +1,12 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import { Button } from "../ui/button";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -57,24 +56,31 @@ export function MonthSelect({
       }),
     });
   }
+
+  const isCurrentMonth =
+    date.month() === dayjs().month() && date.year() === dayjs().year();
+
   return (
-    <div className="flex items-center gap-1">
-      <Button variant="outline" onClick={handlePrevMonth}>
-        <ChevronLeft />
+    <div className="flex items-center gap-1.5">
+      <Button
+        variant="outline"
+        size="icon"
+        className="size-9 shrink-0"
+        onClick={handlePrevMonth}
+      >
+        <ChevronLeft className="size-4" />
       </Button>
       <Select
         value={`${date.month()}`}
         onValueChange={(v) => handleMonthChange(Number(v))}
       >
-        <SelectTrigger className="w-full min-w-40 max-w-48">
-          <Calendar />
+        <SelectTrigger className="h-9 min-w-36 max-w-48 text-sm">
           <SelectValue placeholder="Select a month" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectLabel>Months</SelectLabel>
             <SelectItem value="0">January</SelectItem>
-            <SelectItem value="1">Febrary</SelectItem>
+            <SelectItem value="1">February</SelectItem>
             <SelectItem value="2">March</SelectItem>
             <SelectItem value="3">April</SelectItem>
             <SelectItem value="4">May</SelectItem>
@@ -88,11 +94,21 @@ export function MonthSelect({
           </SelectGroup>
         </SelectContent>
       </Select>
-      <Button variant="outline" onClick={handleNextMonth}>
-        <ChevronRight />
+      <Button
+        variant="outline"
+        size="icon"
+        className="size-9 shrink-0"
+        onClick={handleNextMonth}
+      >
+        <ChevronRight className="size-4" />
       </Button>
-      {(date.month() !== dayjs().month() || date.year() !== dayjs().year()) && (
-        <Button variant="outline" onClick={resetDate}>
+      {!isCurrentMonth && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-1 h-9 text-xs text-muted-foreground"
+          onClick={resetDate}
+        >
           Today
         </Button>
       )}

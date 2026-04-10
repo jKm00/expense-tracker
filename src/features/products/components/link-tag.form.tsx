@@ -1,14 +1,6 @@
 import { Tag } from "@/features/tags/tags.models";
 import { ProductWithTag } from "../products.models";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { useMemo, useState } from "react";
 import { productMutations } from "../products.mutations";
@@ -56,72 +48,72 @@ export function LinkTagForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-end">
-          <div>
-            <CardTitle>Link tags</CardTitle>
-            <CardDescription>
-              Link tags to product for analytics
-            </CardDescription>
-          </div>
-          <NewTagDialog />
+    <div className="space-y-6">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-lg font-semibold">Link tags</h2>
+          <p className="text-sm text-muted-foreground">
+            Link tags to product for analytics
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-          <div>
-            <h2 className="mb-2 font-semibold">Applied tags</h2>
-            {product.tags.length === 0 ? (
-              <EmptyState icon={TagIcon} size="md">
-                <EmptyStateMessage>No tags applied</EmptyStateMessage>
-              </EmptyState>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {product.tags.map((tag) => (
-                  <TagBadge
-                    key={tag.id}
-                    tag={tag}
-                    onClick={() => handleUnlinkTag(tag)}
-                  >
-                    <TagIcon />
-                    {tag.name}
-                    <X />
-                  </TagBadge>
-                ))}
-              </div>
-            )}
-          </div>
-          <div>
-            <h2 className="mb-2 font-semibold">Available tags</h2>
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="mb-4"
-            />
-            {filteredTags.length === 0 ? (
-              <EmptyState icon={TagIcon} size="md">
-                <EmptyStateMessage>No tags available</EmptyStateMessage>
-              </EmptyState>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {filteredTags.map((tag) => (
-                  <TagBadge
-                    key={tag.id}
-                    tag={tag}
-                    onClick={() => handleLinkTag(tag)}
-                  >
-                    <TagIcon />
-                    {tag.name}
-                    <Plus />
-                  </TagBadge>
-                ))}
-              </div>
-            )}
-          </div>
+        <NewTagDialog />
+      </div>
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Applied tags
+          </p>
+          {product.tags.length === 0 ? (
+            <EmptyState icon={TagIcon} size="md">
+              <EmptyStateMessage>No tags applied</EmptyStateMessage>
+            </EmptyState>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {product.tags.map((tag) => (
+                <TagBadge
+                  key={tag.id}
+                  tag={tag}
+                  onClick={() => handleUnlinkTag(tag)}
+                >
+                  <TagIcon />
+                  {tag.name}
+                  <X />
+                </TagBadge>
+              ))}
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Available tags
+          </p>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search tags..."
+            className="mb-3"
+          />
+          {filteredTags.length === 0 ? (
+            <EmptyState icon={TagIcon} size="md">
+              <EmptyStateMessage>No tags available</EmptyStateMessage>
+            </EmptyState>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {filteredTags.map((tag) => (
+                <TagBadge
+                  key={tag.id}
+                  tag={tag}
+                  onClick={() => handleLinkTag(tag)}
+                >
+                  <TagIcon />
+                  {tag.name}
+                  <Plus />
+                </TagBadge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -12,15 +12,7 @@ import { Product } from "@/features/products/products.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { X, Plus, ChevronDownIcon } from "lucide-react";
+import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
   Dialog,
@@ -119,55 +111,59 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
     <Form onSubmit={onSubmit}>
       <Card>
         <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead className="text-center">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-muted-foreground text-center"
+          {/* Entries list */}
+          <div>
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Items
+            </h3>
+            {entries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+                <ShoppingBag className="size-5 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No products added yet
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border/60">
+                {entries.map((entry, i) => (
+                  <div
+                    key={`${entry.product.id}-${entry.quantity}-${i}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 ${i !== entries.length - 1 ? "border-b border-border/40" : ""}`}
                   >
-                    No products added...
-                  </TableCell>
-                </TableRow>
-              ) : (
-                entries.map((entry, i) => (
-                  <TableRow key={`${entry.product.id}-${entry.quantity}-${i}`}>
-                    <TableCell>{entry.product.name}</TableCell>
-                    <TableCell>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {entry.product.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.quantity} x {entry.price},-
+                      </p>
+                    </div>
+                    <span
+                      className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-red-400" : "text-emerald-400"}`}
+                    >
                       {entry.type === "expense" ? "-" : "+"}
-                      {entry.price}
-                    </TableCell>
-                    <TableCell>{entry.quantity}</TableCell>
-                    <TableCell className="text-center">
-                      {/* TODO: Possibility to edit directly */}
-                      {/* <Button variant="ghost" type="button"> */}
-                      {/*   <SquarePen /> */}
-                      {/* </Button> */}
-                      <Button
-                        variant="ghost"
-                        type="button"
-                        onClick={() => handleRemoveEntry(i)}
-                      >
-                        <X />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      {Number(entry.price).toFixed(2)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      className="size-7"
+                      onClick={() => handleRemoveEntry(i)}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <NewEntryDialog products={products} onSave={handleNewEntry} />
           <FormFieldError>{errors.entries?.message}</FormFieldError>
-          <Separator className="mb-8 mt-2" />
+
+          <Separator />
+
           <FormField>
             <FormFieldLabel>
               Store <span className="text-muted-foreground">(Optional)</span>
@@ -221,7 +217,9 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
           <Input {...register("source")} value="manual" className="hidden" />
         </CardContent>
         <CardFooter>
-          <Button type="submit">Save transaction</Button>
+          <Button type="submit" className="w-full">
+            Save transaction
+          </Button>
         </CardFooter>
       </Card>
     </Form>
@@ -289,7 +287,7 @@ function NewEntryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
-          <Plus />
+          <Plus className="size-4" />
           Add product
         </Button>
       </DialogTrigger>
@@ -330,17 +328,19 @@ function NewEntryDialog({
           <Button
             type="button"
             variant="outline"
-            className="border-red-400 text-red-400"
+            className="border-red-400/30 text-red-400 hover:bg-red-400/10 hover:text-red-400"
             onClick={() => addEntry("expense")}
           >
+            <Minus className="size-4" />
             Expense
           </Button>
           <Button
             type="button"
             variant="outline"
-            className="border-green-400 text-green-400"
+            className="border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 hover:text-emerald-400"
             onClick={() => addEntry("income")}
           >
+            <Plus className="size-4" />
             Income
           </Button>
         </DialogFooter>

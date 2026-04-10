@@ -1,7 +1,6 @@
-import { Tag, TagWithProduct } from "../tags.models";
+import { TagWithProduct } from "../tags.models";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,6 +14,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { LoaderButton } from "@/components/custom/loader.button";
+import { AlertTriangle } from "lucide-react";
 
 export function DeleteTagDialog({
   tag,
@@ -70,19 +70,26 @@ export function DeleteTagDialog({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription className="text-foreground mb-4">
-            This will permanently delete the tag and remove all its links to
-            products. This action cannot be undone.
-          </AlertDialogDescription>
-          <p className="text-sm text-muted-foreground">
-            Type '{confirmValue}' to confirm the deletion
-          </p>
-          <Input
-            value={confirmInput}
-            onChange={(e) => setConfirmInput(e.target.value)}
-            placeholder={`Type '${confirmValue}'`}
-          />
+          <div className="flex items-center justify-center bg-destructive/10 rounded-full size-10 mb-2">
+            <AlertTriangle className="size-5 text-destructive" />
+          </div>
+          <div>
+            <AlertDialogTitle className="mb-2">
+              Are you absolutely sure?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mb-4">
+              This will permanently delete the tag and remove all its links to
+              products. This action cannot be undone.
+            </AlertDialogDescription>
+            <p className="text-sm text-muted-foreground mb-1.5">
+              Type '{confirmValue}' to confirm the deletion
+            </p>
+            <Input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={`Type '${confirmValue}'`}
+            />
+          </div>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>

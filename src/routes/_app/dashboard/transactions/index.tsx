@@ -12,7 +12,7 @@ import { transactionQueries } from "@/features/transactions/transactions.queries
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import dayjs from "dayjs";
-import { ArrowLeftRight, Plus, XLineTop } from "lucide-react";
+import { ArrowLeftRight, Plus, TrendingUp, Layers } from "lucide-react";
 import { Suspense, useMemo } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/")({
@@ -27,13 +27,18 @@ export const Route = createFileRoute("/_app/dashboard/transactions/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="flex flex-col gap-2 mb-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <Button asChild className="">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Track your income and expenses
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
             <Link to="/dashboard/transactions/new">
-              <Plus />
+              <Plus className="size-4" />
               <span className="max-md:sr-only">New transaction</span>
             </Link>
           </Button>
@@ -43,7 +48,7 @@ function RouteComponent() {
           to="/dashboard/transactions/"
         />
       </div>
-      <Suspense fallback={<p>TODO: Skeleton</p>}>
+      <Suspense fallback={<p>Loading...</p>}>
         <TransactionsContent />
       </Suspense>
     </div>
@@ -115,26 +120,26 @@ function TransactionsContent() {
   }
 
   return (
-    <div className="space-y-8 @container">
-      <div className="grid gap-2 @xl:grid-cols-2 @2xl:grid-cols-3">
+    <div className="space-y-6 @container">
+      <div className="grid gap-3 @xl:grid-cols-2 @2xl:grid-cols-3">
         <KpiCard
           title="Transactions"
           value={`${transactions.length}`}
-          subtitle="Number of transactions"
+          subtitle="This month"
           icon={ArrowLeftRight}
         />
         <KpiCard
-          title="Transactions / Day"
+          title="Per day"
           value={`${averageTransactionsPerDay}`}
-          subtitle="Average transaction per day"
-          icon={XLineTop}
+          subtitle="Average per day"
+          icon={TrendingUp}
         />
         <div className="@xl:col-span-2 @2xl:col-span-1">
           <KpiCard
-            title="Items / Transaction"
+            title="Items"
             value={`${averageItemsPerTransaction}`}
-            subtitle="Average items per transactions"
-            icon={XLineTop}
+            subtitle="Average per transaction"
+            icon={Layers}
           />
         </div>
       </div>

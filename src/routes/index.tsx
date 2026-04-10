@@ -11,6 +11,7 @@ import {
   TagIcon,
   RepeatIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -35,71 +36,59 @@ function LandingPage() {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
-        <div className="w-full max-w-sm space-y-10 text-center">
-          {/* Icon */}
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-foreground">
-            <Gem className="size-7 text-background" />
-          </div>
-
-          {/* Copy */}
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              Expense Tracker
-            </h1>
-            <p className="text-base text-muted-foreground sm:text-lg">
-              A simple way to track spending, organize products, and stay on top
-              of recurring costs.
-            </p>
-          </div>
-
-          {/* CTA */}
-          <div>
-            {isLoggedIn ? (
-              <Button asChild size="lg" className="w-full text-base">
-                <Link to="/dashboard">
-                  Go to Dashboard
-                  <ArrowRightIcon className="ml-2 size-4" />
-                </Link>
-              </Button>
-            ) : (
-              <Button
-                size="lg"
-                className="w-full text-base"
-                onClick={() =>
-                  authClient.signIn.social({
-                    provider: "github",
-                    callbackURL: "/dashboard",
-                  })
-                }
-              >
-                <GithubIcon className="mr-2 size-5" />
-                Continue with GitHub
-              </Button>
-            )}
-          </div>
-
-          {/* Feature pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
-              <TrendingUpIcon className="size-3.5" />
-              Analytics
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
-              <TagIcon className="size-3.5" />
-              Tags
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
-              <RepeatIcon className="size-3.5" />
-              Recurring
-            </span>
-          </div>
+    <div className="min-h-screen flex flex-col">
+      <main
+        className="flex flex-col grow items-start justify-center mx-auto"
+        style={{ width: "min(500px, 100%)" }}
+      >
+        <div className="bg-foreground size-16 rounded-xl grid place-items-center mb-8">
+          <Gem className="text-background" />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Expenses</h1>
+        <p className="text-sm text-muted-foreground mb-8">
+          A simple way to track spending, organize products, and stay on top of
+          recurring costs.
+        </p>
+        <div className="w-full mb-8">
+          {isLoggedIn ? (
+            <Button asChild size="lg" className="w-full">
+              <Link to="/dashboard">
+                Go to Dashboard
+                <ArrowRightIcon className="ml-2 size-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() =>
+                authClient.signIn.social({
+                  provider: "github",
+                  callbackURL: "/dashboard",
+                })
+              }
+            >
+              <GithubIcon className="mr-2 size-5" />
+              Continue with GitHub
+            </Button>
+          )}
+        </div>
+        <div className="flex justify-center w-full gap-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+            <TrendingUpIcon className="size-3.5" />
+            Analytics
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+            <TagIcon className="size-3.5" />
+            Tags
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+            <RepeatIcon className="size-3.5" />
+            Recurring
+          </span>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="pb-8 text-center text-xs text-muted-foreground/60">
+      <footer className="pb-8 text-center text-xs text-muted-foreground/50">
         Built for personal use
       </footer>
     </div>
