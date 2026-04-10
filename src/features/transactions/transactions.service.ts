@@ -2,11 +2,7 @@ import { err, ok } from "@/utils/result";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
 import { NewEntryDTO } from "./transactions.dtos";
-import {
-  FullTransaction,
-  NewTransaction,
-  Transaction,
-} from "./transactions.models";
+import { NewTransaction, Transaction } from "./transactions.models";
 import { productService } from "../products/products.service";
 import { Product } from "../products/products.models";
 
@@ -47,7 +43,13 @@ async function getTransaction(userId: string, transactionId: string) {
       });
     }
 
-    return ok(transaction);
+    return ok({
+      ...transaction,
+      entries: transaction.entries.map((entry) => ({
+        ...entry,
+        product: entry.products,
+      })),
+    });
   } catch (error) {
     return err({
       reason: "UNEXPECTED_DB_ERROR",

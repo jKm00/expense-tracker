@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { Package } from "lucide-react";
 import React from "react";
@@ -34,18 +34,22 @@ function EntryList({
               params={{ productId: entry.productId }}
             >
               <Card>
-                <CardContent className="flex justify-between items-center gap-4">
-                  <h3 className="font-semibold">{entry.products?.name}</h3>
-                  <div className="flex items-center gap-4">
-                    <p>{entry.quantity} Qty</p>
-                    <p>{entry.price} per pcs</p>
-                    <p
-                      className={`${entry.type === "expense" ? "text-red-400" : "text-green-400"}`}
-                    >
-                      {entry.type === "expense" ? "-" : ""}
-                      {Number(entry.price) * entry.quantity}
-                    </p>
-                  </div>
+                <CardHeader>
+                  <CardTitle>{entry.product?.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>
+                    Quantity: <span>{entry.quantity}</span>
+                  </p>
+                  <p>
+                    Price per unit: <span>{entry.price},-</span>
+                  </p>
+                  <p>
+                    Total sum:{" "}
+                    <span>
+                      {(entry.quantity * Number(entry.price)).toFixed(2)},-
+                    </span>
+                  </p>
                 </CardContent>
               </Card>
             </Link>

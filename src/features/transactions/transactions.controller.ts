@@ -35,6 +35,7 @@ const saveTransaction = createServerFn({ method: "POST" })
         userId,
         store: data.store,
         description: data.description,
+        date: data.date,
         source: data.source,
       },
       entries: data.entries,

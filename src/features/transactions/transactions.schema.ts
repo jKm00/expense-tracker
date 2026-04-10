@@ -30,6 +30,7 @@ export const transactions = pgTable("transactions", {
   description: text("description"),
   source: transactionSource().notNull(),
   totalPrice: numeric("total_price", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull().notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

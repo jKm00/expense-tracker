@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronDownIcon } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
   Dialog,
@@ -40,8 +40,16 @@ import {
   saveTransactionSchema,
 } from "../transactions.dtos";
 import { EntryType } from "../transactions.models";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 
 export function NewTransactionForm({ products }: { products: Product[] }) {
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [entries, setEntries] = useState<NewEntryDTO[]>([]);
 
   const navigate = useNavigate();
@@ -50,14 +58,18 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
   const {
     register,
     setValue,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm({
     defaultValues: {
+      date: new Date(),
       entries: [],
     },
     resolver: zodResolver(saveTransactionSchema),
   });
+
+  const selectedDate = watch("date");
 
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
@@ -96,6 +108,11 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
       setValue("entries", rest);
       return rest;
     });
+  }
+
+  function handleDateSelect(date: Date | undefined) {
+    setValue("date", date || new Date());
+    setDatePickerOpen(false);
   }
 
   return (
@@ -172,6 +189,34 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
               className="resize-none"
             />
             <FormFieldError>{errors.description?.message}</FormFieldError>
+          </FormField>
+          <FormField>
+            <FormFieldLabel>Date of transaction</FormFieldLabel>
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-empty={!selectedDate}
+                  className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                >
+                  {selectedDate ? (
+                    format(selectedDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                  <ChevronDownIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  defaultMonth={new Date()}
+                />
+              </PopoverContent>
+            </Popover>
+            <FormFieldError>{errors.date?.message}</FormFieldError>
           </FormField>
           <Input {...register("source")} value="manual" className="hidden" />
         </CardContent>

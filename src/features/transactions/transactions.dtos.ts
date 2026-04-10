@@ -30,7 +30,8 @@ export const saveTransactionSchema = z.object({
   store: z.string().optional(),
   description: z.string().optional(),
   source: z.enum(transactionSources),
-  entries: saveEntrySchema.array(),
+  date: z.date(),
+  entries: saveEntrySchema.array().min(1, "Need at least one transaction item"),
 });
 
 export type NewTransactionDTO = z.infer<typeof saveTransactionSchema>;
