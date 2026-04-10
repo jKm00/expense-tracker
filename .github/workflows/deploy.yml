@@ -18,13 +18,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Enable and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
-      - name: Build
-        run: npm run build
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
 
-      - name: Run DB migrations
+      - name: Build (pnpm)
+        run: pnpm build
+
+      - name: Run DB migrations (pnpm)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -33,4 +38,4 @@ jobs:
             echo "DATABASE_URL secret is not set";
             exit 1;
           fi
-          npm run db:migrate
+          pnpm run db:migrate
