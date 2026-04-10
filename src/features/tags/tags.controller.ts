@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { tagsService } from "./tags.service";
-import { addTagSchema } from "./tags.dtos";
+import { addTagSchema, deleteTagSchema } from "./tags.dtos";
 
 const getTags = createServerFn({ method: "GET" })
   .middleware([authenticated])
@@ -21,7 +21,17 @@ const addTag = createServerFn({ method: "POST" })
     });
   });
 
+const deleteTag = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(deleteTagSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { tagId } = data;
+    return await tagsService.deleteTag(userId, tagId);
+  });
+
 export const tagsController = {
   getTags,
   addTag,
+  deleteTag,
 };

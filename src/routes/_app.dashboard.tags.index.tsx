@@ -27,8 +27,18 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Star, XLineTop } from "lucide-react";
+import { Ellipsis, Hash, Star, Trash, XLineTop } from "lucide-react";
 import { Suspense, useMemo } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
@@ -115,7 +125,28 @@ function TagContent() {
                   <TableCell>{tag.color || "-"}</TableCell>
                   <TableCell>{tag.products.length}</TableCell>
                   <TableCell className="flex justify-center">
-                    <Ellipsis />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                          <Ellipsis />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-40" align="start">
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <DeleteTagDialog tag={tag}>
+                              <p>
+                                Delete <Trash />
+                              </p>
+                            </DeleteTagDialog>
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

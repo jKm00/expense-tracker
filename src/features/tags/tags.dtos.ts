@@ -6,3 +6,9 @@ export const addTagSchema = z.object({
 });
 
 export type AddTagDTO = z.infer<typeof addTagSchema>;
+
+export const deleteTagSchema = z.object({
+  tagId: z.string(),
+});
+
+export type DeleteTagDTO = z.infer<typeof deleteTagSchema>;

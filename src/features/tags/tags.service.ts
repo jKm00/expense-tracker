@@ -84,8 +84,31 @@ async function addTag(tag: NewTag) {
     return ok(saved[0]);
   } catch (error) {
     return err({
-      reason: "TAG_SAVE_DB_ERROR",
+      reason: "TAG_DB_ERROR",
       message: `Failed to save tag ${tag.name} to DB`,
+    });
+  }
+}
+
+async function deleteTag(userId: string, tagId: string) {
+  const [foundError] = await getTag(userId, tagId);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  try {
+    const removed = await tagsRepo.remove(tagId);
+    if (removed.length === 0) {
+      return err({
+        reason: "TAG_NOT_RETURNED",
+        message: `No tag returned after deleting`,
+      });
+    }
+    return ok(removed);
+  } catch (error) {
+    return err({
+      reason: "TAG_DB_ERROR",
+      message: `Failed to remove tag ${tagId} from DB`,
     });
   }
 }
@@ -94,4 +117,5 @@ export const tagsService = {
   getTags,
   getTag,
   addTag,
+  deleteTag,
 };

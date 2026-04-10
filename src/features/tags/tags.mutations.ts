@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AddTagDTO } from "./tags.dtos";
+import { AddTagDTO, DeleteTagDTO } from "./tags.dtos";
 import { assertOnline } from "@/lib/offline-guard";
 import { tagsController } from "./tags.controller";
 import { TAG_QUERY_KEY } from "./tags.queries";
@@ -26,6 +26,28 @@ function createTag() {
   });
 }
 
+function deleteTag() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteTagDTO) => {
+      assertOnline();
+      return await tagsController.deleteTag({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [TAG_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened when trying to delete the tag. Please try again!",
+      );
+    },
+  });
+}
+
 export const tagsMutations = {
   createTag,
+  deleteTag,
 };
