@@ -1,3 +1,3 @@
 # Agent Instructions
 
-Use `bun` instead of `npm` for package management.
+Use `pnpm` instead of `npm` for package management.
