@@ -1,0 +1,36 @@
+name: Build and Run DB Migrations
+
+on:
+  push:
+    branches:
+      - version-2-refined
+
+jobs:
+  build-and-migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run DB migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Ensure the DB connection string is available
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret is not set";
+            exit 1;
+          fi
+          npm run db:migrate
