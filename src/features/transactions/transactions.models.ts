@@ -12,6 +12,7 @@ export const entryTypes = ["income", "expense"] as const;
 export type EntryType = (typeof entryTypes)[number];
 
 export type Entry = InferSelectModel<typeof entries>;
+export type EntryWithProduct = Entry & { products: Product | null };
 export type NewEntry = InferInsertModel<typeof entries>;
 
 export type FullTransaction = Transaction & {

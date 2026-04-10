@@ -15,17 +15,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
+import {
+  EntryList,
+  EntryListEmpty,
+  EntryListTitle,
+} from "@/features/transactions/components/entry-list";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
 import { toCapitalized } from "@/utils/typography";
@@ -123,7 +119,23 @@ function TransactionDetails() {
 
   return (
     <div className="space-y-4 @container">
-      <div className="grid gap-2 @md:grid-cols-2 @xl:grid-cols-3">
+      <div className="grid gap-2 @xl:grid-cols-2 @2xl:grid-cols-4">
+        <KpiCard
+          title="Date"
+          value={transaction.createdAt.toLocaleString("en-UK", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
+          subtitle="Transactions occurance"
+          icon={Calendar}
+        />
+        <KpiCard
+          title="Price"
+          value={transaction.totalPrice}
+          subtitle="Total sum"
+          icon={Braces}
+        />
         <KpiCard
           title="Items"
           value={`${transaction.entries.length}`}
@@ -136,18 +148,6 @@ function TransactionDetails() {
           subtitle="Transactions creation"
           icon={Braces}
         />
-        <div className="@md:col-span-2 @xl:col-span-1">
-          <KpiCard
-            title="Date"
-            value={transaction.createdAt.toLocaleString("en-UK", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-            subtitle="Transactions occurance"
-            icon={Calendar}
-          />
-        </div>
       </div>
       <Card>
         <CardHeader>
@@ -176,56 +176,10 @@ function TransactionDetails() {
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Items</CardTitle>
-          <CardDescription>
-            Items purchased as part of this transaction
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-full">Product</TableHead>
-                <TableHead className="md:min-w-32 text-right max-md:hidden">
-                  Unit Price
-                </TableHead>
-                <TableHead className="md:min-w-20 text-right">Qty</TableHead>
-                <TableHead className="md:min-w-28 text-right">
-                  Total Price
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transaction.entries.map((entry) => (
-                <TableRow>
-                  <TableCell>{entry.products?.name || "N/A"}</TableCell>
-                  <TableCell className="text-right max-md:hidden">
-                    {entry.type === "expense" ? "-" : ""}
-                    {entry.price},-
-                  </TableCell>
-                  <TableCell className="text-right">{entry.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    {entry.type === "expense" ? "-" : ""}
-                    {(Number(entry.price) * entry.quantity).toFixed(2)},-
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={isMobile ? 2 : 3}>Sum</TableCell>
-                <TableCell
-                  className={`${Number(transaction.totalPrice) < 0 ? "text-red-400" : "text-green-400"} text-right`}
-                >
-                  {transaction.totalPrice},-
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </CardContent>
-      </Card>
+      <EntryList entries={transaction.entries}>
+        <EntryListTitle>Transaction Items</EntryListTitle>
+        <EntryListEmpty>No transaction items found...</EntryListEmpty>
+      </EntryList>
     </div>
   );
 }
