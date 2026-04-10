@@ -1,0 +1,275 @@
+# Batch 3: Tests — Validator Tests
+
+> **Plan:** Add `type` column to recurring product
+> **Goal:** Add an `income` | `expense` type column to the `recurring_product` table, reusing the existing `transaction_type` pgEnum, and surface it in the UI forms and list view.
+> **See:** [index.md](index.md) for full architecture, dependencies, and task list
+
+---
+
+## Task 8: Validator Tests
+
+**Depends on:** Task 3 (validators must have `type` field)
+**Can parallelize with:** Task 5, Task 6, Task 7
+
+**Files:**
+
+- Modify: `src/features/recurring/recurring.validators.test.ts`
+
+### Step 1: Update existing tests and add new type-specific tests
+
+The existing tests need `type` added to their test data, and we need new tests for the `type` field validation.
+
+**Current file (full):**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { recurringValidators } from "./recurring.validators";
+
+describe("recurringValidators.addFormValidation", () => {
+  const schema = recurringValidators.addFormValidation;
+
+  it("accepts valid add recurring data", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "42.50",
+      interval: "monthly",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts data with optional endDate", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "weekly",
+      startDate: new Date("2026-01-01"),
+      endDate: new Date("2026-12-31"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing productId", () => {
+    const result = schema.safeParse({
+      price: "10",
+      interval: "monthly",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-numeric price", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "abc",
+      interval: "monthly",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid interval", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "daily",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+});
+```
+
+**Updated file (full):**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { recurringValidators } from "./recurring.validators";
+
+describe("recurringValidators.addFormValidation", () => {
+  const schema = recurringValidators.addFormValidation;
+
+  it("accepts valid add recurring data", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "42.50",
+      interval: "monthly",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts data with optional endDate", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "weekly",
+      type: "income",
+      startDate: new Date("2026-01-01"),
+      endDate: new Date("2026-12-31"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts income type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "100",
+      interval: "monthly",
+      type: "income",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts expense type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "100",
+      interval: "monthly",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "monthly",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "monthly",
+      type: "transfer",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing productId", () => {
+    const result = schema.safeParse({
+      price: "10",
+      interval: "monthly",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-numeric price", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "abc",
+      interval: "monthly",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid interval", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "daily",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("recurringValidators.formValidation", () => {
+  const schema = recurringValidators.formValidation;
+
+  it("accepts valid edit recurring data", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "42.50",
+      interval: "monthly",
+      type: "expense",
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      isActive: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts income type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "100",
+      interval: "yearly",
+      type: "income",
+      startDate: new Date("2026-01-01"),
+      endDate: new Date("2027-01-01"),
+      isActive: false,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "monthly",
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      isActive: true,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid type", () => {
+    const result = schema.safeParse({
+      productId: "some-uuid",
+      price: "10",
+      interval: "monthly",
+      type: "refund",
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      isActive: true,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+```
+
+**Changes explained:**
+- All existing `addFormValidation` test data objects now include `type: "expense"` (or `"income"` where applicable)
+- Added 4 new tests to `addFormValidation`:
+  - `accepts income type` — validates "income" is accepted
+  - `accepts expense type` — validates "expense" is accepted
+  - `rejects missing type` — validates type is required
+  - `rejects invalid type` — validates "transfer" (or any non-enum value) is rejected
+- Added a new `formValidation` describe block with 4 tests:
+  - `accepts valid edit recurring data` — validates full edit form data with type
+  - `accepts income type` — validates "income" in edit form
+  - `rejects missing type` — validates type is required in edit form
+  - `rejects invalid type` — validates invalid type is rejected in edit form
+
+### Step 2: Run the tests
+
+Run:
+
+```bash
+npm run test
+```
+
+Expected: All tests pass. Output should show all test suites passing including the updated `recurring.validators.test.ts`.
+
+### Step 3: Commit
+
+```bash
+git add src/features/recurring/recurring.validators.test.ts
+git commit -m "test(recurring): update validator tests for type field"
+```

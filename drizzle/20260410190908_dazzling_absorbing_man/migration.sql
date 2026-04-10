@@ -1,0 +1,1 @@
+ALTER TABLE "product_tags" DROP CONSTRAINT "product_tags_tag_id_tags_id_fkey", ADD CONSTRAINT "product_tags_tag_id_tags_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id") ON DELETE CASCADE;

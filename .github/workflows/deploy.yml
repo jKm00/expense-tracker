@@ -1,0 +1,42 @@
+name: Build and Run DB Migrations
+
+on:
+  push:
+    branches:
+      - main
+      - version-2-refined
+
+jobs:
+  build-and-migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (pnpm)
+        run: pnpm build
+
+      - name: Run DB migrations (pnpm)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Ensure the DB connection string is available
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret is not set";
+            exit 1;
+          fi
+          pnpm run db:migrate
