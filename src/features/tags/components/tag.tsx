@@ -17,7 +17,8 @@ export function TagBadge({
 }: TagBadgeProps) {
   return (
     <Badge
-      className={cn(badgeVariants({ variant, className }), "select-none")}
+      variant={variant}
+      className={cn("select-none", className)}
       style={{
         color: tag.color || undefined,
         borderColor: tag.color ? `${tag.color}40` : undefined,
