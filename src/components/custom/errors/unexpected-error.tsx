@@ -15,7 +15,7 @@ export function UnexpectedError() {
         </div>
         <h2 className="text-lg font-semibold mb-2">Unexpected error...</h2>
         <p className="text-muted-foreground text-sm mb-6">
-          Something unexpected happen. Please try again or contact support
+          Something unexpected happened. Please try again or contact support.
         </p>
         <Button onClick={refresh} variant="outline" size="sm">
           <RotateCw className="size-3.5" />
