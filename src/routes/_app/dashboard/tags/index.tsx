@@ -12,7 +12,15 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Pencil, Star, Trash, TrendingUp } from "lucide-react";
+import {
+  Ellipsis,
+  Hash,
+  Pencil,
+  SquarePen,
+  Star,
+  Trash,
+  TrendingUp,
+} from "lucide-react";
 import { Suspense, useMemo } from "react";
 import {
   DropdownMenu,
@@ -116,7 +124,10 @@ function TagContent() {
                   {tag.products.length} ref
                   {tag.products.length !== 1 ? "s" : ""}
                 </span>
-                <div>
+                <div className="flex gap-2">
+                  <EditTagDialog tag={tag}>
+                    <SquarePen />
+                  </EditTagDialog>
                   <DeleteTagDialog tag={tag}>
                     <Trash />
                   </DeleteTagDialog>

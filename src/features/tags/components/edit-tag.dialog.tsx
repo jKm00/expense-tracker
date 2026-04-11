@@ -1,3 +1,4 @@
+import { Form, FormField, FormFieldLabel } from "@/components/custom/form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,46 +10,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { RefreshCcw } from "lucide-react";
-import {
-  FormField,
-  FormFieldError,
-  FormFieldLabel,
-} from "@/components/custom/form";
 import { Input } from "@/components/ui/input";
+import { Tag } from "../tags.models";
 import { useForm } from "react-hook-form";
-import { tagsMutations } from "../tags.mutations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updateTagSchema, UpdateTagDTO } from "../tags.dtos";
+import { updateTagSchema } from "../tags.dtos";
+import { LoaderButton } from "@/components/custom/loader.button";
+import { RefreshCcw } from "lucide-react";
+import { tagUtils } from "../tags.utils";
 import { useMemo, useState } from "react";
 import { wait } from "@/utils";
+import { tagsMutations } from "../tags.mutations";
 import { toast } from "sonner";
-import { TagWithProduct } from "../tags.models";
-import { LoaderButton } from "@/components/custom/loader.button";
 
 export function EditTagDialog({
   tag,
   children,
 }: {
-  tag: TagWithProduct;
+  tag: Tag;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
   const mutation = tagsMutations.updateTag();
-  const {
-    register,
-    setValue,
-    watch,
-    reset,
-    handleSubmit,
-    formState: { errors, isDirty },
-  } = useForm<UpdateTagDTO>({
+  const { register, resetField, setValue, watch, handleSubmit } = useForm({
     resolver: zodResolver(updateTagSchema),
     defaultValues: {
       tagId: tag.id,
       name: tag.name,
-      color: tag.color ?? undefined,
+      color: tag.color || undefined,
     },
   });
 
@@ -66,31 +56,34 @@ export function EditTagDialog({
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(data, {
       onSuccess: (res) => {
-        const [error] = res;
-        if (error) {
+        const [err] = res;
+        if (err) {
           let message: string;
-          const reason = error.reason;
+          const reason = err.reason;
           switch (reason) {
-            case "TAG_ALREADY_EXISTS":
-              message = `A tag with that name already exists`;
-              break;
             case "TAG_NOT_FOUND":
-              message = "Tag was not found and could therefore not be updated";
+              message =
+                "Tag was not found and could therefore not be updated...";
               break;
             case "TAG_UNATHORIZED":
-              message = "You do not have permission to edit this tag";
+              message = "You do not have permission to update this tag...";
               break;
-            case "TAG_NOT_RETURNED":
+            case "TAG_ALREADY_EXISTS":
+              message =
+                "A tag with the provided name already exists. Please choose another name!";
+              break;
             case "TAG_DB_ERROR":
-              message = "Failed to update tag. Please try again";
+            case "TAG_NOT_RETURNED":
+              message =
+                "Something unexpected happened when trying to update the tag. Please try again!";
               break;
             default:
-              message = `Something went wrong updating the tag ${reason satisfies never}. Please try again`;
+              message = `Unexpected error: ${reason satisfies never}. Please try again!`;
           }
           toast.error(message);
         } else {
-          handleOpenChange(false);
           toast.success("Tag updated!");
+          handleOpenChange(false);
         }
       },
     });
@@ -99,84 +92,72 @@ export function EditTagDialog({
   async function handleOpenChange(isOpen: boolean) {
     setOpen(isOpen);
     if (!isOpen) {
-      // Wait so UI does not reset before dialog is closed
       await wait(100);
-      reset({
-        tagId: tag.id,
-        name: tag.name,
-        color: tag.color ?? undefined,
-      });
+      resetField("name");
+      resetField("color");
     }
   }
 
   function handleRandomizeColor() {
-    const color = generateRandomHex();
-    setValue("color", color, { shouldDirty: true });
-  }
-
-  function generateRandomHex() {
-    const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-    return `#${randomColor.padStart(6, "0")}`;
+    const color = tagUtils.generateRandomHex();
+    setValue("color", color);
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild className="flex justify-between w-full">
-        {children}
+      <DialogTrigger asChild>
+        <Button variant="ghost">{children}</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Tag</DialogTitle>
-          <DialogDescription>
-            Update the name and color of the tag
-          </DialogDescription>
-        </DialogHeader>
-        <FormField>
-          <FormFieldLabel required>Tag name</FormFieldLabel>
-          <Input {...register("name")} placeholder="Grocery, Meat..." />
-          <FormFieldError>{errors.name?.message}</FormFieldError>
-        </FormField>
-        <FormField>
-          <FormFieldLabel>
-            Tag color <span className="text-muted-foreground">(Optional)</span>
-          </FormFieldLabel>
-          <div className="flex gap-2">
-            <Input
-              {...register("color")}
-              style={{
-                borderColor: `${hexValues.border}`,
-                color: `${hexValues.text}`,
-                backgroundColor: `${hexValues.bg}`,
-              }}
-              className="border-muted"
-              placeholder="Generate color >>>"
-              readOnly
-            />
-            <Button
-              type="button"
-              onClick={handleRandomizeColor}
-              variant="outline"
-              size="icon"
-            >
-              <RefreshCcw className="size-4" />
-            </Button>
+      <DialogContent className="sm:max-w-sm">
+        <Form onSubmit={onSubmit}>
+          <DialogHeader>
+            <DialogTitle>Edit profile</DialogTitle>
+            <DialogDescription>
+              Make changes to your profile here. Click save when you&apos;re
+              done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mb-4 space-y-4">
+            <FormField>
+              <FormFieldLabel required>Tag Name</FormFieldLabel>
+              <Input {...register("name")} placeholder="Grocery, Meat..." />
+            </FormField>
+            <FormField>
+              <FormFieldLabel>
+                Color <span className="text-muted-foreground">(Optional)</span>
+              </FormFieldLabel>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  {...register("color")}
+                  placeholder="Generate color >>>"
+                  className="border-muted"
+                  style={{
+                    borderColor: hexValues.border,
+                    color: hexValues.text,
+                    backgroundColor: hexValues.bg,
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleRandomizeColor}
+                  variant="outline"
+                  size="icon"
+                >
+                  <RefreshCcw />
+                </Button>
+              </div>
+            </FormField>
           </div>
-        </FormField>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
-          <LoaderButton
-            type="submit"
-            onClick={onSubmit}
-            isLoading={mutation.isPending}
-            disabled={!isDirty || mutation.isPending}
-          >
-            Save changes
-          </LoaderButton>
-        </DialogFooter>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <LoaderButton type="submit" isLoading={false}>
+              Save changes
+            </LoaderButton>
+          </DialogFooter>
+        </Form>
       </DialogContent>
     </Dialog>
   );
