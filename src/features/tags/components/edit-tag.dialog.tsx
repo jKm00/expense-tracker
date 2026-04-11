@@ -1,4 +1,9 @@
-import { Form, FormField, FormFieldLabel } from "@/components/custom/form";
+import {
+  Form,
+  FormField,
+  FormFieldError,
+  FormFieldLabel,
+} from "@/components/custom/form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,7 +38,14 @@ export function EditTagDialog({
   const [open, setOpen] = useState(false);
 
   const mutation = tagsMutations.updateTag();
-  const { register, resetField, setValue, watch, handleSubmit } = useForm({
+  const {
+    register,
+    resetField,
+    setValue,
+    watch,
+    handleSubmit,
+    formState: { errors, isDirty },
+  } = useForm({
     resolver: zodResolver(updateTagSchema),
     defaultValues: {
       tagId: tag.id,
@@ -120,6 +132,7 @@ export function EditTagDialog({
             <FormField>
               <FormFieldLabel required>Tag Name</FormFieldLabel>
               <Input {...register("name")} placeholder="Grocery, Meat..." />
+              <FormFieldError>{errors.name?.message}</FormFieldError>
             </FormField>
             <FormField>
               <FormFieldLabel>
@@ -146,13 +159,18 @@ export function EditTagDialog({
                   <RefreshCcw />
                 </Button>
               </div>
+              <FormFieldError>{errors.color?.message}</FormFieldError>
             </FormField>
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <LoaderButton type="submit" isLoading={false}>
+            <LoaderButton
+              type="submit"
+              isLoading={mutation.isPending}
+              disabled={!isDirty || mutation.isPending}
+            >
               Save changes
             </LoaderButton>
           </DialogFooter>
