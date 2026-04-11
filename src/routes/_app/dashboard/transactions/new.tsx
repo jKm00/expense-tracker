@@ -4,6 +4,11 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { NewTransactionForm } from "@/features/transactions/components/new-transaction.form";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -22,12 +27,12 @@ export const Route = createFileRoute("/_app/dashboard/transactions/new")({
 function RouteComponent() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">New Transaction</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>New Transaction</PageHeaderTitle>
+        <PageHeaderDescription>
           Document a new transaction
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
       <Suspense>
         <NewProductForm />
       </Suspense>

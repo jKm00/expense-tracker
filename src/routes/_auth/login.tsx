@@ -18,19 +18,21 @@ function LoginPage() {
   const { redirect } = Route.useSearch();
 
   return (
-    <div className="min-h-screen flex items-center">
+    <div className="min-h-screen flex items-center bg-background">
       <div
-        className="flex flex-col items-start mx-auto"
-        style={{ width: "min(500px, 100%)" }}
+        className="flex flex-col items-start mx-auto px-6"
+        style={{ width: "min(480px, 100%)" }}
       >
-        <div className="bg-foreground size-16 rounded-xl grid place-items-center mb-8">
-          <Gem className="text-background size-8" />
+        <div className="size-14 rounded-xl bg-primary grid place-items-center mb-10">
+          <Gem className="size-6 text-primary-foreground" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back</h1>
-        <p className="text-sm text-muted-foreground mb-8">
+
+        <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Sign in to continue to your dashboard.
         </p>
-        <div className="grid w-full gap-4">
+
+        <div className="grid w-full gap-3 mt-10">
           <Button
             size="lg"
             className="w-full"
@@ -41,12 +43,12 @@ function LoginPage() {
               })
             }
           >
-            <GithubIcon className="mr-2 size-5" />
+            <GithubIcon className="mr-2 size-4" />
             Continue with GitHub
           </Button>
           <Button
             asChild
-            variant="link"
+            variant="ghost"
             size="sm"
             className="text-muted-foreground"
           >

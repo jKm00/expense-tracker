@@ -37,8 +37,8 @@ function AppLayout() {
         {/* Desktop: sidebar + content */}
         <div className="hidden md:flex">
           <DesktopSidebar />
-          <main className="flex-1 p-6">
-            <div className="mx-auto">
+          <main className="flex-1 min-w-0">
+            <div className="mx-auto max-w-4xl px-6 py-8">
               <Outlet />
             </div>
           </main>
@@ -46,7 +46,7 @@ function AppLayout() {
 
         {/* Mobile: content + bottom nav */}
         <div className="md:hidden flex flex-col min-h-screen">
-          <main className="flex-1 p-4 pb-26">
+          <main className="flex-1 px-4 pt-6 pb-28">
             <Outlet />
           </main>
           <MobileNav />

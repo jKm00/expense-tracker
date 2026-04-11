@@ -46,7 +46,7 @@ export function NewTagDialog() {
     if (!color) return { border: undefined, bg: undefined, text: undefined };
 
     return {
-      border: color,
+      border: `${color}40`,
       bg: `${color}10`,
       text: color,
     };
@@ -96,11 +96,11 @@ export function NewTagDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button type="button" size="sm" variant="outline">
-          <Plus />
+          <Plus className="size-4" />
           <span className="max-md:sr-only">New tag</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>New Tag</DialogTitle>
           <DialogDescription>
@@ -136,6 +136,7 @@ export function NewTagDialog() {
                 onClick={handleRandomizeColor}
                 variant="outline"
                 size="icon"
+                className="shrink-0"
               >
                 <RefreshCcw className="size-4" />
               </Button>
@@ -143,12 +144,13 @@ export function NewTagDialog() {
           </FormField>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" size="sm">
                 Cancel
               </Button>
             </DialogClose>
             <LoaderButton
               type="submit"
+              size="sm"
               isLoading={mutation.isPending}
               disabled={mutation.isPending}
             >

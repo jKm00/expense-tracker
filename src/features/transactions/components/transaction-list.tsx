@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
-import { ChevronRight, Package, Receipt } from "lucide-react";
+import { ChevronRight, Receipt, ShoppingBag } from "lucide-react";
 import { FullTransaction } from "../transactions.models";
 import { useMemo } from "react";
 import { transactionUtils } from "../transactions.utils";
@@ -23,14 +23,14 @@ export function TransactionList({
         <div className="space-y-6">
           {grouped.map((group) => (
             <div key={group[0].createdAt.toISOString()}>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {group[0].createdAt.toLocaleString("en-UK", {
                   weekday: "long",
                   month: "long",
                   day: "numeric",
                 })}
               </h3>
-              <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+              <div className="overflow-hidden rounded-xl border border-border bg-card">
                 {group.map((transaction, idx) => (
                   <Link
                     key={transaction.id}
@@ -38,25 +38,27 @@ export function TransactionList({
                     params={{ id: transaction.id }}
                   >
                     <div
-                      className={`flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50 ${idx !== group.length - 1 ? "border-b border-border/40" : ""}`}
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${idx !== group.length - 1 ? "border-b border-border" : ""}`}
                     >
-                      <Receipt className="size-4 text-muted-foreground" />
+                      <div className="size-8 rounded-lg bg-muted grid place-items-center shrink-0">
+                        <Receipt className="size-3.5 text-muted-foreground" />
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {transaction.store || "Transaction"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {transaction.entries.length} item
                           {transaction.entries.length !== 1 ? "s" : ""}
                         </p>
                       </div>
                       <span
-                        className={`text-sm font-semibold tabular-nums ${Number(transaction.totalPrice) < 0 ? "text-red-400" : "text-emerald-400"}`}
+                        className={`text-sm font-semibold tabular-nums ${Number(transaction.totalPrice) < 0 ? "text-expense" : "text-income"}`}
                       >
                         {Number(transaction.totalPrice) > 0 ? "+" : ""}
                         {transaction.totalPrice}
                       </span>
-                      <ChevronRight className="size-4 text-muted-foreground/50" />
+                      <ChevronRight className="size-3.5 text-muted-foreground/40" />
                     </div>
                   </Link>
                 ))}
@@ -65,7 +67,7 @@ export function TransactionList({
           ))}
         </div>
       ) : (
-        <EmptyState icon={Package}>
+        <EmptyState icon={ShoppingBag}>
           <EmptyStateMessage>No transactions available</EmptyStateMessage>
         </EmptyState>
       )}

@@ -95,19 +95,19 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           <Button
             onClick={() => onSubmit("expense")}
             variant="outline"
-            className="border-red-400/30 text-red-400 hover:bg-red-400/10 hover:text-red-400"
+            className="border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
             type="button"
           >
-            <Minus className="size-4" />
+            <Minus className="size-3.5" />
             Expense
           </Button>
           <Button
             onClick={() => onSubmit("income")}
             variant="outline"
-            className="border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 hover:text-emerald-400"
+            className="border-income/30 text-income hover:bg-income/10 hover:text-income"
             type="button"
           >
-            <Plus className="size-4" />
+            <Plus className="size-3.5" />
             Income
           </Button>
         </CardFooter>

@@ -5,6 +5,14 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import { MonthSelect } from "@/components/custom/month-select";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+} from "@/components/custom/page-header";
+import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
+import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { TransactionList } from "@/features/transactions/components/transaction-list";
@@ -29,28 +37,41 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Track your income and expenses
-            </p>
-          </div>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/dashboard/transactions/new">
-              <Plus className="size-4" />
-              <span className="max-md:sr-only">New transaction</span>
-            </Link>
-          </Button>
-        </div>
+        <PageHeader>
+          <PageHeaderTitle>Transactions</PageHeaderTitle>
+          <PageHeaderDescription>
+            Track your income and expenses
+          </PageHeaderDescription>
+          <PageHeaderActions>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/transactions/new">
+                <Plus className="size-4" />
+                <span className="max-md:sr-only">New transaction</span>
+              </Link>
+            </Button>
+          </PageHeaderActions>
+        </PageHeader>
         <MonthSelect
           from="/_app/dashboard/transactions/"
           to="/dashboard/transactions/"
         />
       </div>
-      <Suspense fallback={<p>Loading...</p>}>
+      <Suspense fallback={<TransactionsContentSkeleton />}>
         <TransactionsContent />
       </Suspense>
+    </div>
+  );
+}
+
+function TransactionsContentSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <SkeletonList rows={5} />
     </div>
   );
 }

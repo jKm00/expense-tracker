@@ -4,6 +4,11 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { EditProductForm } from "@/features/products/components/edit-product.form";
 import { LinkTagForm } from "@/features/products/components/link-tag.form";
@@ -27,12 +32,12 @@ export const Route = createFileRoute("/_app/dashboard/products/$productId")({
 function RouteComponent() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>Product Details</PageHeaderTitle>
+        <PageHeaderDescription>
           View and edit the details about the product
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
       <Suspense fallback={<SkeletonForm fields={1} />}>
         <EditProductContent />
       </Suspense>

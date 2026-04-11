@@ -23,16 +23,18 @@ function ExpectedError({
   return (
     <Card className="py-8 px-2 max-md:text-center md:px-6">
       <CardContent className="flex flex-col max-md:items-center">
-        <Icon className="size-10 mb-4" />
+        <div className="size-12 rounded-full bg-destructive/10 grid place-items-center mb-4">
+          <Icon className="size-5 text-destructive" />
+        </div>
         {children}
         <div className="flex gap-2">
-          <Button onClick={goBack} variant="secondary">
-            <ArrowLeft />
-            Back to previous page
+          <Button onClick={goBack} variant="outline" size="sm">
+            <ArrowLeft className="size-3.5" />
+            Go back
           </Button>
-          <Button onClick={refresh} variant="outline">
-            <RefreshCw />
-            Refresh page
+          <Button onClick={refresh} variant="ghost" size="sm">
+            <RefreshCw className="size-3.5" />
+            Refresh
           </Button>
         </div>
       </CardContent>
@@ -41,11 +43,11 @@ function ExpectedError({
 }
 
 function ExpectedErrorTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-semibold mb-4">{children}</h2>;
+  return <h2 className="text-lg font-semibold mb-2">{children}</h2>;
 }
 
 function ExpectedErrorMessage({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground text-sm mb-8">{children}</p>;
+  return <p className="text-muted-foreground text-sm mb-6">{children}</p>;
 }
 
 export { ExpectedError, ExpectedErrorTitle, ExpectedErrorMessage };

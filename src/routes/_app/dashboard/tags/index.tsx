@@ -4,7 +4,14 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
-import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+} from "@/components/custom/page-header";
+import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
+import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 import { TagBadge } from "@/features/tags/components/tag";
@@ -27,19 +34,31 @@ export const Route = createFileRoute("/_app/dashboard/tags/")({
 function RouteComponent() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tags</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Organize products with tags
-          </p>
-        </div>
-        <NewTagDialog />
-      </div>
-      {/* TODO: Make and replace to skeleton table */}
-      <Suspense fallback={<SkeletonForm />}>
+      <PageHeader>
+        <PageHeaderTitle>Tags</PageHeaderTitle>
+        <PageHeaderDescription>
+          Organize products with tags
+        </PageHeaderDescription>
+        <PageHeaderActions>
+          <NewTagDialog />
+        </PageHeaderActions>
+      </PageHeader>
+      <Suspense fallback={<TagsContentSkeleton />}>
         <TagContent />
       </Suspense>
+    </div>
+  );
+}
+
+function TagsContentSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <SkeletonList rows={4} />
     </div>
   );
 }
@@ -107,13 +126,13 @@ function TagContent() {
                   {tag.products.length} ref
                   {tag.products.length !== 1 ? "s" : ""}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <EditTagDialog tag={tag}>
-                    <SquarePen />
+                    <SquarePen className="size-4" />
                     <span className="sr-only">Edit tag {tag.name}</span>
                   </EditTagDialog>
                   <DeleteTagDialog tag={tag}>
-                    <Trash />
+                    <Trash className="size-4" />
                     <span className="sr-only">Delete tag {tag.name}</span>
                   </DeleteTagDialog>
                 </div>

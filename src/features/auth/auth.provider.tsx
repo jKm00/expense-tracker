@@ -25,9 +25,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-card p-4 rounded-lg animate-pulse">
-          <Gem className="text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary/10 grid place-items-center animate-pulse">
+            <Gem className="size-5 text-primary" />
+          </div>
+          <p className="text-xs text-muted-foreground">Loading...</p>
         </div>
       </div>
     );

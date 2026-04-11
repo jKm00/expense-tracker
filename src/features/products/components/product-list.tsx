@@ -26,7 +26,7 @@ function ProductList({
     <div className="space-y-2">
       {title}
       {hasProducts ? (
-        <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           {products.map((product, idx) => (
             <Link
               key={product.id}
@@ -35,9 +35,11 @@ function ProductList({
               className="block"
             >
               <div
-                className={`flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50 ${idx !== products.length - 1 ? "border-b border-border/40" : ""}`}
+                className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${idx !== products.length - 1 ? "border-b border-border" : ""}`}
               >
-                <Package className="size-4 text-muted-foreground" />
+                <div className="size-8 rounded-lg bg-muted grid place-items-center shrink-0">
+                  <Package className="size-3.5 text-muted-foreground" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">
                     {product.name}
@@ -52,7 +54,7 @@ function ProductList({
                     </div>
                   )}
                 </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
+                <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/40" />
               </div>
             </Link>
           ))}
@@ -66,7 +68,7 @@ function ProductList({
 
 function ProductListTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
       {children}
     </h2>
   );

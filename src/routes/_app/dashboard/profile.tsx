@@ -10,6 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LogOutIcon, Palette } from "lucide-react";
 
@@ -42,26 +47,26 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>Profile</PageHeaderTitle>
+        <PageHeaderDescription>
           Manage your account settings
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
 
       {/* User Info */}
       <Card>
         <CardContent className="flex items-center gap-4 py-2">
-          <Avatar className="size-14 ring-2 ring-border">
+          <Avatar className="size-12 ring-2 ring-border">
             {user?.image && (
               <AvatarImage src={user.image} alt={user.name ?? "User"} />
             )}
-            <AvatarFallback className="text-base font-semibold">
+            <AvatarFallback className="text-sm font-semibold">
               {user?.name ? getInitials(user.name) : "?"}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="text-lg font-semibold truncate">
+            <p className="text-base font-semibold truncate">
               {user?.name ?? "Unknown"}
             </p>
             <p className="text-sm text-muted-foreground truncate">
@@ -80,7 +85,9 @@ function RouteComponent() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Palette className="size-4 text-muted-foreground" />
+              <div className="size-8 rounded-lg bg-muted grid place-items-center">
+                <Palette className="size-4 text-muted-foreground" />
+              </div>
               <div>
                 <p className="text-sm font-medium">Theme</p>
                 <p className="text-xs text-muted-foreground">
@@ -94,7 +101,7 @@ function RouteComponent() {
       </Card>
 
       {/* Account Actions */}
-      <Card className="border-destructive/30">
+      <Card className="border-destructive/20">
         <CardHeader>
           <CardTitle className="text-destructive">Danger zone</CardTitle>
           <CardDescription>Irreversible account actions</CardDescription>

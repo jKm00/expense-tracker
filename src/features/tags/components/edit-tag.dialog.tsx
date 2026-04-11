@@ -63,7 +63,7 @@ export function EditTagDialog({
     if (!color) return { border: undefined, bg: undefined, text: undefined };
 
     return {
-      border: color,
+      border: `${color}40`,
       bg: `${color}10`,
       text: color,
     };
@@ -121,7 +121,9 @@ export function EditTagDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost">{children}</Button>
+        <Button variant="ghost" size="sm" className="size-8 p-0">
+          {children}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <Form onSubmit={onSubmit}>
@@ -158,8 +160,9 @@ export function EditTagDialog({
                   onClick={handleRandomizeColor}
                   variant="outline"
                   size="icon"
+                  className="shrink-0"
                 >
-                  <RefreshCcw />
+                  <RefreshCcw className="size-4" />
                 </Button>
               </div>
               <FormFieldError>{errors.color?.message}</FormFieldError>
@@ -167,10 +170,11 @@ export function EditTagDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" size="sm">Cancel</Button>
             </DialogClose>
             <LoaderButton
               type="submit"
+              size="sm"
               isLoading={mutation.isPending}
               disabled={!isDirty || mutation.isPending}
             >

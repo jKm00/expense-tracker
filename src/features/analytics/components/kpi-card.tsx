@@ -13,19 +13,23 @@ export function KpiCard({
   icon?: LucideIcon;
 }) {
   return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="flex flex-col gap-1 py-2">
+    <Card size="sm">
+      <CardContent className="flex flex-col gap-0.5 py-1">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="size-4 text-primary" />}
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {Icon && (
+            <div className="size-6 rounded-md bg-primary/10 grid place-items-center">
+              <Icon className="size-3 text-primary" />
+            </div>
+          )}
+          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
             {title}
           </p>
         </div>
-        <p className="mt-1 text-2xl font-bold tracking-tight truncate">
+        <p className="mt-1 text-xl font-semibold tracking-tight truncate">
           {value}
         </p>
         {subtitle && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-[11px] text-muted-foreground">{subtitle}</p>
         )}
       </CardContent>
     </Card>

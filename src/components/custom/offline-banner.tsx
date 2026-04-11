@@ -1,4 +1,5 @@
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { WifiOff } from "lucide-react";
 
 export function OfflineBanner() {
   const isOnline = useOnlineStatus();
@@ -10,8 +11,9 @@ export function OfflineBanner() {
   return (
     <div
       role="alert"
-      className="bg-yellow-600 text-white text-center text-sm py-1.5 px-4"
+      className="flex items-center justify-center gap-2 bg-amber-500/90 text-white text-center text-xs font-medium py-2 px-4"
     >
+      <WifiOff className="size-3.5" />
       You're offline — viewing cached data. Some features may not work.
     </div>
   );

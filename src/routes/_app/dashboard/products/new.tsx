@@ -1,8 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
+import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { NewProductForm } from "@/features/products/components/new-product.form";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
+import { createFileRoute } from "@tanstack/react-router";
+import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/products/new")({
   loader: async ({ context }) => {
@@ -14,12 +19,12 @@ export const Route = createFileRoute("/_app/dashboard/products/new")({
 function RouteComponent() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">New Product</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>New Product</PageHeaderTitle>
+        <PageHeaderDescription>
           Add a new product to your product bank
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
       <Suspense fallback={<SkeletonForm fields={1} />}>
         <NewProductForm />
       </Suspense>

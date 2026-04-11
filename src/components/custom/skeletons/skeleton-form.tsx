@@ -6,12 +6,12 @@ export function SkeletonForm({ fields = 4 }: { fields?: number }) {
     <Card>
       <CardContent className="space-y-4">
         {Array.from({ length: fields }).map((_, i) => (
-          <div key={i} className="space-y-1">
-            <Skeleton className="h-6 max-w-30" />
-            <Skeleton className="h-10" />
+          <div key={i} className="space-y-1.5">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-full" />
           </div>
         ))}
-        <Skeleton className="h-10 max-w-40" />
+        <Skeleton className="h-8 w-32" />
       </CardContent>
     </Card>
   );

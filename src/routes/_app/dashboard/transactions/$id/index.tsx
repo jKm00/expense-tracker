@@ -4,6 +4,12 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+} from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,16 +56,12 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6 @container">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Transaction Details
-          </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            View and edit details about the transaction
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader>
+        <PageHeaderTitle>Transaction Details</PageHeaderTitle>
+        <PageHeaderDescription>
+          View and edit details about the transaction
+        </PageHeaderDescription>
+        <PageHeaderActions>
           <Button asChild variant="outline" size="sm">
             <Link to="/dashboard/transactions/$id/edit" params={{ id }}>
               <SquarePen className="size-4" />
@@ -70,8 +72,8 @@ function RouteComponent() {
             <Trash className="size-4" />
             <span className="@max-lg:sr-only">Delete</span>
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
       <Suspense fallback={<SkeletonForm fields={2} />}>
         <TransactionDetails />
       </Suspense>
