@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { entries, transactions } from "@/lib/db/schema";
 import { NewEntry, NewTransaction } from "./transactions.models";
+import { eq } from "drizzle-orm";
 
 async function getAll(userId: string, start: Date, end: Date) {
   return await db.query.transactions.findMany({
@@ -41,9 +42,17 @@ async function saveEntry(entry: NewEntry) {
   return await db.insert(entries).values(entry).returning();
 }
 
+async function remove(transactionId: string) {
+  return await db
+    .delete(transactions)
+    .where(eq(transactions.id, transactionId))
+    .returning();
+}
+
 export const transactionRepo = {
   getAll,
   getOne,
   save,
   saveEntry,
+  remove,
 };

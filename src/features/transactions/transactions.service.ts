@@ -147,8 +147,32 @@ async function saveEntry(
   return ok(savedEntries[0]);
 }
 
+async function deleteTransaction(userId: string, transactionId: string) {
+  const [foundError] = await getTransaction(userId, transactionId);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  try {
+    const removed = await transactionRepo.remove(transactionId);
+    if (removed.length === 0) {
+      return err({
+        reason: "TRANSACTION_NOT_RETURNED",
+        message: `No transaction returned after deleting`,
+      });
+    }
+    return ok(removed);
+  } catch (error) {
+    return err({
+      reason: "TRANSACTION_DB_ERROR",
+      message: `Failed to remove transaction ${transactionId} from DB`,
+    });
+  }
+}
+
 export const transactionService = {
   getTransactions,
   getTransaction,
   saveTransaction,
+  deleteTransaction,
 };
