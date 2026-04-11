@@ -111,13 +111,12 @@ export function EditTagDialog({
       <DialogContent className="sm:max-w-sm">
         <Form onSubmit={onSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
+            <DialogTitle>Edit Tag</DialogTitle>
             <DialogDescription>
-              Make changes to your profile here. Click save when you&apos;re
-              done.
+              Make changes to your tag here. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
-          <div className="mb-4 space-y-4">
+          <div className="my-4 space-y-4">
             <FormField>
               <FormFieldLabel required>Tag Name</FormFieldLabel>
               <Input {...register("name")} placeholder="Grocery, Meat..." />
