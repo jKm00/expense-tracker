@@ -9,7 +9,7 @@ export type AddTagDTO = z.infer<typeof addTagSchema>;
 
 export const updateTagSchema = z.object({
   tagId: z.string(),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").optional(),
   color: z.string().optional(),
 });
 
