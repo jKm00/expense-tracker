@@ -34,7 +34,7 @@ export function MobileNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom,24px)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/80 backdrop-blur-xl pb-6">
       <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -49,7 +49,9 @@ export function MobileNav() {
                   : "text-muted-foreground active:text-foreground",
               )}
             >
-              <item.icon className={cn("size-[18px]", active && "text-primary")} />
+              <item.icon
+                className={cn("size-[18px]", active && "text-primary")}
+              />
               <span>{item.label}</span>
             </Link>
           );
