@@ -12,25 +12,8 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Ellipsis,
-  Hash,
-  Pencil,
-  SquarePen,
-  Star,
-  Trash,
-  TrendingUp,
-} from "lucide-react";
+import { Hash, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
 import { Suspense, useMemo } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 
