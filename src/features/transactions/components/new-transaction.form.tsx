@@ -113,45 +113,46 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
         <CardContent className="space-y-4">
           {/* Entries list */}
           <div>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Items
             </h3>
             {entries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
-                <ShoppingBag className="size-5 text-muted-foreground mb-2" />
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-4 py-6 text-center">
+                <div className="size-8 rounded-lg bg-muted grid place-items-center mb-2">
+                  <ShoppingBag className="size-3.5 text-muted-foreground" />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   No products added yet
                 </p>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-lg border border-border/60">
+              <div className="overflow-hidden rounded-xl border border-border">
                 {entries.map((entry, i) => (
                   <div
                     key={`${entry.product.id}-${entry.quantity}-${i}`}
-                    className={`flex items-center gap-3 px-3 py-2.5 ${i !== entries.length - 1 ? "border-b border-border/40" : ""}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 ${i !== entries.length - 1 ? "border-b border-border" : ""}`}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
                         {entry.product.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {entry.quantity} x {entry.price},-
                       </p>
                     </div>
                     <span
-                      className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-red-400" : "text-emerald-400"}`}
+                      className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
                     >
                       {entry.type === "expense" ? "-" : "+"}
                       {Number(entry.price).toFixed(2)}
                     </span>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon-xs"
                       type="button"
-                      className="size-7"
                       onClick={() => handleRemoveEntry(i)}
                     >
-                      <X className="size-3.5" />
+                      <X className="size-3" />
                     </Button>
                   </div>
                 ))}
@@ -166,7 +167,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
 
           <FormField>
             <FormFieldLabel>
-              Store <span className="text-muted-foreground">(Optional)</span>
+              Store <span className="text-muted-foreground/60">(Optional)</span>
             </FormFieldLabel>
             <Input
               {...register("store")}
@@ -177,7 +178,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
           <FormField>
             <FormFieldLabel>
               Description{" "}
-              <span className="text-muted-foreground">(Optional)</span>
+              <span className="text-muted-foreground/60">(Optional)</span>
             </FormFieldLabel>
             <Textarea
               {...register("description")}
@@ -200,7 +201,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                   ) : (
                     <span>Pick a date</span>
                   )}
-                  <ChevronDownIcon />
+                  <ChevronDownIcon className="size-3.5" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -287,7 +288,7 @@ function NewEntryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
-          <Plus className="size-4" />
+          <Plus className="size-3.5" />
           Add product
         </Button>
       </DialogTrigger>
@@ -328,19 +329,19 @@ function NewEntryDialog({
           <Button
             type="button"
             variant="outline"
-            className="border-red-400/30 text-red-400 hover:bg-red-400/10 hover:text-red-400"
+            className="border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
             onClick={() => addEntry("expense")}
           >
-            <Minus className="size-4" />
+            <Minus className="size-3.5" />
             Expense
           </Button>
           <Button
             type="button"
             variant="outline"
-            className="border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 hover:text-emerald-400"
+            className="border-income/30 text-income hover:bg-income/10 hover:text-income"
             onClick={() => addEntry("income")}
           >
-            <Plus className="size-4" />
+            <Plus className="size-3.5" />
             Income
           </Button>
         </DialogFooter>

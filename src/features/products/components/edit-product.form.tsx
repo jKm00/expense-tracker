@@ -5,6 +5,13 @@ import {
   FormFieldLabel,
 } from "@/components/custom/form";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { productSchema } from "../products.validators";
@@ -67,20 +74,32 @@ export function EditProductForm({ product }: { product: Product }) {
   });
 
   return (
-    <Form onSubmit={onSubmit}>
-      <FormField>
-        <FormFieldLabel required>Product Name</FormFieldLabel>
-        <Input {...register("name")} placeholder="White Monster, Potato..." />
-        <FormFieldError>{errors.name?.message}</FormFieldError>
-      </FormField>
-      <LoaderButton
-        type="submit"
-        isLoading={mutation.isPending}
-        disabled={!isDirty || mutation.isPending}
-        className="w-full"
-      >
-        Save changes
-      </LoaderButton>
-    </Form>
+    <Card>
+      <CardHeader>
+        <CardTitle>General</CardTitle>
+        <CardDescription>Basic product information</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form onSubmit={onSubmit}>
+          <FormField>
+            <FormFieldLabel required>Product Name</FormFieldLabel>
+            <Input
+              {...register("name")}
+              placeholder="White Monster, Potato..."
+            />
+            <FormFieldError>{errors.name?.message}</FormFieldError>
+          </FormField>
+          <LoaderButton
+            type="submit"
+            size="sm"
+            isLoading={mutation.isPending}
+            disabled={!isDirty || mutation.isPending}
+            className="w-full mt-2"
+          >
+            Save changes
+          </LoaderButton>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

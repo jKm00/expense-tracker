@@ -1,3 +1,8 @@
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { SimpleTransactionForm } from "@/features/transactions/components/simple-transaction.form";
 import { useAuth } from "@/features/auth/auth.provider";
@@ -20,14 +25,12 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Hey, {firstName}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>Hey, {firstName}</PageHeaderTitle>
+        <PageHeaderDescription>
           Quickly log a transaction below.
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
       <Suspense>
         <HomeContent />
       </Suspense>

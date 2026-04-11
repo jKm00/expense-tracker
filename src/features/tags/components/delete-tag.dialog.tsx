@@ -83,33 +83,42 @@ export function DeleteTagDialog({
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">{children}</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="size-8 p-0 text-destructive hover:text-destructive"
+        >
+          {children}
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <div className="size-10 flex items-center justify-center bg-destructive/20 rounded-full">
-            <AlertTriangle className="text-destructive" />
+          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
+            <AlertTriangle className="size-5 text-destructive" />
           </div>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription className="mb-4">
+          <AlertDialogDescription>
             This will permanently delete the tag and unlink it from{" "}
             {tag.products.length}{" "}
             {tag.products.length > 1 ? "products" : "product"}. This action
             cannot be undone.
           </AlertDialogDescription>
-          <p className="text-muted-foreground text-sm">
-            Type '{confirmValue}' to confirm the deletion
-          </p>
-          <Input
-            value={confirmInput}
-            onChange={(e) => setConfirmInput(e.target.value)}
-            placeholder={`Type '${confirmValue}'`}
-          />
+          <div className="space-y-2 pt-2 w-full">
+            <p className="text-xs text-muted-foreground">
+              Type &apos;{confirmValue}&apos; to confirm the deletion
+            </p>
+            <Input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={`Type '${confirmValue}'`}
+            />
+          </div>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <LoaderButton
             variant="destructive"
+            size="sm"
             isLoading={mutation.isPending}
             disabled={
               confirmInput.toLowerCase() !== confirmValue || mutation.isPending

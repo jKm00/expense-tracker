@@ -8,10 +8,10 @@ function EmptyState({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-6 py-10 text-center">
+      <div className="flex size-10 items-center justify-center rounded-full bg-muted">
         <Icon
-          className={`${size === "sm" ? "size-3" : size === "md" ? "size-4" : size === "lg" ? "size-5" : "size-5"} text-muted-foreground`}
+          className={`${size === "sm" ? "size-3" : size === "md" ? "size-4" : size === "lg" ? "size-5" : "size-4"} text-muted-foreground`}
         />
       </div>
       <div className="mt-3">{children}</div>

@@ -4,7 +4,6 @@ import {
   FormFieldError,
   FormFieldLabel,
 } from "@/components/custom/form";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tag } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { productSchema } from "../products.validators";
 import { TagBadge } from "@/features/tags/components/tag";
+import { LoaderButton } from "@/components/custom/loader.button";
 
 export function NewProductForm() {
   const {
@@ -99,7 +99,7 @@ export function NewProductForm() {
         </FormField>
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Selected tags{" "}
               <span className="text-muted-foreground">(optional)</span>
             </p>
@@ -114,19 +114,19 @@ export function NewProductForm() {
                     key={tag.id}
                     tag={tag}
                     onClick={() => removeTag(tag)}
-                    className="hover:cursor-pointer"
+                    className="cursor-pointer"
                     variant="secondary"
                   >
-                    <TagIcon />
+                    <TagIcon className="size-3" />
                     {tag.name}
-                    <X />
+                    <X className="size-3" />
                   </TagBadge>
                 ))}
               </div>
             )}
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Available tags
             </p>
             {unselectedTags.length === 0 ? (
@@ -140,21 +140,27 @@ export function NewProductForm() {
                     key={tag.id}
                     tag={tag}
                     onClick={() => addTag(tag)}
-                    className="hover:cursor-pointer space-x-1"
+                    className="cursor-pointer"
                     variant="secondary"
                   >
-                    <TagIcon />
+                    <TagIcon className="size-3" />
                     {tag.name}
-                    <Plus />
+                    <Plus className="size-3" />
                   </TagBadge>
                 ))}
               </div>
             )}
           </div>
         </div>
-        <Button type="submit" className="w-full">
+        <LoaderButton
+          type="submit"
+          size="sm"
+          isLoading={mutation.isPending}
+          disabled={mutation.isPending}
+          className="w-full"
+        >
           Add product
-        </Button>
+        </LoaderButton>
       </div>
     </Form>
   );

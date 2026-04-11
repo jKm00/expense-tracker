@@ -1,3 +1,8 @@
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+} from "@/components/custom/page-header";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Package, Repeat, Tag } from "lucide-react";
 
@@ -29,19 +34,21 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">More</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderTitle>More</PageHeaderTitle>
+        <PageHeaderDescription>
           Additional features and settings
-        </p>
-      </div>
+        </PageHeaderDescription>
+      </PageHeader>
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
         {menuItems.map((item, idx) => (
           <Link key={item.label} to={item.href} className="block">
             <div
-              className={`flex items-center gap-4 px-4 py-4 transition-colors hover:bg-muted/50 ${idx !== menuItems.length - 1 ? "border-b border-border/40" : ""}`}
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== menuItems.length - 1 ? "border-b border-border/40" : ""}`}
             >
-              <item.icon className="size-5 text-primary" />
+              <div className="grid size-8 place-items-center rounded-lg bg-muted">
+                <item.icon className="size-4 text-primary" />
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">
                   {item.label}
@@ -50,7 +57,7 @@ function RouteComponent() {
                   {item.description}
                 </p>
               </div>
-              <ArrowRight className="size-4 text-muted-foreground/50" />
+              <ArrowRight className="size-3.5 text-muted-foreground/50" />
             </div>
           </Link>
         ))}

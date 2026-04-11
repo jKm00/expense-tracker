@@ -2,6 +2,13 @@ import { Tag } from "@/features/tags/tags.models";
 import { ProductWithTag } from "../products.models";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useMemo, useState } from "react";
 import { productMutations } from "../products.mutations";
 import { Input } from "@/components/ui/input";
@@ -48,19 +55,21 @@ export function LinkTagForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-lg font-semibold">Link tags</h2>
-          <p className="text-sm text-muted-foreground">
-            Link tags to product for analytics
-          </p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle>Tags</CardTitle>
+            <CardDescription>
+              Link tags to product for analytics
+            </CardDescription>
+          </div>
+          <NewTagDialog />
         </div>
-        <NewTagDialog />
-      </div>
-      <div className="space-y-6">
+      </CardHeader>
+      <CardContent className="space-y-6">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Applied tags
           </p>
           {product.tags.length === 0 ? (
@@ -74,17 +83,18 @@ export function LinkTagForm({
                   key={tag.id}
                   tag={tag}
                   onClick={() => handleUnlinkTag(tag)}
+                  className="cursor-pointer"
                 >
-                  <TagIcon />
+                  <TagIcon className="size-3" />
                   {tag.name}
-                  <X />
+                  <X className="size-3" />
                 </TagBadge>
               ))}
             </div>
           )}
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Available tags
           </p>
           <Input
@@ -104,16 +114,17 @@ export function LinkTagForm({
                   key={tag.id}
                   tag={tag}
                   onClick={() => handleLinkTag(tag)}
+                  className="cursor-pointer"
                 >
-                  <TagIcon />
+                  <TagIcon className="size-3" />
                   {tag.name}
-                  <Plus />
+                  <Plus className="size-3" />
                 </TagBadge>
               ))}
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -65,16 +65,16 @@ export function MonthSelect({
       <Button
         variant="outline"
         size="icon"
-        className="size-9 shrink-0"
+        className="size-8 shrink-0"
         onClick={handlePrevMonth}
       >
-        <ChevronLeft className="size-4" />
+        <ChevronLeft className="size-3.5" />
       </Button>
       <Select
         value={`${date.month()}`}
         onValueChange={(v) => handleMonthChange(Number(v))}
       >
-        <SelectTrigger className="h-9 min-w-36 max-w-48 text-sm">
+        <SelectTrigger className="h-8 min-w-32 max-w-44 text-xs">
           <SelectValue placeholder="Select a month" />
         </SelectTrigger>
         <SelectContent>
@@ -97,16 +97,16 @@ export function MonthSelect({
       <Button
         variant="outline"
         size="icon"
-        className="size-9 shrink-0"
+        className="size-8 shrink-0"
         onClick={handleNextMonth}
       >
-        <ChevronRight className="size-4" />
+        <ChevronRight className="size-3.5" />
       </Button>
       {!isCurrentMonth && (
         <Button
           variant="ghost"
           size="sm"
-          className="ml-1 h-9 text-xs text-muted-foreground"
+          className="ml-1 h-8 text-xs text-muted-foreground"
           onClick={resetDate}
         >
           Today

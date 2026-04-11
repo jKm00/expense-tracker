@@ -59,24 +59,26 @@ export function ProductSelect({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-between">
+        <Button variant="outline" className="w-full justify-between font-normal">
           {value ? (
-            value.name
+            <span className="truncate">{value.name}</span>
           ) : (
             <span className="text-muted-foreground">Select product</span>
           )}
           <ChevronRight
-            className={`${open ? "rotate-90" : ""} transition-transform text-muted-foreground`}
+            className={`size-3.5 ${open ? "rotate-90" : ""} transition-transform text-muted-foreground`}
           />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 gap-0">
-        <Input
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Search for product..."
-          className="mb-1"
-        />
+        <div className="p-2 pb-1">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Search for product..."
+            className="h-8 text-xs"
+          />
+        </div>
         {inputValue.length > 0 && (
           <Button
             onClick={() =>
@@ -89,21 +91,25 @@ export function ProductSelect({
               })
             }
             variant="ghost"
-            className="justify-start text-muted-foreground"
+            size="sm"
+            className="mx-2 justify-start text-muted-foreground text-xs"
           >
             Create '{inputValue}'
           </Button>
         )}
-        <div className="grid max-h-60 overflow-y-scroll">
+        <div className="grid max-h-60 overflow-y-auto p-1">
           {filteredProducts.map((product) => (
             <Button
               key={product.id}
               onClick={() => handleSelect(product)}
               variant="ghost"
-              className="justify-between"
+              size="sm"
+              className="justify-between text-xs font-normal"
             >
-              {product.name}
-              {value && value.name === product.name && <Check />}
+              <span className="truncate">{product.name}</span>
+              {value && value.name === product.name && (
+                <Check className="size-3.5 text-primary" />
+              )}
             </Button>
           ))}
         </div>

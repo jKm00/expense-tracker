@@ -35,7 +35,7 @@ function LoaderButton({
           </span>
         ) : (
           <Loader2
-            className={`animate-spin ${isLoading ? "visible" : "invisible"}`}
+            className={`size-4 animate-spin ${isLoading ? "visible" : "invisible"}`}
             style={{ gridArea: "stack" }}
           />
         )}

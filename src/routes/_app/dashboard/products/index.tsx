@@ -4,8 +4,15 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+} from "@/components/custom/page-header";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
+import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
 import {
   ProductList,
@@ -31,20 +38,20 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
 function RouteComponent() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Manage your product catalog
-          </p>
-        </div>
-        <Button asChild size="sm" variant="outline">
-          <Link to="/dashboard/products/new">
-            <Plus className="size-4" />
-            <span className="max-md:sr-only">New product</span>
-          </Link>
-        </Button>
-      </div>
+      <PageHeader>
+        <PageHeaderTitle>Products</PageHeaderTitle>
+        <PageHeaderDescription>
+          Manage your product catalog
+        </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/dashboard/products/new">
+              <Plus className="size-4" />
+              <span className="max-md:sr-only">New product</span>
+            </Link>
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
       <Suspense fallback={<ProductsContentSkeleton />}>
         <ProductsContent />
       </Suspense>
@@ -54,8 +61,12 @@ function RouteComponent() {
 
 function ProductsContentSkeleton() {
   return (
-    <div className="space-y-8">
-      <SkeletonList rows={2} />
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
       <SkeletonList rows={6} />
     </div>
   );
