@@ -116,35 +116,11 @@ function TagContent() {
                   {tag.products.length} ref
                   {tag.products.length !== 1 ? "s" : ""}
                 </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
-                      <Ellipsis className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-40" align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={(e) => e.preventDefault()}>
-                        <EditTagDialog tag={tag}>
-                          <p>
-                            Edit <Pencil />
-                          </p>
-                        </EditTagDialog>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <DeleteTagDialog tag={tag}>
-                          <p>
-                            Delete <Trash />
-                          </p>
-                        </DeleteTagDialog>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div>
+                  <DeleteTagDialog tag={tag}>
+                    <Trash />
+                  </DeleteTagDialog>
+                </div>
               </div>
             ))}
           </div>

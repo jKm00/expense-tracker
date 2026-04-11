@@ -1,6 +1,6 @@
-import { TagWithProduct } from "../tags.models";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,12 +9,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { tagsMutations } from "../tags.mutations";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { LoaderButton } from "@/components/custom/loader.button";
 import { AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { TagWithProduct } from "../tags.models";
+import { tagsMutations } from "../tags.mutations";
+import { LoaderButton } from "@/components/custom/loader.button";
+import { toast } from "sonner";
+import { wait } from "@/utils";
 
 export function DeleteTagDialog({
   tag,
@@ -26,34 +29,41 @@ export function DeleteTagDialog({
   const [confirmInput, setConfirmInput] = useState("");
   const confirmValue = tag.name.toLowerCase();
 
+  const [open, setOpen] = useState(false);
+
   const mutation = tagsMutations.deleteTag();
 
   function handleDelete() {
+    if (confirmInput.toLowerCase() !== confirmValue) {
+      toast.error("Type the name of the tag to confirm before deleting");
+      return;
+    }
+
     mutation.mutate(
-      { tagId: tag.id },
+      {
+        tagId: tag.id,
+      },
       {
         onSuccess: (res) => {
-          const [error] = res;
-          if (error) {
+          const [err] = res;
+          if (err) {
             let message: string;
-
-            const reason = error.reason;
+            const reason = err.reason;
             switch (reason) {
               case "TAG_NOT_FOUND":
-                message = "No tag was found and could therefore not be deleted";
+                message = "Tag was not found and was therefore not deleted...";
                 break;
               case "TAG_UNATHORIZED":
-                message = "You do not have permission to delete this tag";
+                message = "You do not have perimssion to delete this tag!";
                 break;
-              case "TAG_NOT_RETURNED":
               case "TAG_DB_ERROR":
+              case "TAG_NOT_RETURNED":
                 message =
-                  "Something unexpected happened when tring to delete that tag. Please try again!";
+                  "Something unexpected happened when trying to delete the tag. Please try again!";
                 break;
               default:
-                message = `Failed to delete tag: ${reason satisfies never}. Please try again!`;
+                message = `Unexpected error: ${reason satisfies never}. Please try again!`;
             }
-
             toast.error(message);
           } else {
             toast.success("Tag deleted!");
@@ -63,41 +73,49 @@ export function DeleteTagDialog({
     );
   }
 
+  async function handleOpenChange(isOpen: boolean) {
+    setOpen(isOpen);
+    if (!isOpen) {
+      await wait(100);
+      setConfirmInput("");
+    }
+  }
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild className="flex justify-between w-full">
-        {children}
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">{children}</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <div className="flex items-center justify-center bg-destructive/10 rounded-full size-10 mb-2">
-            <AlertTriangle className="size-5 text-destructive" />
+          <div className="size-10 flex items-center justify-center bg-destructive/20 rounded-full">
+            <AlertTriangle className="text-destructive" />
           </div>
-          <div>
-            <AlertDialogTitle className="mb-2">
-              Are you absolutely sure?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="mb-4">
-              This will permanently delete the tag and remove all its links to
-              products. This action cannot be undone.
-            </AlertDialogDescription>
-            <p className="text-sm text-muted-foreground mb-1.5">
-              Type '{confirmValue}' to confirm the deletion
-            </p>
-            <Input
-              value={confirmInput}
-              onChange={(e) => setConfirmInput(e.target.value)}
-              placeholder={`Type '${confirmValue}'`}
-            />
-          </div>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription className="mb-4">
+            This will permanently delete the tag and unlink it from{" "}
+            {tag.products.length}{" "}
+            {tag.products.length > 1 ? "products" : "product"}. This action
+            cannot be undone.
+          </AlertDialogDescription>
+          <p className="text-muted-foreground text-sm">
+            Type '{confirmValue}' to confirm the deletion
+          </p>
+          <Input
+            value={confirmInput}
+            onChange={(e) => setConfirmInput(e.target.value)}
+            placeholder={`Type '${confirmValue}'`}
+          />
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <LoaderButton
-            onClick={handleDelete}
-            isLoading={mutation.isPending}
-            disabled={confirmInput !== confirmValue || mutation.isPending}
             variant="destructive"
+            isLoading={mutation.isPending}
+            disabled={
+              confirmInput.toLowerCase() !== confirmValue || mutation.isPending
+            }
+            onClick={handleDelete}
           >
             Delete
           </LoaderButton>
