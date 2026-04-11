@@ -82,7 +82,7 @@ export function DeleteTransactionDialog({
           </div>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This is action cannot be undone and will permanently delete the
+            This action cannot be undone and will permanently delete the
             transaction!
           </AlertDialogDescription>
         </AlertDialogHeader>
