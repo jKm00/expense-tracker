@@ -53,7 +53,7 @@ export function DeleteTagDialog({
                 message = "Tag was not found and was therefore not deleted...";
                 break;
               case "TAG_UNATHORIZED":
-                message = "You do not have perimssion to delete this tag!";
+                message = "You do not have permission to delete this tag!";
                 break;
               case "TAG_DB_ERROR":
               case "TAG_NOT_RETURNED":
