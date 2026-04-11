@@ -23,6 +23,8 @@ import { addTagSchema } from "../tags.dtos";
 import { useMemo, useState } from "react";
 import { wait } from "@/utils";
 import { toast } from "sonner";
+import { LoaderButton } from "@/components/custom/loader.button";
+import { tagUtils } from "../tags.utils";
 
 export function NewTagDialog() {
   const [open, setOpen] = useState(false);
@@ -86,13 +88,8 @@ export function NewTagDialog() {
   }
 
   function handleRandomizeColor() {
-    const color = generateRandomHex();
+    const color = tagUtils.generateRandomHex();
     setValue("color", color);
-  }
-
-  function generateRandomHex() {
-    const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-    return `#${randomColor.padStart(6, "0")}`;
   }
 
   return (
@@ -150,7 +147,13 @@ export function NewTagDialog() {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">Add tag</Button>
+            <LoaderButton
+              type="submit"
+              isLoading={mutation.isPending}
+              disabled={mutation.isPending}
+            >
+              Add tag
+            </LoaderButton>
           </DialogFooter>
         </form>
       </DialogContent>

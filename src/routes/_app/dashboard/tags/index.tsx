@@ -12,18 +12,10 @@ import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Hash, Star, Trash, TrendingUp } from "lucide-react";
+import { Hash, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
 import { Suspense, useMemo } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
+import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
@@ -112,30 +104,19 @@ function TagContent() {
                   </div>
                 </div>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {tag.products.length} ref{tag.products.length !== 1 ? "s" : ""}
+                  {tag.products.length} ref
+                  {tag.products.length !== 1 ? "s" : ""}
                 </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
-                      <Ellipsis className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-40" align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <DeleteTagDialog tag={tag}>
-                          <p>
-                            Delete <Trash />
-                          </p>
-                        </DeleteTagDialog>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex gap-2">
+                  <EditTagDialog tag={tag}>
+                    <SquarePen />
+                    <span className="sr-only">Edit tag {tag.name}</span>
+                  </EditTagDialog>
+                  <DeleteTagDialog tag={tag}>
+                    <Trash />
+                    <span className="sr-only">Delete tag {tag.name}</span>
+                  </DeleteTagDialog>
+                </div>
               </div>
             ))}
           </div>

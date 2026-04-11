@@ -6,3 +6,6 @@ export type Tag = InferSelectModel<typeof tags>;
 export type TagWithProduct = Tag & { products: Product[] };
 
 export type NewTag = InferInsertModel<typeof tags>;
+export type UpdateTag = Partial<
+  Omit<NewTag, "id" | "userId" | "createdAt" | "updatedAt">
+>;

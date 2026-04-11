@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { NewTag } from "./tags.models";
+import { NewTag, UpdateTag } from "./tags.models";
 import { tags } from "./tags.schema";
 import { eq } from "drizzle-orm";
 
@@ -41,6 +41,14 @@ async function save(tag: NewTag) {
   return await db.insert(tags).values(tag).returning();
 }
 
+async function update(id: string, data: UpdateTag) {
+  return await db
+    .update(tags)
+    .set(data)
+    .where(eq(tags.id, id))
+    .returning();
+}
+
 async function remove(tagId: string) {
   return await db.delete(tags).where(eq(tags.id, tagId)).returning();
 }
@@ -50,5 +58,6 @@ export const tagsRepo = {
   getFirst,
   getFirstByName,
   save,
+  update,
   remove,
 };
