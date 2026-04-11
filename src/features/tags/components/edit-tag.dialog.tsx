@@ -23,7 +23,7 @@ import { updateTagSchema } from "../tags.dtos";
 import { LoaderButton } from "@/components/custom/loader.button";
 import { RefreshCcw } from "lucide-react";
 import { tagUtils } from "../tags.utils";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { wait } from "@/utils";
 import { tagsMutations } from "../tags.mutations";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ export function EditTagDialog({
   const mutation = tagsMutations.updateTag();
   const {
     register,
-    resetField,
+    reset,
     setValue,
     watch,
     handleSubmit,
@@ -50,9 +50,13 @@ export function EditTagDialog({
     defaultValues: {
       tagId: tag.id,
       name: tag.name,
-      color: tag.color || undefined,
+      color: tag.color ?? undefined,
     },
   });
+
+  useEffect(() => {
+    reset({ tagId: tag.id, name: tag.name, color: tag.color ?? undefined });
+  }, [tag, reset]);
 
   const color = watch("color") || undefined;
   const hexValues = useMemo(() => {
@@ -105,8 +109,7 @@ export function EditTagDialog({
     setOpen(isOpen);
     if (!isOpen) {
       await wait(100);
-      resetField("name");
-      resetField("color");
+      reset({ tagId: tag.id, name: tag.name, color: tag.color ?? undefined });
     }
   }
 
