@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { transactionService } from "./transactions.service";
 import {
+  deleteTransactionSchema,
   getTransactionSchema,
   getTransactionsSchema,
   saveTransactionSchema,
@@ -42,8 +43,18 @@ const saveTransaction = createServerFn({ method: "POST" })
     });
   });
 
+const deleteTransaction = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(deleteTransactionSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { transactionId } = data;
+    return await transactionService.deleteTransaction(userId, transactionId);
+  });
+
 export const transactionController = {
   getTransactions,
   getTransaction,
   saveTransaction,
+  deleteTransaction,
 };

@@ -35,3 +35,9 @@ export const saveTransactionSchema = z.object({
 });
 
 export type NewTransactionDTO = z.infer<typeof saveTransactionSchema>;
+
+export const deleteTransactionSchema = z.object({
+  transactionId: z.string(),
+});
+
+export type DeleteTransactionDTO = z.infer<typeof deleteTransactionSchema>;

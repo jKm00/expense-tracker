@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
+import { DeleteTransactionDialog } from "@/features/transactions/components/delete-transaction.alert";
 import {
   EntryList,
   EntryListEmpty,
@@ -68,10 +69,10 @@ function RouteComponent() {
               <span className="@max-lg:sr-only">Edit</span>
             </Link>
           </Button>
-          <Button variant="destructive" size="sm">
+          <DeleteTransactionDialog transactionId={id}>
             <Trash className="size-4" />
             <span className="@max-lg:sr-only">Delete</span>
-          </Button>
+          </DeleteTransactionDialog>
         </PageHeaderActions>
       </PageHeader>
       <Suspense fallback={<SkeletonForm fields={2} />}>
