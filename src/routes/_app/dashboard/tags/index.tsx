@@ -110,9 +110,11 @@ function TagContent() {
                 <div className="flex gap-2">
                   <EditTagDialog tag={tag}>
                     <SquarePen />
+                    <span className="sr-only">Edit tag {tag.name}</span>
                   </EditTagDialog>
                   <DeleteTagDialog tag={tag}>
                     <Trash />
+                    <span className="sr-only">Delete tag {tag.name}</span>
                   </DeleteTagDialog>
                 </div>
               </div>
