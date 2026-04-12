@@ -3,15 +3,21 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import {
-  EmptyState,
-  EmptyStateMessage,
-} from "@/components/custom/empty-state";
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3 } from "lucide-react";
+import { MonthSelect } from "@/components/custom/month-select";
+import { Suspense } from "react";
+import { Label } from "@/components/ui/label";
+import { CompareSelect } from "@/features/analytics/components/compare.select";
+import z from "zod";
+import { zodValidator } from "@tanstack/zod-adapter";
+
+const anaylyticsSchema = z.object({
+  comparison: z.enum(["year", "month"]).optional(),
+});
 
 export const Route = createFileRoute("/_app/dashboard/analytics")({
   component: RouteComponent,
+  validateSearch: zodValidator(anaylyticsSchema),
 });
 
 function RouteComponent() {
@@ -23,9 +29,27 @@ function RouteComponent() {
           Insights into your spending habits
         </PageHeaderDescription>
       </PageHeader>
-      <EmptyState icon={BarChart3}>
-        <EmptyStateMessage>Analytics coming soon</EmptyStateMessage>
-      </EmptyState>
+      <Suspense>
+        <AnalyticsContent />
+      </Suspense>
+    </div>
+  );
+}
+
+function AnalyticsContent() {
+  return (
+    <div className="flex gap-2">
+      <div>
+        <Label>Date</Label>
+        <MonthSelect
+          from="/_app/dashboard/analytics"
+          to="/dashboard/analytics"
+        />
+      </div>
+      <div>
+        <Label>Comparison</Label>
+        <CompareSelect />
+      </div>
     </div>
   );
 }
