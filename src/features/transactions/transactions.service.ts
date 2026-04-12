@@ -170,9 +170,135 @@ async function deleteTransaction(userId: string, transactionId: string) {
   }
 }
 
+async function updateTransaction(
+  userId: string,
+  transactionId: string,
+  {
+    transaction,
+    entries,
+  }: {
+    transaction: Partial<Omit<NewTransaction, "totalPrice">>;
+    entries: (NewEntryDTO & { id?: string })[];
+  },
+) {
+  // Verify ownership
+  const [foundError, existingTransaction] = await getTransaction(
+    userId,
+    transactionId,
+  );
+  if (foundError) {
+    return err(foundError);
+  }
+
+  // Calculate total price
+  const totalPrice = entries.reduce((acc, curr) => {
+    if (curr.type === "expense") {
+      return acc - Number(curr.price) * Number(curr.quantity);
+    } else {
+      return acc + Number(curr.price) * Number(curr.quantity);
+    }
+  }, 0);
+
+  // Update transaction
+  try {
+    const updated = await transactionRepo.update(transactionId, {
+      ...transaction,
+      totalPrice: String(totalPrice),
+    });
+
+    if (updated.length === 0) {
+      return err({
+        reason: "UPDATE_TRANSACTION_NO_RETURNING",
+        message: "Nothing was returned after updating transaction",
+      });
+    }
+  } catch (error) {
+    return err({
+      reason: "UPDATE_TRANSACTION_ERROR",
+      message: "Failed to update transaction in DB",
+    });
+  }
+
+  // Get existing entry IDs to determine what to delete
+  const existingEntryIds = existingTransaction.entries.map((e) => e.id);
+  const updatedEntryIds = entries.filter((e) => e.id).map((e) => e.id);
+  const entriesToDelete = existingEntryIds.filter(
+    (id) => !updatedEntryIds.includes(id),
+  );
+
+  // Delete removed entries
+  await Promise.all(
+    entriesToDelete.map(async (entryId) => {
+      try {
+        await transactionRepo.removeEntry(entryId);
+      } catch (error) {
+        // Continue even if delete fails
+      }
+    }),
+  );
+
+  // Update or create entries
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (entry.id) {
+        // Update existing entry
+        await updateEntry(userId, entry.id, entry);
+      } else {
+        // Create new entry
+        await saveEntry(userId, transactionId, entry);
+      }
+    }),
+  );
+
+  return ok(existingTransaction);
+}
+
+async function updateEntry(
+  userId: string,
+  entryId: string,
+  entry: NewEntryDTO,
+) {
+  let product: Product;
+  if (!entry.product.id) {
+    const [productError, savedProduct] = await productService.addProduct({
+      userId,
+      name: entry.product.name,
+    });
+    if (productError) {
+      return err(productError);
+    }
+    product = savedProduct;
+  } else {
+    const [productError, foundProduct] = await productService.getProduct(
+      userId,
+      entry.product.id,
+    );
+    if (productError) {
+      return err(productError);
+    }
+    product = foundProduct;
+  }
+
+  const updatedEntries = await transactionRepo.updateEntry(entryId, {
+    ...entry,
+    productId: product.id,
+    quantity: Number(entry.quantity),
+  });
+
+  if (updatedEntries.length === 0) {
+    return err({
+      reason: "UPDATE_ENTRY_NO_RETURNING",
+      message: "Nothing was returned after updating entry",
+    });
+  }
+
+  return ok(updatedEntries[0]);
+}
+
 export const transactionService = {
   getTransactions,
   getTransaction,
   saveTransaction,
   deleteTransaction,
+  updateTransaction,
 };
