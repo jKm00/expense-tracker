@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DeleteTransactionDTO, NewTransactionDTO } from "./transactions.dtos";
+import {
+  DeleteTransactionDTO,
+  NewTransactionDTO,
+  UpdateTransactionDTO,
+} from "./transactions.dtos";
 import { assertOnline } from "@/lib/offline-guard";
 import { transactionController } from "./transactions.controller";
 import { TRANSACTION_QUERY_KEY } from "./transactions.queries";
@@ -47,7 +51,29 @@ function deleteTransaction() {
   });
 }
 
+function updateTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateTransactionDTO) => {
+      assertOnline();
+      return await transactionController.updateTransaction({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [TRANSACTION_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened when updating your transaction. Please try again!",
+      );
+    },
+  });
+}
+
 export const transactionMutations = {
   saveTransaction,
   deleteTransaction,
+  updateTransaction,
 };
