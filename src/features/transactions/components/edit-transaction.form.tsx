@@ -28,6 +28,7 @@ import { transactionMutations } from "../transactions.mutations";
 import { useNavigate } from "@tanstack/react-router";
 import {
   NewEntryDTO,
+  UpdateEntryDTO,
   saveEntrySchema,
   updateTransactionSchema,
 } from "../transactions.dtos";
@@ -40,8 +41,6 @@ import {
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 
-type EntryWithOptionalId = NewEntryDTO & { id?: string };
-
 export function EditTransactionForm({
   products,
   transaction,
@@ -50,7 +49,7 @@ export function EditTransactionForm({
   transaction: FullTransaction;
 }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [entries, setEntries] = useState<EntryWithOptionalId[]>([]);
+  const [entries, setEntries] = useState<UpdateEntryDTO[]>([]);
 
   const navigate = useNavigate();
   const mutation = transactionMutations.updateTransaction();
@@ -67,14 +66,14 @@ export function EditTransactionForm({
       store: transaction.store || "",
       description: transaction.description || "",
       date: new Date(transaction.date),
-      entries: [] as EntryWithOptionalId[],
+      entries: [] as UpdateEntryDTO[],
     },
     resolver: zodResolver(updateTransactionSchema),
   });
 
   // Initialize entries from transaction
   useEffect(() => {
-    const initialEntries: EntryWithOptionalId[] = transaction.entries.map(
+    const initialEntries: UpdateEntryDTO[] = transaction.entries.map(
       (entry) => ({
         id: entry.id,
         product: {

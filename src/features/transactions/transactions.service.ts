@@ -1,10 +1,9 @@
 import { err, ok } from "@/utils/result";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
-import { NewEntryDTO } from "./transactions.dtos";
+import { NewEntryDTO, UpdateEntryDTO } from "./transactions.dtos";
 import { NewTransaction, Transaction } from "./transactions.models";
 import { productService } from "../products/products.service";
-import { Product } from "../products/products.models";
 
 async function getTransactions(userId: string, year?: number, month?: number) {
   try {
@@ -65,13 +64,7 @@ async function saveTransaction({
   transaction: Omit<NewTransaction, "totalPrice">;
   entries: NewEntryDTO[];
 }) {
-  const totalPrice = entries.reduce((acc, curr) => {
-    if (curr.type === "expense") {
-      return acc - Number(curr.price) * Number(curr.quantity);
-    } else {
-      return acc + Number(curr.price) * Number(curr.quantity);
-    }
-  }, 0);
+  const totalPrice = calculateTotalPrice(entries);
 
   let savedTransactions: Transaction[];
   try {
@@ -109,25 +102,9 @@ async function saveEntry(
   transactionId: string,
   entry: NewEntryDTO,
 ) {
-  let product: Product;
-  if (!entry.product.id) {
-    const [productError, savedProduct] = await productService.addProduct({
-      userId,
-      name: entry.product.name,
-    });
-    if (productError) {
-      return err(productError);
-    }
-    product = savedProduct;
-  } else {
-    const [productError, foundProduct] = await productService.getProduct(
-      userId,
-      entry.product.id,
-    );
-    if (productError) {
-      return err(productError);
-    }
-    product = foundProduct;
+  const [productError, product] = await resolveProduct(userId, entry.product);
+  if (productError) {
+    return err(productError);
   }
 
   const savedEntries = await transactionRepo.saveEntry({
@@ -178,7 +155,7 @@ async function updateTransaction(
     entries,
   }: {
     transaction: Partial<Omit<NewTransaction, "totalPrice">>;
-    entries: (NewEntryDTO & { id?: string })[];
+    entries: UpdateEntryDTO[];
   },
 ) {
   // Verify ownership
@@ -190,14 +167,22 @@ async function updateTransaction(
     return err(foundError);
   }
 
-  // Calculate total price
-  const totalPrice = entries.reduce((acc, curr) => {
-    if (curr.type === "expense") {
-      return acc - Number(curr.price) * Number(curr.quantity);
-    } else {
-      return acc + Number(curr.price) * Number(curr.quantity);
-    }
-  }, 0);
+  // Validate that all provided entry IDs belong to this transaction
+  const existingEntryIds = new Set(
+    existingTransaction.entries.map((e) => e.id),
+  );
+  const invalidEntryIds = entries
+    .filter((e) => e.id)
+    .filter((e) => !existingEntryIds.has(e.id!));
+
+  if (invalidEntryIds.length > 0) {
+    return err({
+      reason: "INVALID_ENTRY_IDS",
+      message: `Entry IDs do not belong to this transaction: ${invalidEntryIds.map((e) => e.id).join(", ")}`,
+    });
+  }
+
+  const totalPrice = calculateTotalPrice(entries);
 
   // Update transaction
   try {
@@ -219,11 +204,12 @@ async function updateTransaction(
     });
   }
 
-  // Get existing entry IDs to determine what to delete
-  const existingEntryIds = existingTransaction.entries.map((e) => e.id);
-  const updatedEntryIds = entries.filter((e) => e.id).map((e) => e.id);
-  const entriesToDelete = existingEntryIds.filter(
-    (id) => !updatedEntryIds.includes(id),
+  // Determine which entries to delete
+  const updatedEntryIds = new Set(
+    entries.filter((e) => e.id).map((e) => e.id),
+  );
+  const entriesToDelete = [...existingEntryIds].filter(
+    (id) => !updatedEntryIds.has(id),
   );
 
   // Delete removed entries
@@ -241,16 +227,23 @@ async function updateTransaction(
   await Promise.all(
     entries.map(async (entry) => {
       if (entry.id) {
-        // Update existing entry
         await updateEntry(userId, entry.id, entry);
       } else {
-        // Create new entry
         await saveEntry(userId, transactionId, entry);
       }
     }),
   );
 
-  return ok(existingTransaction);
+  // Re-fetch to return the fully updated transaction
+  const [refetchError, updatedTransaction] = await getTransaction(
+    userId,
+    transactionId,
+  );
+  if (refetchError) {
+    return err(refetchError);
+  }
+
+  return ok(updatedTransaction);
 }
 
 async function updateEntry(
@@ -258,25 +251,9 @@ async function updateEntry(
   entryId: string,
   entry: NewEntryDTO,
 ) {
-  let product: Product;
-  if (!entry.product.id) {
-    const [productError, savedProduct] = await productService.addProduct({
-      userId,
-      name: entry.product.name,
-    });
-    if (productError) {
-      return err(productError);
-    }
-    product = savedProduct;
-  } else {
-    const [productError, foundProduct] = await productService.getProduct(
-      userId,
-      entry.product.id,
-    );
-    if (productError) {
-      return err(productError);
-    }
-    product = foundProduct;
+  const [productError, product] = await resolveProduct(userId, entry.product);
+  if (productError) {
+    return err(productError);
   }
 
   const updatedEntries = await transactionRepo.updateEntry(entryId, {
@@ -293,6 +270,31 @@ async function updateEntry(
   }
 
   return ok(updatedEntries[0]);
+}
+
+// --- Shared helpers ---
+
+function calculateTotalPrice(entries: NewEntryDTO[]): number {
+  return entries.reduce((acc, curr) => {
+    if (curr.type === "expense") {
+      return acc - Number(curr.price) * Number(curr.quantity);
+    } else {
+      return acc + Number(curr.price) * Number(curr.quantity);
+    }
+  }, 0);
+}
+
+async function resolveProduct(
+  userId: string,
+  product: { id: string | null; name: string },
+) {
+  if (!product.id) {
+    return await productService.addProduct({
+      userId,
+      name: product.name,
+    });
+  }
+  return await productService.getProduct(userId, product.id);
 }
 
 export const transactionService = {
