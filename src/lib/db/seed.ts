@@ -232,7 +232,7 @@ const main = async () => {
     "#f43f5e",
   ];
 
-  const minDate = new Date("2026-01-01");
+  const minDate = new Date("2025-01-01");
   const maxDate = new Date("2026-04-30");
 
   console.log("Creating tags...");

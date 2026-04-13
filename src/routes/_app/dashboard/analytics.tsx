@@ -55,18 +55,34 @@ import {
 } from "@/components/ui/chart";
 import dayjs from "dayjs";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import { getComparisonDate } from "@/features/analytics/analytics.utils";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
 });
 
 export const Route = createFileRoute("/_app/dashboard/analytics")({
-  loaderDeps: ({ search: { month, year } }) => ({ month, year }),
+  loaderDeps: ({ search: { month, year, comparison } }) => ({
+    month,
+    year,
+    comparison,
+  }),
   loader: async ({ context, deps }) => {
     context.queryClient.ensureQueryData(tagsQueries.getTagsOptions());
 
+    // Prefetch current month transactions
     context.queryClient.prefetchQuery(
       transactionQueries.getTransactionsOptions(deps.year, deps.month),
+    );
+
+    // Prefetch comparison month transactions
+    const { compareYear, compareMonth } = getComparisonDate(
+      deps.year,
+      deps.month,
+      deps.comparison,
+    );
+    context.queryClient.prefetchQuery(
+      transactionQueries.getTransactionsOptions(compareYear, compareMonth),
     );
   },
   component: RouteComponent,
@@ -140,11 +156,23 @@ function RouteComponent() {
 }
 
 function AnalyticsContent() {
-  const { month, year } = Route.useSearch();
+  const { month, year, comparison } = Route.useSearch();
   const {
     data: [expectedTransactionError, transactions],
     error: unexpectedTransactionError,
   } = useSuspenseQuery(transactionQueries.getTransactionsOptions(year, month));
+
+  // Fetch comparison month data
+  const { compareYear, compareMonth } = getComparisonDate(
+    year,
+    month,
+    comparison,
+  );
+  const {
+    data: [, comparisonTransactions],
+  } = useSuspenseQuery(
+    transactionQueries.getTransactionsOptions(compareYear, compareMonth),
+  );
 
   const selectedMonth = month || dayjs().month();
   const selectedYear = year || dayjs().year();
@@ -183,13 +211,19 @@ function AnalyticsContent() {
       <AnalyticsKpis transactions={transactions} />
       <SpentGraph
         transactions={transactions}
+        comparisonTransactions={comparisonTransactions || []}
         month={selectedMonth}
         year={selectedYear}
+        compareMonth={compareMonth}
+        compareYear={compareYear}
       />
       <CumulativeSpentGraph
         transactions={transactions}
+        comparisonTransactions={comparisonTransactions || []}
         month={selectedMonth}
         year={selectedYear}
+        compareMonth={compareMonth}
+        compareYear={compareYear}
       />
     </div>
   );
@@ -367,22 +401,31 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
 
 function SpentGraph({
   transactions,
+  comparisonTransactions,
   month,
   year,
+  compareMonth,
+  compareYear,
 }: {
   transactions: FullTransaction[];
+  comparisonTransactions: FullTransaction[];
   month: number;
   year: number;
+  compareMonth: number;
+  compareYear: number;
 }) {
   const chartData = useMemo(() => {
-    if (transactions.length === 0) return [];
+    if (transactions.length === 0 && comparisonTransactions.length === 0)
+      return [];
 
     const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
 
     // Initialize daily expenses map with all days set to 0
     const dailyExpenses = new Map<number, number>();
+    const comparisonDailyExpenses = new Map<number, number>();
     for (let i = 1; i <= daysInMonth; i++) {
       dailyExpenses.set(i, 0);
+      comparisonDailyExpenses.set(i, 0);
     }
 
     // Single pass through transactions to accumulate expenses by day
@@ -395,14 +438,35 @@ function SpentGraph({
       dailyExpenses.set(day, (dailyExpenses.get(day) || 0) + expenseSum);
     });
 
-    // Convert map to array format for chart
-    return Array.from(dailyExpenses, ([day, value]) => ({ day, value }));
-  }, [transactions, month, year]);
+    // Process comparison transactions
+    comparisonTransactions.forEach((transaction) => {
+      const day = dayjs(transaction.date).date();
+      const expenseSum = transaction.entries
+        .filter((e) => e.type === "expense")
+        .reduce((acc, curr) => acc + Number(curr.price), 0);
+
+      comparisonDailyExpenses.set(
+        day,
+        (comparisonDailyExpenses.get(day) || 0) + expenseSum,
+      );
+    });
+
+    // Convert maps to array format for chart
+    return Array.from(dailyExpenses, ([day, value]) => ({
+      day,
+      value,
+      comparison: comparisonDailyExpenses.get(day) || 0,
+    }));
+  }, [transactions, comparisonTransactions, month, year]);
 
   const chartConfig = {
     value: {
-      label: "Daily Expenses",
+      label: "Current Period",
       color: "var(--chart-2)",
+    },
+    comparison: {
+      label: "Previous Period",
+      color: "var(--chart-4)",
     },
   } satisfies ChartConfig;
 
@@ -454,13 +518,35 @@ function SpentGraph({
                     stopOpacity={0.1}
                   />
                 </linearGradient>
+                <linearGradient id="fillComparison" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-comparison)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-comparison)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
               </defs>
               <Area
                 dataKey="value"
-                type="natural"
+                type="monotone"
                 fill="url(#fillExpenses)"
                 fillOpacity={0.4}
                 stroke="var(--color-value)"
+                strokeWidth={2}
+              />
+              <Area
+                dataKey="comparison"
+                type="monotone"
+                fill="url(#fillComparison)"
+                fillOpacity={0.2}
+                stroke="var(--color-comparison)"
+                strokeWidth={2}
+                strokeDasharray="5 5"
               />
             </AreaChart>
           </ChartContainer>
@@ -469,7 +555,9 @@ function SpentGraph({
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="flex items-center gap-2 leading-none text-muted-foreground">
-            Daily spending breakdown for {dayjs(new Date(year, month)).format("MMMM YYYY")}
+            Daily spending for{" "}
+            {dayjs(new Date(year, month)).format("MMMM YYYY")} vs{" "}
+            {dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}
           </div>
         </div>
       </CardFooter>
@@ -479,22 +567,31 @@ function SpentGraph({
 
 function CumulativeSpentGraph({
   transactions,
+  comparisonTransactions,
   month,
   year,
+  compareMonth,
+  compareYear,
 }: {
   transactions: FullTransaction[];
+  comparisonTransactions: FullTransaction[];
   month: number;
   year: number;
+  compareMonth: number;
+  compareYear: number;
 }) {
   const chartData = useMemo(() => {
-    if (transactions.length === 0) return [];
+    if (transactions.length === 0 && comparisonTransactions.length === 0)
+      return [];
 
     const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
 
     // Initialize daily expenses map with all days set to 0
     const dailyExpenses = new Map<number, number>();
+    const comparisonDailyExpenses = new Map<number, number>();
     for (let i = 1; i <= daysInMonth; i++) {
       dailyExpenses.set(i, 0);
+      comparisonDailyExpenses.set(i, 0);
     }
 
     // Single pass through transactions to accumulate expenses by day
@@ -507,18 +604,41 @@ function CumulativeSpentGraph({
       dailyExpenses.set(day, (dailyExpenses.get(day) || 0) + expenseSum);
     });
 
+    // Process comparison transactions
+    comparisonTransactions.forEach((transaction) => {
+      const day = dayjs(transaction.date).date();
+      const expenseSum = transaction.entries
+        .filter((e) => e.type === "expense")
+        .reduce((acc, curr) => acc + Number(curr.price), 0);
+
+      comparisonDailyExpenses.set(
+        day,
+        (comparisonDailyExpenses.get(day) || 0) + expenseSum,
+      );
+    });
+
     // Convert map to array and calculate cumulative values
     let cumulative = 0;
-    return Array.from(dailyExpenses, ([day, value]) => {
-      cumulative += value;
-      return { day, cumulative };
+    let comparisonCumulative = 0;
+    return Array.from(dailyExpenses, ([day]) => {
+      cumulative += dailyExpenses.get(day) || 0;
+      comparisonCumulative += comparisonDailyExpenses.get(day) || 0;
+      return {
+        day,
+        cumulative,
+        comparisonCumulative,
+      };
     });
-  }, [transactions, month, year]);
+  }, [transactions, comparisonTransactions, month, year]);
 
   const chartConfig = {
     cumulative: {
-      label: "Cumulative Expenses",
+      label: "Current Period",
       color: "var(--chart-1)",
+    },
+    comparisonCumulative: {
+      label: "Previous Period",
+      color: "var(--chart-3)",
     },
   } satisfies ChartConfig;
 
@@ -570,6 +690,24 @@ function CumulativeSpentGraph({
                     stopOpacity={0.1}
                   />
                 </linearGradient>
+                <linearGradient
+                  id="fillComparisonCumulative"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-comparisonCumulative)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-comparisonCumulative)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
               </defs>
               <Area
                 dataKey="cumulative"
@@ -577,6 +715,16 @@ function CumulativeSpentGraph({
                 fill="url(#fillCumulative)"
                 fillOpacity={0.4}
                 stroke="var(--color-cumulative)"
+                strokeWidth={2}
+              />
+              <Area
+                dataKey="comparisonCumulative"
+                type="monotone"
+                fill="url(#fillComparisonCumulative)"
+                fillOpacity={0.2}
+                stroke="var(--color-comparisonCumulative)"
+                strokeWidth={2}
+                strokeDasharray="5 5"
               />
             </AreaChart>
           </ChartContainer>
@@ -585,7 +733,9 @@ function CumulativeSpentGraph({
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="flex items-center gap-2 leading-none text-muted-foreground">
-            Cumulative spending for {dayjs(new Date(year, month)).format("MMMM YYYY")}
+            Cumulative spending for{" "}
+            {dayjs(new Date(year, month)).format("MMMM YYYY")} vs{" "}
+            {dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}
           </div>
         </div>
       </CardFooter>
