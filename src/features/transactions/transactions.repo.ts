@@ -57,10 +57,36 @@ async function remove(transactionId: string) {
     .returning();
 }
 
+async function update(id: string, transaction: Partial<NewTransaction>) {
+  return await db
+    .update(transactions)
+    .set({ ...transaction, updatedAt: new Date() })
+    .where(eq(transactions.id, id))
+    .returning();
+}
+
+async function updateEntry(id: string, entry: Partial<NewEntry>) {
+  return await db
+    .update(entries)
+    .set(entry)
+    .where(eq(entries.id, id))
+    .returning();
+}
+
+async function removeEntry(entryId: string) {
+  return await db
+    .delete(entries)
+    .where(eq(entries.id, entryId))
+    .returning();
+}
+
 export const transactionRepo = {
   getAll,
   getOne,
   save,
   saveEntry,
   remove,
+  update,
+  updateEntry,
+  removeEntry,
 };

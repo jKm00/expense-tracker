@@ -6,6 +6,7 @@ import {
   getTransactionSchema,
   getTransactionsSchema,
   saveTransactionSchema,
+  updateTransactionSchema,
 } from "./transactions.dtos";
 
 const getTransactions = createServerFn({ method: "GET" })
@@ -52,9 +53,26 @@ const deleteTransaction = createServerFn({ method: "POST" })
     return await transactionService.deleteTransaction(userId, transactionId);
   });
 
+const updateTransaction = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(updateTransactionSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { transactionId, ...updateData } = data;
+    return await transactionService.updateTransaction(userId, transactionId, {
+      transaction: {
+        store: updateData.store,
+        description: updateData.description,
+        date: updateData.date,
+      },
+      entries: updateData.entries,
+    });
+  });
+
 export const transactionController = {
   getTransactions,
   getTransaction,
   saveTransaction,
   deleteTransaction,
+  updateTransaction,
 };
