@@ -28,6 +28,7 @@ import {
   ShoppingBag,
   Calendar,
   Activity,
+  ChartArea,
 } from "lucide-react";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
@@ -37,7 +38,7 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { FullTransaction } from "@/features/transactions/transactions.models";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -52,6 +53,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import dayjs from "dayjs";
+import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
@@ -143,6 +146,9 @@ function AnalyticsContent() {
     error: unexpectedTransactionError,
   } = useSuspenseQuery(transactionQueries.getTransactionsOptions(year, month));
 
+  const selectedMonth = month || dayjs().month();
+  const selectedYear = year || dayjs().year();
+
   if (unexpectedTransactionError) {
     return <UnexpectedError />;
   }
@@ -175,7 +181,16 @@ function AnalyticsContent() {
     <div className="space-y-6 @container">
       {/* KPIs */}
       <AnalyticsKpis transactions={transactions} />
-      <SpentGraph />
+      <SpentGraph
+        transactions={transactions}
+        month={selectedMonth}
+        year={selectedYear}
+      />
+      <CumulativeSpentGraph
+        transactions={transactions}
+        month={selectedMonth}
+        year={selectedYear}
+      />
     </div>
   );
 }
@@ -350,23 +365,43 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
   );
 }
 
-function SpentGraph() {
-  const chartData = [
-    { month: "January", desktop: 186, mobile: 80 },
-    { month: "February", desktop: 305, mobile: 200 },
-    { month: "March", desktop: 237, mobile: 120 },
-    { month: "April", desktop: 73, mobile: 190 },
-    { month: "May", desktop: 209, mobile: 130 },
-    { month: "June", desktop: 214, mobile: 140 },
-  ];
+function SpentGraph({
+  transactions,
+  month,
+  year,
+}: {
+  transactions: FullTransaction[];
+  month: number;
+  year: number;
+}) {
+  const chartData = useMemo(() => {
+    if (transactions.length === 0) return [];
+
+    const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
+
+    // Initialize daily expenses map with all days set to 0
+    const dailyExpenses = new Map<number, number>();
+    for (let i = 1; i <= daysInMonth; i++) {
+      dailyExpenses.set(i, 0);
+    }
+
+    // Single pass through transactions to accumulate expenses by day
+    transactions.forEach((transaction) => {
+      const day = dayjs(transaction.date).date();
+      const expenseSum = transaction.entries
+        .filter((e) => e.type === "expense")
+        .reduce((acc, curr) => acc + Number(curr.price), 0);
+
+      dailyExpenses.set(day, (dailyExpenses.get(day) || 0) + expenseSum);
+    });
+
+    // Convert map to array format for chart
+    return Array.from(dailyExpenses, ([day, value]) => ({ day, value }));
+  }, [transactions, month, year]);
 
   const chartConfig = {
-    desktop: {
-      label: "Desktop",
-      color: "var(--chart-1)",
-    },
-    mobile: {
-      label: "Mobile",
+    value: {
+      label: "Daily Expenses",
       color: "var(--chart-2)",
     },
   } satisfies ChartConfig;
@@ -378,78 +413,179 @@ function SpentGraph() {
         <CardDescription>Your spending pattern</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <AreaChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#fillMobile)"
-              fillOpacity={0.4}
-              stroke="var(--color-mobile)"
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
-              type="natural"
-              fill="url(#fillDesktop)"
-              fillOpacity={0.4}
-              stroke="var(--color-desktop)"
-              stackId="a"
-            />
-          </AreaChart>
-        </ChartContainer>
+        {transactions.length === 0 ? (
+          <EmptyState icon={ChartArea}>
+            <EmptyStateMessage>No data available</EmptyStateMessage>
+          </EmptyState>
+        ) : (
+          <ChartContainer config={chartConfig}>
+            <AreaChart
+              accessibilityLayer
+              data={chartData}
+              margin={{
+                left: 12,
+                right: 12,
+              }}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
+              <YAxis
+                tickLine={true}
+                axisLine={false}
+                tickMargin={8}
+                tickCount={3}
+              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <defs>
+                <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-value)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-value)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
+              <Area
+                dataKey="value"
+                type="natural"
+                fill="url(#fillExpenses)"
+                fillOpacity={0.4}
+                stroke="var(--color-value)"
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              January - June 2024
-            </div>
+          <div className="flex items-center gap-2 leading-none text-muted-foreground">
+            Daily spending breakdown for {dayjs(new Date(year, month)).format("MMMM YYYY")}
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function CumulativeSpentGraph({
+  transactions,
+  month,
+  year,
+}: {
+  transactions: FullTransaction[];
+  month: number;
+  year: number;
+}) {
+  const chartData = useMemo(() => {
+    if (transactions.length === 0) return [];
+
+    const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
+
+    // Initialize daily expenses map with all days set to 0
+    const dailyExpenses = new Map<number, number>();
+    for (let i = 1; i <= daysInMonth; i++) {
+      dailyExpenses.set(i, 0);
+    }
+
+    // Single pass through transactions to accumulate expenses by day
+    transactions.forEach((transaction) => {
+      const day = dayjs(transaction.date).date();
+      const expenseSum = transaction.entries
+        .filter((e) => e.type === "expense")
+        .reduce((acc, curr) => acc + Number(curr.price), 0);
+
+      dailyExpenses.set(day, (dailyExpenses.get(day) || 0) + expenseSum);
+    });
+
+    // Convert map to array and calculate cumulative values
+    let cumulative = 0;
+    return Array.from(dailyExpenses, ([day, value]) => {
+      cumulative += value;
+      return { day, cumulative };
+    });
+  }, [transactions, month, year]);
+
+  const chartConfig = {
+    cumulative: {
+      label: "Cumulative Expenses",
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Cumulative Spending</CardTitle>
+        <CardDescription>Total accumulated expenses over time</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {transactions.length === 0 ? (
+          <EmptyState icon={ChartArea}>
+            <EmptyStateMessage>No data available</EmptyStateMessage>
+          </EmptyState>
+        ) : (
+          <ChartContainer config={chartConfig}>
+            <AreaChart
+              accessibilityLayer
+              data={chartData}
+              margin={{
+                left: 12,
+                right: 12,
+              }}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
+              <YAxis
+                tickLine={true}
+                axisLine={false}
+                tickMargin={8}
+                tickCount={3}
+              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <defs>
+                <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-cumulative)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-cumulative)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
+              <Area
+                dataKey="cumulative"
+                type="monotone"
+                fill="url(#fillCumulative)"
+                fillOpacity={0.4}
+                stroke="var(--color-cumulative)"
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="flex items-center gap-2 leading-none text-muted-foreground">
+            Cumulative spending for {dayjs(new Date(year, month)).format("MMMM YYYY")}
           </div>
         </div>
       </CardFooter>
