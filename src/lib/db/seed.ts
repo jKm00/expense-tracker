@@ -210,6 +210,12 @@ const main = async () => {
     "Fitness",
     "Subscription",
     "Insurance",
+    "Dairy",
+    "Meat",
+    "Produce",
+    "Beverages",
+    "Household",
+    "Technology",
   ];
 
   const colors = [
@@ -236,23 +242,122 @@ const main = async () => {
   const maxDate = new Date("2026-04-30");
 
   console.log("Creating tags...");
-  const tags = [];
-  for (let i = 0; i < 20; i++) {
+  const tags: (typeof schema.tags.$inferSelect)[] = [];
+  const tagMap = new Map<string, typeof schema.tags.$inferSelect>();
+  for (let i = 0; i < 26; i++) {
+    const tagName = tagNames[i];
     const [tag] = await db
       .insert(schema.tags)
       .values({
         userId,
-        name: rng.pick(tagNames),
-        color: rng.pick(colors),
+        name: tagName,
+        color: colors[i % colors.length],
         createdAt: rng.date(minDate, maxDate),
         updatedAt: rng.date(minDate, maxDate),
       })
       .returning();
     tags.push(tag);
+    tagMap.set(tagName, tag);
   }
 
   console.log("Creating products...");
   const products = [];
+  
+  // Define which tags should be assigned to which product names
+  const productTagMapping: Record<string, string[]> = {
+    // Groceries - Dairy
+    "Milk": ["Groceries", "Food", "Dairy", "Beverages"],
+    "Cheese": ["Groceries", "Food", "Dairy"],
+    "Butter": ["Groceries", "Food", "Dairy"],
+    "Yogurt": ["Groceries", "Food", "Dairy"],
+    
+    // Groceries - Meat
+    "Chicken Breast": ["Groceries", "Food", "Meat"],
+    "Ground Beef": ["Groceries", "Food", "Meat"],
+    "Salmon": ["Groceries", "Food", "Meat"],
+    
+    // Groceries - Produce
+    "Apples": ["Groceries", "Food", "Produce"],
+    "Bananas": ["Groceries", "Food", "Produce"],
+    "Oranges": ["Groceries", "Food", "Produce"],
+    "Tomatoes": ["Groceries", "Food", "Produce"],
+    "Lettuce": ["Groceries", "Food", "Produce"],
+    "Broccoli": ["Groceries", "Food", "Produce"],
+    
+    // Groceries - Pantry
+    "Bread": ["Groceries", "Food"],
+    "Eggs": ["Groceries", "Food"],
+    "Rice": ["Groceries", "Food"],
+    "Pasta": ["Groceries", "Food"],
+    
+    // Groceries - Beverages
+    "Coffee": ["Groceries", "Food", "Beverages"],
+    "Tea": ["Groceries", "Food", "Beverages"],
+    "Orange Juice": ["Groceries", "Food", "Beverages", "Produce"],
+    
+    // Electronics
+    "Laptop": ["Electronics", "Technology", "Shopping"],
+    "Phone": ["Electronics", "Technology", "Shopping"],
+    "Headphones": ["Electronics", "Technology", "Shopping"],
+    "Tablet": ["Electronics", "Technology", "Shopping"],
+    "Monitor": ["Electronics", "Technology", "Shopping"],
+    "Keyboard": ["Electronics", "Technology", "Shopping"],
+    "Mouse": ["Electronics", "Technology", "Shopping"],
+    "USB Cable": ["Electronics", "Technology", "Shopping"],
+    "Power Bank": ["Electronics", "Technology", "Shopping"],
+    "Smart Watch": ["Electronics", "Technology", "Shopping"],
+    
+    // Home
+    "Dish Soap": ["Home", "Household", "Shopping"],
+    "Paper Towels": ["Home", "Household", "Shopping"],
+    "Laundry Detergent": ["Home", "Household", "Shopping"],
+    "Trash Bags": ["Home", "Household", "Shopping"],
+    "Light Bulbs": ["Home", "Household", "Shopping"],
+    "Furniture": ["Home", "Shopping"],
+    "Bedding": ["Home", "Shopping"],
+    "Towels": ["Home", "Shopping"],
+    "Storage Bins": ["Home", "Shopping"],
+    "Cleaning Supplies": ["Home", "Household", "Shopping"],
+    
+    // Entertainment
+    "Movie Ticket": ["Entertainment"],
+    "Concert Ticket": ["Entertainment"],
+    "Streaming Subscription": ["Entertainment", "Subscription"],
+    "Video Game": ["Entertainment", "Electronics"],
+    "Book": ["Entertainment", "Education", "Shopping"],
+    "Magazine": ["Entertainment", "Shopping"],
+    "Sports Event Ticket": ["Entertainment"],
+    
+    // Transport
+    "Gas": ["Transport", "Utilities"],
+    "Bus Ticket": ["Transport", "Travel"],
+    "Train Ticket": ["Transport", "Travel"],
+    "Uber Ride": ["Transport"],
+    "Lyft Ride": ["Transport"],
+    "Parking Fee": ["Transport"],
+    "Toll Fee": ["Transport"],
+    "Car Wash": ["Transport", "Personal"],
+    
+    // Dining
+    "Lunch": ["Dining Out", "Food"],
+    "Dinner": ["Dining Out", "Food"],
+    "Breakfast": ["Dining Out", "Food"],
+    "Snacks": ["Dining Out", "Food"],
+    "Dessert": ["Dining Out", "Food"],
+    "Drinks": ["Dining Out", "Food", "Beverages"],
+    "Fast Food": ["Dining Out", "Food"],
+    "Restaurant Meal": ["Dining Out", "Food"],
+    
+    // Income
+    "Salary": ["Business"],
+    "Freelance Payment": ["Business"],
+    "Bonus": ["Business"],
+    "Investment Return": ["Investment", "Business"],
+    "Gift": ["Gifts", "Personal"],
+    "Refund": ["Personal"],
+    "Side Hustle": ["Business"],
+  };
+  
   for (let i = 0; i < 100; i++) {
     const category = rng.weighted([
       { weight: 0.4, value: "groceries" },
@@ -264,16 +369,29 @@ const main = async () => {
       { weight: 0.05, value: "income" },
     ]) as keyof typeof productNames;
 
+    const productName = rng.pick(productNames[category]);
     const [product] = await db
       .insert(schema.products)
       .values({
         userId,
-        name: rng.pick(productNames[category]),
+        name: productName,
         createdAt: rng.date(minDate, maxDate),
         updatedAt: rng.date(minDate, maxDate),
       })
       .returning();
     products.push(product);
+    
+    // Link product to tags
+    const tagNamesForProduct = productTagMapping[productName] || [];
+    for (const tagName of tagNamesForProduct) {
+      const tag = tagMap.get(tagName);
+      if (tag) {
+        await db.insert(schema.productTags).values({
+          productId: product.id,
+          tagId: tag.id,
+        });
+      }
+    }
   }
 
   console.log("Creating transactions and entries...");
@@ -393,8 +511,8 @@ const main = async () => {
 
   console.log("\n✅ Database seeded successfully!");
   console.log("📊 Summary:");
-  console.log(`  - 20 tags`);
-  console.log(`  - 100 products`);
+  console.log(`  - 26 tags`);
+  console.log(`  - 100 products (with tag associations)`);
   console.log(`  - 200 transactions`);
   console.log(`  - ${totalEntries} entries (transaction line items)`);
   console.log(`  - 10 recurring entries`);

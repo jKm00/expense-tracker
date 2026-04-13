@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/chart";
 import dayjs from "dayjs";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
-import { getComparisonDate } from "@/features/analytics/analytics.utils";
+import { getComparisonDate, filterTransactionsByTags } from "@/features/analytics/analytics.utils";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
@@ -149,13 +149,22 @@ function RouteComponent() {
         </div>
       </section>
       <Suspense fallback="Loading...">
-        <AnalyticsContent />
+        <AnalyticsContent
+          includeTags={includeTags}
+          excludeTags={excludeTags}
+        />
       </Suspense>
     </div>
   );
 }
 
-function AnalyticsContent() {
+function AnalyticsContent({
+  includeTags,
+  excludeTags,
+}: {
+  includeTags: Tag[];
+  excludeTags: Tag[];
+}) {
   const { month, year, comparison } = Route.useSearch();
   const {
     data: [expectedTransactionError, transactions],
@@ -176,6 +185,22 @@ function AnalyticsContent() {
 
   const selectedMonth = month || dayjs().month();
   const selectedYear = year || dayjs().year();
+
+  // Apply tag filters to transactions
+  const filteredTransactions = useMemo(
+    () => filterTransactionsByTags(transactions ?? [], includeTags, excludeTags),
+    [transactions, includeTags, excludeTags],
+  );
+
+  const filteredComparisonTransactions = useMemo(
+    () =>
+      filterTransactionsByTags(
+        comparisonTransactions ?? [],
+        includeTags,
+        excludeTags,
+      ),
+    [comparisonTransactions, includeTags, excludeTags],
+  );
 
   if (unexpectedTransactionError) {
     return <UnexpectedError />;
@@ -208,18 +233,18 @@ function AnalyticsContent() {
   return (
     <div className="space-y-6 @container">
       {/* KPIs */}
-      <AnalyticsKpis transactions={transactions} />
+      <AnalyticsKpis transactions={filteredTransactions} />
       <SpentGraph
-        transactions={transactions}
-        comparisonTransactions={comparisonTransactions || []}
+        transactions={filteredTransactions}
+        comparisonTransactions={filteredComparisonTransactions}
         month={selectedMonth}
         year={selectedYear}
         compareMonth={compareMonth}
         compareYear={compareYear}
       />
       <CumulativeSpentGraph
-        transactions={transactions}
-        comparisonTransactions={comparisonTransactions || []}
+        transactions={filteredTransactions}
+        comparisonTransactions={filteredComparisonTransactions}
         month={selectedMonth}
         year={selectedYear}
         compareMonth={compareMonth}
@@ -240,21 +265,22 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
     let totalIncome = 0;
     let totalExpenses = 0;
     let largest = 0;
+    
     transactions.forEach((transaction) => {
-      const isExpense = transaction.totalPrice.charAt(0) === "-";
-
-      if (isExpense) {
-        const number = Number(transaction.totalPrice.slice(1));
-        netBalance -= number;
-        totalExpenses += number;
-        if (number > largest) {
-          largest = number;
+      transaction.entries.forEach((entry) => {
+        const price = Number(entry.price) * entry.quantity;
+        
+        if (entry.type === "expense") {
+          netBalance -= price;
+          totalExpenses += price;
+          if (price > largest) {
+            largest = price;
+          }
+        } else {
+          netBalance += price;
+          totalIncome += price;
         }
-      } else {
-        const number = Number(transaction.totalPrice);
-        netBalance += number;
-        totalIncome += number;
-      }
+      });
     });
 
     return {
