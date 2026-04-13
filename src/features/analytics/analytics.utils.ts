@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { Tag } from "@/features/tags/tags.models";
+import { ComparisonDelta } from "./analytics.models";
 
 export function getComparisonDate(
   year: number | undefined,
@@ -22,6 +23,33 @@ export function getComparisonDate(
   return {
     compareYear: compareDate.year(),
     compareMonth: compareDate.month(),
+  };
+}
+
+export function calculateComparisonDelta(
+  current: number,
+  comparison: number,
+  favorableDirection: "up" | "down",
+): ComparisonDelta {
+  const absolute = current - comparison;
+  const percentage =
+    comparison === 0 ? 0 : ((current - comparison) / Math.abs(comparison)) * 100;
+
+  let direction: "up" | "down" | "neutral";
+  if (absolute > 0) direction = "up";
+  else if (absolute < 0) direction = "down";
+  else direction = "neutral";
+
+  const favorable =
+    direction === "neutral"
+      ? true
+      : direction === favorableDirection;
+
+  return {
+    absolute,
+    percentage,
+    direction,
+    favorable,
   };
 }
 

@@ -55,7 +55,11 @@ import {
 } from "@/components/ui/chart";
 import dayjs from "dayjs";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
-import { getComparisonDate, filterTransactionsByTags } from "@/features/analytics/analytics.utils";
+import {
+  getComparisonDate,
+  filterTransactionsByTags,
+  calculateComparisonDelta,
+} from "@/features/analytics/analytics.utils";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
@@ -149,10 +153,7 @@ function RouteComponent() {
         </div>
       </section>
       <Suspense fallback="Loading...">
-        <AnalyticsContent
-          includeTags={includeTags}
-          excludeTags={excludeTags}
-        />
+        <AnalyticsContent includeTags={includeTags} excludeTags={excludeTags} />
       </Suspense>
     </div>
   );
@@ -188,7 +189,8 @@ function AnalyticsContent({
 
   // Apply tag filters to transactions
   const filteredTransactions = useMemo(
-    () => filterTransactionsByTags(transactions ?? [], includeTags, excludeTags),
+    () =>
+      filterTransactionsByTags(transactions ?? [], includeTags, excludeTags),
     [transactions, includeTags, excludeTags],
   );
 
@@ -233,7 +235,10 @@ function AnalyticsContent({
   return (
     <div className="space-y-6 @container">
       {/* KPIs */}
-      <AnalyticsKpis transactions={filteredTransactions} />
+      <AnalyticsKpis
+        transactions={filteredTransactions}
+        comparisonTransactions={filteredComparisonTransactions}
+      />
       <SpentGraph
         transactions={filteredTransactions}
         comparisonTransactions={filteredComparisonTransactions}
@@ -254,42 +259,357 @@ function AnalyticsContent({
   );
 }
 
-function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
+function AnalyticsKpis({
+  transactions,
+  comparisonTransactions,
+}: {
+  transactions: FullTransaction[];
+  comparisonTransactions: FullTransaction[];
+}) {
   const formatter = new Intl.NumberFormat("no-NB", {
     style: "currency",
     currency: "NOK",
   });
 
-  const { netBalance, totalIncome, totalExpenses, largest } = useMemo(() => {
+  const metrics = useMemo(() => {
     let netBalance = 0;
     let totalIncome = 0;
     let totalExpenses = 0;
+    let fixedIncome = 0;
+    let variableIncome = 0;
+    let fixedExpenses = 0;
+    let variableExpenses = 0;
     let largest = 0;
-    
+    let totalItems = 0;
+    let totalItemValue = 0;
+    const activeDays = new Set<number>();
+
     transactions.forEach((transaction) => {
+      // Track active days
+      const day = dayjs(transaction.date).date();
+      activeDays.add(day);
+
+      const isRecurring = transaction.source === "recurring";
+
       transaction.entries.forEach((entry) => {
         const price = Number(entry.price) * entry.quantity;
-        
+        totalItems += entry.quantity;
+        totalItemValue += Number(entry.price) * entry.quantity;
+
         if (entry.type === "expense") {
           netBalance -= price;
           totalExpenses += price;
+
+          if (isRecurring) {
+            fixedExpenses += price;
+          } else {
+            variableExpenses += price;
+          }
+
           if (price > largest) {
             largest = price;
           }
         } else {
           netBalance += price;
           totalIncome += price;
+
+          if (isRecurring) {
+            fixedIncome += price;
+          } else {
+            variableIncome += price;
+          }
         }
       });
     });
+
+    const savingsRate =
+      totalIncome === 0
+        ? 0
+        : ((totalIncome - totalExpenses) / totalIncome) * 100;
+    const avgItemValue = totalItems === 0 ? 0 : totalItemValue / totalItems;
+    const itemsPerTransaction =
+      transactions.length === 0 ? 0 : totalItems / transactions.length;
+    const dailySpending =
+      activeDays.size === 0 ? 0 : totalExpenses / activeDays.size;
 
     return {
       netBalance,
       totalIncome,
       totalExpenses,
+      fixedIncome,
+      variableIncome,
+      fixedExpenses,
+      variableExpenses,
       largest,
+      savingsRate,
+      transactionCount: transactions.length,
+      itemsPerTransaction,
+      totalItems,
+      avgItemValue,
+      dailySpending,
+      activeDays: activeDays.size,
     };
   }, [transactions]);
+
+  // Calculate comparison metrics
+  const comparisonMetrics = useMemo(() => {
+    let comparisonNetBalance = 0;
+    let comparisonTotalIncome = 0;
+    let comparisonTotalExpenses = 0;
+    let comparisonFixedIncome = 0;
+    let comparisonVariableIncome = 0;
+    let comparisonFixedExpenses = 0;
+    let comparisonVariableExpenses = 0;
+    let comparisonLargest = 0;
+    let comparisonTotalItems = 0;
+    let comparisonTotalItemValue = 0;
+    const comparisonActiveDays = new Set<number>();
+
+    comparisonTransactions.forEach((transaction) => {
+      // Track active days
+      const day = dayjs(transaction.date).date();
+      comparisonActiveDays.add(day);
+
+      const isRecurring = transaction.source === "recurring";
+
+      transaction.entries.forEach((entry) => {
+        const price = Number(entry.price) * entry.quantity;
+        comparisonTotalItems += entry.quantity;
+        comparisonTotalItemValue += Number(entry.price) * entry.quantity;
+
+        if (entry.type === "expense") {
+          comparisonNetBalance -= price;
+          comparisonTotalExpenses += price;
+
+          if (isRecurring) {
+            comparisonFixedExpenses += price;
+          } else {
+            comparisonVariableExpenses += price;
+          }
+
+          if (price > comparisonLargest) {
+            comparisonLargest = price;
+          }
+        } else {
+          comparisonNetBalance += price;
+          comparisonTotalIncome += price;
+
+          if (isRecurring) {
+            comparisonFixedIncome += price;
+          } else {
+            comparisonVariableIncome += price;
+          }
+        }
+      });
+    });
+
+    const comparisonSavingsRate =
+      comparisonTotalIncome === 0
+        ? 0
+        : ((comparisonTotalIncome - comparisonTotalExpenses) /
+            comparisonTotalIncome) *
+          100;
+    const comparisonAvgItemValue =
+      comparisonTotalItems === 0
+        ? 0
+        : comparisonTotalItemValue / comparisonTotalItems;
+    const comparisonItemsPerTransaction =
+      comparisonTransactions.length === 0
+        ? 0
+        : comparisonTotalItems / comparisonTransactions.length;
+    const comparisonDailySpending =
+      comparisonActiveDays.size === 0
+        ? 0
+        : comparisonTotalExpenses / comparisonActiveDays.size;
+
+    return {
+      netBalance: comparisonNetBalance,
+      totalIncome: comparisonTotalIncome,
+      totalExpenses: comparisonTotalExpenses,
+      fixedIncome: comparisonFixedIncome,
+      variableIncome: comparisonVariableIncome,
+      fixedExpenses: comparisonFixedExpenses,
+      variableExpenses: comparisonVariableExpenses,
+      largest: comparisonLargest,
+      savingsRate: comparisonSavingsRate,
+      transactionCount: comparisonTransactions.length,
+      itemsPerTransaction: comparisonItemsPerTransaction,
+      totalItems: comparisonTotalItems,
+      avgItemValue: comparisonAvgItemValue,
+      dailySpending: comparisonDailySpending,
+      activeDays: comparisonActiveDays.size,
+    };
+  }, [comparisonTransactions]);
+
+  // Calculate deltas
+  const netBalanceDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.netBalance,
+        comparisonMetrics.netBalance,
+        "up",
+      ),
+    [metrics.netBalance, comparisonMetrics.netBalance],
+  );
+
+  const totalIncomeDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.totalIncome,
+        comparisonMetrics.totalIncome,
+        "up",
+      ),
+    [metrics.totalIncome, comparisonMetrics.totalIncome],
+  );
+
+  const totalExpensesDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.totalExpenses,
+        comparisonMetrics.totalExpenses,
+        "down",
+      ),
+    [metrics.totalExpenses, comparisonMetrics.totalExpenses],
+  );
+
+  const savingsRateDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.savingsRate,
+        comparisonMetrics.savingsRate,
+        "up",
+      ),
+    [metrics.savingsRate, comparisonMetrics.savingsRate],
+  );
+
+  const fixedIncomeDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.fixedIncome,
+        comparisonMetrics.fixedIncome,
+        "up",
+      ),
+    [metrics.fixedIncome, comparisonMetrics.fixedIncome],
+  );
+
+  const variableIncomeDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.variableIncome,
+        comparisonMetrics.variableIncome,
+        "up",
+      ),
+    [metrics.variableIncome, comparisonMetrics.variableIncome],
+  );
+
+  const fixedExpensesDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.fixedExpenses,
+        comparisonMetrics.fixedExpenses,
+        "down",
+      ),
+    [metrics.fixedExpenses, comparisonMetrics.fixedExpenses],
+  );
+
+  const variableExpensesDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.variableExpenses,
+        comparisonMetrics.variableExpenses,
+        "down",
+      ),
+    [metrics.variableExpenses, comparisonMetrics.variableExpenses],
+  );
+
+  const avgTransactionDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        transactions.length === 0
+          ? 0
+          : metrics.totalExpenses / transactions.length,
+        comparisonTransactions.length === 0
+          ? 0
+          : comparisonMetrics.totalExpenses / comparisonTransactions.length,
+        "down",
+      ),
+    [
+      metrics.totalExpenses,
+      transactions.length,
+      comparisonMetrics.totalExpenses,
+      comparisonTransactions.length,
+    ],
+  );
+
+  const transactionCountDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.transactionCount,
+        comparisonMetrics.transactionCount,
+        "down",
+      ),
+    [metrics.transactionCount, comparisonMetrics.transactionCount],
+  );
+
+  const itemsPerTransactionDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.itemsPerTransaction,
+        comparisonMetrics.itemsPerTransaction,
+        "up",
+      ),
+    [metrics.itemsPerTransaction, comparisonMetrics.itemsPerTransaction],
+  );
+
+  const largestDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.largest,
+        comparisonMetrics.largest,
+        "down",
+      ),
+    [metrics.largest, comparisonMetrics.largest],
+  );
+
+  const avgItemValueDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.avgItemValue,
+        comparisonMetrics.avgItemValue,
+        "down",
+      ),
+    [metrics.avgItemValue, comparisonMetrics.avgItemValue],
+  );
+
+  const totalItemsDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.totalItems,
+        comparisonMetrics.totalItems,
+        "down",
+      ),
+    [metrics.totalItems, comparisonMetrics.totalItems],
+  );
+
+  const dailySpendingDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.dailySpending,
+        comparisonMetrics.dailySpending,
+        "down",
+      ),
+    [metrics.dailySpending, comparisonMetrics.dailySpending],
+  );
+
+  const activeDaysDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.activeDays,
+        comparisonMetrics.activeDays,
+        "up",
+      ),
+    [metrics.activeDays, comparisonMetrics.activeDays],
+  );
 
   return (
     <section className="space-y-4">
@@ -301,27 +621,31 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
           <KpiCard
             title="Net Balance"
             subtitle="Income minus expenses"
-            value={formatter.format(netBalance)}
+            value={formatter.format(metrics.netBalance)}
             icon={Scale}
+            delta={netBalanceDelta}
           />
         </div>
         <KpiCard
           title="Total Income"
           subtitle="All money earned"
-          value={formatter.format(totalIncome)}
+          value={formatter.format(metrics.totalIncome)}
           icon={TrendingUp}
+          delta={totalIncomeDelta}
         />
         <KpiCard
           title="Total Expenses"
           subtitle="All money spent"
-          value={formatter.format(totalExpenses)}
+          value={formatter.format(metrics.totalExpenses)}
           icon={TrendingDown}
+          delta={totalExpensesDelta}
         />
         <KpiCard
           title="Savings Rate"
           subtitle="Of income saved"
-          value="16%"
+          value={`${metrics.savingsRate.toFixed(1)}%`}
           icon={Percent}
+          delta={savingsRateDelta}
         />
       </div>
       <div className="grid gap-2 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4">
@@ -332,27 +656,31 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
           <KpiCard
             title="Fixed Income"
             subtitle="Recurring earnings"
-            value="30 000,-"
+            value={formatter.format(metrics.fixedIncome)}
             icon={Anchor}
+            delta={fixedIncomeDelta}
           />
         </div>
         <KpiCard
           title="Variable Income"
           subtitle="Irregular earnings"
-          value="2 000,-"
+          value={formatter.format(metrics.variableIncome)}
           icon={Sparkles}
+          delta={variableIncomeDelta}
         />
         <KpiCard
           title="Fixed Expenses"
           subtitle="Recurring costs"
-          value="5 200 ,-"
+          value={formatter.format(metrics.fixedExpenses)}
           icon={Anchor}
+          delta={fixedExpensesDelta}
         />
         <KpiCard
           title="Variable Expenses"
           subtitle="Irregular costs"
-          value="21 600,-"
+          value={formatter.format(metrics.variableExpenses)}
           icon={Sparkles}
+          delta={variableExpensesDelta}
         />
       </div>
       <div className="grid gap-2 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4">
@@ -366,28 +694,32 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
             value={formatter.format(
               transactions.length === 0
                 ? 0
-                : totalExpenses / transactions.length,
+                : metrics.totalExpenses / transactions.length,
             )}
             icon={DollarSign}
+            delta={avgTransactionDelta}
           />
         </div>
         <KpiCard
           title="Total Count"
           subtitle="Number of transactions"
-          value={`${transactions.length}`}
+          value={`${metrics.transactionCount}`}
           icon={Receipt}
+          delta={transactionCountDelta}
         />
         <KpiCard
           title="Items per Tx"
           subtitle="Avg entries per transaction"
-          value="2.6"
+          value={metrics.itemsPerTransaction.toFixed(1)}
           icon={Layers}
+          delta={itemsPerTransactionDelta}
         />
         <KpiCard
           title="Largest Tx"
           subtitle="Biggest transaction"
-          value={formatter.format(largest)}
+          value={formatter.format(metrics.largest)}
           icon={TrendingUp}
+          delta={largestDelta}
         />
       </div>
       <div className="grid gap-2 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4">
@@ -398,27 +730,31 @@ function AnalyticsKpis({ transactions }: { transactions: FullTransaction[] }) {
           <KpiCard
             title="Avg Item Value"
             subtitle="Mean item price"
-            value="215,-"
+            value={formatter.format(metrics.avgItemValue)}
             icon={ShoppingBag}
+            delta={avgItemValueDelta}
           />
         </div>
         <KpiCard
           title="Total Items"
           subtitle="All line items"
-          value="124"
+          value={`${metrics.totalItems}`}
           icon={Layers}
+          delta={totalItemsDelta}
         />
         <KpiCard
           title="Daily Spending"
           subtitle="Average per day"
-          value="865,-"
+          value={formatter.format(metrics.dailySpending)}
           icon={Calendar}
+          delta={dailySpendingDelta}
         />
         <KpiCard
           title="Active Days"
           subtitle="Days with transactions"
-          value="23"
+          value={`${metrics.activeDays}`}
           icon={Activity}
+          delta={activeDaysDelta}
         />
       </div>
     </section>
