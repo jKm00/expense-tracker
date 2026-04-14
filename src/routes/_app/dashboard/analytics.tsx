@@ -29,6 +29,7 @@ import {
   Calendar,
   Activity,
   ChartArea,
+  ChevronsUpDown,
 } from "lucide-react";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
@@ -38,7 +39,7 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { FullTransaction } from "@/features/transactions/transactions.models";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -60,6 +61,7 @@ import {
   filterTransactionsByTags,
   calculateComparisonDelta,
 } from "@/features/analytics/analytics.utils";
+import { Button } from "@/components/ui/button";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
@@ -255,6 +257,10 @@ function AnalyticsContent({
         compareMonth={compareMonth}
         compareYear={compareYear}
       />
+      <div className="grid gap-6 @lg:grid-cols-2">
+        <ExpensesByTagsChart transactions={filteredTransactions} />
+        <ExpensesByProductsChart transactions={filteredTransactions} />
+      </div>
     </div>
   );
 }
@@ -923,6 +929,245 @@ function SpentGraph({
           </div>
         </div>
       </CardFooter>
+    </Card>
+  );
+}
+
+const TOP_LIMIT = 5;
+
+function ExpensesByTagsChart({
+  transactions,
+}: {
+  transactions: FullTransaction[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const formatter = new Intl.NumberFormat("no-NB", {
+    style: "currency",
+    currency: "NOK",
+    maximumFractionDigits: 0,
+  });
+
+  const allData = useMemo(() => {
+    const totals = new Map<string, number>();
+
+    transactions.forEach((transaction) => {
+      transaction.entries.forEach((entry) => {
+        if (entry.type !== "expense") return;
+        const amount = Number(entry.price) * entry.quantity;
+        const tags = entry.products?.tags ?? [];
+
+        if (tags.length === 0) {
+          totals.set("Untagged", (totals.get("Untagged") ?? 0) + amount);
+        } else {
+          tags.forEach((tag) => {
+            totals.set(tag.name, (totals.get(tag.name) ?? 0) + amount);
+          });
+        }
+      });
+    });
+
+    return Array.from(totals.entries())
+      .map(([tag, total]) => ({ tag, total }))
+      .sort((a, b) => b.total - a.total);
+  }, [transactions]);
+
+  const chartData = expanded ? allData : allData.slice(0, TOP_LIMIT);
+  const hasMore = allData.length > TOP_LIMIT;
+
+  const chartConfig = {
+    total: {
+      label: "Expenses",
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Expenses by Tag</CardTitle>
+        <CardDescription>
+          {expanded
+            ? `All ${allData.length} tags by spending`
+            : `Top ${Math.min(TOP_LIMIT, allData.length)} tags by spending`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {allData.length === 0 ? (
+          <EmptyState icon={ChartArea}>
+            <EmptyStateMessage>No data available</EmptyStateMessage>
+          </EmptyState>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="w-full"
+            style={{ height: Math.max(200, chartData.length * 40) }}
+          >
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{ left: 8, right: 24, top: 4, bottom: 4 }}
+            >
+              <CartesianGrid horizontal={false} />
+              <YAxis
+                dataKey="tag"
+                type="category"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                width={90}
+              />
+              <XAxis
+                type="number"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(v) => formatter.format(v)}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatter.format(Number(value))}
+                  />
+                }
+              />
+              <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+      {hasMore && (
+        <CardFooter>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <ChevronsUpDown className="mr-2 h-4 w-4" />
+            {expanded
+              ? "Show less"
+              : `Show all ${allData.length} tags`}
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
+  );
+}
+
+function ExpensesByProductsChart({
+  transactions,
+}: {
+  transactions: FullTransaction[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const formatter = new Intl.NumberFormat("no-NB", {
+    style: "currency",
+    currency: "NOK",
+    maximumFractionDigits: 0,
+  });
+
+  const allData = useMemo(() => {
+    const totals = new Map<string, number>();
+
+    transactions.forEach((transaction) => {
+      transaction.entries.forEach((entry) => {
+        if (entry.type !== "expense") return;
+        const amount = Number(entry.price) * entry.quantity;
+        const name = entry.products?.name ?? "Unknown";
+        totals.set(name, (totals.get(name) ?? 0) + amount);
+      });
+    });
+
+    return Array.from(totals.entries())
+      .map(([product, total]) => ({ product, total }))
+      .sort((a, b) => b.total - a.total);
+  }, [transactions]);
+
+  const chartData = expanded ? allData : allData.slice(0, TOP_LIMIT);
+  const hasMore = allData.length > TOP_LIMIT;
+
+  const chartConfig = {
+    total: {
+      label: "Expenses",
+      color: "var(--chart-2)",
+    },
+  } satisfies ChartConfig;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Expenses by Product</CardTitle>
+        <CardDescription>
+          {expanded
+            ? `All ${allData.length} products by spending`
+            : `Top ${Math.min(TOP_LIMIT, allData.length)} products by spending`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {allData.length === 0 ? (
+          <EmptyState icon={ChartArea}>
+            <EmptyStateMessage>No data available</EmptyStateMessage>
+          </EmptyState>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="w-full"
+            style={{ height: Math.max(200, chartData.length * 40) }}
+          >
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{ left: 8, right: 24, top: 4, bottom: 4 }}
+            >
+              <CartesianGrid horizontal={false} />
+              <YAxis
+                dataKey="product"
+                type="category"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                width={110}
+              />
+              <XAxis
+                type="number"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(v) => formatter.format(v)}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatter.format(Number(value))}
+                  />
+                }
+              />
+              <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+      {hasMore && (
+        <CardFooter>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <ChevronsUpDown className="mr-2 h-4 w-4" />
+            {expanded
+              ? "Show less"
+              : `Show all ${allData.length} products`}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
