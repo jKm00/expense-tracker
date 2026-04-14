@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/select";
 import { Route } from "@/routes/_app/dashboard/analytics";
 import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeftRight } from "lucide-react";
 import { useState } from "react";
 
-export function CompareSelect() {
+export function CompareSelect({ className }: { className?: string }) {
   const { comparison } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -30,8 +31,9 @@ export function CompareSelect() {
 
   return (
     <Select value={value} onValueChange={handleValueChange}>
-      <SelectTrigger className="w-full max-w-48">
-        <SelectValue placeholder="Choose how to compare" />
+      <SelectTrigger className={className}>
+        <ArrowLeftRight className="size-3.5 text-muted-foreground" />
+        <SelectValue placeholder="Compare to..." />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Combobox,
   ComboboxChip,
@@ -17,10 +18,16 @@ export function TagSelect({
   tags,
   value,
   onChange,
+  placeholder,
+  className,
+  portalContainer,
 }: {
   tags: Tag[];
   value?: Tag[];
   onChange?: (tags: Tag[]) => void;
+  placeholder?: string;
+  className?: string;
+  portalContainer?: React.RefObject<HTMLElement | null>;
 }) {
   const anchor = useComboboxAnchor();
 
@@ -37,7 +44,7 @@ export function TagSelect({
       }
       onValueChange={onChange}
     >
-      <ComboboxChips ref={anchor} className="w-full max-w-xs">
+      <ComboboxChips ref={anchor} className={className ?? "w-full max-w-xs"}>
         <ComboboxValue>
           {(values) =>
             values.map((tag: Tag) => (
@@ -47,9 +54,9 @@ export function TagSelect({
             ))
           }
         </ComboboxValue>
-        <ComboboxChipsInput />
+        <ComboboxChipsInput placeholder={placeholder} />
       </ComboboxChips>
-      <ComboboxContent anchor={anchor}>
+      <ComboboxContent anchor={anchor} container={portalContainer}>
         <ComboboxEmpty>No items found.</ComboboxEmpty>
         <ComboboxList>
           {(tag) => (
