@@ -39,7 +39,15 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { FullTransaction } from "@/features/transactions/transactions.models";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   Card,
   CardContent,
@@ -841,7 +849,7 @@ function SpentGraph({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Spent Over Time</CardTitle>
+        <CardTitle>Daily Activity</CardTitle>
         <CardDescription>Your spending pattern</CardDescription>
       </CardHeader>
       <CardContent>
@@ -851,7 +859,7 @@ function SpentGraph({
           </EmptyState>
         ) : (
           <ChartContainer config={chartConfig}>
-            <AreaChart
+            <BarChart
               accessibilityLayer
               data={chartData}
               margin={{
@@ -867,56 +875,24 @@ function SpentGraph({
                 tickMargin={8}
               />
               <YAxis
-                tickLine={true}
+                tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tickCount={3}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <defs>
-                <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-value)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-value)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-                <linearGradient id="fillComparison" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-comparison)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-comparison)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              </defs>
-              <Area
+              <Bar
                 dataKey="value"
-                type="monotone"
-                fill="url(#fillExpenses)"
-                fillOpacity={0.4}
-                stroke="var(--color-value)"
-                strokeWidth={2}
+                fill="var(--color-value)"
+                radius={[4, 4, 0, 0]}
               />
-              <Area
+              <Bar
                 dataKey="comparison"
-                type="monotone"
-                fill="url(#fillComparison)"
-                fillOpacity={0.2}
-                stroke="var(--color-comparison)"
-                strokeWidth={2}
-                strokeDasharray="5 5"
+                fill="var(--color-comparison)"
+                radius={[4, 4, 0, 0]}
+                opacity={0.5}
               />
-            </AreaChart>
+            </BarChart>
           </ChartContainer>
         )}
       </CardContent>
@@ -1047,9 +1023,7 @@ function ExpensesByTagsChart({
             onClick={() => setExpanded((v) => !v)}
           >
             <ChevronsUpDown className="mr-2 h-4 w-4" />
-            {expanded
-              ? "Show less"
-              : `Show all ${allData.length} tags`}
+            {expanded ? "Show less" : `Show all ${allData.length} tags`}
           </Button>
         </CardFooter>
       )}
@@ -1162,9 +1136,7 @@ function ExpensesByProductsChart({
             onClick={() => setExpanded((v) => !v)}
           >
             <ChevronsUpDown className="mr-2 h-4 w-4" />
-            {expanded
-              ? "Show less"
-              : `Show all ${allData.length} products`}
+            {expanded ? "Show less" : `Show all ${allData.length} products`}
           </Button>
         </CardFooter>
       )}
