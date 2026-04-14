@@ -8,7 +8,11 @@ async function getAll(userId: string, start: Date, end: Date) {
     with: {
       entries: {
         with: {
-          products: true,
+          products: {
+            with: {
+              tags: true,
+            },
+          },
         },
       },
     },
@@ -24,7 +28,11 @@ async function getOne(id: string) {
     with: {
       entries: {
         with: {
-          products: true,
+          products: {
+            with: {
+              tags: true,
+            },
+          },
         },
       },
     },

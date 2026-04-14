@@ -1,16 +1,20 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent } from "../../../components/ui/card";
+import { ComparisonDelta } from "../analytics.models";
+import { cn } from "@/lib/utils";
 
 export function KpiCard({
   title,
   value,
   subtitle,
   icon: Icon,
+  delta,
 }: {
   title: string;
   value: string;
   subtitle?: string;
   icon?: LucideIcon;
+  delta?: ComparisonDelta;
 }) {
   return (
     <Card size="sm">
@@ -25,9 +29,26 @@ export function KpiCard({
             {title}
           </p>
         </div>
-        <p className="mt-1 text-xl font-semibold tracking-tight truncate">
-          {value}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className="mt-1 text-xl font-semibold tracking-tight truncate">
+            {value}
+          </p>
+          {delta && delta.direction !== "neutral" && (
+            <div
+              className={cn(
+                "flex items-center gap-0.5 text-xs font-medium",
+                delta.favorable ? "text-income" : "text-expense",
+              )}
+            >
+              {delta.direction === "up" ? (
+                <TrendingUp className="size-3" />
+              ) : (
+                <TrendingDown className="size-3" />
+              )}
+              <span>{Math.abs(delta.percentage).toFixed(1)}%</span>
+            </div>
+          )}
+        </div>
         {subtitle && (
           <p className="text-[11px] text-muted-foreground">{subtitle}</p>
         )}
