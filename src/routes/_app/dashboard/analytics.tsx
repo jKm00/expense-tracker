@@ -63,6 +63,8 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -241,7 +243,10 @@ function RouteComponent() {
             </SheetDescription>
           </SheetHeader>
 
-          <div ref={sheetContentRef} className="flex-1 overflow-y-auto px-4 pb-6 space-y-6">
+          <div
+            ref={sheetContentRef}
+            className="flex-1 overflow-y-auto px-4 pb-6 space-y-6"
+          >
             {/* Date section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
@@ -1075,6 +1080,7 @@ function SpentGraph({
                 tickCount={3}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey="value"
                 fill="var(--color-value)"
@@ -1450,6 +1456,7 @@ function CumulativeSpentGraph({
                 tickCount={3}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
               <defs>
                 <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
                   <stop
