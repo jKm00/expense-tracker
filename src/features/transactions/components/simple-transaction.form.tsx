@@ -4,7 +4,7 @@ import {
   FormFieldLabel,
 } from "@/components/custom/form";
 import { ProductSelect } from "@/components/custom/product-select";
-import { Button } from "@/components/ui/button";
+import { LoaderButton } from "@/components/custom/loader.button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/features/products/products.models";
@@ -92,24 +92,26 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           </FormField>
         </CardContent>
         <CardFooter className="grid grid-cols-2 gap-2">
-          <Button
+          <LoaderButton
             onClick={() => onSubmit("expense")}
             variant="outline"
             className="border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
             type="button"
+            isLoading={mutation.isPending}
           >
             <Minus className="size-3.5" />
             Expense
-          </Button>
-          <Button
+          </LoaderButton>
+          <LoaderButton
             onClick={() => onSubmit("income")}
             variant="outline"
             className="border-income/30 text-income hover:bg-income/10 hover:text-income"
             type="button"
+            isLoading={mutation.isPending}
           >
             <Plus className="size-3.5" />
             Income
-          </Button>
+          </LoaderButton>
         </CardFooter>
       </Card>
     </form>

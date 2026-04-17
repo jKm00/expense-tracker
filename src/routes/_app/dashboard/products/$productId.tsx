@@ -12,6 +12,7 @@ import {
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { EditProductForm } from "@/features/products/components/edit-product.form";
 import { LinkTagForm } from "@/features/products/components/link-tag.form";
+import { DeleteProductDialog } from "@/features/products/components/delete-product.dialog";
 import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -95,6 +96,11 @@ function EditProductContent() {
       <Suspense>
         <LinkTagContent product={product} />
       </Suspense>
+      <div className="pt-4 border-t border-border">
+        <DeleteProductDialog productId={product.id}>
+          Delete product
+        </DeleteProductDialog>
+      </div>
     </div>
   );
 }

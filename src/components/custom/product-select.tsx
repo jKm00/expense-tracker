@@ -88,6 +88,7 @@ export function ProductSelect({
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 userId: "",
+                deletedAt: null,
               })
             }
             variant="ghost"
