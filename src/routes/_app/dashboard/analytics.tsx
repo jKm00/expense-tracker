@@ -993,7 +993,11 @@ function SpentGraph({
     if (transactions.length === 0 && comparisonTransactions.length === 0)
       return [];
 
-    const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
+    const today = dayjs();
+    const isCurrentMonth = today.month() === month && today.year() === year;
+    const daysInMonth = isCurrentMonth
+      ? today.date()
+      : dayjs(new Date(year, month, 1)).daysInMonth();
 
     // Initialize daily expenses map with all days set to 0
     const dailyExpenses = new Map<number, number>();
@@ -1363,7 +1367,11 @@ function CumulativeSpentGraph({
     if (transactions.length === 0 && comparisonTransactions.length === 0)
       return [];
 
-    const daysInMonth = dayjs(new Date(year, month, 1)).daysInMonth();
+    const today = dayjs();
+    const isCurrentMonth = today.month() === month && today.year() === year;
+    const daysInMonth = isCurrentMonth
+      ? today.date()
+      : dayjs(new Date(year, month, 1)).daysInMonth();
 
     // Initialize daily expenses map with all days set to 0
     const dailyExpenses = new Map<number, number>();
