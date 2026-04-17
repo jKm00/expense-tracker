@@ -316,12 +316,12 @@ function NewEntryDialog({
           </div>
           <FormField>
             <FormFieldLabel>Price</FormFieldLabel>
-            <Input {...register("price")} placeholder="12.45,-" />
+            <Input {...register("price")} inputMode="decimal" placeholder="12.45,-" />
             <FormFieldError>{errors.price?.message}</FormFieldError>
           </FormField>
           <FormField>
             <FormFieldLabel>Quantity</FormFieldLabel>
-            <Input {...register("quantity")} placeholder="1" />
+            <Input {...register("quantity")} inputMode="numeric" placeholder="1" />
             <FormFieldError>{errors.quantity?.message}</FormFieldError>
           </FormField>
         </div>

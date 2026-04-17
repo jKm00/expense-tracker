@@ -87,7 +87,7 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           </FormField>
           <FormField>
             <FormFieldLabel>Price</FormFieldLabel>
-            <Input {...register("price")} placeholder="123.45,-" />
+            <Input {...register("price")} inputMode="decimal" placeholder="123.45,-" />
             <FormFieldError>{errors.price?.message}</FormFieldError>
           </FormField>
         </CardContent>
