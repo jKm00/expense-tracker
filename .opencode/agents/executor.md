@@ -33,7 +33,9 @@ ALWAYS use the caveman skill from `.opencode/skills/caveman/SKILL.md`
 
 ### Step 1: Load and Review Plan
 
-Check if there are plans written in markdown about the implementation you are going to do in the codebase. Use this to implement. If not, use the plan that is available in your context to implement.
+Check if there are plans written in markdown about the implementation you are going to do in the codebase. Use this to implement.
+If not, use the plan that is available in your context to implement.
+If no plan is implemented and the task is simple and clear, start implementing based on your best ability without any plan.
 
 ### Step 2: Execute Plan
 

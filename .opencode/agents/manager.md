@@ -50,3 +50,7 @@ ALWAYS check for valid workflows before just dispatching to a subagent directly.
 
 - Dispatch to @executor to start implement if the is a plan.
 - If no plan is availabe, use the first workflow (generate a plan) to generate a plan before implementing.
+
+4. **Simple fix**
+
+- If the task is really simple and clear, skip planning and immediately dispatch the @executor to start implementing with a plan.
