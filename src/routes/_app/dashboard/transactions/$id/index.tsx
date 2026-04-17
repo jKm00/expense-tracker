@@ -131,7 +131,7 @@ function TransactionDetails() {
       <div className="grid gap-3 @xl:grid-cols-2 @2xl:grid-cols-4">
         <KpiCard
           title="Date"
-          value={transaction.createdAt.toLocaleString("en-UK", {
+          value={transaction.date.toLocaleString("en-UK", {
             day: "2-digit",
             month: "short",
             year: "numeric",
