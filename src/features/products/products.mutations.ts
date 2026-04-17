@@ -1,6 +1,6 @@
 import { assertOnline } from "@/lib/offline-guard";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AddProductDTO, LinkTagDTO, UpdateProductDTO } from "./products.dtos";
+import { AddProductDTO, DeleteProductDTO, LinkTagDTO, UpdateProductDTO } from "./products.dtos";
 import { productController } from "./products.controller";
 import { PRODUCT_QUERY_KEY } from "./products.queries";
 import { toast } from "sonner";
@@ -68,6 +68,27 @@ function linkTagToProduct() {
   });
 }
 
+function deleteProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteProductDTO) => {
+      assertOnline();
+      return await productController.deleteProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to delete your product. Please try again!",
+      );
+    },
+  });
+}
+
 function unlinkTagFromProduct() {
   const qc = useQueryClient();
 
@@ -92,6 +113,7 @@ function unlinkTagFromProduct() {
 export const productMutations = {
   createProduct,
   updateProduct,
+  deleteProduct,
   linkTagToProduct,
   unlinkTagFromProduct,
 };

@@ -144,11 +144,35 @@ async function unlinkTagFromProduct(
   });
 }
 
+async function deleteProduct(userId: string, productId: string) {
+  const [foundError] = await getProduct(userId, productId);
+  if (foundError) {
+    return err(foundError);
+  }
+
+  try {
+    const res = await productRepo.softDelete(productId);
+    if (res.length === 0) {
+      return err({
+        reason: "PRODUCT_DELETE_FAILED" as const,
+        message: "Failed to delete product. No product returned",
+      });
+    }
+    return ok(res[0]);
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR" as const,
+      message: `Failed to delete product (${productId}) from the DB`,
+    });
+  }
+}
+
 export const productService = {
   getProducts,
   getProduct,
   addProduct,
   updateProduct,
+  deleteProduct,
   linkTagToProduct,
   unlinkTagFromProduct,
 };

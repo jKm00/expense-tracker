@@ -42,6 +42,11 @@ function EntryList({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">
                     {entry.product?.name}
+                    {entry.product?.deletedAt && (
+                      <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        archived
+                      </span>
+                    )}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     {entry.quantity} x {entry.price},-

@@ -3,6 +3,7 @@ import { authenticated } from "../auth/auth.utils";
 import { productService } from "./products.service";
 import {
   addProductSchema,
+  deleteProductSchema,
   getProductSchema,
   linkTagSchema,
   updateProductSchema,
@@ -45,6 +46,15 @@ const updateProduct = createServerFn({ method: "POST" })
     return await productService.updateProduct(userId, productId, rest);
   });
 
+const deleteProduct = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(deleteProductSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { productId } = data;
+    return await productService.deleteProduct(userId, productId);
+  });
+
 const linkTagToProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
   .inputValidator(linkTagSchema)
@@ -68,6 +78,7 @@ export const productController = {
   getProduct,
   addProduct,
   updateProduct,
+  deleteProduct,
   linkTagToProduct,
   unlinkTagFromProduct,
 };

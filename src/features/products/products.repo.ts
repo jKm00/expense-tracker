@@ -10,6 +10,7 @@ async function getAll(userId: string) {
     },
     where: {
       userId,
+      deletedAt: { isNull: true },
     },
   });
 }
@@ -41,6 +42,14 @@ async function remove(id: string) {
   return await db.delete(products).where(eq(products.id, id)).returning();
 }
 
+async function softDelete(id: string) {
+  return await db
+    .update(products)
+    .set({ deletedAt: new Date() })
+    .where(eq(products.id, id))
+    .returning();
+}
+
 async function saveTagLink(productId: string, tagId: string) {
   return await db
     .insert(productTags)
@@ -67,5 +76,6 @@ export const productRepo = {
   saveTagLink,
   update,
   remove,
+  softDelete,
   removeTagLink,
 };

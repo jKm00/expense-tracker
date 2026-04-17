@@ -22,6 +22,12 @@ export const updateProductSchema = z.object({
 
 export type UpdateProductDTO = z.infer<typeof updateProductSchema>;
 
+export const deleteProductSchema = z.object({
+  productId: z.string(),
+});
+
+export type DeleteProductDTO = z.infer<typeof deleteProductSchema>;
+
 export const linkTagSchema = z.object({
   tagId: z.string(),
   productId: z.string(),
