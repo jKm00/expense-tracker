@@ -5,6 +5,7 @@ import {
   FormFieldLabel,
 } from "@/components/custom/form";
 import { Button } from "@/components/ui/button";
+import { LoaderButton } from "@/components/custom/loader.button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -250,9 +251,9 @@ export function EditTransactionForm({
           />
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full">
+          <LoaderButton type="submit" className="w-full" isLoading={mutation.isPending}>
             Update transaction
-          </Button>
+          </LoaderButton>
         </CardFooter>
       </Card>
     </Form>

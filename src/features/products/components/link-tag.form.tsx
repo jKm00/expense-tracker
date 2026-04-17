@@ -83,7 +83,7 @@ export function LinkTagForm({
                   key={tag.id}
                   tag={tag}
                   onClick={() => handleUnlinkTag(tag)}
-                  className="cursor-pointer"
+                  className={unlinkMutation.isPending ? "cursor-pointer opacity-50 pointer-events-none" : "cursor-pointer"}
                 >
                   <TagIcon className="size-3" />
                   {tag.name}
@@ -114,7 +114,7 @@ export function LinkTagForm({
                   key={tag.id}
                   tag={tag}
                   onClick={() => handleLinkTag(tag)}
-                  className="cursor-pointer"
+                  className={linkMutation.isPending ? "cursor-pointer opacity-50 pointer-events-none" : "cursor-pointer"}
                 >
                   <TagIcon className="size-3" />
                   {tag.name}
