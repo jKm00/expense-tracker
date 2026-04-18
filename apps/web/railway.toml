@@ -3,4 +3,5 @@ buildCommand = "pnpm build"
 
 [deploy]
 startCommand = "pnpm start"
+preDeployCommand = ["pnpm db:migrate"]
 restartPolicyType = "ALWAYS"
