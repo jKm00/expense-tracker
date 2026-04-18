@@ -12,6 +12,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { Tag } from "@/features/tags/tags.models";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { getComparisonDate } from "@/features/analytics/analytics.utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
@@ -48,6 +49,11 @@ export const Route = createFileRoute("/_app/dashboard/analytics")({
     );
     context.queryClient.prefetchQuery(
       transactionQueries.getTransactionsOptions(compareYear, compareMonth),
+    );
+
+    // Prefetch recurring entries for the recurring expenses chart
+    context.queryClient.prefetchQuery(
+      recurringQueries.getRecurringsOptions(),
     );
   },
   component: RouteComponent,

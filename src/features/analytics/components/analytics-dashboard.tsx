@@ -11,6 +11,7 @@ import { DailyActivityChart } from "./daily-activity-chart";
 import { CumulativeSpendingChart } from "./cumulative-spending-chart";
 import { ExpensesByTagsChart } from "./expenses-by-tags-chart";
 import { ExpensesByProductsChart } from "./expenses-by-products-chart";
+import { RecurringExpensesChart } from "./recurring-expenses-chart";
 
 type AnalyticsDashboardProps = {
   transactions: FullTransaction[];
@@ -78,6 +79,8 @@ export function AnalyticsDashboard({
         <ExpensesByTagsChart transactions={transactions} />
         <ExpensesByProductsChart transactions={transactions} />
       </div>
+
+      <RecurringExpensesChart />
     </div>
   );
 }
