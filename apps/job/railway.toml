@@ -1,5 +1,6 @@
 [build]
 buildCommand = "pnpm build"
+watchPatterns = ["apps/job/src/**"]
 
 [deploy]
 startCommand = "node dist/index.js"
