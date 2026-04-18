@@ -70,10 +70,7 @@ async function createRecurring(
 ) {
   const [productError, product] = await resolveProduct(userId, data.product);
   if (productError) {
-    return err({
-      reason: "RECURRING_UNAUTHORIZED" as const,
-      message: `User ${userId} does not own product ${data.product.id ?? data.product.name}`,
-    });
+    return err(productError);
   }
 
   try {
@@ -117,10 +114,7 @@ async function updateRecurring(
   if (data.product) {
     const [productError, product] = await resolveProduct(userId, data.product);
     if (productError) {
-      return err({
-        reason: "RECURRING_UNAUTHORIZED" as const,
-        message: `Failed to resolve product ${data.product.id ?? data.product.name} for user ${userId}`,
-      });
+      return err(productError);
     }
     resolvedProductId = product.id;
   }
