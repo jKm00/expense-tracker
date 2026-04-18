@@ -9,10 +9,6 @@ export type AnalyticsMetrics = {
   netBalance: number;
   totalIncome: number;
   totalExpenses: number;
-  fixedIncome: number;
-  variableIncome: number;
-  fixedExpenses: number;
-  variableExpenses: number;
   largest: number;
   savingsRate: number;
   transactionCount: number;
@@ -21,6 +17,13 @@ export type AnalyticsMetrics = {
   avgItemValue: number;
   dailySpending: number;
   activeDays: number;
+};
+
+export type FixedVariableMetrics = {
+  fixedIncome: number;
+  fixedExpenses: number;
+  variableIncome: number;
+  variableExpenses: number;
 };
 
 export type DailyExpensesDataPoint = {

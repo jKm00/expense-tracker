@@ -5,8 +5,10 @@ import { calculateComparisonDelta } from "@/features/analytics/analytics.utils";
 import { currencyFormatter } from "@/features/analytics/analytics.constants";
 import { cn } from "@/lib/utils";
 import {
-  Anchor,
-  Sparkles,
+  Percent,
+  Calendar,
+  TrendingUp,
+  Activity,
   DollarSign,
   Receipt,
   Layers,
@@ -29,44 +31,44 @@ export function DetailedKpis({
 }: DetailedKpisProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const fixedIncomeDelta = useMemo(
+  const savingsRateDelta = useMemo(
     () =>
       calculateComparisonDelta(
-        metrics.fixedIncome,
-        comparisonMetrics.fixedIncome,
+        metrics.savingsRate,
+        comparisonMetrics.savingsRate,
         "up",
       ),
-    [metrics.fixedIncome, comparisonMetrics.fixedIncome],
+    [metrics.savingsRate, comparisonMetrics.savingsRate],
   );
 
-  const variableIncomeDelta = useMemo(
+  const dailySpendingDelta = useMemo(
     () =>
       calculateComparisonDelta(
-        metrics.variableIncome,
-        comparisonMetrics.variableIncome,
+        metrics.dailySpending,
+        comparisonMetrics.dailySpending,
+        "down",
+      ),
+    [metrics.dailySpending, comparisonMetrics.dailySpending],
+  );
+
+  const largestDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.largest,
+        comparisonMetrics.largest,
+        "down",
+      ),
+    [metrics.largest, comparisonMetrics.largest],
+  );
+
+  const activeDaysDelta = useMemo(
+    () =>
+      calculateComparisonDelta(
+        metrics.activeDays,
+        comparisonMetrics.activeDays,
         "up",
       ),
-    [metrics.variableIncome, comparisonMetrics.variableIncome],
-  );
-
-  const fixedExpensesDelta = useMemo(
-    () =>
-      calculateComparisonDelta(
-        metrics.fixedExpenses,
-        comparisonMetrics.fixedExpenses,
-        "down",
-      ),
-    [metrics.fixedExpenses, comparisonMetrics.fixedExpenses],
-  );
-
-  const variableExpensesDelta = useMemo(
-    () =>
-      calculateComparisonDelta(
-        metrics.variableExpenses,
-        comparisonMetrics.variableExpenses,
-        "down",
-      ),
-    [metrics.variableExpenses, comparisonMetrics.variableExpenses],
+    [metrics.activeDays, comparisonMetrics.activeDays],
   );
 
   const avgTransactionDelta = useMemo(
@@ -144,39 +146,39 @@ export function DetailedKpis({
 
       {isOpen && (
         <div className="mt-3 space-y-4">
-          {/* Fixed vs Variable */}
+          {/* Spending Overview */}
           <div>
             <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Fixed vs Variable
+              Spending Overview
             </h3>
             <div className="grid gap-2 @sm:grid-cols-2 @lg:grid-cols-4">
               <KpiCard
-                title="Fixed Income"
-                subtitle="Recurring earnings"
-                value={currencyFormatter.format(metrics.fixedIncome)}
-                icon={Anchor}
-                delta={fixedIncomeDelta}
+                title="Savings Rate"
+                subtitle="Of income saved"
+                value={`${metrics.savingsRate.toFixed(1)}%`}
+                icon={Percent}
+                delta={savingsRateDelta}
               />
               <KpiCard
-                title="Variable Income"
-                subtitle="Irregular earnings"
-                value={currencyFormatter.format(metrics.variableIncome)}
-                icon={Sparkles}
-                delta={variableIncomeDelta}
+                title="Daily Spending"
+                subtitle="Average per active day"
+                value={currencyFormatter.format(metrics.dailySpending)}
+                icon={Calendar}
+                delta={dailySpendingDelta}
               />
               <KpiCard
-                title="Fixed Expenses"
-                subtitle="Recurring costs"
-                value={currencyFormatter.format(metrics.fixedExpenses)}
-                icon={Anchor}
-                delta={fixedExpensesDelta}
+                title="Largest Expense"
+                subtitle="Single biggest item"
+                value={currencyFormatter.format(metrics.largest)}
+                icon={TrendingUp}
+                delta={largestDelta}
               />
               <KpiCard
-                title="Variable Expenses"
-                subtitle="Irregular costs"
-                value={currencyFormatter.format(metrics.variableExpenses)}
-                icon={Sparkles}
-                delta={variableExpensesDelta}
+                title="Active Days"
+                subtitle="Days with transactions"
+                value={`${metrics.activeDays}`}
+                icon={Activity}
+                delta={activeDaysDelta}
               />
             </div>
           </div>

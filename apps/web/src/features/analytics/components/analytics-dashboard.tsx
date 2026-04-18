@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { FullTransaction } from "@/features/transactions/transactions.models";
+import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
   calculateAnalyticsMetrics,
+  calculateFixedTotalsFromRecurrings,
   buildDailyExpensesData,
 } from "@/features/analytics/analytics.calculations";
 import { HeroKpis } from "./hero-kpis";
-import { QuickStats } from "./quick-stats";
+import { FixedVsVariable } from "./fixed-vs-variable";
 import { DetailedKpis } from "./detailed-kpis";
 import { DailyActivityChart } from "./daily-activity-chart";
 import { CumulativeSpendingChart } from "./cumulative-spending-chart";
@@ -16,6 +18,7 @@ import { RecurringExpensesChart } from "./recurring-expenses-chart";
 type AnalyticsDashboardProps = {
   transactions: FullTransaction[];
   comparisonTransactions: FullTransaction[];
+  recurrings: RecurringWithProduct[];
   month: number;
   year: number;
   compareMonth: number;
@@ -25,6 +28,7 @@ type AnalyticsDashboardProps = {
 export function AnalyticsDashboard({
   transactions,
   comparisonTransactions,
+  recurrings,
   month,
   year,
   compareMonth,
@@ -42,6 +46,18 @@ export function AnalyticsDashboard({
     () => buildDailyExpensesData(transactions, comparisonTransactions, month, year),
     [transactions, comparisonTransactions, month, year],
   );
+
+  const fixedTotals = useMemo(
+    () => calculateFixedTotalsFromRecurrings(recurrings),
+    [recurrings],
+  );
+
+  const fixedVariableMetrics = useMemo(() => ({
+    fixedIncome: fixedTotals.fixedIncome,
+    fixedExpenses: fixedTotals.fixedExpenses,
+    variableIncome: Math.max(0, metrics.totalIncome - fixedTotals.fixedIncome),
+    variableExpenses: Math.max(0, metrics.totalExpenses - fixedTotals.fixedExpenses),
+  }), [fixedTotals, metrics]);
 
   return (
     <div className="space-y-6 @container">
@@ -65,7 +81,7 @@ export function AnalyticsDashboard({
           compareMonth={compareMonth}
           compareYear={compareYear}
         />
-        <QuickStats metrics={metrics} comparisonMetrics={comparisonMetrics} />
+        <FixedVsVariable metrics={fixedVariableMetrics} />
       </div>
 
       <DetailedKpis
