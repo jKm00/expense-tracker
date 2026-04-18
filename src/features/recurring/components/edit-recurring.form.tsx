@@ -253,17 +253,35 @@ export function EditRecurringForm({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={(date) => {
-                      setValue("end", date || undefined, {
-                        shouldDirty: true,
-                      });
-                      setEndDateOpen(false);
-                    }}
-                    defaultMonth={endDate || new Date()}
-                  />
+                  <div className="flex flex-col">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => {
+                        setValue("end", (date ?? null) as CreateRecurringDTO["end"], {
+                          shouldDirty: true,
+                        });
+                        setEndDateOpen(false);
+                      }}
+                      defaultMonth={endDate || new Date()}
+                    />
+                    <div className="border-t p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          setValue("end", null as CreateRecurringDTO["end"], {
+                            shouldDirty: true,
+                          });
+                          setEndDateOpen(false);
+                        }}
+                      >
+                        Clear end date
+                      </Button>
+                    </div>
+                  </div>
                 </PopoverContent>
               </Popover>
               <FormFieldError>{errors.end?.message}</FormFieldError>
