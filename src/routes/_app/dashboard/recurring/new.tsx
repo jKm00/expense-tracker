@@ -3,14 +3,18 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import {
-  EmptyState,
-  EmptyStateMessage,
-} from "@/components/custom/empty-state";
+import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
+import { NewRecurringForm } from "@/features/recurring/components/new-recurring.form";
+import { productQueries } from "@/features/products/products.queries";
 import { createFileRoute } from "@tanstack/react-router";
-import { Repeat } from "lucide-react";
+import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/new")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      productQueries.getProductsOptions(),
+    );
+  },
   component: RouteComponent,
 });
 
@@ -23,9 +27,9 @@ function RouteComponent() {
           Set up a new recurring transaction
         </PageHeaderDescription>
       </PageHeader>
-      <EmptyState icon={Repeat}>
-        <EmptyStateMessage>Coming soon</EmptyStateMessage>
-      </EmptyState>
+      <Suspense fallback={<SkeletonForm fields={6} />}>
+        <NewRecurringForm />
+      </Suspense>
     </div>
   );
 }

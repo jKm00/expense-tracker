@@ -12,14 +12,4 @@
       "model": "github-copilot/claude-opus-4.6",
     },
   },
-  "tools": {
-    "google-devtools*": false
-  },
-  "mcp": {
-    "google-devtools": {
-       "type": "local",
-       "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
-       "enabled": true
-    }
-  }
 }
