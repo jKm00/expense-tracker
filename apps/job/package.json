@@ -1,7 +1,6 @@
 {
   "name": "@expense-tracker/job",
   "private": true,
-  "packageManager": "pnpm@10.0.0",
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
