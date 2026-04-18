@@ -3,26 +3,47 @@ import { Card, CardContent } from "../../../components/ui/card";
 import { ComparisonDelta } from "../analytics.models";
 import { cn } from "@/lib/utils";
 
+type KpiCardColor = "default" | "income" | "expense";
+
+const iconColorMap: Record<KpiCardColor, string> = {
+  default: "bg-primary/10 text-primary",
+  income: "bg-income/10 text-income",
+  expense: "bg-expense/10 text-expense",
+};
+
+const valueColorMap: Record<KpiCardColor, string> = {
+  default: "",
+  income: "text-income",
+  expense: "text-expense",
+};
+
 export function KpiCard({
   title,
   value,
   subtitle,
   icon: Icon,
   delta,
+  color = "default",
 }: {
   title: string;
   value: string;
   subtitle?: string;
   icon?: LucideIcon;
   delta?: ComparisonDelta;
+  color?: KpiCardColor;
 }) {
   return (
     <Card size="sm">
       <CardContent className="flex flex-col gap-0.5 py-1">
         <div className="flex items-center gap-2">
           {Icon && (
-            <div className="size-6 rounded-md bg-primary/10 grid place-items-center">
-              <Icon className="size-3 text-primary" />
+            <div
+              className={cn(
+                "size-6 rounded-md grid place-items-center",
+                iconColorMap[color],
+              )}
+            >
+              <Icon className="size-3" />
             </div>
           )}
           <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -30,7 +51,12 @@ export function KpiCard({
           </p>
         </div>
         <div className="flex items-baseline gap-2">
-          <p className="mt-1 text-xl font-semibold tracking-tight truncate">
+          <p
+            className={cn(
+              "mt-1 text-xl font-semibold tracking-tight truncate",
+              valueColorMap[color],
+            )}
+          >
             {value}
           </p>
           {delta && delta.direction !== "neutral" && (

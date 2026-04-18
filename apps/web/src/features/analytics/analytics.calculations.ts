@@ -27,9 +27,9 @@ export function calculateAnalyticsMetrics(
     const isRecurring = transaction.source === "recurring";
 
     transaction.entries.forEach((entry) => {
-      const price = Number(entry.price) * entry.quantity;
+      const price = Math.abs(Number(entry.price)) * entry.quantity;
       totalItems += entry.quantity;
-      totalItemValue += Number(entry.price) * entry.quantity;
+      totalItemValue += Math.abs(Number(entry.price)) * entry.quantity;
 
       if (entry.type === "expense") {
         netBalance -= price;

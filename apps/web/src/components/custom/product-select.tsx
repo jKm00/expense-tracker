@@ -59,7 +59,7 @@ export function ProductSelect({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-between font-normal">
+        <Button variant="outline" className="h-11 md:h-9 w-full justify-between font-normal text-base md:text-sm">
           {value ? (
             <span className="truncate">{value.name}</span>
           ) : (
