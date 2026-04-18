@@ -119,6 +119,7 @@ export async function processRecurringTransactions(
       rec.type === "expense"
         ? String(-Math.abs(Number(rec.price)))
         : String(Math.abs(Number(rec.price)));
+    const unsignedPrice = String(Math.abs(Number(rec.price)));
 
     await db.transaction(async (tx) => {
       const [newTransaction] = await tx
@@ -135,7 +136,7 @@ export async function processRecurringTransactions(
       await tx.insert(entries).values({
         transactionId: newTransaction.id,
         productId: rec.productId,
-        price: signedPrice,
+        price: unsignedPrice,
         quantity: 1,
         type: rec.type,
       });

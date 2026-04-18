@@ -5,7 +5,13 @@ import {
 } from "@/components/custom/form";
 import { ProductSelect } from "@/components/custom/product-select";
 import { LoaderButton } from "@/components/custom/loader.button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/features/products/products.models";
 import { saveEntrySchema } from "../transactions.dtos";
@@ -46,7 +52,6 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           onSuccess: (res) => {
             const [error] = res;
             if (error) {
-              // TODO: Handle errors
               toast.error(error.message);
             } else {
               toast.success("Transaction saved");
@@ -71,9 +76,13 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
   }
 
   return (
-    <form>
-      <Card>
-        <CardContent className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Log</CardTitle>
+        <CardDescription>Add a transaction</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4">
           <FormField>
             <FormFieldLabel>Product</FormFieldLabel>
             <ProductSelect
@@ -87,33 +96,38 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           </FormField>
           <FormField>
             <FormFieldLabel>Price</FormFieldLabel>
-            <Input {...register("price")} inputMode="decimal" placeholder="123.45,-" />
+            <Input
+              {...register("price")}
+              inputMode="decimal"
+              placeholder="123.45,-"
+              className="h-11 md:h-9 text-base md:text-sm px-3"
+            />
             <FormFieldError>{errors.price?.message}</FormFieldError>
           </FormField>
-        </CardContent>
-        <CardFooter className="grid grid-cols-2 gap-2">
-          <LoaderButton
-            onClick={() => onSubmit("expense")}
-            variant="outline"
-            className="border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
-            type="button"
-            isLoading={mutation.isPending}
-          >
-            <Minus className="size-3.5" />
-            Expense
-          </LoaderButton>
-          <LoaderButton
-            onClick={() => onSubmit("income")}
-            variant="outline"
-            className="border-income/30 text-income hover:bg-income/10 hover:text-income"
-            type="button"
-            isLoading={mutation.isPending}
-          >
-            <Plus className="size-3.5" />
-            Income
-          </LoaderButton>
-        </CardFooter>
-      </Card>
-    </form>
+          <div className="grid grid-cols-2 gap-3">
+            <LoaderButton
+              onClick={() => onSubmit("expense")}
+              variant="outline"
+              className="h-11 md:h-9 border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
+              type="button"
+              isLoading={mutation.isPending}
+            >
+              <Minus className="size-4" />
+              Expense
+            </LoaderButton>
+            <LoaderButton
+              onClick={() => onSubmit("income")}
+              variant="outline"
+              className="h-11 md:h-9 border-income/30 text-income hover:bg-income/10 hover:text-income"
+              type="button"
+              isLoading={mutation.isPending}
+            >
+              <Plus className="size-4" />
+              Income
+            </LoaderButton>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
