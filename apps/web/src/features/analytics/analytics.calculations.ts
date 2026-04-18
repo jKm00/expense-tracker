@@ -1,5 +1,6 @@
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { AnalyticsMetrics, DailyExpensesDataPoint } from "./analytics.models";
+import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import dayjs from "dayjs";
 
 /**
@@ -11,10 +12,6 @@ export function calculateAnalyticsMetrics(
   let netBalance = 0;
   let totalIncome = 0;
   let totalExpenses = 0;
-  let fixedIncome = 0;
-  let variableIncome = 0;
-  let fixedExpenses = 0;
-  let variableExpenses = 0;
   let largest = 0;
   let totalItems = 0;
   let totalItemValue = 0;
@@ -23,8 +20,6 @@ export function calculateAnalyticsMetrics(
   transactions.forEach((transaction) => {
     const day = dayjs(transaction.date).date();
     activeDays.add(day);
-
-    const isRecurring = transaction.source === "recurring";
 
     transaction.entries.forEach((entry) => {
       const price = Math.abs(Number(entry.price)) * entry.quantity;
@@ -35,24 +30,12 @@ export function calculateAnalyticsMetrics(
         netBalance -= price;
         totalExpenses += price;
 
-        if (isRecurring) {
-          fixedExpenses += price;
-        } else {
-          variableExpenses += price;
-        }
-
         if (price > largest) {
           largest = price;
         }
       } else {
         netBalance += price;
         totalIncome += price;
-
-        if (isRecurring) {
-          fixedIncome += price;
-        } else {
-          variableIncome += price;
-        }
       }
     });
   });
@@ -71,10 +54,6 @@ export function calculateAnalyticsMetrics(
     netBalance,
     totalIncome,
     totalExpenses,
-    fixedIncome,
-    variableIncome,
-    fixedExpenses,
-    variableExpenses,
     largest,
     savingsRate,
     transactionCount: transactions.length,
@@ -84,6 +63,48 @@ export function calculateAnalyticsMetrics(
     dailySpending,
     activeDays: activeDays.size,
   };
+}
+
+/**
+ * Calculate fixed income and fixed expenses from the recurrings table.
+ * Only includes active, non-deleted recurrings.
+ * For yearly recurrings, divides by 12 to get a monthly equivalent.
+ * For weekly recurrings, multiplies by ~4.33 to get a monthly equivalent.
+ */
+export function calculateFixedTotalsFromRecurrings(
+  recurrings: RecurringWithProduct[],
+): { fixedIncome: number; fixedExpenses: number } {
+  let fixedIncome = 0;
+  let fixedExpenses = 0;
+
+  recurrings.forEach((r) => {
+    if (!r.isActive) return;
+
+    const price = Math.abs(Number(r.price));
+    let monthlyPrice: number;
+
+    switch (r.interval) {
+      case "weekly":
+        monthlyPrice = price * (52 / 12);
+        break;
+      case "monthly":
+        monthlyPrice = price;
+        break;
+      case "yearly":
+        monthlyPrice = price / 12;
+        break;
+      default:
+        monthlyPrice = price;
+    }
+
+    if (r.type === "income") {
+      fixedIncome += monthlyPrice;
+    } else {
+      fixedExpenses += monthlyPrice;
+    }
+  });
+
+  return { fixedIncome, fixedExpenses };
 }
 
 /**

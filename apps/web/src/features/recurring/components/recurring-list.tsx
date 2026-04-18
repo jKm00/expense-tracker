@@ -52,7 +52,7 @@ function RecurringList({
                       variant={
                         item.type === "expense" ? "destructive" : "default"
                       }
-                      className="text-[10px] px-1.5 py-0"
+                      className={`text-[10px] px-1.5 py-0 ${item.type === "income" ? "border-income/30 bg-income/10 text-income" : ""}`}
                     >
                       {item.type}
                     </Badge>

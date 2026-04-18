@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Tag } from "@/features/tags/tags.models";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   ExpectedError,
@@ -40,6 +41,12 @@ export function AnalyticsLoader({
     data: [, comparisonTransactions],
   } = useSuspenseQuery(
     transactionQueries.getTransactionsOptions(compareYear, compareMonth),
+  );
+
+  const {
+    data: [, recurrings],
+  } = useSuspenseQuery(
+    recurringQueries.getRecurringsOptions(),
   );
 
   const selectedMonth = month || dayjs().month();
@@ -93,6 +100,7 @@ export function AnalyticsLoader({
     <AnalyticsDashboard
       transactions={filteredTransactions}
       comparisonTransactions={filteredComparisonTransactions}
+      recurrings={recurrings ?? []}
       month={selectedMonth}
       year={selectedYear}
       compareMonth={compareMonth}
