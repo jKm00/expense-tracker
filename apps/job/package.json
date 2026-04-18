@@ -1,10 +1,12 @@
 {
   "name": "@expense-tracker/job",
   "private": true,
+  "packageManager": "pnpm@10.0.0",
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --outDir dist --noEmit false"
   },
   "dependencies": {
     "@expense-tracker/db": "workspace:*",
