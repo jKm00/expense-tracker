@@ -6,6 +6,7 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
+  PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
   PageHeaderActions,
@@ -58,6 +59,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
+        <PageHeaderBackButton to="/dashboard/transactions" />
         <PageHeaderTitle>Transaction Details</PageHeaderTitle>
         <PageHeaderDescription>
           View and edit details about the transaction
