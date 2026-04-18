@@ -4,27 +4,58 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
+  build-web:
+    name: Build web
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Enable and prepare pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+      - name: Enable pnpm
+        run: corepack enable
 
-      - name: Install dependencies (pnpm)
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install
 
-      - name: Build (pnpm)
+      - name: Build
+        run: pnpm build
+
+  build-job:
+    name: Build job
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/job
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
         run: pnpm build

@@ -6,8 +6,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { products } from "../products/products.schema";
-import { entryType } from "../transactions/transactions.schema";
+import { products } from "./products.schema.js";
+import { entryType } from "./transactions.schema.js";
 
 export const recurringInterval = pgEnum("recurring_interval", [
   "weekly",

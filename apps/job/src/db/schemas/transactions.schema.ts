@@ -8,10 +8,12 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "../auth/auth.schema";
-import { products } from "../products/products.schema";
-import { tags } from "../tags/tags.schema";
-import { entryTypes } from "./transactions.models";
+import { user } from "./auth.schema.js";
+import { products } from "./products.schema.js";
+import { tags } from "./tags.schema.js";
+
+export const entryTypes = ["income", "expense"] as const;
+export type EntryType = (typeof entryTypes)[number];
 
 export const transactionSource = pgEnum("transaction_source", [
   "manual",

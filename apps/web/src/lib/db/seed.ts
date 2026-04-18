@@ -1,9 +1,13 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 
-config({ path: [".env.local", ".env"] });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = path.resolve(__dirname, "../../..");
+config({ path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")] });
 
 // Seeded random number generator for deterministic output
 class SeededRandom {
