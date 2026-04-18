@@ -28,4 +28,5 @@ export const recurring = pgTable("recurring", {
   isActive: boolean("is_active").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 });

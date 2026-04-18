@@ -65,6 +65,9 @@ export function AnalyticsContentSkeleton() {
         <ChartCardSkeleton />
         <ChartCardSkeleton />
       </div>
+
+      {/* 6. Recurring expenses chart */}
+      <ChartCardSkeleton />
     </div>
   );
 }

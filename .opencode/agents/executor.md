@@ -1,5 +1,5 @@
 ---
-description: Plan executor subagent - executes implementation plans
+description: Executor subagent - implements requirements from plans or simple task by the user
 mode: subagent
 temperature: 0.3
 permission:
@@ -36,10 +36,11 @@ ALWAYS use the caveman skill from `.opencode/skills/caveman/SKILL.md`
 Check if there are plans written in markdown about the implementation you are going to do in the codebase. Use this to implement.
 If not, use the plan that is available in your context to implement.
 If no plan is implemented and the task is simple and clear, start implementing based on your best ability without any plan.
+If no plan is available and the task is medium to a big task, STOP your work, tell the @manager agent that no plan is available, so it can dispatch the @planner agent to create the plan first.
 
 ### Step 2: Execute Plan
 
-Start implement based on the plan
+Start implement based on the plan.
 
 ## When to STOP
 
