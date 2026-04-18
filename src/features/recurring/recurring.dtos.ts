@@ -26,7 +26,12 @@ export type CreateRecurringDTO = z.infer<typeof createRecurringSchema>;
 
 export const updateRecurringSchema = z.object({
   recurringId: z.string(),
-  productId: z.string().optional(),
+  product: z
+    .object({
+      id: z.string().nullable(),
+      name: z.string(),
+    })
+    .optional(),
   price: positiveNumberValidator.optional(),
   interval: z.enum(recurringIntervals).optional(),
   type: z.enum(entryTypes).optional(),

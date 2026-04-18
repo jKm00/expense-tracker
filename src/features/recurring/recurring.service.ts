@@ -104,38 +104,45 @@ async function createRecurring(
 async function updateRecurring(
   userId: string,
   recurringId: string,
-  data: UpdateRecurring,
+  data: Omit<UpdateRecurring, "productId"> & {
+    product?: { id: string | null; name: string };
+  },
 ) {
   const [foundError] = await getRecurring(userId, recurringId);
   if (foundError) {
     return err(foundError);
   }
 
-  if (data.productId) {
-    const [productError] = await productService.getProduct(
-      userId,
-      data.productId,
-    );
+  let resolvedProductId: string | undefined;
+  if (data.product) {
+    const [productError, product] = await resolveProduct(userId, data.product);
     if (productError) {
       return err({
-        reason: "RECURRING_UNAUTHORIZED",
-        message: `User ${userId} does not own product ${data.productId}`,
+        reason: "RECURRING_UNAUTHORIZED" as const,
+        message: `Failed to resolve product ${data.product.id ?? data.product.name} for user ${userId}`,
       });
     }
+    resolvedProductId = product.id;
   }
 
+  const { product: _, ...rest } = data;
+  const updateData: UpdateRecurring = {
+    ...rest,
+    ...(resolvedProductId ? { productId: resolvedProductId } : {}),
+  };
+
   try {
-    const res = await recurringRepo.update(recurringId, data);
+    const res = await recurringRepo.update(recurringId, updateData);
     if (res.length === 0) {
       return err({
-        reason: "RECURRING_UPDATE_FAILED",
+        reason: "RECURRING_UPDATE_FAILED" as const,
         message: "Failed to update recurring transaction. No row returned",
       });
     }
     return ok(res[0]);
   } catch (error) {
     return err({
-      reason: "RECURRING_DB_ERROR",
+      reason: "RECURRING_DB_ERROR" as const,
       message: `Failed to update recurring transaction (${recurringId})`,
     });
   }
