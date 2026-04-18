@@ -8,9 +8,9 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth.schema";
-import { products } from "./products.schema";
-import { tags } from "./tags.schema";
+import { user } from "./auth.schema.js";
+import { products } from "./products.schema.js";
+import { tags } from "./tags.schema.js";
 
 export const entryTypes = ["income", "expense"] as const;
 export type EntryType = (typeof entryTypes)[number];

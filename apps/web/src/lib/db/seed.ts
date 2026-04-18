@@ -6,8 +6,8 @@ import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "../../../../..");
-config({ path: [path.join(root, ".env.local"), path.join(root, ".env")] });
+const appRoot = path.resolve(__dirname, "../../..");
+config({ path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")] });
 
 // Seeded random number generator for deterministic output
 class SeededRandom {

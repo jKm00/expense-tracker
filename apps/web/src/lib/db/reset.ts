@@ -5,8 +5,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { sql } from "drizzle-orm";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "../../../../..");
-config({ path: [path.join(root, ".env.local"), path.join(root, ".env")] });
+const appRoot = path.resolve(__dirname, "../../..");
+config({ path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")] });
 
 const main = async () => {
   const db = drizzle(process.env.DATABASE_URL!);

@@ -18,7 +18,6 @@
     "db:list-users": "tsx src/lib/db/list-users.ts"
   },
   "dependencies": {
-    "@expense-tracker/db": "workspace:*",
     "@base-ui/react": "^1.3.0",
     "@better-auth/drizzle-adapter": "^1.5.5",
     "@fontsource-variable/geist": "^5.2.8",

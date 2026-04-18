@@ -5,8 +5,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth.schema";
-import { tags } from "./tags.schema";
+import { user } from "./auth.schema.js";
+import { tags } from "./tags.schema.js";
 
 export const products = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "./schema";
-import { relations } from "./relations";
+import * as schema from "./schema.js";
+import { relations } from "./relations.js";
 
 export function createDb(databaseUrl: string) {
   return drizzle(databaseUrl, { schema, relations });
@@ -8,5 +8,5 @@ export function createDb(databaseUrl: string) {
 
 export type Database = ReturnType<typeof createDb>;
 
-export * from "./schema";
-export { relations } from "./relations";
+export * from "./schema.js";
+export { relations } from "./relations.js";

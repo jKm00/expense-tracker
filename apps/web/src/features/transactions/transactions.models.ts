@@ -1,7 +1,7 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { entries, transactions } from "./transactions.schema";
 import { Product, ProductWithTag } from "../products/products.models";
-import type { EntryType as _EntryType } from "@expense-tracker/db/schema";
+import type { EntryType as _EntryType } from "./transactions.schema";
 
 export const transactionSources = ["manual", "recurring", "scan"] as const;
 export type TransactionSource = (typeof transactionSources)[number];

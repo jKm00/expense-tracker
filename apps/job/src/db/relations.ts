@@ -3,30 +3,27 @@ import {
   session,
   user,
   verification,
-} from "./schemas/auth.schema";
-import { products, productTags } from "./schemas/products.schema";
-import { recurring } from "./schemas/recurring.schema";
-import { tags } from "./schemas/tags.schema";
+} from "./schemas/auth.schema.js";
+import { products, productTags } from "./schemas/products.schema.js";
+import { recurring } from "./schemas/recurring.schema.js";
+import { tags } from "./schemas/tags.schema.js";
 import {
   entries,
   entryTags,
   transactions,
-} from "./schemas/transactions.schema";
+} from "./schemas/transactions.schema.js";
 import { defineRelations } from "drizzle-orm";
 
 export const relations = defineRelations(
   {
-    // Auth
     user,
     session,
     account,
     verification,
-    // Product
     products,
     recurring,
     tags,
     productTags,
-    // Transactions
     transactions,
     entries,
     entryTags,

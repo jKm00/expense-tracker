@@ -1,14 +1,12 @@
 import { config } from "dotenv";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { processRecurringTransactions } from "./process-recurring";
-import { createDb } from "@expense-tracker/db";
+import { processRecurringTransactions } from "./process-recurring.js";
+import { createDb } from "./db/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, "../.env.local") });   // apps/job/.env.local
 config({ path: resolve(__dirname, "../.env") });          // apps/job/.env
-config({ path: resolve(__dirname, "../../../.env.local") }); // repo root .env.local
-config({ path: resolve(__dirname, "../../../.env") });        // repo root .env
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;

@@ -1,11 +1,8 @@
 import { and, eq, lte, gte, or, isNull } from "drizzle-orm";
-import {
-  type Database,
-  recurring,
-  products,
-  transactions,
-  entries,
-} from "@expense-tracker/db";
+import type { Database } from "./db/index.js";
+import { recurring } from "./db/schemas/recurring.schema.js";
+import { products } from "./db/schemas/products.schema.js";
+import { transactions, entries } from "./db/schemas/transactions.schema.js";
 import {
   startOfDay,
   getDay,
