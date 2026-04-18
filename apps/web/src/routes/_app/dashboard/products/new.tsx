@@ -1,5 +1,6 @@
 import {
   PageHeader,
+  PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
@@ -20,6 +21,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
+        <PageHeaderBackButton to="/dashboard/products" />
         <PageHeaderTitle>New Product</PageHeaderTitle>
         <PageHeaderDescription>
           Add a new product to your product bank

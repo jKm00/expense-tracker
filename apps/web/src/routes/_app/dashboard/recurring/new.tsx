@@ -1,5 +1,6 @@
 import {
   PageHeader,
+  PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
@@ -22,6 +23,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
+        <PageHeaderBackButton to="/dashboard/recurring" />
         <PageHeaderTitle>New Recurring</PageHeaderTitle>
         <PageHeaderDescription>
           Set up a new recurring transaction
