@@ -133,6 +133,32 @@ export function calculateVariableTotals(
 }
 
 /**
+ * Calculate fixed income and expenses from recurring-sourced transactions.
+ * Used for comparison periods where we need actual historical fixed totals.
+ */
+export function calculateFixedTotalsFromTransactions(
+  transactions: FullTransaction[],
+): { fixedIncome: number; fixedExpenses: number } {
+  let fixedIncome = 0;
+  let fixedExpenses = 0;
+
+  transactions.forEach((transaction) => {
+    if (transaction.source !== "recurring") return;
+
+    transaction.entries.forEach((entry) => {
+      const price = Math.abs(Number(entry.price)) * entry.quantity;
+      if (entry.type === "income") {
+        fixedIncome += price;
+      } else {
+        fixedExpenses += price;
+      }
+    });
+  });
+
+  return { fixedIncome, fixedExpenses };
+}
+
+/**
  * Builds per-day expense totals for current and comparison periods.
  */
 export function buildDailyExpensesData(

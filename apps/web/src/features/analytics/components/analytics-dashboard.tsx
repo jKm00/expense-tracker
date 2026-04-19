@@ -4,6 +4,7 @@ import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
   calculateAnalyticsMetrics,
   calculateFixedTotalsFromRecurrings,
+  calculateFixedTotalsFromTransactions,
   calculateVariableTotals,
   buildDailyExpensesData,
 } from "@/features/analytics/analytics.calculations";
@@ -44,7 +45,8 @@ export function AnalyticsDashboard({
     [comparisonTransactions],
   );
   const dailyChartData = useMemo(
-    () => buildDailyExpensesData(transactions, comparisonTransactions, month, year),
+    () =>
+      buildDailyExpensesData(transactions, comparisonTransactions, month, year),
     [transactions, comparisonTransactions, month, year],
   );
 
@@ -54,7 +56,8 @@ export function AnalyticsDashboard({
   );
 
   const fixedVariableMetrics = useMemo(() => {
-    const { variableIncome, variableExpenses } = calculateVariableTotals(transactions);
+    const { variableIncome, variableExpenses } =
+      calculateVariableTotals(transactions);
     return {
       fixedIncome: fixedTotals.fixedIncome,
       fixedExpenses: fixedTotals.fixedExpenses,
@@ -62,6 +65,16 @@ export function AnalyticsDashboard({
       variableExpenses,
     };
   }, [fixedTotals, transactions]);
+
+  const comparisonFixedVariableMetrics = useMemo(() => {
+    const { fixedIncome, fixedExpenses } = calculateFixedTotalsFromTransactions(
+      comparisonTransactions,
+    );
+    const { variableIncome, variableExpenses } = calculateVariableTotals(
+      comparisonTransactions,
+    );
+    return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
+  }, [comparisonTransactions]);
 
   return (
     <div className="space-y-6 @container">
@@ -85,7 +98,10 @@ export function AnalyticsDashboard({
           compareMonth={compareMonth}
           compareYear={compareYear}
         />
-        <FixedVsVariable metrics={fixedVariableMetrics} />
+        <FixedVsVariable
+          metrics={fixedVariableMetrics}
+          comparisonMetrics={comparisonFixedVariableMetrics}
+        />
       </div>
 
       <DetailedKpis
