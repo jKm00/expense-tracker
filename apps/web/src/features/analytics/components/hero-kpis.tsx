@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { AnalyticsMetrics } from "@/features/analytics/analytics.models";
 import { calculateComparisonDelta } from "@/features/analytics/analytics.utils";
-import { currencyFormatter } from "@/features/analytics/analytics.constants";
+import { formatAmount } from "@/utils/format";
 import { Scale, TrendingUp, TrendingDown } from "lucide-react";
 
 type HeroKpisProps = {
@@ -46,21 +46,21 @@ export function HeroKpis({ metrics, comparisonMetrics }: HeroKpisProps) {
       <KpiCard
         title="Net Balance"
         subtitle="Income minus expenses"
-        value={currencyFormatter.format(metrics.netBalance)}
+        value={formatAmount(metrics.netBalance, { sign: true })}
         icon={Scale}
         delta={netBalanceDelta}
       />
       <KpiCard
         title="Total Income"
         subtitle="All money earned"
-        value={currencyFormatter.format(metrics.totalIncome)}
+        value={formatAmount(metrics.totalIncome)}
         icon={TrendingUp}
         delta={totalIncomeDelta}
       />
       <KpiCard
         title="Total Expenses"
         subtitle="All money spent"
-        value={currencyFormatter.format(metrics.totalExpenses)}
+        value={formatAmount(metrics.totalExpenses)}
         icon={TrendingDown}
         delta={totalExpensesDelta}
       />

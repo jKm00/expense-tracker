@@ -4,6 +4,7 @@ import { ChevronRight, Receipt, ShoppingBag } from "lucide-react";
 import { FullTransaction } from "../transactions.models";
 import { useMemo } from "react";
 import { transactionUtils } from "../transactions.utils";
+import { formatAmount } from "@/utils";
 
 export function TransactionList({
   transactions,
@@ -55,8 +56,7 @@ export function TransactionList({
                       <span
                         className={`text-sm font-semibold tabular-nums ${Number(transaction.totalPrice) < 0 ? "text-expense" : "text-income"}`}
                       >
-                        {Number(transaction.totalPrice) > 0 ? "+" : ""}
-                        {transaction.totalPrice}
+                        {formatAmount(transaction.totalPrice, { sign: true })}
                       </span>
                       <ChevronRight className="size-3.5 text-muted-foreground/40" />
                     </div>

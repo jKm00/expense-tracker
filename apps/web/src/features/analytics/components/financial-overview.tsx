@@ -1,7 +1,7 @@
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { calculateAnalyticsMetrics } from "@/features/analytics/analytics.calculations";
 import { calculateComparisonDelta } from "@/features/analytics/analytics.utils";
-import { currencyFormatterNoDecimals } from "@/features/analytics/analytics.constants";
+import { formatAmountNoDecimals } from "@/utils/format";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { Scale, TrendingUp, TrendingDown } from "lucide-react";
 import { useMemo } from "react";
@@ -69,24 +69,23 @@ export function FinancialOverview({
       <div className="col-span-2">
         <KpiCard
           title="Balance"
-          value={currencyFormatterNoDecimals.format(metrics.netBalance)}
+          value={formatAmountNoDecimals(metrics.netBalance, { sign: true })}
           icon={Scale}
           delta={netBalanceDelta}
+          color={metrics.netBalance < 0 ? "expense" : "income"}
         />
       </div>
       <KpiCard
         title="Income"
-        value={currencyFormatterNoDecimals.format(metrics.totalIncome)}
+        value={formatAmountNoDecimals(metrics.totalIncome)}
         icon={TrendingUp}
         delta={totalIncomeDelta}
-        color="income"
       />
       <KpiCard
         title="Expenses"
-        value={currencyFormatterNoDecimals.format(metrics.totalExpenses)}
+        value={formatAmountNoDecimals(metrics.totalExpenses)}
         icon={TrendingDown}
         delta={totalExpensesDelta}
-        color="expense"
       />
     </section>
   );

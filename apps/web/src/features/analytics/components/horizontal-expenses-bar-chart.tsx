@@ -17,7 +17,8 @@ import {
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, ChartArea } from "lucide-react";
-import { TOP_LIMIT, currencyFormatterNoDecimals } from "@/features/analytics/analytics.constants";
+import { TOP_LIMIT } from "@/features/analytics/analytics.constants";
+import { formatAmountNoDecimals } from "@/utils/format";
 
 type HorizontalExpensesBarChartProps = {
   title: string;
@@ -80,14 +81,14 @@ export function HorizontalExpensesBarChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(v) => currencyFormatterNoDecimals.format(v)}
+                tickFormatter={(v) => formatAmountNoDecimals(v)}
               />
               <ChartTooltip
                 cursor={false}
                 content={
                   <ChartTooltipContent
                     formatter={(value) =>
-                      currencyFormatterNoDecimals.format(Number(value))
+                      formatAmountNoDecimals(Number(value))
                     }
                   />
                 }

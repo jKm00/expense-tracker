@@ -3,6 +3,7 @@ import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { Package, ShoppingBag } from "lucide-react";
 import React from "react";
 import { EntryWithProduct } from "../transactions.models";
+import { formatAmount } from "@/utils/format";
 
 function EntryList({
   entries,
@@ -49,11 +50,11 @@ function EntryList({
                     )}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {entry.quantity} x {entry.price},-
+                    {entry.quantity} x {formatAmount(entry.price)},-
                   </p>
                 </div>
                 <span className="text-sm font-semibold tabular-nums text-foreground">
-                  {(entry.quantity * Number(entry.price)).toFixed(2)},-
+                  {formatAmount(entry.quantity * Number(entry.price))},-
                 </span>
               </div>
             </Link>

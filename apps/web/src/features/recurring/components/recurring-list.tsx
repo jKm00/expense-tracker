@@ -4,6 +4,7 @@ import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { ChevronRight, Repeat } from "lucide-react";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { formatAmount } from "@/utils/format";
 
 function RecurringList({
   items,
@@ -46,7 +47,7 @@ function RecurringList({
                   </p>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
-                      ${item.price}/{item.interval}
+                      {formatAmount(item.price)}/{item.interval}
                     </span>
                     <Badge
                       variant={

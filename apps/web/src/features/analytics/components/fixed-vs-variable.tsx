@@ -1,6 +1,6 @@
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { FixedVariableMetrics } from "@/features/analytics/analytics.models";
-import { currencyFormatter } from "@/features/analytics/analytics.constants";
+import { formatAmount } from "@/utils/format";
 import { Anchor, Sparkles } from "lucide-react";
 
 type FixedVsVariableProps = {
@@ -13,25 +13,25 @@ export function FixedVsVariable({ metrics }: FixedVsVariableProps) {
       <KpiCard
         title="Fixed Income"
         subtitle="Recurring earnings"
-        value={currencyFormatter.format(metrics.fixedIncome)}
+        value={formatAmount(metrics.fixedIncome)}
         icon={Anchor}
       />
       <KpiCard
         title="Variable Income"
         subtitle="Irregular earnings"
-        value={currencyFormatter.format(metrics.variableIncome)}
+        value={formatAmount(metrics.variableIncome)}
         icon={Sparkles}
       />
       <KpiCard
         title="Fixed Expenses"
         subtitle="Recurring costs"
-        value={currencyFormatter.format(metrics.fixedExpenses)}
+        value={formatAmount(metrics.fixedExpenses)}
         icon={Anchor}
       />
       <KpiCard
         title="Variable Expenses"
         subtitle="Irregular costs"
-        value={currencyFormatter.format(metrics.variableExpenses)}
+        value={formatAmount(metrics.variableExpenses)}
         icon={Sparkles}
       />
     </div>

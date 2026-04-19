@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { AnalyticsMetrics } from "@/features/analytics/analytics.models";
 import { calculateComparisonDelta } from "@/features/analytics/analytics.utils";
-import { currencyFormatter } from "@/features/analytics/analytics.constants";
+import { formatAmount } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import {
   Percent,
@@ -162,14 +162,14 @@ export function DetailedKpis({
               <KpiCard
                 title="Daily Spending"
                 subtitle="Average per active day"
-                value={currencyFormatter.format(metrics.dailySpending)}
+                value={formatAmount(metrics.dailySpending)}
                 icon={Calendar}
                 delta={dailySpendingDelta}
               />
               <KpiCard
                 title="Largest Expense"
                 subtitle="Single biggest item"
-                value={currencyFormatter.format(metrics.largest)}
+                value={formatAmount(metrics.largest)}
                 icon={TrendingUp}
                 delta={largestDelta}
               />
@@ -192,7 +192,7 @@ export function DetailedKpis({
               <KpiCard
                 title="Avg Transaction"
                 subtitle="Mean transaction size"
-                value={currencyFormatter.format(
+                value={formatAmount(
                   transactionCount === 0
                     ? 0
                     : metrics.totalExpenses / transactionCount,
@@ -217,7 +217,7 @@ export function DetailedKpis({
               <KpiCard
                 title="Avg Item Value"
                 subtitle="Mean item price"
-                value={currencyFormatter.format(metrics.avgItemValue)}
+                value={formatAmount(metrics.avgItemValue)}
                 icon={ShoppingBag}
                 delta={avgItemValueDelta}
               />
