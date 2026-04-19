@@ -31,6 +31,7 @@ import {
   EntryListTitle,
 } from "@/features/transactions/components/entry-list";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { formatAmount } from "@/utils/format";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -143,7 +144,7 @@ function TransactionDetails() {
         />
         <KpiCard
           title="Total"
-          value={transaction.totalPrice}
+          value={formatAmount(transaction.totalPrice)}
           subtitle="Total amount"
           icon={CircleDollarSign}
         />

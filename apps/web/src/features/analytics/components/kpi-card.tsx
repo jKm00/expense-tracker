@@ -37,13 +37,8 @@ export function KpiCard({
       <CardContent className="flex flex-col gap-0.5 py-1">
         <div className="flex items-center gap-2">
           {Icon && (
-            <div
-              className={cn(
-                "size-6 rounded-md grid place-items-center",
-                iconColorMap[color],
-              )}
-            >
-              <Icon className="size-3" />
+            <div className={"size-6 rounded-md grid place-items-center"}>
+              <Icon className="size-3 text-primary" />
             </div>
           )}
           <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">

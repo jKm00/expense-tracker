@@ -4,6 +4,8 @@ import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
   calculateAnalyticsMetrics,
   calculateFixedTotalsFromRecurrings,
+  calculateFixedTotalsFromTransactions,
+  calculateVariableTotals,
   buildDailyExpensesData,
 } from "@/features/analytics/analytics.calculations";
 import { HeroKpis } from "./hero-kpis";
@@ -43,7 +45,8 @@ export function AnalyticsDashboard({
     [comparisonTransactions],
   );
   const dailyChartData = useMemo(
-    () => buildDailyExpensesData(transactions, comparisonTransactions, month, year),
+    () =>
+      buildDailyExpensesData(transactions, comparisonTransactions, month, year),
     [transactions, comparisonTransactions, month, year],
   );
 
@@ -52,12 +55,26 @@ export function AnalyticsDashboard({
     [recurrings],
   );
 
-  const fixedVariableMetrics = useMemo(() => ({
-    fixedIncome: fixedTotals.fixedIncome,
-    fixedExpenses: fixedTotals.fixedExpenses,
-    variableIncome: Math.max(0, metrics.totalIncome - fixedTotals.fixedIncome),
-    variableExpenses: Math.max(0, metrics.totalExpenses - fixedTotals.fixedExpenses),
-  }), [fixedTotals, metrics]);
+  const fixedVariableMetrics = useMemo(() => {
+    const { variableIncome, variableExpenses } =
+      calculateVariableTotals(transactions);
+    return {
+      fixedIncome: fixedTotals.fixedIncome,
+      fixedExpenses: fixedTotals.fixedExpenses,
+      variableIncome,
+      variableExpenses,
+    };
+  }, [fixedTotals, transactions]);
+
+  const comparisonFixedVariableMetrics = useMemo(() => {
+    const { fixedIncome, fixedExpenses } = calculateFixedTotalsFromTransactions(
+      comparisonTransactions,
+    );
+    const { variableIncome, variableExpenses } = calculateVariableTotals(
+      comparisonTransactions,
+    );
+    return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
+  }, [comparisonTransactions]);
 
   return (
     <div className="space-y-6 @container">
@@ -81,7 +98,10 @@ export function AnalyticsDashboard({
           compareMonth={compareMonth}
           compareYear={compareYear}
         />
-        <FixedVsVariable metrics={fixedVariableMetrics} />
+        <FixedVsVariable
+          metrics={fixedVariableMetrics}
+          comparisonMetrics={comparisonFixedVariableMetrics}
+        />
       </div>
 
       <DetailedKpis

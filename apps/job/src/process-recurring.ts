@@ -3,12 +3,12 @@ import type { Database } from "./db/index.js";
 import { recurring } from "./db/schemas/recurring.schema.js";
 import { products } from "./db/schemas/products.schema.js";
 import { transactions, entries } from "./db/schemas/transactions.schema.js";
-import {
-  startOfDay,
-  getDay,
-  getDate,
-  getMonth,
-} from "date-fns";
+
+function toNoonUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0, 0)
+  );
+}
 
 interface ProcessResult {
   created: number;
@@ -31,16 +31,14 @@ export function shouldFireOnDate(
 ): boolean {
   switch (interval) {
     case "weekly":
-      return getDay(today) === getDay(start);
+      return today.getUTCDay() === start.getUTCDay();
 
     case "monthly": {
-      const startDay = getDate(start);
-      const todayDay = getDate(today);
+      const startDay = start.getUTCDate();
+      const todayDay = today.getUTCDate();
       const lastDayOfMonth = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0,
-      ).getDate();
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0),
+      ).getUTCDate();
       if (startDay > lastDayOfMonth) {
         return todayDay === lastDayOfMonth;
       }
@@ -49,8 +47,8 @@ export function shouldFireOnDate(
 
     case "yearly":
       return (
-        getMonth(today) === getMonth(start) &&
-        getDate(today) === getDate(start)
+        today.getUTCMonth() === start.getUTCMonth() &&
+        today.getUTCDate() === start.getUTCDate()
       );
   }
 }
@@ -63,7 +61,7 @@ export async function processRecurringTransactions(
   db: Database,
   today: Date,
 ): Promise<ProcessResult> {
-  const todayStart = startOfDay(today);
+  const todayStart = toNoonUTC(today);
 
   const activeRecurring = await db
     .select({

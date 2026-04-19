@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { formatAmount } from "@/utils/format";
 import { transactionMutations } from "../transactions.mutations";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -138,14 +139,16 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                         {entry.product.name}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {entry.quantity} x {entry.price},-
+                        {entry.quantity} x {formatAmount(entry.price)},-
                       </p>
                     </div>
                     <span
                       className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
                     >
-                      {entry.type === "expense" ? "-" : "+"}
-                      {Number(entry.price).toFixed(2)}
+                      {formatAmount(
+                        entry.type === "expense" ? -Number(entry.price) : Number(entry.price),
+                        { sign: true },
+                      )}
                     </span>
                     <Button
                       variant="ghost"

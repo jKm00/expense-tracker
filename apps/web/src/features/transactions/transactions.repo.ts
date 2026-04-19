@@ -18,7 +18,7 @@ async function getAll(userId: string, start: Date, end: Date) {
     },
     where: {
       userId,
-      createdAt: { gte: start, lte: end },
+      date: { gte: start, lte: end },
     },
   });
 }
@@ -74,10 +74,7 @@ async function updateEntry(id: string, entry: Partial<NewEntry>) {
 }
 
 async function removeEntry(entryId: string) {
-  return await db
-    .delete(entries)
-    .where(eq(entries.id, entryId))
-    .returning();
+  return await db.delete(entries).where(eq(entries.id, entryId)).returning();
 }
 
 export const transactionRepo = {
