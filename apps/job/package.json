@@ -5,7 +5,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --outDir dist --noEmit false"
+    "build": "tsc --outDir dist --noEmit false",
+    "test": "vitest"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

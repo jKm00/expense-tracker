@@ -43,6 +43,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { productQueries } from "@/features/products/products.queries";
+import { normalizeToNoonUTC } from "@/utils/date";
 
 export function EditRecurringForm({
   recurring,
@@ -72,8 +73,8 @@ export function EditRecurringForm({
       price: recurring.price,
       interval: recurring.interval,
       type: recurring.type,
-      start: new Date(recurring.start),
-      end: recurring.end ? new Date(recurring.end) : undefined,
+      start: normalizeToNoonUTC(new Date(recurring.start)),
+      end: recurring.end ? normalizeToNoonUTC(new Date(recurring.end)) : undefined,
       isActive: recurring.isActive,
     },
   });
@@ -220,7 +221,7 @@ export function EditRecurringForm({
                     mode="single"
                     selected={startDate}
                     onSelect={(date) => {
-                      setValue("start", date || new Date(), {
+                      setValue("start", date ? normalizeToNoonUTC(date) : normalizeToNoonUTC(new Date()), {
                         shouldDirty: true,
                       });
                       setStartDateOpen(false);
@@ -258,7 +259,7 @@ export function EditRecurringForm({
                       mode="single"
                       selected={endDate}
                       onSelect={(date) => {
-                        setValue("end", (date ?? null) as CreateRecurringDTO["end"], {
+                        setValue("end", (date ? normalizeToNoonUTC(date) : null) as CreateRecurringDTO["end"], {
                           shouldDirty: true,
                         });
                         setEndDateOpen(false);

@@ -36,6 +36,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { productQueries } from "@/features/products/products.queries";
+import { normalizeToNoonUTC } from "@/utils/date";
 
 export function NewRecurringForm() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export function NewRecurringForm() {
       isActive: true,
       type: "expense",
       interval: "monthly",
-      start: new Date(),
+      start: normalizeToNoonUTC(new Date()),
     },
   });
 
@@ -196,7 +197,7 @@ export function NewRecurringForm() {
                 mode="single"
                 selected={startDate}
                 onSelect={(date) => {
-                  setValue("start", date || new Date());
+                  setValue("start", date ? normalizeToNoonUTC(date) : normalizeToNoonUTC(new Date()));
                   setStartDateOpen(false);
                 }}
                 defaultMonth={new Date()}
@@ -231,7 +232,7 @@ export function NewRecurringForm() {
                 mode="single"
                 selected={endDate}
                 onSelect={(date) => {
-                  setValue("end", date || undefined);
+                  setValue("end", date ? normalizeToNoonUTC(date) : undefined);
                   setEndDateOpen(false);
                 }}
                 defaultMonth={new Date()}
