@@ -17,5 +17,5 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": "."
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts"]
 }
