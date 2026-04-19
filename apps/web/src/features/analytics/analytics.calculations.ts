@@ -108,6 +108,31 @@ export function calculateFixedTotalsFromRecurrings(
 }
 
 /**
+ * Calculate variable income and expenses from non-recurring transactions.
+ */
+export function calculateVariableTotals(
+  transactions: FullTransaction[],
+): { variableIncome: number; variableExpenses: number } {
+  let variableIncome = 0;
+  let variableExpenses = 0;
+
+  transactions.forEach((transaction) => {
+    if (transaction.source === "recurring") return;
+
+    transaction.entries.forEach((entry) => {
+      const price = Math.abs(Number(entry.price)) * entry.quantity;
+      if (entry.type === "income") {
+        variableIncome += price;
+      } else {
+        variableExpenses += price;
+      }
+    });
+  });
+
+  return { variableIncome, variableExpenses };
+}
+
+/**
  * Builds per-day expense totals for current and comparison periods.
  */
 export function buildDailyExpensesData(

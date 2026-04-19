@@ -4,6 +4,7 @@ import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
   calculateAnalyticsMetrics,
   calculateFixedTotalsFromRecurrings,
+  calculateVariableTotals,
   buildDailyExpensesData,
 } from "@/features/analytics/analytics.calculations";
 import { HeroKpis } from "./hero-kpis";
@@ -52,12 +53,15 @@ export function AnalyticsDashboard({
     [recurrings],
   );
 
-  const fixedVariableMetrics = useMemo(() => ({
-    fixedIncome: fixedTotals.fixedIncome,
-    fixedExpenses: fixedTotals.fixedExpenses,
-    variableIncome: Math.max(0, metrics.totalIncome - fixedTotals.fixedIncome),
-    variableExpenses: Math.max(0, metrics.totalExpenses - fixedTotals.fixedExpenses),
-  }), [fixedTotals, metrics]);
+  const fixedVariableMetrics = useMemo(() => {
+    const { variableIncome, variableExpenses } = calculateVariableTotals(transactions);
+    return {
+      fixedIncome: fixedTotals.fixedIncome,
+      fixedExpenses: fixedTotals.fixedExpenses,
+      variableIncome,
+      variableExpenses,
+    };
+  }, [fixedTotals, transactions]);
 
   return (
     <div className="space-y-6 @container">
