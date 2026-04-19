@@ -35,6 +35,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.0.1))(lightningcss@1.32.0)(msw@2.13.0(@types/node@22.19.17)(typescript@5.9.3))(terser@5.46.1)(tsx@4.21.0)
 
   apps/web:
     dependencies:

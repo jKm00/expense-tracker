@@ -6,7 +6,8 @@
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc --outDir dist --noEmit false",
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
@@ -18,6 +19,7 @@
     "@types/node": "^22.10.2",
     "@types/pg": "^8.15.6",
     "tsx": "^4.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.1"
   }
 }
