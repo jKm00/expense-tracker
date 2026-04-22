@@ -10,6 +10,14 @@ function getTagsOptions() {
   });
 }
 
+function getTagOptions(tagId: string) {
+  return queryOptions({
+    queryKey: [TAG_QUERY_KEY, tagId],
+    queryFn: () => tagsController.getTag({ data: { tagId } }),
+  });
+}
+
 export const tagsQueries = {
   getTagsOptions,
+  getTagOptions,
 };
