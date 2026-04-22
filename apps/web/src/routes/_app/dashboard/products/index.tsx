@@ -24,7 +24,8 @@ import { productQueries } from "@/features/products/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Package, PackageX, Plus, Tag } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
@@ -73,17 +74,20 @@ function ProductsContentSkeleton() {
 }
 
 function ProductsContent() {
+  const [search, setSearch] = useState("");
+
   const {
     data: [expectedError, products],
     error: unexpectedError,
   } = useSuspenseQuery(productQueries.getProductsOptions());
 
   const { taggedProducts, untaggedProducts } = useMemo(() => {
-    if (!products)
+    if (!products) {
       return {
         taggedProducts: [],
         untaggedProducts: [],
       };
+    }
 
     let taggedProducts: ProductWithTag[] = [];
     let untaggedProducts: ProductWithTag[] = [];
@@ -98,6 +102,18 @@ function ProductsContent() {
 
     return { taggedProducts, untaggedProducts };
   }, [products]);
+
+  const { filteredTaggedProducts, filteredUntaggedProducts } = useMemo(
+    () => ({
+      filteredTaggedProducts: taggedProducts.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+      filteredUntaggedProducts: untaggedProducts.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    }),
+    [taggedProducts, untaggedProducts, search],
+  );
 
   if (unexpectedError) {
     return <UnexpectedError />;
@@ -151,11 +167,17 @@ function ProductsContent() {
           icon={PackageX}
         />
       </div>
-      <ProductList products={untaggedProducts}>
+      <Input
+        placeholder="Search..."
+        className="max-w-75"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <ProductList products={filteredUntaggedProducts}>
         <ProductListTitle>Untagged products</ProductListTitle>
         <ProductListEmpty>No untagged products found</ProductListEmpty>
       </ProductList>
-      <ProductList products={taggedProducts}>
+      <ProductList products={filteredTaggedProducts}>
         <ProductListTitle>Tagged products</ProductListTitle>
         <ProductListEmpty>No tagged products found</ProductListEmpty>
       </ProductList>
