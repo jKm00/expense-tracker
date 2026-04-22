@@ -24,7 +24,8 @@ import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Repeat, Plus, Pause, Play } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/")({
   loader: async ({ context }) => {
@@ -73,18 +74,25 @@ function RecurringContentSkeleton() {
 }
 
 function RecurringContent() {
+  const [search, setSearch] = useState("");
+
   const {
     data: [expectedError, items],
     error: unexpectedError,
   } = useSuspenseQuery(recurringQueries.getRecurringsOptions());
 
+  const sortedItems = useMemo(() => {
+    if (!items) return [];
+    return items.sort((a, b) => Number(b.price) - Number(a.price));
+  }, [items]);
+
   const { activeItems, pausedItems } = useMemo(() => {
-    if (!items) return { activeItems: [], pausedItems: [] };
+    if (!sortedItems) return { activeItems: [], pausedItems: [] };
 
     const activeItems: RecurringWithProduct[] = [];
     const pausedItems: RecurringWithProduct[] = [];
 
-    items.forEach((item) => {
+    sortedItems.forEach((item) => {
       if (item.isActive) {
         activeItems.push(item);
       } else {
@@ -93,7 +101,19 @@ function RecurringContent() {
     });
 
     return { activeItems, pausedItems };
-  }, [items]);
+  }, [sortedItems]);
+
+  const filteredActiveItems = useMemo(() => {
+    return activeItems.filter((i) =>
+      i.products?.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [activeItems, search]);
+
+  const filteredPausedItems = useMemo(() => {
+    return pausedItems.filter((i) =>
+      i.products?.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [pausedItems, search]);
 
   if (unexpectedError) {
     return <UnexpectedError />;
@@ -147,13 +167,19 @@ function RecurringContent() {
           icon={Pause}
         />
       </div>
-      <RecurringList items={activeItems}>
+      <Input
+        placeholder="Search..."
+        className="max-w-75"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <RecurringList items={filteredActiveItems}>
         <RecurringListTitle>Active</RecurringListTitle>
         <RecurringListEmpty>
           No active recurring transactions
         </RecurringListEmpty>
       </RecurringList>
-      <RecurringList items={pausedItems}>
+      <RecurringList items={filteredPausedItems}>
         <RecurringListTitle>Paused</RecurringListTitle>
         <RecurringListEmpty>
           No paused recurring transactions

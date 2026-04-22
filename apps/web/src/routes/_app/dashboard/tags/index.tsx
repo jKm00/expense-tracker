@@ -20,9 +20,10 @@ import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Hash, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
@@ -64,10 +65,24 @@ function TagsContentSkeleton() {
 }
 
 function TagContent() {
+  const [search, setSearch] = useState("");
+
   const {
     data: [expectedError, tags],
     error: unexpectedError,
   } = useSuspenseQuery(tagsQueries.getTagsOptions());
+
+  const sortedTags = useMemo(() => {
+    if (!tags) return [];
+    return tags.sort((a, b) => b.products.length - a.products.length);
+  }, [tags]);
+
+  const filteredTags = useMemo(() => {
+    if (!sortedTags) return [];
+    return sortedTags.filter((t) =>
+      t.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [sortedTags, search]);
 
   if (unexpectedError) {
     return <UnexpectedError />;
@@ -100,17 +115,23 @@ function TagContent() {
   return (
     <div className="space-y-6 @container">
       <TagKpis tags={tags} />
+      <Input
+        placeholder="Search..."
+        className="max-w-75"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
       <div>
         <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           All tags
         </h2>
-        {tags.length === 0 ? (
+        {filteredTags.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
             <p className="text-sm text-muted-foreground">No tags created yet</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-            {tags.map((tag, idx) => (
+            {filteredTags.map((tag, idx) => (
               <div
                 key={tag.id}
                 className={`flex items-center gap-4 px-4 py-3 ${idx !== tags.length - 1 ? "border-b border-border/40" : ""}`}
