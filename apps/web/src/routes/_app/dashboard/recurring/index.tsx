@@ -81,10 +81,12 @@ function RecurringContent() {
   const { activeItems, pausedItems } = useMemo(() => {
     if (!items) return { activeItems: [], pausedItems: [] };
 
+    const sorted = items.sort((a, b) => Number(b.price) - Number(a.price));
+
     const activeItems: RecurringWithProduct[] = [];
     const pausedItems: RecurringWithProduct[] = [];
 
-    items.forEach((item) => {
+    sorted.forEach((item) => {
       if (item.isActive) {
         activeItems.push(item);
       } else {
