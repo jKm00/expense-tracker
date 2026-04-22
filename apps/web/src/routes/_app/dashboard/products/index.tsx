@@ -103,17 +103,17 @@ function ProductsContent() {
     return { taggedProducts, untaggedProducts };
   }, [products]);
 
-  const { filteredTaggedProducts, filteredUntaggedProducts } = useMemo(
-    () => ({
-      filteredTaggedProducts: taggedProducts.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()),
-      ),
-      filteredUntaggedProducts: untaggedProducts.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()),
-      ),
-    }),
-    [taggedProducts, untaggedProducts, search],
-  );
+  const filteredTaggedProducts = useMemo(() => {
+    return taggedProducts.filter((p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [taggedProducts, search]);
+
+  const filteredUntaggedProducts = useMemo(() => {
+    return untaggedProducts.filter((p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [untaggedProducts, search]);
 
   if (unexpectedError) {
     return <UnexpectedError />;
