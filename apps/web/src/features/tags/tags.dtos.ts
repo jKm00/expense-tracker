@@ -1,5 +1,11 @@
 import z from "zod";
 
+export const getTagSchema = z.object({
+  tagId: z.string(),
+});
+
+export type GetTagDTO = z.infer<typeof getTagSchema>;
+
 export const addTagSchema = z.object({
   name: z.string().min(1, "Name is required"),
   color: z.string().optional(),

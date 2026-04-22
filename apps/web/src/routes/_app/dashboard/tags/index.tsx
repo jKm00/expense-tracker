@@ -18,7 +18,7 @@ import { TagBadge } from "@/features/tags/components/tag";
 import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Hash, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
 import { Suspense, useMemo, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
@@ -134,19 +134,23 @@ function TagContent() {
             {filteredTags.map((tag, idx) => (
               <div
                 key={tag.id}
-                className={`flex items-center gap-4 px-4 py-3 ${idx !== tags.length - 1 ? "border-b border-border/40" : ""}`}
+                className={`flex items-center ${idx !== filteredTags.length - 1 ? "border-b border-border/40" : ""}`}
               >
-                <div className="min-w-0 flex-1">
+                <Link
+                  to="/dashboard/tags/$tagId"
+                  params={{ tagId: tag.id }}
+                  className="flex-1 flex justify-between py-4 px-4"
+                >
                   <div className="flex items-center gap-2">
                     <TagBadge tag={tag} variant="secondary">
                       {tag.name}
                     </TagBadge>
                   </div>
-                </div>
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {tag.products.length} ref
-                  {tag.products.length !== 1 ? "s" : ""}
-                </span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {tag.products.length} ref
+                    {tag.products.length !== 1 ? "s" : ""}
+                  </span>
+                </Link>
                 <div className="flex gap-1">
                   <EditTagDialog tag={tag}>
                     <SquarePen className="size-4" />

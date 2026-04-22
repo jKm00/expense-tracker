@@ -21,9 +21,11 @@ import { wait } from "@/utils";
 export function DeleteTagDialog({
   tag,
   children,
+  onDeleted,
 }: {
   tag: TagWithProduct;
   children: React.ReactNode;
+  onDeleted?: () => void;
 }) {
   const [confirmInput, setConfirmInput] = useState("");
   const confirmValue = tag.name.toLowerCase();
@@ -66,6 +68,7 @@ export function DeleteTagDialog({
             toast.error(message);
           } else {
             toast.success("Tag deleted!");
+            onDeleted?.();
           }
         },
       },
