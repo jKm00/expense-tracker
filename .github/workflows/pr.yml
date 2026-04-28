@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  build-web:
+  verify-web:
     name: Build web
     runs-on: ubuntu-latest
     defaults:
@@ -34,6 +34,17 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Test
+        run: pnpm vitest run --reporter=default --reporter=junit --outputFile=./test-results/vitest-junit.xml
+
+      - name: Upload web test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-test-results
+          path: apps/web/test-results/vitest-junit.xml
+          if-no-files-found: warn
 
   build-job:
     name: Build job
