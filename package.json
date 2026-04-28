@@ -1,7 +1,7 @@
 {
   "name": "expense-tracker",
   "private": true,
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "pnpm --filter @expense-tracker/web dev",
     "build": "pnpm --filter @expense-tracker/web build",
@@ -12,6 +12,7 @@
     "db:studio": "pnpm --filter @expense-tracker/web db:studio",
     "db:seed": "pnpm --filter @expense-tracker/web db:seed",
     "db:reset": "pnpm --filter @expense-tracker/web db:reset",
+    "test:web": "pnpm --filter @expense-tracker/web test",
     "test:job": "pnpm --filter @expense-tracker/job test"
   }
 }
