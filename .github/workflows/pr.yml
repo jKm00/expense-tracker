@@ -13,9 +13,6 @@ jobs:
   verify-web:
     name: Verify web
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
 
     steps:
       - name: Checkout repository
@@ -36,15 +33,7 @@ jobs:
         run: pnpm build
 
       - name: Test
-        run: pnpm vitest run --reporter=default --reporter=html --outputFile=./test-results/vitest-report.html
-
-      - name: Upload web test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-test-results
-          path: apps/web/test-results/vitest-report.html
-          if-no-files-found: warn
+        run: pnpm test:web
 
   build-job:
     name: Build job
