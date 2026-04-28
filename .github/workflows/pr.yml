@@ -11,7 +11,7 @@ on:
 
 jobs:
   verify-web:
-    name: Build web
+    name: Verify web
     runs-on: ubuntu-latest
     defaults:
       run:
