@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
@@ -109,6 +109,10 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
     setDatePickerOpen(false);
   }
 
+  function getEntryTotal(entry: NewEntryDTO) {
+    return Number(entry.price) * Number(entry.quantity);
+  }
+
   return (
     <Form onSubmit={onSubmit}>
       <Card>
@@ -146,7 +150,9 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                       className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
                     >
                       {formatAmount(
-                        entry.type === "expense" ? -Number(entry.price) : Number(entry.price),
+                        entry.type === "expense"
+                          ? -getEntryTotal(entry)
+                          : getEntryTotal(entry),
                         { sign: true },
                       )}
                     </span>
@@ -239,17 +245,80 @@ function NewEntryDialog({
   onSave: (entry: NewEntryDTO) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [total, setTotal] = useState("");
+  const [lastEditedField, setLastEditedField] = useState<"price" | "total">(
+    "price",
+  );
 
   const {
     register,
     setValue,
     getValues,
+    watch,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(saveEntrySchema),
   });
+
+  const price = watch("price");
+  const quantity = watch("quantity");
+
+  const priceRegistration = register("price");
+  const quantityRegistration = register("quantity");
+
+  function parsePositiveNumber(value?: string) {
+    if (!value || value.trim().length === 0) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  function formatCalculatedAmount(value: number) {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  }
+
+  useEffect(() => {
+    const parsedQuantity = parsePositiveNumber(quantity);
+
+    if (!parsedQuantity) {
+      if (lastEditedField === "price") {
+        setTotal("");
+      }
+
+      return;
+    }
+
+    if (lastEditedField === "total") {
+      const parsedTotal = parsePositiveNumber(total);
+
+      if (!parsedTotal) {
+        return;
+      }
+
+      const nextPrice = formatCalculatedAmount(parsedTotal / parsedQuantity);
+      if (price !== nextPrice) {
+        setValue("price", nextPrice, { shouldValidate: true, shouldDirty: true });
+      }
+
+      return;
+    }
+
+    const parsedPrice = parsePositiveNumber(price);
+
+    if (!parsedPrice) {
+      setTotal("");
+      return;
+    }
+
+    const nextTotal = formatCalculatedAmount(parsedPrice * parsedQuantity);
+    if (total !== nextTotal) {
+      setTotal(nextTotal);
+    }
+  }, [lastEditedField, price, quantity, setValue, total]);
 
   function addEntry(type: EntryType) {
     setValue("type", type);
@@ -281,6 +350,8 @@ function NewEntryDialog({
 
   // TODO: Does not work...
   function resetForm() {
+    setTotal("");
+    setLastEditedField("price");
     reset({
       product: undefined,
       price: undefined,
@@ -300,11 +371,11 @@ function NewEntryDialog({
         <DialogHeader>
           <DialogTitle>Transaction Entry</DialogTitle>
           <DialogDescription>
-            Add a product with quantity and price to the transaction
+            Add a product with quantity and either unit price or total
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-2 gap-y-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-3">
+          <div className="sm:col-span-3">
             <FormField>
               <FormFieldLabel>Product</FormFieldLabel>
               <ProductSelect
@@ -320,13 +391,40 @@ function NewEntryDialog({
           </div>
           <FormField>
             <FormFieldLabel>Price</FormFieldLabel>
-            <Input {...register("price")} inputMode="decimal" placeholder="12.45,-" />
+            <Input
+              {...priceRegistration}
+              inputMode="decimal"
+              placeholder="12.45,-"
+              onChange={(event) => {
+                setLastEditedField("price");
+                priceRegistration.onChange(event);
+              }}
+            />
             <FormFieldError>{errors.price?.message}</FormFieldError>
           </FormField>
           <FormField>
             <FormFieldLabel>Quantity</FormFieldLabel>
-            <Input {...register("quantity")} inputMode="numeric" placeholder="1" />
+            <Input
+              {...quantityRegistration}
+              inputMode="numeric"
+              placeholder="1"
+              onChange={(event) => {
+                quantityRegistration.onChange(event);
+              }}
+            />
             <FormFieldError>{errors.quantity?.message}</FormFieldError>
+          </FormField>
+          <FormField>
+            <FormFieldLabel>Total</FormFieldLabel>
+            <Input
+              value={total}
+              inputMode="decimal"
+              placeholder="24.90,-"
+              onChange={(event) => {
+                setLastEditedField("total");
+                setTotal(event.target.value);
+              }}
+            />
           </FormField>
         </div>
         <DialogFooter className="grid grid-cols-2">
