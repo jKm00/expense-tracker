@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import type { NewTransactionDTO } from "../transactions.dtos";
 
 const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
   product: undefined,
@@ -52,6 +53,8 @@ const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
 export function NewTransactionForm({ products }: { products: Product[] }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [entries, setEntries] = useState<NewEntryDTO[]>([]);
+  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [editingEntryIndex, setEditingEntryIndex] = useState<number | null>(null);
 
   const navigate = useNavigate();
   const mutation = transactionMutations.saveTransaction();
@@ -62,7 +65,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
     watch,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<NewTransactionDTO>({
     defaultValues: {
       date: new Date(),
       entries: [],
@@ -71,6 +74,8 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
   });
 
   const selectedDate = watch("date");
+  const editingEntry =
+    editingEntryIndex === null ? undefined : entries[editingEntryIndex];
 
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
@@ -103,12 +108,40 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
     });
   }
 
+  function handleSaveEntry(entry: NewEntryDTO) {
+    if (editingEntryIndex === null) {
+      handleNewEntry(entry);
+      return;
+    }
+
+    setEntries((prev) => {
+      const updated = prev.map((existingEntry, index) =>
+        index === editingEntryIndex ? entry : existingEntry,
+      );
+      setValue("entries", updated);
+      return updated;
+    });
+  }
+
   function handleRemoveEntry(index: number) {
     setEntries((prev) => {
       const rest = prev.filter((_, i) => i !== index);
       setValue("entries", rest);
       return rest;
     });
+  }
+
+  function handleEditEntry(index: number) {
+    setEditingEntryIndex(index);
+    setEntryDialogOpen(true);
+  }
+
+  function handleEntryDialogOpenChange(open: boolean) {
+    setEntryDialogOpen(open);
+
+    if (!open) {
+      setEditingEntryIndex(null);
+    }
   }
 
   function handleDateSelect(date: Date | undefined) {
@@ -143,7 +176,16 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                 {entries.map((entry, i) => (
                   <div
                     key={`${entry.product.id}-${entry.quantity}-${i}`}
-                    className={`flex items-center gap-3 px-3 py-2.5 ${i !== entries.length - 1 ? "border-b border-border" : ""}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40 ${i !== entries.length - 1 ? "border-b border-border" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleEditEntry(i)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleEditEntry(i);
+                      }
+                    }}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
@@ -167,7 +209,10 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                       variant="ghost"
                       size="icon-xs"
                       type="button"
-                      onClick={() => handleRemoveEntry(i)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveEntry(i);
+                      }}
                     >
                       <X className="size-3" />
                     </Button>
@@ -177,7 +222,13 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
             )}
           </div>
 
-          <NewEntryDialog products={products} onSave={handleNewEntry} />
+          <NewEntryDialog
+            products={products}
+            open={entryDialogOpen}
+            onOpenChange={handleEntryDialogOpenChange}
+            initialEntry={editingEntry}
+            onSave={handleSaveEntry}
+          />
           <FormFieldError>{errors.entries?.message}</FormFieldError>
 
           <Separator />
@@ -250,12 +301,17 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
 
 function NewEntryDialog({
   products,
+  open,
+  onOpenChange,
+  initialEntry,
   onSave,
 }: {
   products: Product[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialEntry?: NewEntryDTO;
   onSave: (entry: NewEntryDTO) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [total, setTotal] = useState("");
   const [lastEditedField, setLastEditedField] = useState<"price" | "total">(
     "price",
@@ -280,6 +336,8 @@ function NewEntryDialog({
   const priceRegistration = register("price");
   const quantityRegistration = register("quantity");
 
+  const isEditing = initialEntry !== undefined;
+
   function parsePositiveNumber(value?: string) {
     if (!value || value.trim().length === 0) {
       return null;
@@ -291,6 +349,10 @@ function NewEntryDialog({
 
   function formatCalculatedAmount(value: number) {
     return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  }
+
+  function getDialogEntryTotal(entry: NewEntryDTO) {
+    return Number(entry.price) * Number(entry.quantity);
   }
 
   useEffect(() => {
@@ -335,12 +397,27 @@ function NewEntryDialog({
     }
   }, [lastEditedField, price, quantity, setValue, total]);
 
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+      return;
+    }
+
+    if (initialEntry) {
+      reset(initialEntry);
+      setLastEditedField("price");
+      setTotal(formatCalculatedAmount(getDialogEntryTotal(initialEntry)));
+      return;
+    }
+
+    resetForm();
+  }, [initialEntry, open, reset]);
+
   function addEntry(type: EntryType) {
     setValue("type", type);
     handleSubmit((data) => {
       onSave({ ...data, type });
-      setOpen(false);
-      resetForm();
+      onOpenChange(false);
     })();
   }
 
@@ -353,11 +430,7 @@ function NewEntryDialog({
   }
 
   function handleOpenChange(open: boolean) {
-    setOpen(open);
-
-    if (!open) {
-      resetForm();
-    }
+    onOpenChange(open);
   }
 
   function resetForm() {
@@ -376,9 +449,13 @@ function NewEntryDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transaction Entry</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Transaction Entry" : "Transaction Entry"}
+          </DialogTitle>
           <DialogDescription>
-            Add a product with quantity and either unit price or total
+            {isEditing
+              ? "Update the product, quantity, or pricing for this item"
+              : "Add a product with quantity and either unit price or total"}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-3">
