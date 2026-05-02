@@ -29,18 +29,14 @@ import { formatAmount } from "@/utils/format";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Calendar,
-  CircleDollarSign,
-  SquarePen,
-  ToggleLeft,
-  Trash,
-} from "lucide-react";
+import { Calendar, Repeat, SquarePen, ToggleLeft, Trash } from "lucide-react";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/recurring/$id/")({
   loader: async ({ context, params }) => {
-    context.queryClient.prefetchQuery(recurringQueries.getRecurringOptions(params.id));
+    context.queryClient.prefetchQuery(
+      recurringQueries.getRecurringOptions(params.id),
+    );
   },
   component: RouteComponent,
 });
@@ -121,7 +117,11 @@ function RecurringDetails() {
     );
   }
 
-  const occurrencesSoFar = getOccurrencesSoFar(recurring.start, recurring.end, recurring.interval);
+  const occurrencesSoFar = getOccurrencesSoFar(
+    recurring.start,
+    recurring.end,
+    recurring.interval,
+  );
   const nextOccurrence = recurring.isActive
     ? getNextOccurrence(recurring.start, recurring.end, recurring.interval)
     : null;
@@ -129,13 +129,6 @@ function RecurringDetails() {
   return (
     <div className="space-y-6 @container">
       <div className="grid gap-3 @xl:grid-cols-3">
-        <KpiCard
-          title="Amount"
-          value={formatAmount(recurring.price)}
-          subtitle="Per interval"
-          icon={CircleDollarSign}
-          color={recurring.type === "expense" ? "expense" : "income"}
-        />
         <KpiCard
           title="Status"
           value={recurring.isActive ? "Active" : "Paused"}
@@ -153,8 +146,18 @@ function RecurringDetails() {
                 })
               : "No upcoming run"
           }
-          subtitle={nextOccurrence ? "Next scheduled occurrence" : "Already ended or paused"}
+          subtitle={
+            nextOccurrence
+              ? "Next scheduled occurrence"
+              : "Already ended or paused"
+          }
           icon={Calendar}
+        />
+        <KpiCard
+          title="Count"
+          value={`${occurrencesSoFar}`}
+          subtitle="Number of times payed"
+          icon={Repeat}
         />
       </div>
 
@@ -263,10 +266,7 @@ function getNextOccurrence(
   return cursor;
 }
 
-function advanceDate(
-  date: Date,
-  interval: "weekly" | "monthly" | "yearly",
-) {
+function advanceDate(date: Date, interval: "weekly" | "monthly" | "yearly") {
   const next = new Date(date);
 
   switch (interval) {
