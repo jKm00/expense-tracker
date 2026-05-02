@@ -122,7 +122,9 @@ function RecurringDetails() {
   }
 
   const occurrencesSoFar = getOccurrencesSoFar(recurring.start, recurring.end, recurring.interval);
-  const nextOccurrence = getNextOccurrence(recurring.start, recurring.end, recurring.interval);
+  const nextOccurrence = recurring.isActive
+    ? getNextOccurrence(recurring.start, recurring.end, recurring.interval)
+    : null;
 
   return (
     <div className="space-y-6 @container">
