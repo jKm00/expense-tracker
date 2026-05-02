@@ -5,6 +5,7 @@ import {
   addProductSchema,
   deleteProductSchema,
   getProductSchema,
+  getProductStatsSchema,
   linkTagSchema,
   updateProductSchema,
 } from "./products.dtos";
@@ -23,6 +24,15 @@ const getProduct = createServerFn({ method: "GET" })
     const userId = context.user.id;
     const productId = data.productId;
     return await productService.getProduct(userId, productId);
+  });
+
+const getProductStats = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(getProductStatsSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const productId = data.productId;
+    return await productService.getProductStats(userId, productId);
   });
 
 const addProduct = createServerFn({ method: "POST" })
@@ -76,6 +86,7 @@ const unlinkTagFromProduct = createServerFn({ method: "POST" })
 export const productController = {
   getProducts,
   getProduct,
+  getProductStats,
   addProduct,
   updateProduct,
   deleteProduct,

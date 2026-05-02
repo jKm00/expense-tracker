@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TagBadge } from "@/features/tags/components/tag";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -111,7 +110,7 @@ function TagDetailsContent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/tags" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Tag Details</PageHeaderTitle>
         <PageHeaderDescription>
           View and edit details of the tag
@@ -197,8 +196,8 @@ function TagDetailsContent() {
             {tag.products.map((product, idx) => (
               <Link
                 key={product.id}
-                to="/dashboard/products/$productId"
-                params={{ productId: product.id }}
+                to="/dashboard/products/$id"
+                params={{ id: product.id }}
                 className="block"
               >
                 <div

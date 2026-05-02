@@ -23,7 +23,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/recurring" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>New Recurring</PageHeaderTitle>
         <PageHeaderDescription>
           Set up a new recurring transaction

@@ -5,6 +5,7 @@ vi.mock("./products.repo", () => ({
   productRepo: {
     getAll: vi.fn(),
     getOne: vi.fn(),
+    getStats: vi.fn(),
     save: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
@@ -96,6 +97,72 @@ describe("productService", () => {
       mockProductRepo.getOne.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await productService.getProduct("user-1", "product-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("PRODUCT_DB_ERROR");
+    });
+  });
+
+  describe("getProductStats", () => {
+    it("returns ok with stats when product exists and repo succeeds", async () => {
+      const product = makeProduct();
+      const stats = {
+        purchaseCount: 3,
+        totalQuantity: 6,
+        totalSpent: "120.50",
+        totalIncome: "10.00",
+        lastPurchasedAt: new Date("2024-02-15"),
+      };
+
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getStats.mockResolvedValue(stats as any);
+
+      const [error, data] = await productService.getProductStats(
+        "user-1",
+        "product-1",
+      );
+
+      expect(error).toBeNull();
+      expect(data).toEqual(stats);
+      expect(mockProductRepo.getStats).toHaveBeenCalledWith("product-1");
+    });
+
+    it("returns err early when getProduct fails", async () => {
+      mockProductRepo.getOne.mockResolvedValue(undefined);
+
+      const [error, data] = await productService.getProductStats(
+        "user-1",
+        "product-1",
+      );
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
+      expect(mockProductRepo.getStats).not.toHaveBeenCalled();
+    });
+
+    it("returns err early when product is not owned by the user", async () => {
+      const product = makeProduct({ userId: "other-user" });
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+
+      const [error, data] = await productService.getProductStats(
+        "user-1",
+        "product-1",
+      );
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("PRODUCT_UNAUTHORIZED");
+      expect(mockProductRepo.getStats).not.toHaveBeenCalled();
+    });
+
+    it("returns err with PRODUCT_DB_ERROR when stats repo throws", async () => {
+      const product = makeProduct();
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getStats.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await productService.getProductStats(
+        "user-1",
+        "product-1",
+      );
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("PRODUCT_DB_ERROR");

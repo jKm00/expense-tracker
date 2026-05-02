@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { products, productTags } from "./products.schema";
+import { entries, transactions } from "../transactions/transactions.schema";
 import { NewProduct, UpdateProduct } from "./products.models";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, sql, sum } from "drizzle-orm";
 
 async function getAll(userId: string) {
   return await db.query.products.findMany({
@@ -69,9 +70,32 @@ async function removeTagLink(productId: string, tagId: string) {
     .returning();
 }
 
+async function getStats(productId: string) {
+  const [stats] = await db
+    .select({
+      purchaseCount: count(entries.id),
+      totalQuantity: sql<number>`coalesce(${sum(entries.quantity)}, 0)`,
+      totalSpent: sql<string>`coalesce(sum(case when ${entries.type} = 'expense' then ${entries.price} * ${entries.quantity} else 0 end), 0)`,
+      totalIncome: sql<string>`coalesce(sum(case when ${entries.type} = 'income' then ${entries.price} * ${entries.quantity} else 0 end), 0)`,
+      lastPurchasedAt: sql<Date | null>`max(${transactions.date})`,
+    })
+    .from(entries)
+    .innerJoin(transactions, eq(entries.transactionId, transactions.id))
+    .where(eq(entries.productId, productId));
+
+  return {
+    purchaseCount: Number(stats?.purchaseCount ?? 0),
+    totalQuantity: Number(stats?.totalQuantity ?? 0),
+    totalSpent: String(stats?.totalSpent ?? "0"),
+    totalIncome: String(stats?.totalIncome ?? "0"),
+    lastPurchasedAt: stats?.lastPurchasedAt ?? null,
+  };
+}
+
 export const productRepo = {
   getAll,
   getOne,
+  getStats,
   save,
   saveTagLink,
   update,

@@ -5,12 +5,6 @@ import { cn } from "@/lib/utils";
 
 type KpiCardColor = "default" | "income" | "expense";
 
-const iconColorMap: Record<KpiCardColor, string> = {
-  default: "bg-primary/10 text-primary",
-  income: "bg-income/10 text-income",
-  expense: "bg-expense/10 text-expense",
-};
-
 const valueColorMap: Record<KpiCardColor, string> = {
   default: "",
   income: "text-income",

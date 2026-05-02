@@ -21,7 +21,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/products" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>New Product</PageHeaderTitle>
         <PageHeaderDescription>
           Add a new product to your product bank

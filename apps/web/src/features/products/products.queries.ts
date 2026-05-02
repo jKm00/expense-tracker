@@ -17,7 +17,15 @@ function getProductOptions(productId: string) {
   });
 }
 
+function getProductStatsOptions(productId: string) {
+  return queryOptions({
+    queryKey: [PRODUCT_QUERY_KEY, productId, "stats"],
+    queryFn: () => productController.getProductStats({ data: { productId } }),
+  });
+}
+
 export const productQueries = {
   getProductsOptions,
   getProductOptions,
+  getProductStatsOptions,
 };

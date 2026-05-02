@@ -20,7 +20,7 @@ export const getRouter = () => {
 
   setupRouterSsrQueryIntegration({
     router,
-    queryClient: rqContext.queryClient,
+    queryClient: rqContext.queryClient as never,
   });
 
   return router;

@@ -7,24 +7,20 @@ import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
   PageHeaderBackButton,
-  PageHeaderTitle,
   PageHeaderDescription,
+  PageHeaderTitle,
 } from "@/components/custom/page-header";
-import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { EditRecurringForm } from "@/features/recurring/components/edit-recurring.form";
-import { DeleteRecurringDialog } from "@/features/recurring/components/delete-recurring.dialog";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
-import { productQueries } from "@/features/products/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/recurring/$id")({
+export const Route = createFileRoute("/_app/dashboard/recurring/$id/edit")({
   loader: async ({ context, params }) => {
-    context.queryClient.prefetchQuery(
+    await context.queryClient.ensureQueryData(
       recurringQueries.getRecurringOptions(params.id),
     );
-    context.queryClient.prefetchQuery(productQueries.getProductsOptions());
   },
   component: RouteComponent,
 });
@@ -33,20 +29,18 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/recurring" />
-        <PageHeaderTitle>Recurring Details</PageHeaderTitle>
-        <PageHeaderDescription>
-          View and manage this recurring transaction
-        </PageHeaderDescription>
+        <PageHeaderBackButton />
+        <PageHeaderTitle>Edit Recurring</PageHeaderTitle>
+        <PageHeaderDescription>Modify recurring item details</PageHeaderDescription>
       </PageHeader>
-      <Suspense fallback={<SkeletonForm fields={6} />}>
-        <EditRecurringContent />
+      <Suspense fallback={null}>
+        <EditRecurringFormWrapper />
       </Suspense>
     </div>
   );
 }
 
-function EditRecurringContent() {
+function EditRecurringFormWrapper() {
   const { id } = Route.useParams();
   const {
     data: [expectedError, recurring],
@@ -64,18 +58,17 @@ function EditRecurringContent() {
     const reason = expectedError.reason;
     switch (reason) {
       case "RECURRING_NOT_FOUND":
-        title = "Not found";
-        message =
-          "Recurring transaction not found. Make sure the URL is correct.";
+        title = "Recurring not found";
+        message = "The recurring item you are trying to edit does not exist.";
         break;
       case "RECURRING_UNAUTHORIZED":
         title = "Unauthorized";
-        message =
-          "You do not have permission to view this recurring transaction!";
+        message = "You do not have permission to edit this recurring item.";
         break;
       case "RECURRING_DB_ERROR":
         title = "Database error";
-        message = "Something went wrong. Please try again!";
+        message =
+          "Something went wrong trying to fetch the recurring item from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
@@ -91,14 +84,5 @@ function EditRecurringContent() {
     );
   }
 
-  return (
-    <div className="space-y-8">
-      <EditRecurringForm recurring={recurring} />
-      <div className="pt-4 border-t border-border">
-        <DeleteRecurringDialog recurringId={recurring.id}>
-          Delete recurring transaction
-        </DeleteRecurringDialog>
-      </div>
-    </div>
-  );
+  return <EditRecurringForm recurring={recurring} />;
 }

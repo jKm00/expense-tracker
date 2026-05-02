@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
-import { createRecurringSchema, CreateRecurringDTO } from "../recurring.dtos";
+import { updateRecurringSchema, type UpdateRecurringDTO } from "../recurring.dtos";
 import { RecurringWithProduct } from "../recurring.models";
 import { recurringIntervals } from "../recurring.models";
 import { entryTypes } from "@/features/transactions/transactions.models";
@@ -50,6 +50,16 @@ export function EditRecurringForm({
 }: {
   recurring: RecurringWithProduct;
 }) {
+  type EditRecurringFormValues = Omit<UpdateRecurringDTO, "recurringId"> & {
+    product: NonNullable<UpdateRecurringDTO["product"]>;
+    price: NonNullable<UpdateRecurringDTO["price"]>;
+    interval: NonNullable<UpdateRecurringDTO["interval"]>;
+    type: NonNullable<UpdateRecurringDTO["type"]>;
+    start: NonNullable<UpdateRecurringDTO["start"]>;
+    isActive: NonNullable<UpdateRecurringDTO["isActive"]>;
+    end?: UpdateRecurringDTO["end"];
+  };
+
   const {
     data: [_, productsResult],
   } = useSuspenseQuery(productQueries.getProductsOptions());
@@ -66,8 +76,19 @@ export function EditRecurringForm({
     setValue,
     watch,
     formState: { errors, isDirty },
-  } = useForm<CreateRecurringDTO>({
-    resolver: zodResolver(createRecurringSchema),
+  } = useForm<EditRecurringFormValues>({
+    resolver: zodResolver(
+      updateRecurringSchema
+        .omit({ recurringId: true })
+        .required({
+          product: true,
+          price: true,
+          interval: true,
+          type: true,
+          start: true,
+          isActive: true,
+        }),
+    ),
     defaultValues: {
       product: { id: recurring.productId, name: recurring.products?.name ?? "" },
       price: recurring.price,
@@ -103,6 +124,19 @@ export function EditRecurringForm({
               case "RECURRING_UPDATE_FAILED":
               case "RECURRING_DB_ERROR":
                 message = "Failed to update. Please try again!";
+                break;
+              case "PRODUCT_NOT_FOUND":
+                message = "The selected product could not be found";
+                break;
+              case "PRODUCT_UNAUTHORIZED":
+                message = "You do not have permission to use the selected product";
+                break;
+              case "PRODUCT_DB_ERROR":
+              case "UNEXPECTED_DB_ERROR":
+                message = "Failed to load the selected product. Please try again!";
+                break;
+              case "PRODUCT_NOT_RETURNED":
+                message = "Failed to create the selected product. Please try again!";
                 break;
               default:
                 message = `Unexpected error: ${reason satisfies never}. Please try again!`;
@@ -257,9 +291,9 @@ export function EditRecurringForm({
                   <div className="flex flex-col">
                     <Calendar
                       mode="single"
-                      selected={endDate}
+                      selected={endDate ?? undefined}
                       onSelect={(date) => {
-                        setValue("end", (date ? normalizeToNoonUTC(date) : null) as CreateRecurringDTO["end"], {
+                        setValue("end", date ? normalizeToNoonUTC(date) : null, {
                           shouldDirty: true,
                         });
                         setEndDateOpen(false);
@@ -273,7 +307,7 @@ export function EditRecurringForm({
                         size="sm"
                         className="w-full"
                         onClick={() => {
-                          setValue("end", null as CreateRecurringDTO["end"], {
+                          setValue("end", null, {
                             shouldDirty: true,
                           });
                           setEndDateOpen(false);

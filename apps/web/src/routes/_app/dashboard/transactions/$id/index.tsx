@@ -60,7 +60,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/transactions" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Transaction Details</PageHeaderTitle>
         <PageHeaderDescription>
           View and edit details about the transaction

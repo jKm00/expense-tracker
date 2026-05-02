@@ -1,14 +1,14 @@
 import React from "react";
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { Button } from "../ui/button";
 
-export function PageHeader({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function PageHeader({ children }: { children: React.ReactNode }) {
   const backButton = filterChildren(children, [PageHeaderBackButton]);
-  const titleArea = filterChildren(children, [PageHeaderTitle, PageHeaderDescription]);
+  const titleArea = filterChildren(children, [
+    PageHeaderTitle,
+    PageHeaderDescription,
+  ]);
   const actions = filterChildren(children, [PageHeaderActions]);
 
   return (
@@ -22,15 +22,20 @@ export function PageHeader({
   );
 }
 
-export function PageHeaderBackButton({ to }: { to: string }) {
+export function PageHeaderBackButton() {
+  const router = useRouter();
+
   return (
-    <Link
-      to={to}
-      className="md:hidden flex items-center justify-center -ml-1 mr-2 shrink-0 size-8 rounded-md hover:bg-accent"
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={() => router.history.back()}
+      className="-ml-1 mr-2 shrink-0 md:hidden"
       aria-label="Go back"
     >
       <ArrowLeft className="size-4" />
-    </Link>
+    </Button>
   );
 }
 
@@ -47,16 +52,10 @@ export function PageHeaderDescription({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <p className="mt-1 text-sm text-muted-foreground">{children}</p>
-  );
+  return <p className="mt-1 text-sm text-muted-foreground">{children}</p>;
 }
 
-export function PageHeaderActions({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function PageHeaderActions({ children }: { children: React.ReactNode }) {
   return <div className="flex items-center gap-2 shrink-0">{children}</div>;
 }
 
@@ -64,7 +63,7 @@ function filterChildren(
   children: React.ReactNode,
   types: React.ComponentType<any>[],
 ) {
-  return React.Children.toArray(children).filter((child) =>
-    React.isValidElement(child) && types.includes(child.type as any),
+  return React.Children.toArray(children).filter(
+    (child) => React.isValidElement(child) && types.includes(child.type as any),
   );
 }
