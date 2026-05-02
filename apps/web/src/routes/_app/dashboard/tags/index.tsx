@@ -117,7 +117,6 @@ function TagContent() {
       <TagKpis tags={tags} />
       <Input
         placeholder="Search..."
-        className="max-w-75"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
