@@ -42,6 +42,13 @@ import {
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 
+const NEW_ENTRY_DEFAULT_VALUES = {
+  product: undefined,
+  price: "",
+  quantity: "",
+  type: "expense" as EntryType,
+};
+
 export function NewTransactionForm({ products }: { products: Product[] }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [entries, setEntries] = useState<NewEntryDTO[]>([]);
@@ -259,6 +266,7 @@ function NewEntryDialog({
     reset,
     formState: { errors },
   } = useForm({
+    defaultValues: NEW_ENTRY_DEFAULT_VALUES,
     resolver: zodResolver(saveEntrySchema),
   });
 
@@ -352,11 +360,7 @@ function NewEntryDialog({
   function resetForm() {
     setTotal("");
     setLastEditedField("price");
-    reset({
-      product: undefined,
-      price: undefined,
-      quantity: undefined,
-    });
+    reset(NEW_ENTRY_DEFAULT_VALUES);
   }
 
   return (
