@@ -6,6 +6,12 @@ export const getProductSchema = z.object({
 
 export type GetProductDTO = z.infer<typeof getProductSchema>;
 
+export const getProductStatsSchema = z.object({
+  productId: z.string(),
+});
+
+export type GetProductStatsDTO = z.infer<typeof getProductStatsSchema>;
+
 export const addProductSchema = z.object({
   product: z.object({
     name: z.string(),

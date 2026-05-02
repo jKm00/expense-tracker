@@ -41,6 +41,23 @@ async function getProduct(userId: string, productId: string) {
   }
 }
 
+async function getProductStats(userId: string, productId: string) {
+  const [productError] = await getProduct(userId, productId);
+  if (productError) {
+    return err(productError);
+  }
+
+  try {
+    const stats = await productRepo.getStats(productId);
+    return ok(stats);
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DB_ERROR" as const,
+      message: `Failed to fetch stats for product (${productId}) for user ${userId}`,
+    });
+  }
+}
+
 async function addProduct(product: NewProduct, tagIds?: string[]) {
   let saved: Product;
   try {
@@ -170,6 +187,7 @@ async function deleteProduct(userId: string, productId: string) {
 export const productService = {
   getProducts,
   getProduct,
+  getProductStats,
   addProduct,
   updateProduct,
   deleteProduct,
