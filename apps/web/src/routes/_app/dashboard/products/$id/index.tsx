@@ -55,7 +55,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/products" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Product Details</PageHeaderTitle>
         <PageHeaderDescription>
           View details about this product

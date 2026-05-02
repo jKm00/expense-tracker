@@ -51,7 +51,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/recurring" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Recurring Details</PageHeaderTitle>
         <PageHeaderDescription>
           View details about this recurring item

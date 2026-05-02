@@ -111,7 +111,7 @@ function TagDetailsContent() {
   return (
     <div className="space-y-6 @container">
       <PageHeader>
-        <PageHeaderBackButton to="/dashboard/tags" />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Tag Details</PageHeaderTitle>
         <PageHeaderDescription>
           View and edit details of the tag

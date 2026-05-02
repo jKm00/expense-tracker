@@ -31,7 +31,7 @@ function RouteComponent() {
   return (
     <div className="space-y-6">
       <PageHeader>
-        <PageHeaderBackButton to={`/dashboard/products/${id}`} />
+        <PageHeaderBackButton />
         <PageHeaderTitle>Edit Product</PageHeaderTitle>
         <PageHeaderDescription>Modify product details</PageHeaderDescription>
       </PageHeader>
