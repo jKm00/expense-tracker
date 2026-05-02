@@ -30,8 +30,8 @@ function EntryList({
           {entries.map((entry, idx) => (
             <Link
               key={entry.id}
-              to="/dashboard/products/$productId"
-              params={{ productId: entry.productId }}
+              to="/dashboard/products/$id"
+              params={{ id: entry.productId }}
               className="block"
             >
               <div

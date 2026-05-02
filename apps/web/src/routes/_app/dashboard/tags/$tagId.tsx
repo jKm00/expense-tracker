@@ -197,8 +197,8 @@ function TagDetailsContent() {
             {tag.products.map((product, idx) => (
               <Link
                 key={product.id}
-                to="/dashboard/products/$productId"
-                params={{ productId: product.id }}
+                to="/dashboard/products/$id"
+                params={{ id: product.id }}
                 className="block"
               >
                 <div
