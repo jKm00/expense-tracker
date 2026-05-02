@@ -143,7 +143,7 @@ describe("transactionService", () => {
   describe("saveTransaction", () => {
     const baseEntry = {
       product: { id: "product-1", name: "Milk" },
-      quantity: 2,
+      quantity: "2",
       price: "5",
       type: "expense" as const,
     };
@@ -176,10 +176,10 @@ describe("transactionService", () => {
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
       mockTransactionRepo.saveEntry.mockResolvedValue([makeEntry()] as any);
 
-      await transactionService.saveTransaction({
-        transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
-        entries: [{ product: { id: "p1", name: "Milk" }, quantity: 2, price: "5", type: "expense" }],
-      });
+        await transactionService.saveTransaction({
+          transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
+          entries: [{ product: { id: "p1", name: "Milk" }, quantity: "2", price: "5", type: "expense" }],
+        });
 
       // totalPrice = 0 - 5*2 = -10
       expect(mockTransactionRepo.save).toHaveBeenCalledWith(
@@ -194,10 +194,10 @@ describe("transactionService", () => {
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
       mockTransactionRepo.saveEntry.mockResolvedValue([makeEntry()] as any);
 
-      await transactionService.saveTransaction({
-        transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
-        entries: [{ product: { id: "p1", name: "Salary" }, quantity: 1, price: "1000", type: "income" }],
-      });
+        await transactionService.saveTransaction({
+          transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
+          entries: [{ product: { id: "p1", name: "Salary" }, quantity: "1", price: "1000", type: "income" }],
+        });
 
       // totalPrice = 0 + 1000*1 = 1000
       expect(mockTransactionRepo.save).toHaveBeenCalledWith(
@@ -212,13 +212,13 @@ describe("transactionService", () => {
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
       mockTransactionRepo.saveEntry.mockResolvedValue([makeEntry()] as any);
 
-      await transactionService.saveTransaction({
-        transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
-        entries: [
-          { product: { id: "p1", name: "Income" }, quantity: 1, price: "100", type: "income" },
-          { product: { id: "p2", name: "Expense" }, quantity: 2, price: "20", type: "expense" },
-        ],
-      });
+        await transactionService.saveTransaction({
+          transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
+          entries: [
+          { product: { id: "p1", name: "Income" }, quantity: "1", price: "100", type: "income" },
+          { product: { id: "p2", name: "Expense" }, quantity: "2", price: "20", type: "expense" },
+          ],
+        });
 
       // totalPrice = 100 - 40 = 60
       expect(mockTransactionRepo.save).toHaveBeenCalledWith(
@@ -233,10 +233,10 @@ describe("transactionService", () => {
       mockProductService.addProduct.mockResolvedValue([null, product] as any);
       mockTransactionRepo.saveEntry.mockResolvedValue([makeEntry()] as any);
 
-      await transactionService.saveTransaction({
-        transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
-        entries: [{ product: { id: null, name: "New Product" }, quantity: 1, price: "10", type: "expense" }],
-      });
+        await transactionService.saveTransaction({
+          transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
+          entries: [{ product: { id: null, name: "New Product" }, quantity: "1", price: "10", type: "expense" }],
+        });
 
       expect(mockProductService.addProduct).toHaveBeenCalledWith({
         userId: "user-1",
@@ -251,10 +251,10 @@ describe("transactionService", () => {
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
       mockTransactionRepo.saveEntry.mockResolvedValue([makeEntry()] as any);
 
-      await transactionService.saveTransaction({
-        transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
-        entries: [{ product: { id: "product-1", name: "Milk" }, quantity: 1, price: "10", type: "expense" }],
-      });
+        await transactionService.saveTransaction({
+          transaction: { userId: "user-1", store: "Shop", source: "manual", date: new Date() },
+          entries: [{ product: { id: "product-1", name: "Milk" }, quantity: "1", price: "10", type: "expense" }],
+        });
 
       expect(mockProductService.getProduct).toHaveBeenCalledWith("user-1", "product-1");
     });
@@ -328,7 +328,7 @@ describe("transactionService", () => {
     const baseUpdateEntry = {
       id: "entry-1",
       product: { id: "product-1", name: "Milk" },
-      quantity: 1,
+      quantity: "1",
       price: "10",
       type: "expense" as const,
     };
@@ -448,12 +448,12 @@ describe("transactionService", () => {
       mockTransactionRepo.saveEntry.mockResolvedValue([entry] as any);
 
       // existing entry-1 not in payload (gets deleted), new entry without id
-      await transactionService.updateTransaction("user-1", "tx-1", {
-        transaction: {},
-        entries: [
-          { product: { id: null, name: "New Item" }, quantity: 1, price: "5", type: "expense" },
-        ],
-      });
+        await transactionService.updateTransaction("user-1", "tx-1", {
+          transaction: {},
+          entries: [
+          { product: { id: null, name: "New Item" }, quantity: "1", price: "5", type: "expense" },
+          ],
+        });
 
       expect(mockTransactionRepo.saveEntry).toHaveBeenCalled();
       expect(mockProductService.addProduct).toHaveBeenCalled();

@@ -77,20 +77,31 @@ export function NewRecurringForm() {
         const [error] = res;
         if (error) {
           let message: string;
-          const reason = error.reason;
-          switch (reason) {
-            case "RECURRING_UNAUTHORIZED":
-              message =
-                "You do not have permission to create this recurring transaction";
-              break;
-            case "RECURRING_NOT_RETURNED":
-            case "RECURRING_DB_ERROR":
-              message =
-                "Failed to save recurring transaction. Please try again!";
-              break;
-            default:
-              message = `Unexpected error: ${reason satisfies never}`;
-          }
+            const reason = error.reason;
+            switch (reason) {
+              case "RECURRING_NOT_RETURNED":
+              case "RECURRING_DB_ERROR":
+                message =
+                  "Failed to save recurring transaction. Please try again!";
+                break;
+              case "PRODUCT_NOT_FOUND":
+                message = "The selected product could not be found";
+                break;
+              case "PRODUCT_UNAUTHORIZED":
+                message = "You do not have permission to use the selected product";
+                break;
+              case "PRODUCT_DB_ERROR":
+              case "UNEXPECTED_DB_ERROR":
+                message =
+                  "Failed to load the selected product. Please try again!";
+                break;
+              case "PRODUCT_NOT_RETURNED":
+                message =
+                  "Failed to create the selected product. Please try again!";
+                break;
+              default:
+                message = `Unexpected error: ${reason satisfies never}`;
+            }
           toast.error(message);
         } else {
           navigate({ to: "/dashboard/recurring" });

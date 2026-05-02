@@ -98,6 +98,9 @@ function ProductDetails() {
 
   if (expectedProductError || expectedStatsError) {
     const error = expectedProductError ?? expectedStatsError;
+    if (!error) {
+      return <UnexpectedError />;
+    }
 
     let title: string;
     let message: string;

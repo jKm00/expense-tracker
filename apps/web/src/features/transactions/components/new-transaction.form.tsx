@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type DefaultValues } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
@@ -42,11 +42,11 @@ import {
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 
-const NEW_ENTRY_DEFAULT_VALUES = {
+const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
   product: undefined,
   price: "",
   quantity: "",
-  type: "expense" as EntryType,
+  type: "expense",
 };
 
 export function NewTransactionForm({ products }: { products: Product[] }) {
@@ -235,7 +235,11 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
           <Input {...register("source")} value="manual" className="hidden" />
         </CardContent>
         <CardFooter>
-          <LoaderButton type="submit" className="w-full" isLoading={mutation.isPending}>
+          <LoaderButton
+            type="submit"
+            className="w-full"
+            isLoading={mutation.isPending}
+          >
             Save transaction
           </LoaderButton>
         </CardFooter>
@@ -260,16 +264,16 @@ function NewEntryDialog({
   const {
     register,
     setValue,
-    getValues,
     watch,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<NewEntryDTO>({
     defaultValues: NEW_ENTRY_DEFAULT_VALUES,
     resolver: zodResolver(saveEntrySchema),
   });
 
+  const selectedProduct = watch("product");
   const price = watch("price");
   const quantity = watch("quantity");
 
@@ -309,7 +313,10 @@ function NewEntryDialog({
 
       const nextPrice = formatCalculatedAmount(parsedTotal / parsedQuantity);
       if (price !== nextPrice) {
-        setValue("price", nextPrice, { shouldValidate: true, shouldDirty: true });
+        setValue("price", nextPrice, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       }
 
       return;
@@ -331,20 +338,7 @@ function NewEntryDialog({
   function addEntry(type: EntryType) {
     setValue("type", type);
     handleSubmit((data) => {
-      let entryData = { ...data };
-
-      if (lastEditedField === "total") {
-        const parsedTotal = parsePositiveNumber(total);
-        if (parsedTotal) {
-          // Preserve the exact total the user entered. Because the DB stores
-          // price as numeric(10,2), dividing total/quantity would be rounded
-          // (e.g. 10/3 → 3.33, and 3.33×3 = 9.99 ≠ 10). Instead we store the
-          // total as the price with quantity=1 so the arithmetic is exact.
-          entryData = { ...entryData, price: total, quantity: "1" };
-        }
-      }
-
-      onSave({ ...entryData, type });
+      onSave({ ...data, type });
       setOpen(false);
       resetForm();
     })();
@@ -366,7 +360,6 @@ function NewEntryDialog({
     }
   }
 
-  // TODO: Does not work...
   function resetForm() {
     setTotal("");
     setLastEditedField("price");
@@ -393,9 +386,9 @@ function NewEntryDialog({
             <FormField>
               <FormFieldLabel>Product</FormFieldLabel>
               <ProductSelect
-                {...register("product")}
+                key={selectedProduct?.id ?? selectedProduct?.name ?? "new-entry-product"}
                 products={products}
-                defaultValue={getValues("product.name") || undefined}
+                defaultValue={selectedProduct?.name}
                 onValueChange={handleProductSelect}
               />
               <FormFieldError>

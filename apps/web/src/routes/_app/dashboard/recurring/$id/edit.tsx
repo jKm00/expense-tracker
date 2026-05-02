@@ -26,8 +26,6 @@ export const Route = createFileRoute("/_app/dashboard/recurring/$id/edit")({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
-
   return (
     <div className="space-y-6">
       <PageHeader>

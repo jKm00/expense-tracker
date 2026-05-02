@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TagBadge } from "@/features/tags/components/tag";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 import { tagsQueries } from "@/features/tags/tags.queries";

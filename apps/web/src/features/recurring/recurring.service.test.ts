@@ -210,7 +210,7 @@ describe("recurringService", () => {
     }
 
     it("returns ok with updated recurring on success (no product change)", async () => {
-      const item = setupGetRecurring();
+      setupGetRecurring();
       const updated = makeRecurring({ price: "19.99" });
       mockRecurringRepo.update.mockResolvedValue([updated] as any);
 
@@ -230,7 +230,7 @@ describe("recurringService", () => {
       mockProductService.getProduct.mockResolvedValue([null, newProduct] as any);
       mockRecurringRepo.update.mockResolvedValue([updated] as any);
 
-      const [error, data] = await recurringService.updateRecurring("user-1", "rec-1", {
+      const [error] = await recurringService.updateRecurring("user-1", "rec-1", {
         product: { id: "product-2", name: "Spotify" },
       });
 
