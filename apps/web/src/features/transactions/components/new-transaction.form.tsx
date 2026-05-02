@@ -331,10 +331,20 @@ function NewEntryDialog({
   function addEntry(type: EntryType) {
     setValue("type", type);
     handleSubmit((data) => {
-      onSave({
-        ...data,
-        type,
-      });
+      let entryData = { ...data };
+
+      if (lastEditedField === "total") {
+        const parsedTotal = parsePositiveNumber(total);
+        if (parsedTotal) {
+          // Preserve the exact total the user entered. Because the DB stores
+          // price as numeric(10,2), dividing total/quantity would be rounded
+          // (e.g. 10/3 → 3.33, and 3.33×3 = 9.99 ≠ 10). Instead we store the
+          // total as the price with quantity=1 so the arithmetic is exact.
+          entryData = { ...entryData, price: total, quantity: "1" };
+        }
+      }
+
+      onSave({ ...entryData, type });
       setOpen(false);
       resetForm();
     })();
