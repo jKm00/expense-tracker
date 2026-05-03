@@ -120,7 +120,7 @@ async function runTransactionalUpdate(params: {
       .returning();
 
     if (updated.length === 0) {
-      tx.rollback();
+      throw new Error("Nothing was returned after updating transaction");
     }
 
     for (const entryId of params.entryIdsToDelete) {
