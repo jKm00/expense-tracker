@@ -14,7 +14,14 @@ import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type DefaultValues } from "react-hook-form";
 import { useEffect, useMemo, useState } from "react";
-import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
+import {
+  X,
+  Plus,
+  ChevronDownIcon,
+  Minus,
+  ShoppingBag,
+  Tag as TagIcon,
+} from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
   Dialog,
@@ -44,6 +51,8 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import type { NewTransactionDTO } from "../transactions.dtos";
 import { TagSelect } from "@/features/tags/components/tag.select";
+import { TagBadge } from "@/features/tags/components/tag";
+import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 
 const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
   product: undefined,
@@ -339,6 +348,7 @@ function NewEntryDialog({
   const [lastEditedField, setLastEditedField] = useState<"price" | "total">(
     "price",
   );
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const {
     register,
@@ -353,13 +363,8 @@ function NewEntryDialog({
   });
 
   const selectedProduct = watch("product");
-  const selectedTagIds = watch("tagIds") ?? [];
   const price = watch("price");
   const quantity = watch("quantity");
-  const selectedTags = useMemo(
-    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
-    [tags, selectedTagIds],
-  );
 
   const priceRegistration = register("price");
   const quantityRegistration = register("quantity");
@@ -433,18 +438,25 @@ function NewEntryDialog({
 
     if (initialEntry) {
       reset(initialEntry);
+      setSelectedTags(
+        tags.filter((tag) => (initialEntry.tagIds ?? []).includes(tag.id)),
+      );
       setLastEditedField("price");
       setTotal(formatCalculatedAmount(getDialogEntryTotal(initialEntry)));
       return;
     }
 
     resetForm();
-  }, [initialEntry, open, reset]);
+  }, [initialEntry, open, reset, tags]);
 
   function addEntry(type: EntryType) {
     setValue("type", type);
     handleSubmit((data) => {
-      onSave({ ...data, type });
+      onSave({
+        ...data,
+        type,
+        tagIds: selectedTags.map((tag) => tag.id),
+      });
       onOpenChange(false);
     })();
   }
@@ -462,6 +474,7 @@ function NewEntryDialog({
   }
 
   function handleTagsChange(nextTags: Tag[]) {
+    setSelectedTags(nextTags);
     setValue(
       "tagIds",
       nextTags.map((tag) => tag.id),
@@ -474,6 +487,7 @@ function NewEntryDialog({
 
   function resetForm() {
     setTotal("");
+    setSelectedTags([]);
     setLastEditedField("price");
     reset(NEW_ENTRY_DEFAULT_VALUES);
   }
@@ -551,9 +565,12 @@ function NewEntryDialog({
           </FormField>
           <div className="sm:col-span-3">
             <FormField>
-              <FormFieldLabel>
-                Entry tags <span className="text-muted-foreground/60">(Optional)</span>
-              </FormFieldLabel>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <FormFieldLabel>
+                  Entry tags <span className="text-muted-foreground/60">(Optional)</span>
+                </FormFieldLabel>
+                <NewTagDialog />
+              </div>
               <TagSelect
                 tags={tags}
                 value={selectedTags}
@@ -561,6 +578,18 @@ function NewEntryDialog({
                 placeholder="Search tags..."
                 className="w-full"
               />
+              {selectedTags.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {selectedTags.map((tag) => (
+                    <TagBadge key={tag.id} tag={tag}>
+                      <TagIcon className="size-3" />
+                      {tag.name}
+                    </TagBadge>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">No tags selected</p>
+              )}
             </FormField>
           </div>
         </div>

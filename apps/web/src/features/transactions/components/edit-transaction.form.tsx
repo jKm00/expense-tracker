@@ -14,7 +14,14 @@ import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect, useMemo, useState } from "react";
-import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
+import {
+  X,
+  Plus,
+  ChevronDownIcon,
+  Minus,
+  ShoppingBag,
+  Tag as TagIcon,
+} from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
   Dialog,
@@ -44,6 +51,8 @@ import {
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { TagSelect } from "@/features/tags/components/tag.select";
+import { TagBadge } from "@/features/tags/components/tag";
+import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 
 export function EditTransactionForm({
   products,
@@ -289,6 +298,7 @@ function NewEntryDialog({
   onSave: (entry: NewEntryDTO) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const {
     register,
@@ -306,10 +316,10 @@ function NewEntryDialog({
   });
 
   const selectedTagIds = watch("tagIds") ?? [];
-  const selectedTags = useMemo(
-    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
-    [tags, selectedTagIds],
-  );
+
+  useEffect(() => {
+    setSelectedTags(tags.filter((tag) => selectedTagIds.includes(tag.id)));
+  }, [selectedTagIds, tags]);
 
   function addEntry(type: EntryType) {
     setValue("type", type);
@@ -341,6 +351,7 @@ function NewEntryDialog({
   }
 
   function handleTagsChange(nextTags: Tag[]) {
+    setSelectedTags(nextTags);
     setValue(
       "tagIds",
       nextTags.map((tag) => tag.id),
@@ -349,7 +360,8 @@ function NewEntryDialog({
   }
 
   // TODO: Does not work...
-  function resetForm() {
+function resetForm() {
+    setSelectedTags([]);
     reset({
       product: undefined,
       price: undefined,
@@ -400,9 +412,12 @@ function NewEntryDialog({
           </FormField>
           <div className="col-span-2">
             <FormField>
-              <FormFieldLabel>
-                Entry tags <span className="text-muted-foreground/60">(Optional)</span>
-              </FormFieldLabel>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <FormFieldLabel>
+                  Entry tags <span className="text-muted-foreground/60">(Optional)</span>
+                </FormFieldLabel>
+                <NewTagDialog />
+              </div>
               <TagSelect
                 tags={tags}
                 value={selectedTags}
@@ -410,6 +425,18 @@ function NewEntryDialog({
                 placeholder="Search tags..."
                 className="w-full"
               />
+              {selectedTags.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {selectedTags.map((tag) => (
+                    <TagBadge key={tag.id} tag={tag}>
+                      <TagIcon className="size-3" />
+                      {tag.name}
+                    </TagBadge>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">No tags selected</p>
+              )}
             </FormField>
           </div>
         </div>
