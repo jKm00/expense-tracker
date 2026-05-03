@@ -94,6 +94,59 @@ async function removeAllEntryTagLinks(entryId: string) {
   return await db.delete(entryTags).where(eq(entryTags.entryId, entryId)).returning();
 }
 
+export interface EntryCreateInput {
+  entryData: Omit<NewEntry, "id">;
+  tagIds: string[];
+}
+
+export interface EntryUpdateInput {
+  id: string;
+  entryData: Pick<NewEntry, "productId" | "price" | "quantity" | "type">;
+  tagIds: string[];
+}
+
+async function runTransactionalUpdate(params: {
+  transactionId: string;
+  transactionData: Partial<NewTransaction>;
+  entryIdsToDelete: string[];
+  entriesToCreate: EntryCreateInput[];
+  entriesToUpdate: EntryUpdateInput[];
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const updated = await tx
+      .update(transactions)
+      .set({ ...params.transactionData, updatedAt: new Date() })
+      .where(eq(transactions.id, params.transactionId))
+      .returning();
+
+    if (updated.length === 0) {
+      tx.rollback();
+    }
+
+    for (const entryId of params.entryIdsToDelete) {
+      await tx.delete(entries).where(eq(entries.id, entryId));
+    }
+
+    for (const { id, entryData, tagIds } of params.entriesToUpdate) {
+      await tx.update(entries).set(entryData).where(eq(entries.id, id));
+      await tx.delete(entryTags).where(eq(entryTags.entryId, id));
+      for (const tagId of tagIds) {
+        await tx.insert(entryTags).values({ entryId: id, tagId });
+      }
+    }
+
+    for (const { entryData, tagIds } of params.entriesToCreate) {
+      const saved = await tx.insert(entries).values(entryData).returning();
+      if (saved.length > 0) {
+        const savedId = saved[0].id;
+        for (const tagId of tagIds) {
+          await tx.insert(entryTags).values({ entryId: savedId, tagId });
+        }
+      }
+    }
+  });
+}
+
 export const transactionRepo = {
   getAll,
   getOne,
@@ -106,4 +159,5 @@ export const transactionRepo = {
   saveEntryTagLink,
   removeEntryTagLink,
   removeAllEntryTagLinks,
+  runTransactionalUpdate,
 };
