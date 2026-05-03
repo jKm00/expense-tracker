@@ -19,7 +19,6 @@ vi.mock("./transactions.repo", () => ({
     saveEntryTagLink: vi.fn(),
     removeEntryTagLink: vi.fn(),
     removeAllEntryTagLinks: vi.fn(),
-    runTransactionalUpdate: vi.fn(),
   },
 }));
 
@@ -50,7 +49,6 @@ beforeEach(() => {
   mockTagsService.getTag.mockResolvedValue([null, makeTag()] as any);
   mockTransactionRepo.removeAllEntryTagLinks.mockResolvedValue([] as any);
   mockTransactionRepo.saveEntryTagLink.mockResolvedValue([{}] as any);
-  mockTransactionRepo.runTransactionalUpdate.mockResolvedValue(undefined);
 });
 
 // Helper to build a full transaction with entries for getTransaction mock
@@ -364,7 +362,9 @@ describe("transactionService", () => {
       // First call: getTransaction for ownership check
       // Second call: getTransaction for re-fetch
       mockTransactionRepo.getOne.mockResolvedValueOnce(tx as any).mockResolvedValueOnce(tx as any);
+      mockTransactionRepo.update.mockResolvedValue([tx] as any);
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
+      mockTransactionRepo.updateEntry.mockResolvedValue([entry] as any);
 
       return { tx, product };
     }
@@ -412,7 +412,7 @@ describe("transactionService", () => {
       expect(error?.reason).toBe("INVALID_ENTRY_IDS");
     });
 
-    it("passes deleted entry IDs to runTransactionalUpdate", async () => {
+    it("deletes entries absent from update payload", async () => {
       const entry1 = makeEntry({ id: "entry-1" });
       const entry2 = makeEntry({ id: "entry-2" });
       const tx = makeTransaction({
@@ -426,7 +426,10 @@ describe("transactionService", () => {
       mockTransactionRepo.getOne
         .mockResolvedValueOnce(tx as any)
         .mockResolvedValueOnce(tx as any);
+      mockTransactionRepo.update.mockResolvedValue([tx] as any);
+      mockTransactionRepo.removeEntry.mockResolvedValue([entry2] as any);
       mockProductService.getProduct.mockResolvedValue([null, product] as any);
+      mockTransactionRepo.updateEntry.mockResolvedValue([entry1] as any);
 
       await transactionService.updateTransaction("user-1", "tx-1", {
         transaction: {},
@@ -434,12 +437,10 @@ describe("transactionService", () => {
         entries: [{ ...baseUpdateEntry, id: "entry-1" }],
       });
 
-      expect(mockTransactionRepo.runTransactionalUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ entryIdsToDelete: ["entry-2"] }),
-      );
+      expect(mockTransactionRepo.removeEntry).toHaveBeenCalledWith("entry-2");
     });
 
-    it("does not include entries still in update payload in entryIdsToDelete", async () => {
+    it("does not call removeEntry for entries still in update payload", async () => {
       setupSuccessfulUpdate();
 
       await transactionService.updateTransaction("user-1", "tx-1", {
@@ -447,12 +448,10 @@ describe("transactionService", () => {
         entries: [baseUpdateEntry], // entry-1 is in payload
       });
 
-      expect(mockTransactionRepo.runTransactionalUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ entryIdsToDelete: [] }),
-      );
+      expect(mockTransactionRepo.removeEntry).not.toHaveBeenCalled();
     });
 
-    it("passes new entries without id to entriesToCreate", async () => {
+    it("calls saveEntry for new entries without id", async () => {
       const entry = makeEntry({ id: "entry-1" });
       const tx = makeTransaction({
         entries: [{ ...entry, products: makeProduct() }],
@@ -462,27 +461,24 @@ describe("transactionService", () => {
       mockTransactionRepo.getOne
         .mockResolvedValueOnce(tx as any)
         .mockResolvedValueOnce(tx as any);
+      mockTransactionRepo.update.mockResolvedValue([tx] as any);
+      mockTransactionRepo.removeEntry.mockResolvedValue([entry] as any);
       mockProductService.addProduct.mockResolvedValue([null, product] as any);
+      mockTransactionRepo.saveEntry.mockResolvedValue([entry] as any);
 
       // existing entry-1 not in payload (gets deleted), new entry without id
-      await transactionService.updateTransaction("user-1", "tx-1", {
-        transaction: {},
-        entries: [
+        await transactionService.updateTransaction("user-1", "tx-1", {
+          transaction: {},
+          entries: [
           { product: { id: null, name: "New Item" }, quantity: "1", price: "5", type: "expense" },
-        ],
-      });
+          ],
+        });
 
-      expect(mockTransactionRepo.runTransactionalUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          entriesToCreate: expect.arrayContaining([
-            expect.objectContaining({ entryData: expect.objectContaining({ productId: product.id }) }),
-          ]),
-        }),
-      );
+      expect(mockTransactionRepo.saveEntry).toHaveBeenCalled();
       expect(mockProductService.addProduct).toHaveBeenCalled();
     });
 
-    it("passes existing entries with id to entriesToUpdate", async () => {
+    it("calls updateEntry for entries with existing id", async () => {
       setupSuccessfulUpdate();
 
       await transactionService.updateTransaction("user-1", "tx-1", {
@@ -490,24 +486,32 @@ describe("transactionService", () => {
         entries: [baseUpdateEntry], // has id: "entry-1"
       });
 
-      expect(mockTransactionRepo.runTransactionalUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          entriesToUpdate: expect.arrayContaining([
-            expect.objectContaining({ id: "entry-1" }),
-          ]),
-        }),
-      );
+      expect(mockTransactionRepo.updateEntry).toHaveBeenCalled();
     });
 
-    it("returns err with UPDATE_TRANSACTION_ERROR when runTransactionalUpdate throws", async () => {
+    it("returns err with UPDATE_TRANSACTION_NO_RETURNING when repo update returns empty array", async () => {
       const entry = makeEntry({ id: "entry-1" });
       const tx = makeTransaction({
         entries: [{ ...entry, products: makeProduct() }],
       });
-      const product = makeProduct();
       mockTransactionRepo.getOne.mockResolvedValue(tx as any);
-      mockProductService.getProduct.mockResolvedValue([null, product] as any);
-      mockTransactionRepo.runTransactionalUpdate.mockRejectedValue(new Error("DB error"));
+      mockTransactionRepo.update.mockResolvedValue([]);
+
+      const [error] = await transactionService.updateTransaction("user-1", "tx-1", {
+        transaction: {},
+        entries: [baseUpdateEntry],
+      });
+
+      expect(error?.reason).toBe("UPDATE_TRANSACTION_NO_RETURNING");
+    });
+
+    it("returns err with UPDATE_TRANSACTION_ERROR when repo update throws", async () => {
+      const entry = makeEntry({ id: "entry-1" });
+      const tx = makeTransaction({
+        entries: [{ ...entry, products: makeProduct() }],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+      mockTransactionRepo.update.mockRejectedValue(new Error("DB error"));
 
       const [error] = await transactionService.updateTransaction("user-1", "tx-1", {
         transaction: {},
@@ -515,6 +519,33 @@ describe("transactionService", () => {
       });
 
       expect(error?.reason).toBe("UPDATE_TRANSACTION_ERROR");
+    });
+
+    it("returns err when removeEntry throws", async () => {
+      const entry1 = makeEntry({ id: "entry-1" });
+      const entry2 = makeEntry({ id: "entry-2" });
+      const tx = makeTransaction({
+        entries: [
+          { ...entry1, products: makeProduct() },
+          { ...entry2, products: makeProduct() },
+        ],
+      });
+      const product = makeProduct();
+
+      mockTransactionRepo.getOne
+        .mockResolvedValueOnce(tx as any)
+        .mockResolvedValueOnce(tx as any);
+      mockTransactionRepo.update.mockResolvedValue([tx] as any);
+      mockTransactionRepo.removeEntry.mockRejectedValue(new Error("Delete failed"));
+      mockProductService.getProduct.mockResolvedValue([null, product] as any);
+      mockTransactionRepo.updateEntry.mockResolvedValue([entry1] as any);
+
+      const [error] = await transactionService.updateTransaction("user-1", "tx-1", {
+        transaction: {},
+        entries: [{ ...baseUpdateEntry, id: "entry-1" }],
+      });
+
+      expect(error?.reason).toBe("REMOVE_ENTRY_ERROR");
     });
   });
 

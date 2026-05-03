@@ -1,5 +1,5 @@
 import { err, ok } from "@/utils/result";
-import { transactionRepo, type EntryCreateInput, type EntryUpdateInput } from "./transactions.repo";
+import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
 import { NewEntryDTO, UpdateEntryDTO } from "./transactions.dtos";
 import { NewTransaction, Transaction } from "./transactions.models";
@@ -170,7 +170,7 @@ async function updateTransaction(
   transactionId: string,
   {
     transaction,
-    entries: entryDTOs,
+    entries,
   }: {
     transaction: Partial<Omit<NewTransaction, "totalPrice">>;
     entries: UpdateEntryDTO[];
@@ -189,81 +189,68 @@ async function updateTransaction(
   const existingEntryIds = new Set(
     existingTransaction.entries.map((e) => e.id),
   );
-  const invalidEntries = entryDTOs
+  const invalidEntryIds = entries
     .filter((e) => e.id)
     .filter((e) => !existingEntryIds.has(e.id!));
 
-  if (invalidEntries.length > 0) {
+  if (invalidEntryIds.length > 0) {
     return err({
       reason: "INVALID_ENTRY_IDS",
-      message: `Entry IDs do not belong to this transaction: ${invalidEntries.map((e) => e.id).join(", ")}`,
+      message: `Entry IDs do not belong to this transaction: ${invalidEntryIds.map((e) => e.id).join(", ")}`,
     });
   }
 
-  const totalPrice = calculateTotalPrice(entryDTOs);
+  const totalPrice = calculateTotalPrice(entries);
 
-  // Pre-resolve products and validate tag ownership before writing to DB
-  const entriesToCreate: EntryCreateInput[] = [];
-  const entriesToUpdate: EntryUpdateInput[] = [];
-
-  for (const entry of entryDTOs) {
-    const [productError, product] = await resolveProduct(userId, entry.product);
-    if (productError) {
-      return err(productError);
-    }
-
-    const tagIds = normalizeTagIds(entry.tagIds);
-    const [tagError] = await assertTagOwnership(userId, tagIds);
-    if (tagError) {
-      return err(tagError);
-    }
-
-    if (entry.id) {
-      entriesToUpdate.push({
-        id: entry.id,
-        entryData: {
-          productId: product.id,
-          price: entry.price,
-          quantity: Number(entry.quantity),
-          type: entry.type,
-        },
-        tagIds,
-      });
-    } else {
-      entriesToCreate.push({
-        entryData: {
-          transactionId,
-          productId: product.id,
-          price: entry.price,
-          quantity: Number(entry.quantity),
-          type: entry.type,
-        },
-        tagIds,
-      });
-    }
-  }
-
-  const updatedEntryIds = new Set(
-    entryDTOs.filter((e) => e.id).map((e) => e.id),
-  );
-  const entryIdsToDelete = [...existingEntryIds].filter(
-    (id) => !updatedEntryIds.has(id),
-  );
-
-  // Execute all DB writes atomically in a single DB transaction
+  // Update transaction
   try {
-    await transactionRepo.runTransactionalUpdate({
-      transactionId,
-      transactionData: { ...transaction, totalPrice: String(totalPrice) },
-      entryIdsToDelete,
-      entriesToCreate,
-      entriesToUpdate,
+    const updated = await transactionRepo.update(transactionId, {
+      ...transaction,
+      totalPrice: String(totalPrice),
     });
+
+    if (updated.length === 0) {
+      return err({
+        reason: "UPDATE_TRANSACTION_NO_RETURNING",
+        message: "Nothing was returned after updating transaction",
+      });
+    }
   } catch (error) {
     return err({
       reason: "UPDATE_TRANSACTION_ERROR",
       message: "Failed to update transaction in DB",
     });
+  }
+
+  // Determine which entries to delete
+  const updatedEntryIds = new Set(
+    entries.filter((e) => e.id).map((e) => e.id),
+  );
+  const entriesToDelete = [...existingEntryIds].filter(
+    (id) => !updatedEntryIds.has(id),
+  );
+
+  // Delete removed entries
+  for (const entryId of entriesToDelete) {
+    try {
+      await transactionRepo.removeEntry(entryId);
+    } catch (error) {
+      return err({
+        reason: "REMOVE_ENTRY_ERROR",
+        message: `Failed to remove entry ${entryId} from transaction ${transactionId}`,
+      });
+    }
+  }
+
+  // Update or create entries
+  for (const entry of entries) {
+    const [saveOrUpdateError] = entry.id
+      ? await updateEntry(userId, entry.id, entry)
+      : await saveEntry(userId, transactionId, entry);
+
+    if (saveOrUpdateError) {
+      return err(saveOrUpdateError);
+    }
   }
 
   // Re-fetch to return the fully updated transaction
@@ -276,6 +263,44 @@ async function updateTransaction(
   }
 
   return ok(updatedTransaction);
+}
+
+async function updateEntry(
+  userId: string,
+  entryId: string,
+  entry: NewEntryDTO,
+) {
+  const [productError, product] = await resolveProduct(userId, entry.product);
+  if (productError) {
+    return err(productError);
+  }
+
+  const tagIds = normalizeTagIds(entry.tagIds);
+  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
+  if (tagValidationError) {
+    return err(tagValidationError);
+  }
+
+  const updatedEntries = await transactionRepo.updateEntry(entryId, {
+    productId: product.id,
+    price: entry.price,
+    quantity: Number(entry.quantity),
+    type: entry.type,
+  });
+
+  if (updatedEntries.length === 0) {
+    return err({
+      reason: "UPDATE_ENTRY_NO_RETURNING",
+      message: "Nothing was returned after updating entry",
+    });
+  }
+
+  const [syncError] = await replaceEntryTags(entryId, tagIds);
+  if (syncError) {
+    return err(syncError);
+  }
+
+  return ok(updatedEntries[0]);
 }
 
 async function linkTagToEntry(
