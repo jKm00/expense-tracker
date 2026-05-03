@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { makeProduct, makeTransaction, makeEntry } from "../__test-fixtures__";
+import {
+  makeProduct,
+  makeTransaction,
+  makeEntry,
+  makeTag,
+} from "../__test-fixtures__";
 
 vi.mock("./transactions.repo", () => ({
   transactionRepo: {
@@ -11,6 +16,9 @@ vi.mock("./transactions.repo", () => ({
     update: vi.fn(),
     updateEntry: vi.fn(),
     removeEntry: vi.fn(),
+    saveEntryTagLink: vi.fn(),
+    removeEntryTagLink: vi.fn(),
+    removeAllEntryTagLinks: vi.fn(),
   },
 }));
 
@@ -21,15 +29,26 @@ vi.mock("../products/products.service", () => ({
   },
 }));
 
+vi.mock("../tags/tags.service", () => ({
+  tagsService: {
+    getTag: vi.fn(),
+  },
+}));
+
 import { transactionService } from "./transactions.service";
 import { transactionRepo } from "./transactions.repo";
 import { productService } from "../products/products.service";
+import { tagsService } from "../tags/tags.service";
 
 const mockTransactionRepo = vi.mocked(transactionRepo);
 const mockProductService = vi.mocked(productService);
+const mockTagsService = vi.mocked(tagsService);
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  mockTagsService.getTag.mockResolvedValue([null, makeTag()] as any);
+  mockTransactionRepo.removeAllEntryTagLinks.mockResolvedValue([] as any);
+  mockTransactionRepo.saveEntryTagLink.mockResolvedValue([{}] as any);
 });
 
 // Helper to build a full transaction with entries for getTransaction mock
@@ -502,7 +521,7 @@ describe("transactionService", () => {
       expect(error?.reason).toBe("UPDATE_TRANSACTION_ERROR");
     });
 
-    it("continues silently when removeEntry throws", async () => {
+    it("returns err when removeEntry throws", async () => {
       const entry1 = makeEntry({ id: "entry-1" });
       const entry2 = makeEntry({ id: "entry-2" });
       const tx = makeTransaction({
@@ -526,8 +545,122 @@ describe("transactionService", () => {
         entries: [{ ...baseUpdateEntry, id: "entry-1" }],
       });
 
-      // Should not return error despite removeEntry throwing
+      expect(error?.reason).toBe("REMOVE_ENTRY_ERROR");
+    });
+  });
+
+  describe("linkTagToEntry", () => {
+    it("returns err with INVALID_ENTRY_IDS when entry does not belong to transaction", async () => {
+      const tx = makeFullTransaction({
+        id: "tx-1",
+        userId: "user-1",
+        entries: [makeEntry({ id: "entry-1", tags: [], products: makeProduct() })],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+
+      const [error] = await transactionService.linkTagToEntry(
+        "user-1",
+        "tx-1",
+        "entry-2",
+        "tag-1",
+      );
+
+      expect(error?.reason).toBe("INVALID_ENTRY_IDS");
+      expect(mockTagsService.getTag).not.toHaveBeenCalled();
+      expect(mockTransactionRepo.saveEntryTagLink).not.toHaveBeenCalled();
+    });
+
+    it("returns tag ownership error when tag does not belong to user", async () => {
+      const tx = makeFullTransaction({
+        id: "tx-1",
+        userId: "user-1",
+        entries: [makeEntry({ id: "entry-1", tags: [], products: makeProduct() })],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+      mockTagsService.getTag.mockResolvedValueOnce([
+        {
+          reason: "TAG_UNATHORIZED",
+          message: "Tag does not belong to this user",
+        },
+        null,
+      ] as any);
+
+      const [error] = await transactionService.linkTagToEntry(
+        "user-1",
+        "tx-1",
+        "entry-1",
+        "tag-1",
+      );
+
+      expect(error?.reason).toBe("TAG_UNATHORIZED");
+      expect(mockTransactionRepo.saveEntryTagLink).not.toHaveBeenCalled();
+    });
+
+    it("returns ok without writing when link already exists", async () => {
+      const existingTag = makeTag({ id: "tag-1" });
+      const tx = makeFullTransaction({
+        id: "tx-1",
+        userId: "user-1",
+        entries: [
+          makeEntry({
+            id: "entry-1",
+            tags: [existingTag],
+            products: makeProduct(),
+          }),
+        ],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+
+      const [error, data] = await transactionService.linkTagToEntry(
+        "user-1",
+        "tx-1",
+        "entry-1",
+        "tag-1",
+      );
+
       expect(error).toBeNull();
+      expect(data?.message).toContain("already linked");
+      expect(mockTransactionRepo.saveEntryTagLink).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("unlinkTagFromEntry", () => {
+    it("returns err with INVALID_ENTRY_IDS when entry does not belong to transaction", async () => {
+      const tx = makeFullTransaction({
+        id: "tx-1",
+        userId: "user-1",
+        entries: [makeEntry({ id: "entry-1", tags: [], products: makeProduct() })],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+
+      const [error] = await transactionService.unlinkTagFromEntry(
+        "user-1",
+        "tx-1",
+        "entry-2",
+        "tag-1",
+      );
+
+      expect(error?.reason).toBe("INVALID_ENTRY_IDS");
+      expect(mockTransactionRepo.removeEntryTagLink).not.toHaveBeenCalled();
+    });
+
+    it("returns err with TAG_ENTRY_LINK_NOT_FOUND when unlink target does not exist", async () => {
+      const tx = makeFullTransaction({
+        id: "tx-1",
+        userId: "user-1",
+        entries: [makeEntry({ id: "entry-1", tags: [], products: makeProduct() })],
+      });
+      mockTransactionRepo.getOne.mockResolvedValue(tx as any);
+      mockTransactionRepo.removeEntryTagLink.mockResolvedValueOnce([] as any);
+
+      const [error] = await transactionService.unlinkTagFromEntry(
+        "user-1",
+        "tx-1",
+        "entry-1",
+        "tag-1",
+      );
+
+      expect(error?.reason).toBe("TAG_ENTRY_LINK_NOT_FOUND");
     });
   });
 });

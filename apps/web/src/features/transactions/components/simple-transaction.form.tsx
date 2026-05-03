@@ -87,7 +87,7 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
             <FormFieldLabel>Product</FormFieldLabel>
             <ProductSelect
               products={products}
-              defaultValue={getValues("product.id") ?? undefined}
+              defaultValue={getValues("product.name") ?? undefined}
               onValueChange={handleProductSelect}
             />
             <FormFieldError>

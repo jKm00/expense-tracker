@@ -30,6 +30,7 @@ import {
   EntryListEmpty,
   EntryListTitle,
 } from "@/features/transactions/components/entry-list";
+import { tagsQueries } from "@/features/tags/tags.queries";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { formatAmount } from "@/utils/format";
 import { toCapitalized } from "@/utils/typography";
@@ -47,9 +48,12 @@ import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/")({
   loader: async ({ context, params }) => {
-    context.queryClient.prefetchQuery(
-      transactionQueries.getTransactionOptions(params.id),
-    );
+    await Promise.all([
+      context.queryClient.prefetchQuery(
+        transactionQueries.getTransactionOptions(params.id),
+      ),
+      context.queryClient.prefetchQuery(tagsQueries.getTagsOptions()),
+    ]);
   },
   component: RouteComponent,
 });
@@ -91,8 +95,12 @@ function TransactionDetails() {
     data: [expectedError, transaction],
     error: unexpectedError,
   } = useSuspenseQuery(transactionQueries.getTransactionOptions(id));
+  const {
+    data: [expectedTagsError, tags],
+    error: unexpectedTagsError,
+  } = useSuspenseQuery(tagsQueries.getTagsOptions());
 
-  if (unexpectedError) {
+  if (unexpectedError || unexpectedTagsError) {
     return <UnexpectedError />;
   }
 
@@ -114,6 +122,31 @@ function TransactionDetails() {
         title = "Database error";
         message =
           "Something went wrong trying to fetch the transaction from the database. Please try again!";
+        break;
+      default:
+        title = "Unexpected error";
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
+        break;
+    }
+
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
+        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
+  if (expectedTagsError) {
+    let title: string;
+    let message: string;
+
+    const reason = expectedTagsError.reason;
+    switch (reason) {
+      case "UNEXPECTED_DB_ERROR":
+        title = "Database error";
+        message =
+          "Something went wrong trying to fetch tags from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
@@ -191,7 +224,11 @@ function TransactionDetails() {
         </CardContent>
       </Card>
 
-      <EntryList entries={transaction.entries}>
+      <EntryList
+        entries={transaction.entries}
+        transactionId={transaction.id}
+        availableTags={tags || []}
+      >
         <EntryListTitle>Transaction Items</EntryListTitle>
         <EntryListEmpty>No transaction items found...</EntryListEmpty>
       </EntryList>

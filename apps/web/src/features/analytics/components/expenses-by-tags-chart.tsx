@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { HorizontalExpensesBarChart } from "./horizontal-expenses-bar-chart";
 import type { ChartConfig } from "@/components/ui/chart";
+import { getMergedEntryTags } from "@/features/analytics/analytics.utils";
 
 type ExpensesByTagsChartProps = {
   transactions: FullTransaction[];
@@ -15,7 +16,7 @@ export function ExpensesByTagsChart({ transactions }: ExpensesByTagsChartProps) 
       transaction.entries.forEach((entry) => {
         if (entry.type !== "expense") return;
         const amount = Number(entry.price) * entry.quantity;
-        const tags = entry.products?.tags ?? [];
+        const tags = getMergedEntryTags(entry);
 
         if (tags.length === 0) {
           totals.set("Untagged", (totals.get("Untagged") ?? 0) + amount);

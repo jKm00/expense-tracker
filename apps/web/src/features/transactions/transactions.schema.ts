@@ -58,7 +58,7 @@ export const entryTags = pgTable(
       .references(() => entries.id, { onDelete: "cascade" }),
     tagId: uuid("tag_id")
       .notNull()
-      .references(() => tags.id, { onDelete: "restrict" }),
+      .references(() => tags.id, { onDelete: "cascade" }),
   },
   (table) => [primaryKey({ columns: [table.entryId, table.tagId] })],
 );

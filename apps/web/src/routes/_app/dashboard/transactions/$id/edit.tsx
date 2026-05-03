@@ -11,6 +11,7 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
+import { tagsQueries } from "@/features/tags/tags.queries";
 import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
       context.queryClient.ensureQueryData(
         productQueries.getProductsOptions(),
       ),
+      context.queryClient.ensureQueryData(tagsQueries.getTagsOptions()),
       context.queryClient.ensureQueryData(
         transactionQueries.getTransactionOptions(params.id),
       ),
@@ -55,13 +57,17 @@ function EditTransactionFormWrapper() {
     data: [expectedProductError, products],
     error: unexpectedProductError,
   } = useSuspenseQuery(productQueries.getProductsOptions());
+  const {
+    data: [expectedTagsError, tags],
+    error: unexpectedTagsError,
+  } = useSuspenseQuery(tagsQueries.getTagsOptions());
 
   const {
     data: [expectedTransactionError, transaction],
     error: unexpectedTransactionError,
   } = useSuspenseQuery(transactionQueries.getTransactionOptions(id));
 
-  if (unexpectedProductError || unexpectedTransactionError) {
+  if (unexpectedProductError || unexpectedTagsError || unexpectedTransactionError) {
     return <UnexpectedError />;
   }
 
@@ -123,5 +129,36 @@ function EditTransactionFormWrapper() {
     );
   }
 
-  return <EditTransactionForm products={products} transaction={transaction} />;
+  if (expectedTagsError) {
+    let title: string;
+    let message: string;
+
+    const reason = expectedTagsError.reason;
+    switch (reason) {
+      case "UNEXPECTED_DB_ERROR":
+        title = "Database error";
+        message =
+          "Something went wrong trying to fetch your tags from the database. Please try again";
+        break;
+      default:
+        title = "Unexpected error";
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
+        break;
+    }
+
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
+        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
+  return (
+    <EditTransactionForm
+      products={products}
+      tags={tags || []}
+      transaction={transaction}
+    />
+  );
 }

@@ -5,6 +5,7 @@ import {
   deleteTransactionSchema,
   getTransactionSchema,
   getTransactionsSchema,
+  linkTagToEntrySchema,
   saveTransactionSchema,
   updateTransactionSchema,
 } from "./transactions.dtos";
@@ -69,10 +70,40 @@ const updateTransaction = createServerFn({ method: "POST" })
     });
   });
 
+const linkTagToEntry = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(linkTagToEntrySchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { transactionId, entryId, tagId } = data;
+    return await transactionService.linkTagToEntry(
+      userId,
+      transactionId,
+      entryId,
+      tagId,
+    );
+  });
+
+const unlinkTagFromEntry = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(linkTagToEntrySchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { transactionId, entryId, tagId } = data;
+    return await transactionService.unlinkTagFromEntry(
+      userId,
+      transactionId,
+      entryId,
+      tagId,
+    );
+  });
+
 export const transactionController = {
   getTransactions,
   getTransaction,
   saveTransaction,
   deleteTransaction,
   updateTransaction,
+  linkTagToEntry,
+  unlinkTagFromEntry,
 };

@@ -1,0 +1,1 @@
+ALTER TABLE "entry_tags" DROP CONSTRAINT "entry_tags_tag_id_tags_id_fkey", ADD CONSTRAINT "entry_tags_tag_id_tags_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id") ON DELETE CASCADE;

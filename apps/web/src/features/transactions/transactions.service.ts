@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { NewEntryDTO, UpdateEntryDTO } from "./transactions.dtos";
 import { NewTransaction, Transaction } from "./transactions.models";
 import { productService } from "../products/products.service";
+import { tagsService } from "../tags/tags.service";
 
 async function getTransactions(userId: string, year?: number, month?: number) {
   try {
@@ -87,12 +88,16 @@ async function saveTransaction({
   }
 
   const savedTransaction = savedTransactions[0];
-  await Promise.all(
-    entries.map(
-      async (entry) =>
-        await saveEntry(transaction.userId, savedTransaction.id, entry),
-    ),
-  );
+  for (const entry of entries) {
+    const [saveEntryError] = await saveEntry(
+      transaction.userId,
+      savedTransaction.id,
+      entry,
+    );
+    if (saveEntryError) {
+      return err(saveEntryError);
+    }
+  }
 
   return ok(savedTransaction);
 }
@@ -107,11 +112,18 @@ async function saveEntry(
     return err(productError);
   }
 
+  const tagIds = normalizeTagIds(entry.tagIds);
+  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
+  if (tagValidationError) {
+    return err(tagValidationError);
+  }
+
   const savedEntries = await transactionRepo.saveEntry({
-    ...entry,
     transactionId,
     productId: product.id,
+    price: entry.price,
     quantity: Number(entry.quantity),
+    type: entry.type,
   });
 
   if (savedEntries.length === 0) {
@@ -121,7 +133,13 @@ async function saveEntry(
     });
   }
 
-  return ok(savedEntries[0]);
+  const savedEntry = savedEntries[0];
+  const [syncError] = await replaceEntryTags(savedEntry.id, tagIds);
+  if (syncError) {
+    return err(syncError);
+  }
+
+  return ok(savedEntry);
 }
 
 async function deleteTransaction(userId: string, transactionId: string) {
@@ -213,26 +231,27 @@ async function updateTransaction(
   );
 
   // Delete removed entries
-  await Promise.all(
-    entriesToDelete.map(async (entryId) => {
-      try {
-        await transactionRepo.removeEntry(entryId);
-      } catch (error) {
-        // Continue even if delete fails
-      }
-    }),
-  );
+  for (const entryId of entriesToDelete) {
+    try {
+      await transactionRepo.removeEntry(entryId);
+    } catch (error) {
+      return err({
+        reason: "REMOVE_ENTRY_ERROR",
+        message: `Failed to remove entry ${entryId} from transaction ${transactionId}`,
+      });
+    }
+  }
 
   // Update or create entries
-  await Promise.all(
-    entries.map(async (entry) => {
-      if (entry.id) {
-        await updateEntry(userId, entry.id, entry);
-      } else {
-        await saveEntry(userId, transactionId, entry);
-      }
-    }),
-  );
+  for (const entry of entries) {
+    const [saveOrUpdateError] = entry.id
+      ? await updateEntry(userId, entry.id, entry)
+      : await saveEntry(userId, transactionId, entry);
+
+    if (saveOrUpdateError) {
+      return err(saveOrUpdateError);
+    }
+  }
 
   // Re-fetch to return the fully updated transaction
   const [refetchError, updatedTransaction] = await getTransaction(
@@ -256,10 +275,17 @@ async function updateEntry(
     return err(productError);
   }
 
+  const tagIds = normalizeTagIds(entry.tagIds);
+  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
+  if (tagValidationError) {
+    return err(tagValidationError);
+  }
+
   const updatedEntries = await transactionRepo.updateEntry(entryId, {
-    ...entry,
     productId: product.id,
+    price: entry.price,
     quantity: Number(entry.quantity),
+    type: entry.type,
   });
 
   if (updatedEntries.length === 0) {
@@ -269,10 +295,140 @@ async function updateEntry(
     });
   }
 
+  const [syncError] = await replaceEntryTags(entryId, tagIds);
+  if (syncError) {
+    return err(syncError);
+  }
+
   return ok(updatedEntries[0]);
 }
 
+async function linkTagToEntry(
+  userId: string,
+  transactionId: string,
+  entryId: string,
+  tagId: string,
+) {
+  const [transactionError, transaction] = await getTransaction(
+    userId,
+    transactionId,
+  );
+  if (transactionError) {
+    return err(transactionError);
+  }
+
+  const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
+  if (!entry) {
+    return err({
+      reason: "INVALID_ENTRY_IDS",
+      message: `Entry ${entryId} does not belong to transaction ${transactionId}`,
+    });
+  }
+
+  const [tagError] = await tagsService.getTag(userId, tagId);
+  if (tagError) {
+    return err(tagError);
+  }
+
+  const hasTag = entry.tags.some((tag) => tag.id === tagId);
+  if (hasTag) {
+    return ok({
+      success: true as const,
+      message: `Tag ${tagId} already linked to entry ${entryId}`,
+    });
+  }
+
+  try {
+    await transactionRepo.saveEntryTagLink(entryId, tagId);
+  } catch (error) {
+    return err({
+      reason: "LINK_ENTRY_TAG_ERROR",
+      message: `Failed to link tag ${tagId} to entry ${entryId}`,
+    });
+  }
+
+  return ok({
+    success: true as const,
+    message: `Tag ${tagId} linked to entry ${entryId}`,
+  });
+}
+
+async function unlinkTagFromEntry(
+  userId: string,
+  transactionId: string,
+  entryId: string,
+  tagId: string,
+) {
+  const [transactionError, transaction] = await getTransaction(
+    userId,
+    transactionId,
+  );
+  if (transactionError) {
+    return err(transactionError);
+  }
+
+  const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
+  if (!entry) {
+    return err({
+      reason: "INVALID_ENTRY_IDS",
+      message: `Entry ${entryId} does not belong to transaction ${transactionId}`,
+    });
+  }
+
+  try {
+    const removed = await transactionRepo.removeEntryTagLink(entryId, tagId);
+    if (removed.length === 0) {
+      return err({
+        reason: "TAG_ENTRY_LINK_NOT_FOUND",
+        message: `Link between tag ${tagId} and entry ${entryId} not found`,
+      });
+    }
+  } catch (error) {
+    return err({
+      reason: "UNLINK_ENTRY_TAG_ERROR",
+      message: `Failed to unlink tag ${tagId} from entry ${entryId}`,
+    });
+  }
+
+  return ok({
+    success: true as const,
+    message: `Tag ${tagId} unlinked from entry ${entryId}`,
+  });
+}
+
 // --- Shared helpers ---
+
+async function assertTagOwnership(userId: string, tagIds: string[]) {
+  for (const tagId of tagIds) {
+    const [tagError] = await tagsService.getTag(userId, tagId);
+    if (tagError) {
+      return err(tagError);
+    }
+  }
+
+  return ok(true);
+}
+
+async function replaceEntryTags(entryId: string, tagIds: string[]) {
+  try {
+    await transactionRepo.removeAllEntryTagLinks(entryId);
+
+    for (const tagId of tagIds) {
+      await transactionRepo.saveEntryTagLink(entryId, tagId);
+    }
+  } catch (error) {
+    return err({
+      reason: "SAVE_ENTRY_TAG_ERROR",
+      message: `Failed to save tags for entry ${entryId}`,
+    });
+  }
+
+  return ok(true);
+}
+
+function normalizeTagIds(tagIds?: string[]) {
+  return Array.from(new Set(tagIds ?? []));
+}
 
 function calculateTotalPrice(entries: NewEntryDTO[]): number {
   return entries.reduce((acc, curr) => {
@@ -303,4 +459,6 @@ export const transactionService = {
   saveTransaction,
   deleteTransaction,
   updateTransaction,
+  linkTagToEntry,
+  unlinkTagFromEntry,
 };

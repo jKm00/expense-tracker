@@ -1,10 +1,29 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Product } from "@/features/products/products.models";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Check, ChevronRight } from "lucide-react";
 import { Input } from "../ui/input";
-import { wait } from "@/utils";
+
+function toSelectableProduct(name: string): Product {
+  const now = new Date();
+  return {
+    id: "",
+    name,
+    createdAt: now,
+    updatedAt: now,
+    userId: "",
+    deletedAt: null,
+  };
+}
+
+function resolveSelectedProduct(products: Product[], value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  return products.find((product) => product.name === value) ?? toSelectableProduct(value);
+}
 
 export function ProductSelect({
   products,
@@ -17,13 +36,13 @@ export function ProductSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [value, setValue] = useState<Product | null>(() => {
-    if (!defaultValue) return null;
+  const [value, setValue] = useState<Product | null>(() =>
+    resolveSelectedProduct(products, defaultValue),
+  );
 
-    const found = products.find((p) => p.name === defaultValue);
-    if (!found) return null;
-    return found;
-  });
+  useEffect(() => {
+    setValue(resolveSelectedProduct(products, defaultValue));
+  }, [defaultValue, products]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) =>
@@ -32,28 +51,21 @@ export function ProductSelect({
   }, [products, inputValue]);
 
   function handleSelect(product: Product) {
-    setOpen(false);
     setValue(product);
+    setOpen(false);
+    setInputValue("");
 
     if (onValueChange) {
       onValueChange(product);
     }
-
-    clearInput();
   }
 
   function handleOpenChange(open: boolean) {
     setOpen(open);
 
     if (!open) {
-      clearInput();
+      setInputValue("");
     }
-  }
-
-  async function clearInput() {
-    // Wait with clearing input so UI doesnt flicker
-    await wait(100);
-    setInputValue("");
   }
 
   return (
@@ -81,16 +93,7 @@ export function ProductSelect({
         </div>
         {inputValue.length > 0 && (
           <Button
-            onClick={() =>
-              handleSelect({
-                id: "",
-                name: inputValue,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                userId: "",
-                deletedAt: null,
-              })
-            }
+            onClick={() => handleSelect(toSelectableProduct(inputValue))}
             variant="ghost"
             size="sm"
             className="mx-2 justify-start text-muted-foreground text-xs"
