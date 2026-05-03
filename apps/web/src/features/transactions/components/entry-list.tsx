@@ -1,15 +1,32 @@
 import { Link } from "@tanstack/react-router";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
-import { Plus, Tag as TagIcon, X, Package, ShoppingBag } from "lucide-react";
+import {
+  EmptyState,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
+import {
+  Package,
+  Plus,
+  ShoppingBag,
+  Tag as TagIcon,
+  X,
+} from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { EntryWithProduct } from "../transactions.models";
 import { formatAmount } from "@/utils/format";
 import { Tag } from "@/features/tags/tags.models";
 import { TagBadge } from "@/features/tags/components/tag";
-import { TagSelect } from "@/features/tags/components/tag.select";
 import { transactionMutations } from "../transactions.mutations";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 
 function EntryList({
   entries,
@@ -23,13 +40,14 @@ function EntryList({
   children: React.ReactNode;
 }) {
   const hasEntries = entries.length > 0;
-
   const canEditTags = Boolean(transactionId && availableTags);
   const tags = availableTags ?? [];
+  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
 
-  const linkTagMutation = transactionMutations.linkTagToEntry();
-  const unlinkTagMutation = transactionMutations.unlinkTagFromEntry();
-  const [tagPickerEntryId, setTagPickerEntryId] = useState<string | null>(null);
+  const activeEntry = useMemo(() => {
+    if (!activeEntryId) return null;
+    return entries.find((entry) => entry.id === activeEntryId) ?? null;
+  }, [activeEntryId, entries]);
 
   const title = React.Children.toArray(children).find(
     (child) => React.isValidElement(child) && child.type === EntryListTitle,
@@ -49,164 +67,228 @@ function EntryList({
               key={entry.id}
               className={`px-4 py-3 ${idx !== entries.length - 1 ? "border-b border-border" : ""}`}
             >
-              <Link
-                to="/dashboard/products/$id"
-                params={{ id: entry.productId }}
-                className="block"
-              >
-                <div className="flex items-center gap-3 transition-colors hover:bg-muted/50 rounded-md px-1 py-1">
-                  <div className="size-8 rounded-lg bg-muted grid place-items-center shrink-0">
-                    <ShoppingBag className="size-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-3 rounded-md px-1 py-1">
+                <Link
+                  to="/dashboard/products/$id"
+                  params={{ id: entry.productId }}
+                  className="min-w-0 flex-1 block"
+                >
+                  <div className="flex items-center gap-3 transition-colors hover:bg-muted/50 rounded-md px-1 py-1">
+                    <div className="size-8 rounded-lg bg-muted grid place-items-center shrink-0">
+                      <ShoppingBag className="size-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {entry.product?.name}
+                        {entry.product?.deletedAt && (
+                          <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                            archived
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {entry.quantity} x {formatAmount(entry.price)},-
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {entry.product?.name}
-                      {entry.product?.deletedAt && (
-                        <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                          archived
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {entry.quantity} x {formatAmount(entry.price)},-
-                    </p>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums text-foreground">
-                    {formatAmount(entry.quantity * Number(entry.price))},-
-                  </span>
-                </div>
-              </Link>
+                </Link>
 
-              {canEditTags && transactionId && (
-                <EntryTagControls
-                  entry={entry}
-                  tags={tags}
-                  open={tagPickerEntryId === entry.id}
-                  onToggleOpen={(open) => {
-                    setTagPickerEntryId(open ? entry.id : null);
-                  }}
-                  isLinking={linkTagMutation.isPending}
-                  isUnlinking={unlinkTagMutation.isPending}
-                  onLink={(tagId) => {
-                    linkTagMutation.mutate(
-                      {
-                        transactionId,
-                        entryId: entry.id,
-                        tagId,
-                      },
-                      {
-                        onSuccess: ([error]) => {
-                          if (error) {
-                            toast.error(error.message);
-                          }
-                        },
-                      },
-                    );
-                  }}
-                  onUnlink={(tagId) => {
-                    unlinkTagMutation.mutate(
-                      {
-                        transactionId,
-                        entryId: entry.id,
-                        tagId,
-                      },
-                      {
-                        onSuccess: ([error]) => {
-                          if (error) {
-                            toast.error(error.message);
-                          }
-                        },
-                      },
-                    );
-                  }}
-                />
-              )}
+                <span className="text-sm font-semibold tabular-nums text-foreground">
+                  {formatAmount(entry.quantity * Number(entry.price))},-
+                </span>
+
+                {canEditTags && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 whitespace-nowrap"
+                    onClick={() => setActiveEntryId(entry.id)}
+                  >
+                    <TagIcon className="size-3.5" />
+                    {entry.tags.length}
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>
       ) : (
         emptyMessage
       )}
+
+      {canEditTags && transactionId && activeEntry && (
+        <EntryTagsDialog
+          open={Boolean(activeEntry)}
+          onOpenChange={(open) => {
+            if (!open) setActiveEntryId(null);
+          }}
+          transactionId={transactionId}
+          entry={activeEntry}
+          tags={tags}
+        />
+      )}
     </div>
   );
 }
 
-function EntryTagControls({
+function EntryTagsDialog({
+  open,
+  onOpenChange,
+  transactionId,
   entry,
   tags,
-  open,
-  onToggleOpen,
-  isLinking,
-  isUnlinking,
-  onLink,
-  onUnlink,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transactionId: string;
   entry: EntryWithProduct;
   tags: Tag[];
-  open: boolean;
-  onToggleOpen: (open: boolean) => void;
-  isLinking: boolean;
-  isUnlinking: boolean;
-  onLink: (tagId: string) => void;
-  onUnlink: (tagId: string) => void;
 }) {
+  const [search, setSearch] = useState("");
+  const linkTagMutation = transactionMutations.linkTagToEntry();
+  const unlinkTagMutation = transactionMutations.unlinkTagFromEntry();
   const selectedTags = entry.tags ?? [];
-  const selectableTags = useMemo(() => {
-    const selectedTagIds = new Set(selectedTags.map((tag) => tag.id));
-    return tags.filter((tag) => !selectedTagIds.has(tag.id));
-  }, [selectedTags, tags]);
 
-  const disabled = isLinking || isUnlinking;
+  const selectedTagIds = useMemo(
+    () => new Set(selectedTags.map((tag) => tag.id)),
+    [selectedTags],
+  );
+
+  const availableTags = useMemo(() => {
+    return tags.filter((tag) => {
+      if (selectedTagIds.has(tag.id)) {
+        return false;
+      }
+
+      return tag.name.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [search, selectedTagIds, tags]);
+
+  const disabled = linkTagMutation.isPending || unlinkTagMutation.isPending;
+
+  function handleLinkTag(tag: Tag) {
+    linkTagMutation.mutate(
+      {
+        transactionId,
+        entryId: entry.id,
+        tagId: tag.id,
+      },
+      {
+        onSuccess: ([error]) => {
+          if (error) {
+            toast.error(error.message);
+          }
+        },
+      },
+    );
+  }
+
+  function handleUnlinkTag(tag: Tag) {
+    unlinkTagMutation.mutate(
+      {
+        transactionId,
+        entryId: entry.id,
+        tagId: tag.id,
+      },
+      {
+        onSuccess: ([error]) => {
+          if (error) {
+            toast.error(error.message);
+          }
+        },
+      },
+    );
+  }
 
   return (
-    <div className="mt-2 space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        {selectedTags.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">No entry tags</p>
-        ) : (
-          selectedTags.map((tag) => (
-            <TagBadge
-              key={tag.id}
-              tag={tag}
-              onClick={() => {
-                if (disabled) return;
-                onUnlink(tag.id);
-              }}
-              className={disabled ? "cursor-pointer opacity-50 pointer-events-none" : "cursor-pointer"}
-            >
-              <TagIcon className="size-3" />
-              {tag.name}
-              <X className="size-3" />
-            </TagBadge>
-          ))
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onToggleOpen(!open)}
-          className="h-7"
-        >
-          <Plus className="size-3" />
-          Add tag
-        </Button>
-      </div>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onOpenChange(nextOpen);
+        if (!nextOpen) {
+          setSearch("");
+        }
+      }}
+    >
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Entry Tags</DialogTitle>
+          <DialogDescription>
+            Add or remove tags for this transaction item.
+          </DialogDescription>
+        </DialogHeader>
 
-      {open && (
-        <TagSelect
-          tags={selectableTags}
-          value={[]}
-          onChange={(nextTags) => {
-            const tag = nextTags[0];
-            if (!tag) return;
-            onLink(tag.id);
-            onToggleOpen(false);
-          }}
-          placeholder="Select tag..."
-          className="w-full"
-        />
-      )}
-    </div>
+        <div className="space-y-5">
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Applied tags
+            </p>
+            {selectedTags.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tags applied</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedTags.map((tag) => (
+                  <TagBadge
+                    key={tag.id}
+                    tag={tag}
+                    onClick={() => {
+                      if (!disabled) {
+                        handleUnlinkTag(tag);
+                      }
+                    }}
+                    className={disabled ? "cursor-pointer opacity-50 pointer-events-none" : "cursor-pointer"}
+                  >
+                    <TagIcon className="size-3" />
+                    {tag.name}
+                    <X className="size-3" />
+                  </TagBadge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Available tags
+              </p>
+              <NewTagDialog />
+            </div>
+
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search tags..."
+              className="mb-3"
+            />
+
+            {availableTags.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tags available</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {availableTags.map((tag) => (
+                  <TagBadge
+                    key={tag.id}
+                    tag={tag}
+                    onClick={() => {
+                      if (!disabled) {
+                        handleLinkTag(tag);
+                      }
+                    }}
+                    className={disabled ? "cursor-pointer opacity-50 pointer-events-none" : "cursor-pointer"}
+                  >
+                    <TagIcon className="size-3" />
+                    {tag.name}
+                    <Plus className="size-3" />
+                  </TagBadge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
