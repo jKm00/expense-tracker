@@ -3,6 +3,6 @@ buildCommand = "pnpm --filter @expense-tracker/job build"
 watchPatterns = ["apps/job/src/**"]
 
 [deploy]
-startCommand = "pnpm --filter @expense-tracker/job start"
+startCommand = "node apps/job/dist/index.js"
 cronSchedule = "0 0 * * *"
 restartPolicyType = "NEVER"
