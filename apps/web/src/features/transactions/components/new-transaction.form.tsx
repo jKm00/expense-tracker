@@ -13,7 +13,7 @@ import { Product } from "@/features/products/products.models";
 import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type DefaultValues } from "react-hook-form";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   X,
   Plus,
@@ -348,7 +348,7 @@ function NewEntryDialog({
   const [lastEditedField, setLastEditedField] = useState<"price" | "total">(
     "price",
   );
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const tagSelectContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -363,8 +363,13 @@ function NewEntryDialog({
   });
 
   const selectedProduct = watch("product");
+  const selectedTagIds = watch("tagIds") ?? [];
   const price = watch("price");
   const quantity = watch("quantity");
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [tags, selectedTagIds],
+  );
 
   const priceRegistration = register("price");
   const quantityRegistration = register("quantity");
@@ -438,16 +443,13 @@ function NewEntryDialog({
 
     if (initialEntry) {
       reset(initialEntry);
-      setSelectedTags(
-        tags.filter((tag) => (initialEntry.tagIds ?? []).includes(tag.id)),
-      );
       setLastEditedField("price");
       setTotal(formatCalculatedAmount(getDialogEntryTotal(initialEntry)));
       return;
     }
 
     resetForm();
-  }, [initialEntry, open, reset, tags]);
+  }, [initialEntry, open, reset]);
 
   function addEntry(type: EntryType) {
     setValue("type", type);
@@ -455,7 +457,7 @@ function NewEntryDialog({
       onSave({
         ...data,
         type,
-        tagIds: selectedTags.map((tag) => tag.id),
+        tagIds: data.tagIds ?? [],
       });
       onOpenChange(false);
     })();
@@ -474,7 +476,6 @@ function NewEntryDialog({
   }
 
   function handleTagsChange(nextTags: Tag[]) {
-    setSelectedTags(nextTags);
     setValue(
       "tagIds",
       nextTags.map((tag) => tag.id),
@@ -487,7 +488,6 @@ function NewEntryDialog({
 
   function resetForm() {
     setTotal("");
-    setSelectedTags([]);
     setLastEditedField("price");
     reset(NEW_ENTRY_DEFAULT_VALUES);
   }
@@ -563,7 +563,7 @@ function NewEntryDialog({
               }}
             />
           </FormField>
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-3" ref={tagSelectContainerRef}>
             <FormField>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <FormFieldLabel>
@@ -577,6 +577,7 @@ function NewEntryDialog({
                 onChange={handleTagsChange}
                 placeholder="Search tags..."
                 className="w-full"
+                portalContainer={tagSelectContainerRef}
               />
               {selectedTags.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-1.5">

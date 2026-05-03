@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
 import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect, useMemo, useState } from "react";
+import { useForm, type DefaultValues } from "react-hook-form";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   X,
   Plus,
@@ -41,6 +41,7 @@ import {
   UpdateEntryDTO,
   saveEntrySchema,
   updateTransactionSchema,
+  type UpdateTransactionDTO,
 } from "../transactions.dtos";
 import { EntryType, FullTransaction } from "../transactions.models";
 import {
@@ -54,6 +55,14 @@ import { TagSelect } from "@/features/tags/components/tag.select";
 import { TagBadge } from "@/features/tags/components/tag";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 
+const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
+  product: undefined,
+  price: "",
+  quantity: "",
+  type: "expense",
+  tagIds: [],
+};
+
 export function EditTransactionForm({
   products,
   tags,
@@ -65,6 +74,8 @@ export function EditTransactionForm({
 }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [entries, setEntries] = useState<UpdateEntryDTO[]>([]);
+  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [editingEntryIndex, setEditingEntryIndex] = useState<number | null>(null);
 
   const navigate = useNavigate();
   const mutation = transactionMutations.updateTransaction();
@@ -75,37 +86,37 @@ export function EditTransactionForm({
     watch,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<UpdateTransactionDTO>({
     defaultValues: {
       transactionId: transaction.id,
       store: transaction.store || "",
       description: transaction.description || "",
       date: new Date(transaction.date),
-      entries: [] as UpdateEntryDTO[],
+      entries: [],
     },
     resolver: zodResolver(updateTransactionSchema),
   });
 
-  // Initialize entries from transaction
   useEffect(() => {
-    const initialEntries: UpdateEntryDTO[] = transaction.entries.map(
-      (entry) => ({
-        id: entry.id,
-        product: {
-          id: entry.products?.id || null,
-          name: entry.products?.name || "",
-        },
-        quantity: String(entry.quantity),
-        price: String(entry.price),
-        type: entry.type,
-        tagIds: entry.tags.map((tag) => tag.id),
-      }),
-    );
+    const initialEntries: UpdateEntryDTO[] = transaction.entries.map((entry) => ({
+      id: entry.id,
+      product: {
+        id: entry.products?.id || null,
+        name: entry.products?.name || "",
+      },
+      quantity: String(entry.quantity),
+      price: String(entry.price),
+      type: entry.type,
+      tagIds: entry.tags.map((tag) => tag.id),
+    }));
+
     setEntries(initialEntries);
     setValue("entries", initialEntries);
   }, [transaction, setValue]);
 
   const selectedDate = watch("date");
+  const editingEntry =
+    editingEntryIndex === null ? undefined : entries[editingEntryIndex];
   const tagsById = useMemo(() => {
     return new Map(tags.map((tag) => [tag.id, tag]));
   }, [tags]);
@@ -117,25 +128,40 @@ export function EditTransactionForm({
       },
       {
         onSuccess: (data) => {
-          const [error, transaction] = data;
+          const [error, updatedTransaction] = data;
           if (error) {
-            // TODO: Handle errors
-          } else {
-            navigate({
-              to: "/dashboard/transactions/$id",
-              params: {
-                id: transaction.id,
-              },
-            });
+            return;
           }
+
+          navigate({
+            to: "/dashboard/transactions/$id",
+            params: {
+              id: updatedTransaction.id,
+            },
+          });
         },
       },
     );
   });
 
-  function handleNewEntry(entry: NewEntryDTO) {
+  function handleNewEntry(entry: UpdateEntryDTO) {
     setEntries((prev) => {
       const updated = [...prev, entry];
+      setValue("entries", updated);
+      return updated;
+    });
+  }
+
+  function handleSaveEntry(entry: UpdateEntryDTO) {
+    if (editingEntryIndex === null) {
+      handleNewEntry(entry);
+      return;
+    }
+
+    setEntries((prev) => {
+      const updated = prev.map((existingEntry, index) =>
+        index === editingEntryIndex ? entry : existingEntry,
+      );
       setValue("entries", updated);
       return updated;
     });
@@ -149,23 +175,39 @@ export function EditTransactionForm({
     });
   }
 
+  function handleEditEntry(index: number) {
+    setEditingEntryIndex(index);
+    setEntryDialogOpen(true);
+  }
+
+  function handleEntryDialogOpenChange(open: boolean) {
+    setEntryDialogOpen(open);
+
+    if (!open) {
+      setEditingEntryIndex(null);
+    }
+  }
+
   function handleDateSelect(date: Date | undefined) {
     setValue("date", date || new Date());
     setDatePickerOpen(false);
+  }
+
+  function getEntryTotal(entry: UpdateEntryDTO) {
+    return Number(entry.price) * Number(entry.quantity);
   }
 
   return (
     <Form onSubmit={onSubmit}>
       <Card>
         <CardContent className="space-y-4">
-          {/* Entries list */}
           <div>
             <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Items
             </h3>
             {entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-4 py-6 text-center">
-                <div className="size-8 rounded-lg bg-muted grid place-items-center mb-2">
+                <div className="mb-2 grid size-8 place-items-center rounded-lg bg-muted">
                   <ShoppingBag className="size-3.5 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -177,17 +219,24 @@ export function EditTransactionForm({
                 {entries.map((entry, i) => (
                   <div
                     key={`${entry.id || "new"}-${entry.product.id}-${entry.quantity}-${i}`}
-                    className={`flex items-center gap-3 px-3 py-2.5 ${i !== entries.length - 1 ? "border-b border-border" : ""}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40 ${i !== entries.length - 1 ? "border-b border-border" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleEditEntry(i)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleEditEntry(i);
+                      }
+                    }}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {entry.product.name}
-                      </p>
+                      <p className="truncate text-sm font-medium">{entry.product.name}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {entry.quantity} x {formatAmount(entry.price)},-
                       </p>
                       {entry.tagIds && entry.tagIds.length > 0 && (
-                        <p className="text-[11px] text-muted-foreground truncate">
+                        <p className="truncate text-[11px] text-muted-foreground">
                           {entry.tagIds
                             .map((tagId) => tagsById.get(tagId)?.name)
                             .filter(Boolean)
@@ -199,7 +248,9 @@ export function EditTransactionForm({
                       className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
                     >
                       {formatAmount(
-                        entry.type === "expense" ? -Number(entry.price) : Number(entry.price),
+                        entry.type === "expense"
+                          ? -getEntryTotal(entry)
+                          : getEntryTotal(entry),
                         { sign: true },
                       )}
                     </span>
@@ -207,7 +258,10 @@ export function EditTransactionForm({
                       variant="ghost"
                       size="icon-xs"
                       type="button"
-                      onClick={() => handleRemoveEntry(i)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveEntry(i);
+                      }}
                     >
                       <X className="size-3" />
                     </Button>
@@ -217,7 +271,14 @@ export function EditTransactionForm({
             )}
           </div>
 
-          <NewEntryDialog products={products} tags={tags} onSave={handleNewEntry} />
+          <NewEntryDialog
+            products={products}
+            tags={tags}
+            open={entryDialogOpen}
+            onOpenChange={handleEntryDialogOpenChange}
+            initialEntry={editingEntry}
+            onSave={handleSaveEntry}
+          />
           <FormFieldError>{errors.entries?.message}</FormFieldError>
 
           <Separator />
@@ -232,10 +293,10 @@ export function EditTransactionForm({
             />
             <FormFieldError>{errors.store?.message}</FormFieldError>
           </FormField>
+
           <FormField>
             <FormFieldLabel>
-              Description{" "}
-              <span className="text-muted-foreground/60">(Optional)</span>
+              Description <span className="text-muted-foreground/60">(Optional)</span>
             </FormFieldLabel>
             <Textarea
               {...register("description")}
@@ -244,6 +305,7 @@ export function EditTransactionForm({
             />
             <FormFieldError>{errors.description?.message}</FormFieldError>
           </FormField>
+
           <FormField>
             <FormFieldLabel>Date of transaction</FormFieldLabel>
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
@@ -272,6 +334,7 @@ export function EditTransactionForm({
             </Popover>
             <FormFieldError>{errors.date?.message}</FormFieldError>
           </FormField>
+
           <Input
             {...register("transactionId")}
             value={transaction.id}
@@ -279,7 +342,11 @@ export function EditTransactionForm({
           />
         </CardContent>
         <CardFooter>
-          <LoaderButton type="submit" className="w-full" isLoading={mutation.isPending}>
+          <LoaderButton
+            type="submit"
+            className="w-full"
+            isLoading={mutation.isPending}
+          >
             Update transaction
           </LoaderButton>
         </CardFooter>
@@ -291,46 +358,141 @@ export function EditTransactionForm({
 function NewEntryDialog({
   products,
   tags,
+  open,
+  onOpenChange,
+  initialEntry,
   onSave,
 }: {
   products: Product[];
   tags: Tag[];
-  onSave: (entry: NewEntryDTO) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialEntry?: UpdateEntryDTO;
+  onSave: (entry: UpdateEntryDTO) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [total, setTotal] = useState("");
+  const [lastEditedField, setLastEditedField] = useState<"price" | "total">(
+    "price",
+  );
+  const tagSelectContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
     setValue,
     watch,
-    getValues,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
-    defaultValues: {
-      tagIds: [],
-    },
+  } = useForm<NewEntryDTO>({
+    defaultValues: NEW_ENTRY_DEFAULT_VALUES,
     resolver: zodResolver(saveEntrySchema),
   });
 
+  const selectedProduct = watch("product");
   const selectedTagIds = watch("tagIds") ?? [];
+  const price = watch("price");
+  const quantity = watch("quantity");
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [tags, selectedTagIds],
+  );
+
+  const priceRegistration = register("price");
+  const quantityRegistration = register("quantity");
+
+  const isEditing = initialEntry !== undefined;
+
+  function parsePositiveNumber(value?: string) {
+    if (!value || value.trim().length === 0) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  function formatCalculatedAmount(value: number) {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  }
+
+  function getDialogEntryTotal(entry: UpdateEntryDTO) {
+    return Number(entry.price) * Number(entry.quantity);
+  }
 
   useEffect(() => {
-    setSelectedTags(tags.filter((tag) => selectedTagIds.includes(tag.id)));
-  }, [selectedTagIds, tags]);
+    const parsedQuantity = parsePositiveNumber(quantity);
 
-  function addEntry(type: EntryType) {
+    if (!parsedQuantity) {
+      if (lastEditedField === "price") {
+        setTotal("");
+      }
+
+      return;
+    }
+
+    if (lastEditedField === "total") {
+      const parsedTotal = parsePositiveNumber(total);
+
+      if (!parsedTotal) {
+        return;
+      }
+
+      const nextPrice = formatCalculatedAmount(parsedTotal / parsedQuantity);
+      if (price !== nextPrice) {
+        setValue("price", nextPrice, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+
+      return;
+    }
+
+    const parsedPrice = parsePositiveNumber(price);
+
+    if (!parsedPrice) {
+      setTotal("");
+      return;
+    }
+
+    const nextTotal = formatCalculatedAmount(parsedPrice * parsedQuantity);
+    if (total !== nextTotal) {
+      setTotal(nextTotal);
+    }
+  }, [lastEditedField, price, quantity, setValue, total]);
+
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+      return;
+    }
+
+    if (initialEntry) {
+      reset({
+        product: initialEntry.product,
+        price: initialEntry.price,
+        quantity: initialEntry.quantity,
+        type: initialEntry.type,
+        tagIds: initialEntry.tagIds ?? [],
+      });
+      setLastEditedField("price");
+      setTotal(formatCalculatedAmount(getDialogEntryTotal(initialEntry)));
+      return;
+    }
+
+    resetForm();
+  }, [initialEntry, open, reset]);
+
+  function saveEntry(type: EntryType) {
     setValue("type", type);
     handleSubmit((data) => {
       onSave({
         ...data,
+        id: initialEntry?.id,
         type,
         tagIds: data.tagIds ?? [],
       });
-      setOpen(false);
-      resetForm();
+      onOpenChange(false);
     })();
   }
 
@@ -342,32 +504,25 @@ function NewEntryDialog({
     }
   }
 
-  function handleOpenChange(open: boolean) {
-    setOpen(open);
-
-    if (!open) {
-      resetForm();
-    }
+  function handleOpenChange(nextOpen: boolean) {
+    onOpenChange(nextOpen);
   }
 
   function handleTagsChange(nextTags: Tag[]) {
-    setSelectedTags(nextTags);
     setValue(
       "tagIds",
       nextTags.map((tag) => tag.id),
-      { shouldDirty: true, shouldValidate: true },
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
     );
   }
 
-  // TODO: Does not work...
-function resetForm() {
-    setSelectedTags([]);
-    reset({
-      product: undefined,
-      price: undefined,
-      quantity: undefined,
-      tagIds: [],
-    });
+  function resetForm() {
+    setTotal("");
+    setLastEditedField("price");
+    reset(NEW_ENTRY_DEFAULT_VALUES);
   }
 
   return (
@@ -380,19 +535,23 @@ function resetForm() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transaction Entry</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Transaction Entry" : "Transaction Entry"}
+          </DialogTitle>
           <DialogDescription>
-            Add a product with quantity and price to the transaction
+            {isEditing
+              ? "Update the product, quantity, or pricing for this item"
+              : "Add a product with quantity and either unit price or total"}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-2 gap-y-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-3">
+          <div className="sm:col-span-3">
             <FormField>
               <FormFieldLabel>Product</FormFieldLabel>
               <ProductSelect
-                {...register("product")}
+                key={selectedProduct?.id ?? selectedProduct?.name ?? "edit-entry-product"}
                 products={products}
-                defaultValue={getValues("product.name") || undefined}
+                defaultValue={selectedProduct?.name}
                 onValueChange={handleProductSelect}
               />
               <FormFieldError>
@@ -400,17 +559,48 @@ function resetForm() {
               </FormFieldError>
             </FormField>
           </div>
+
           <FormField>
             <FormFieldLabel>Price</FormFieldLabel>
-            <Input {...register("price")} inputMode="decimal" placeholder="12.45,-" />
+            <Input
+              {...priceRegistration}
+              inputMode="decimal"
+              placeholder="12.45,-"
+              onChange={(event) => {
+                setLastEditedField("price");
+                priceRegistration.onChange(event);
+              }}
+            />
             <FormFieldError>{errors.price?.message}</FormFieldError>
           </FormField>
+
           <FormField>
             <FormFieldLabel>Quantity</FormFieldLabel>
-            <Input {...register("quantity")} inputMode="numeric" placeholder="1" />
+            <Input
+              {...quantityRegistration}
+              inputMode="numeric"
+              placeholder="1"
+              onChange={(event) => {
+                quantityRegistration.onChange(event);
+              }}
+            />
             <FormFieldError>{errors.quantity?.message}</FormFieldError>
           </FormField>
-          <div className="col-span-2">
+
+          <FormField>
+            <FormFieldLabel>Total</FormFieldLabel>
+            <Input
+              value={total}
+              inputMode="decimal"
+              placeholder="24.90,-"
+              onChange={(event) => {
+                setLastEditedField("total");
+                setTotal(event.target.value);
+              }}
+            />
+          </FormField>
+
+          <div className="sm:col-span-3" ref={tagSelectContainerRef}>
             <FormField>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <FormFieldLabel>
@@ -424,6 +614,7 @@ function resetForm() {
                 onChange={handleTagsChange}
                 placeholder="Search tags..."
                 className="w-full"
+                portalContainer={tagSelectContainerRef}
               />
               {selectedTags.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -445,7 +636,7 @@ function resetForm() {
             type="button"
             variant="outline"
             className="border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
-            onClick={() => addEntry("expense")}
+            onClick={() => saveEntry("expense")}
           >
             <Minus className="size-3.5" />
             Expense
@@ -454,7 +645,7 @@ function resetForm() {
             type="button"
             variant="outline"
             className="border-income/30 text-income hover:bg-income/10 hover:text-income"
-            onClick={() => addEntry("income")}
+            onClick={() => saveEntry("income")}
           >
             <Plus className="size-3.5" />
             Income
