@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { makeProduct, makeTransaction, makeEntry } from "../__test-fixtures__";
+import {
+  makeProduct,
+  makeTransaction,
+  makeEntry,
+  makeTag,
+} from "../__test-fixtures__";
 
 vi.mock("./transactions.repo", () => ({
   transactionRepo: {
@@ -11,6 +16,9 @@ vi.mock("./transactions.repo", () => ({
     update: vi.fn(),
     updateEntry: vi.fn(),
     removeEntry: vi.fn(),
+    saveEntryTagLink: vi.fn(),
+    removeEntryTagLink: vi.fn(),
+    removeAllEntryTagLinks: vi.fn(),
   },
 }));
 
@@ -21,15 +29,26 @@ vi.mock("../products/products.service", () => ({
   },
 }));
 
+vi.mock("../tags/tags.service", () => ({
+  tagsService: {
+    getTag: vi.fn(),
+  },
+}));
+
 import { transactionService } from "./transactions.service";
 import { transactionRepo } from "./transactions.repo";
 import { productService } from "../products/products.service";
+import { tagsService } from "../tags/tags.service";
 
 const mockTransactionRepo = vi.mocked(transactionRepo);
 const mockProductService = vi.mocked(productService);
+const mockTagsService = vi.mocked(tagsService);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockTagsService.getTag.mockResolvedValue([null, makeTag()] as any);
+  mockTransactionRepo.removeAllEntryTagLinks.mockResolvedValue([] as any);
+  mockTransactionRepo.saveEntryTagLink.mockResolvedValue([{}] as any);
 });
 
 // Helper to build a full transaction with entries for getTransaction mock
@@ -502,7 +521,7 @@ describe("transactionService", () => {
       expect(error?.reason).toBe("UPDATE_TRANSACTION_ERROR");
     });
 
-    it("continues silently when removeEntry throws", async () => {
+    it("returns err when removeEntry throws", async () => {
       const entry1 = makeEntry({ id: "entry-1" });
       const entry2 = makeEntry({ id: "entry-2" });
       const tx = makeTransaction({
@@ -526,8 +545,7 @@ describe("transactionService", () => {
         entries: [{ ...baseUpdateEntry, id: "entry-1" }],
       });
 
-      // Should not return error despite removeEntry throwing
-      expect(error).toBeNull();
+      expect(error?.reason).toBe("REMOVE_ENTRY_ERROR");
     });
   });
 });

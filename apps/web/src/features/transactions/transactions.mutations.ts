@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DeleteTransactionDTO,
+  LinkTagToEntryDTO,
   NewTransactionDTO,
   UpdateTransactionDTO,
 } from "./transactions.dtos";
@@ -72,8 +73,58 @@ function updateTransaction() {
   });
 }
 
+function linkTagToEntry() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagToEntryDTO) => {
+      assertOnline();
+      return await transactionController.linkTagToEntry({ data });
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({
+        queryKey: [TRANSACTION_QUERY_KEY, variables.transactionId],
+      });
+      qc.invalidateQueries({
+        queryKey: [TRANSACTION_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened when linking tag to entry. Please try again!",
+      );
+    },
+  });
+}
+
+function unlinkTagFromEntry() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagToEntryDTO) => {
+      assertOnline();
+      return await transactionController.unlinkTagFromEntry({ data });
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({
+        queryKey: [TRANSACTION_QUERY_KEY, variables.transactionId],
+      });
+      qc.invalidateQueries({
+        queryKey: [TRANSACTION_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened when unlinking tag from entry. Please try again!",
+      );
+    },
+  });
+}
+
 export const transactionMutations = {
   saveTransaction,
   deleteTransaction,
   updateTransaction,
+  linkTagToEntry,
+  unlinkTagFromEntry,
 };

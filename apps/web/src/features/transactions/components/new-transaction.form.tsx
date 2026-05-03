@@ -10,9 +10,10 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
+import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type DefaultValues } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
@@ -42,15 +43,23 @@ import {
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import type { NewTransactionDTO } from "../transactions.dtos";
+import { TagSelect } from "@/features/tags/components/tag.select";
 
 const NEW_ENTRY_DEFAULT_VALUES: DefaultValues<NewEntryDTO> = {
   product: undefined,
   price: "",
   quantity: "",
   type: "expense",
+  tagIds: [],
 };
 
-export function NewTransactionForm({ products }: { products: Product[] }) {
+export function NewTransactionForm({
+  products,
+  tags,
+}: {
+  products: Product[];
+  tags: Tag[];
+}) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [entries, setEntries] = useState<NewEntryDTO[]>([]);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
@@ -76,6 +85,9 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
   const selectedDate = watch("date");
   const editingEntry =
     editingEntryIndex === null ? undefined : entries[editingEntryIndex];
+  const tagsById = useMemo(() => {
+    return new Map(tags.map((tag) => [tag.id, tag]));
+  }, [tags]);
 
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
@@ -194,6 +206,14 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
                       <p className="text-[11px] text-muted-foreground">
                         {entry.quantity} x {formatAmount(entry.price)},-
                       </p>
+                      {entry.tagIds.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {entry.tagIds
+                            .map((tagId) => tagsById.get(tagId)?.name)
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
                     </div>
                     <span
                       className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
@@ -224,6 +244,7 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
 
           <NewEntryDialog
             products={products}
+            tags={tags}
             open={entryDialogOpen}
             onOpenChange={handleEntryDialogOpenChange}
             initialEntry={editingEntry}
@@ -301,12 +322,14 @@ export function NewTransactionForm({ products }: { products: Product[] }) {
 
 function NewEntryDialog({
   products,
+  tags,
   open,
   onOpenChange,
   initialEntry,
   onSave,
 }: {
   products: Product[];
+  tags: Tag[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialEntry?: NewEntryDTO;
@@ -330,8 +353,13 @@ function NewEntryDialog({
   });
 
   const selectedProduct = watch("product");
+  const selectedTagIds = watch("tagIds") ?? [];
   const price = watch("price");
   const quantity = watch("quantity");
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [tags, selectedTagIds],
+  );
 
   const priceRegistration = register("price");
   const quantityRegistration = register("quantity");
@@ -433,6 +461,17 @@ function NewEntryDialog({
     onOpenChange(open);
   }
 
+  function handleTagsChange(nextTags: Tag[]) {
+    setValue(
+      "tagIds",
+      nextTags.map((tag) => tag.id),
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+  }
+
   function resetForm() {
     setTotal("");
     setLastEditedField("price");
@@ -510,6 +549,20 @@ function NewEntryDialog({
               }}
             />
           </FormField>
+          <div className="sm:col-span-3">
+            <FormField>
+              <FormFieldLabel>
+                Entry tags <span className="text-muted-foreground/60">(Optional)</span>
+              </FormFieldLabel>
+              <TagSelect
+                tags={tags}
+                value={selectedTags}
+                onChange={handleTagsChange}
+                placeholder="Search tags..."
+                className="w-full"
+              />
+            </FormField>
+          </div>
         </div>
         <DialogFooter className="grid grid-cols-2">
           <Button

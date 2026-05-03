@@ -10,9 +10,10 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@/features/products/products.models";
+import { Tag } from "@/features/tags/tags.models";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Plus, ChevronDownIcon, Minus, ShoppingBag } from "lucide-react";
 import { ProductSelect } from "@/components/custom/product-select";
 import {
@@ -42,12 +43,15 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { TagSelect } from "@/features/tags/components/tag.select";
 
 export function EditTransactionForm({
   products,
+  tags,
   transaction,
 }: {
   products: Product[];
+  tags: Tag[];
   transaction: FullTransaction;
 }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -85,6 +89,7 @@ export function EditTransactionForm({
         quantity: String(entry.quantity),
         price: String(entry.price),
         type: entry.type,
+        tagIds: entry.tags.map((tag) => tag.id),
       }),
     );
     setEntries(initialEntries);
@@ -92,6 +97,9 @@ export function EditTransactionForm({
   }, [transaction, setValue]);
 
   const selectedDate = watch("date");
+  const tagsById = useMemo(() => {
+    return new Map(tags.map((tag) => [tag.id, tag]));
+  }, [tags]);
 
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
@@ -169,6 +177,14 @@ export function EditTransactionForm({
                       <p className="text-[11px] text-muted-foreground">
                         {entry.quantity} x {formatAmount(entry.price)},-
                       </p>
+                      {entry.tagIds && entry.tagIds.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {entry.tagIds
+                            .map((tagId) => tagsById.get(tagId)?.name)
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
                     </div>
                     <span
                       className={`text-sm font-semibold tabular-nums ${entry.type === "expense" ? "text-expense" : "text-income"}`}
@@ -192,7 +208,7 @@ export function EditTransactionForm({
             )}
           </div>
 
-          <NewEntryDialog products={products} onSave={handleNewEntry} />
+          <NewEntryDialog products={products} tags={tags} onSave={handleNewEntry} />
           <FormFieldError>{errors.entries?.message}</FormFieldError>
 
           <Separator />
@@ -265,9 +281,11 @@ export function EditTransactionForm({
 
 function NewEntryDialog({
   products,
+  tags,
   onSave,
 }: {
   products: Product[];
+  tags: Tag[];
   onSave: (entry: NewEntryDTO) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -275,13 +293,23 @@ function NewEntryDialog({
   const {
     register,
     setValue,
+    watch,
     getValues,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm({
+    defaultValues: {
+      tagIds: [],
+    },
     resolver: zodResolver(saveEntrySchema),
   });
+
+  const selectedTagIds = watch("tagIds") ?? [];
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [tags, selectedTagIds],
+  );
 
   function addEntry(type: EntryType) {
     setValue("type", type);
@@ -289,6 +317,7 @@ function NewEntryDialog({
       onSave({
         ...data,
         type,
+        tagIds: data.tagIds ?? [],
       });
       setOpen(false);
       resetForm();
@@ -311,12 +340,21 @@ function NewEntryDialog({
     }
   }
 
+  function handleTagsChange(nextTags: Tag[]) {
+    setValue(
+      "tagIds",
+      nextTags.map((tag) => tag.id),
+      { shouldDirty: true, shouldValidate: true },
+    );
+  }
+
   // TODO: Does not work...
   function resetForm() {
     reset({
       product: undefined,
       price: undefined,
       quantity: undefined,
+      tagIds: [],
     });
   }
 
@@ -360,6 +398,20 @@ function NewEntryDialog({
             <Input {...register("quantity")} inputMode="numeric" placeholder="1" />
             <FormFieldError>{errors.quantity?.message}</FormFieldError>
           </FormField>
+          <div className="col-span-2">
+            <FormField>
+              <FormFieldLabel>
+                Entry tags <span className="text-muted-foreground/60">(Optional)</span>
+              </FormFieldLabel>
+              <TagSelect
+                tags={tags}
+                value={selectedTags}
+                onChange={handleTagsChange}
+                placeholder="Search tags..."
+                className="w-full"
+              />
+            </FormField>
+          </div>
         </div>
         <DialogFooter className="grid grid-cols-2">
           <Button

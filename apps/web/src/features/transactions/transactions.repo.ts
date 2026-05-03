@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { entries, transactions } from "@/lib/db/schema";
+import { entries, entryTags, transactions } from "@/lib/db/schema";
 import { NewEntry, NewTransaction } from "./transactions.models";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 async function getAll(userId: string, start: Date, end: Date) {
   return await db.query.transactions.findMany({
@@ -13,6 +13,7 @@ async function getAll(userId: string, start: Date, end: Date) {
               tags: true,
             },
           },
+          tags: true,
         },
       },
     },
@@ -33,6 +34,7 @@ async function getOne(id: string) {
               tags: true,
             },
           },
+          tags: true,
         },
       },
     },
@@ -77,6 +79,21 @@ async function removeEntry(entryId: string) {
   return await db.delete(entries).where(eq(entries.id, entryId)).returning();
 }
 
+async function saveEntryTagLink(entryId: string, tagId: string) {
+  return await db.insert(entryTags).values({ entryId, tagId }).returning();
+}
+
+async function removeEntryTagLink(entryId: string, tagId: string) {
+  return await db
+    .delete(entryTags)
+    .where(and(eq(entryTags.entryId, entryId), eq(entryTags.tagId, tagId)))
+    .returning();
+}
+
+async function removeAllEntryTagLinks(entryId: string) {
+  return await db.delete(entryTags).where(eq(entryTags.entryId, entryId)).returning();
+}
+
 export const transactionRepo = {
   getAll,
   getOne,
@@ -86,4 +103,7 @@ export const transactionRepo = {
   update,
   updateEntry,
   removeEntry,
+  saveEntryTagLink,
+  removeEntryTagLink,
+  removeAllEntryTagLinks,
 };

@@ -22,9 +22,10 @@ export const saveEntrySchema = z.object({
   quantity: positiveIntegerValidator,
   price: positiveNumberValidator,
   type: z.enum(entryTypes),
+  tagIds: z.array(z.string()).default([]),
 });
 
-export type NewEntryDTO = z.infer<typeof saveEntrySchema>;
+export type NewEntryDTO = z.input<typeof saveEntrySchema>;
 
 export const saveTransactionSchema = z.object({
   store: z.string().optional(),
@@ -46,7 +47,7 @@ export const updateEntrySchema = saveEntrySchema.extend({
   id: z.string().optional(),
 });
 
-export type UpdateEntryDTO = z.infer<typeof updateEntrySchema>;
+export type UpdateEntryDTO = z.input<typeof updateEntrySchema>;
 
 export const updateTransactionSchema = z.object({
   transactionId: z.string(),
@@ -59,3 +60,11 @@ export const updateTransactionSchema = z.object({
 });
 
 export type UpdateTransactionDTO = z.infer<typeof updateTransactionSchema>;
+
+export const linkTagToEntrySchema = z.object({
+  transactionId: z.string(),
+  entryId: z.string(),
+  tagId: z.string(),
+});
+
+export type LinkTagToEntryDTO = z.infer<typeof linkTagToEntrySchema>;

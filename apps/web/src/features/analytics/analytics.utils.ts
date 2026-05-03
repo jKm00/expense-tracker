@@ -67,26 +67,19 @@ export function filterTransactionsByTags(
 
   return transactions
     .map((transaction) => {
-      // Filter entries based on their product tags
       const filteredEntries = transaction.entries.filter((entry) => {
-        // If no product, skip this entry
-        if (!entry.products) return false;
+        const entryTagIds = getMergedEntryTags(entry).map((tag) => tag.id);
 
-        // Get all tag IDs for this product
-        const productTagIds = entry.products.tags.map((tag) => tag.id);
-
-        // If exclude tags are specified and product has any excluded tag, skip this entry
         if (
           excludeTagIds.size > 0 &&
-          productTagIds.some((tagId) => excludeTagIds.has(tagId))
+          entryTagIds.some((tagId) => excludeTagIds.has(tagId))
         ) {
           return false;
         }
 
-        // If include tags are specified, product must have at least one included tag
         if (
           includeTagIds.size > 0 &&
-          !productTagIds.some((tagId) => includeTagIds.has(tagId))
+          !entryTagIds.some((tagId) => includeTagIds.has(tagId))
         ) {
           return false;
         }
@@ -100,7 +93,22 @@ export function filterTransactionsByTags(
         entries: filteredEntries,
       };
     })
-    // Remove transactions that have no entries after filtering
     .filter((transaction) => transaction.entries.length > 0);
 }
 
+export function getMergedEntryTags(entry: FullTransaction["entries"][number]) {
+  const merged = new Map<string, Tag>();
+
+  const productTags = entry.products?.tags ?? [];
+  const directEntryTags = entry.tags ?? [];
+
+  for (const tag of productTags) {
+    merged.set(tag.id, tag);
+  }
+
+  for (const tag of directEntryTags) {
+    merged.set(tag.id, tag);
+  }
+
+  return Array.from(merged.values());
+}

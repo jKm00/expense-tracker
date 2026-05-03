@@ -54,6 +54,7 @@ export function makeEntry(overrides: Partial<Record<string, unknown>> = {}) {
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date("2024-01-15"),
     products: makeProduct(),
+    tags: [],
     ...overrides,
   };
 }
