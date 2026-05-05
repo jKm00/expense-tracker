@@ -8,6 +8,8 @@ import dayjs from "dayjs";
  */
 export function calculateAnalyticsMetrics(
   transactions: FullTransaction[],
+  month?: number,
+  year?: number,
 ): AnalyticsMetrics {
   let netBalance = 0;
   let totalIncome = 0;
@@ -47,8 +49,11 @@ export function calculateAnalyticsMetrics(
   const avgItemValue = totalItems === 0 ? 0 : totalItemValue / totalItems;
   const itemsPerTransaction =
     transactions.length === 0 ? 0 : totalItems / transactions.length;
-  const dailySpending =
-    activeDays.size === 0 ? 0 : totalExpenses / activeDays.size;
+  const spendingDays =
+    month === undefined || year === undefined
+      ? activeDays.size
+      : getSpendingDays(month, year);
+  const dailySpending = spendingDays === 0 ? 0 : totalExpenses / spendingDays;
 
   return {
     netBalance,
@@ -63,6 +68,17 @@ export function calculateAnalyticsMetrics(
     dailySpending,
     activeDays: activeDays.size,
   };
+}
+
+function getSpendingDays(month: number, year: number): number {
+  const today = dayjs();
+  const isCurrentMonth = today.month() === month && today.year() === year;
+
+  if (isCurrentMonth) {
+    return today.date();
+  }
+
+  return dayjs(new Date(year, month, 1)).daysInMonth();
 }
 
 /**

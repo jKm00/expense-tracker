@@ -161,7 +161,7 @@ export function DetailedKpis({
               />
               <KpiCard
                 title="Daily Spending"
-                subtitle="Average per active day"
+                subtitle="Average per calendar day"
                 value={formatAmount(metrics.dailySpending)}
                 icon={Calendar}
                 delta={dailySpendingDelta}
