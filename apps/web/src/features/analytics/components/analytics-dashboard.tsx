@@ -37,12 +37,17 @@ export function AnalyticsDashboard({
   compareYear,
 }: AnalyticsDashboardProps) {
   const metrics = useMemo(
-    () => calculateAnalyticsMetrics(transactions),
-    [transactions],
+    () => calculateAnalyticsMetrics(transactions, month, year),
+    [transactions, month, year],
   );
   const comparisonMetrics = useMemo(
-    () => calculateAnalyticsMetrics(comparisonTransactions),
-    [comparisonTransactions],
+    () =>
+      calculateAnalyticsMetrics(
+        comparisonTransactions,
+        compareMonth,
+        compareYear,
+      ),
+    [comparisonTransactions, compareMonth, compareYear],
   );
   const dailyChartData = useMemo(
     () =>
