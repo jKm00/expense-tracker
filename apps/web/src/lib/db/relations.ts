@@ -4,7 +4,11 @@ import {
   user,
   verification,
 } from "@/features/auth/auth.schema";
-import { products, productTags } from "@/features/products/products.schema";
+import {
+  productAliases,
+  products,
+  productTags,
+} from "@/features/products/products.schema";
 import { recurring } from "@/features/recurring/recurring.schema";
 import { tags } from "@/features/tags/tags.schema";
 import {
@@ -25,6 +29,7 @@ export const relations = defineRelations(
     products,
     recurring,
     tags,
+    productAliases,
     productTags,
     // Transactions
     transactions,
@@ -64,9 +69,19 @@ export const relations = defineRelations(
         from: r.products.id.through(r.productTags.productId),
         to: r.tags.id.through(r.productTags.tagId),
       }),
+      aliases: r.many.productAliases({
+        from: r.products.id,
+        to: r.productAliases.productId,
+      }),
       entries: r.many.entries({
         from: r.products.id,
         to: r.entries.productId,
+      }),
+    },
+    productAliases: {
+      products: r.one.products({
+        from: r.productAliases.productId,
+        to: r.products.id,
       }),
     },
     recurring: {

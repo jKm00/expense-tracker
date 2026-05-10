@@ -1,6 +1,14 @@
 import { assertOnline } from "@/lib/offline-guard";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AddProductDTO, DeleteProductDTO, LinkTagDTO, UpdateProductDTO } from "./products.dtos";
+import {
+  AddProductAliasDTO,
+  AddProductDTO,
+  DeleteProductAliasDTO,
+  DeleteProductDTO,
+  LinkTagDTO,
+  UpdateProductAliasDTO,
+  UpdateProductDTO,
+} from "./products.dtos";
 import { productController } from "./products.controller";
 import { PRODUCT_QUERY_KEY } from "./products.queries";
 import { toast } from "sonner";
@@ -110,10 +118,76 @@ function unlinkTagFromProduct() {
   });
 }
 
+function addProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: AddProductAliasDTO) => {
+      assertOnline();
+      return await productController.addProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to add alias. Please try again!",
+      );
+    },
+  });
+}
+
+function updateProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateProductAliasDTO) => {
+      assertOnline();
+      return await productController.updateProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to update alias. Please try again!",
+      );
+    },
+  });
+}
+
+function deleteProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteProductAliasDTO) => {
+      assertOnline();
+      return await productController.deleteProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to delete alias. Please try again!",
+      );
+    },
+  });
+}
+
 export const productMutations = {
   createProduct,
   updateProduct,
   deleteProduct,
   linkTagToProduct,
   unlinkTagFromProduct,
+  addProductAlias,
+  updateProductAlias,
+  deleteProductAlias,
 };

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { products, productTags } from "./products.schema";
+import { products, productTags, productAliases } from "./products.schema";
 import { entries, transactions } from "../transactions/transactions.schema";
 import { NewProduct, UpdateProduct } from "./products.models";
 import { and, count, eq, sql, sum } from "drizzle-orm";
@@ -7,6 +7,7 @@ import { and, count, eq, sql, sum } from "drizzle-orm";
 async function getAll(userId: string) {
   return await db.query.products.findMany({
     with: {
+      aliases: true,
       tags: true,
     },
     where: {
@@ -19,6 +20,7 @@ async function getAll(userId: string) {
 async function getOne(id: string) {
   return await db.query.products.findFirst({
     with: {
+      aliases: true,
       tags: true,
     },
     where: {
@@ -27,8 +29,41 @@ async function getOne(id: string) {
   });
 }
 
+async function getAlias(id: string) {
+  return await db.query.productAliases.findFirst({
+    where: {
+      id,
+    },
+  });
+}
+
+async function getAliasByNormalizedName(productId: string, normalizedName: string) {
+  return await db.query.productAliases.findFirst({
+    where: {
+      productId,
+      normalizedName,
+    },
+  });
+}
+
 async function save(product: NewProduct) {
   return await db.insert(products).values(product).returning();
+}
+
+async function saveAlias(alias: { productId: string; name: string; normalizedName: string }) {
+  return await db.insert(productAliases).values(alias).returning();
+}
+
+async function updateAlias(id: string, data: { name?: string; normalizedName?: string }) {
+  return await db
+    .update(productAliases)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(productAliases.id, id))
+    .returning();
+}
+
+async function removeAlias(id: string) {
+  return await db.delete(productAliases).where(eq(productAliases.id, id)).returning();
 }
 
 async function update(id: string, data: UpdateProduct) {
@@ -102,4 +137,9 @@ export const productRepo = {
   remove,
   softDelete,
   removeTagLink,
+  getAlias,
+  getAliasByNormalizedName,
+  saveAlias,
+  updateAlias,
+  removeAlias,
 };

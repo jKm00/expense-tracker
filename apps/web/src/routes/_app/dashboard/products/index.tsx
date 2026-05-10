@@ -27,6 +27,32 @@ import { Package, PackageX, Plus, Tag } from "lucide-react";
 import { Suspense, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function matchesProductSearch(product: ProductWithTag, searchTerm: string) {
+  const normalizedSearch = normalizeSearch(searchTerm);
+  if (normalizedSearch.length === 0) {
+    return true;
+  }
+
+  if (normalizeSearch(product.name).includes(normalizedSearch)) {
+    return true;
+  }
+
+  return product.aliases.some((alias) => {
+    const normalizedAliasName = alias.normalizedName || normalizeSearch(alias.name);
+    return normalizedAliasName.includes(normalizedSearch);
+  });
+}
+
 export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(
@@ -104,15 +130,11 @@ function ProductsContent() {
   }, [products]);
 
   const filteredTaggedProducts = useMemo(() => {
-    return taggedProducts.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()),
-    );
+    return taggedProducts.filter((p) => matchesProductSearch(p, search));
   }, [taggedProducts, search]);
 
   const filteredUntaggedProducts = useMemo(() => {
-    return untaggedProducts.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()),
-    );
+    return untaggedProducts.filter((p) => matchesProductSearch(p, search));
   }, [untaggedProducts, search]);
 
   if (unexpectedError) {

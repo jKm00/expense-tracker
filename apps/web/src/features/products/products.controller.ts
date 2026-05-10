@@ -8,6 +8,9 @@ import {
   getProductStatsSchema,
   linkTagSchema,
   updateProductSchema,
+  addProductAliasSchema,
+  updateProductAliasSchema,
+  deleteProductAliasSchema,
 } from "./products.dtos";
 
 const getProducts = createServerFn({ method: "GET" })
@@ -83,6 +86,33 @@ const unlinkTagFromProduct = createServerFn({ method: "POST" })
     return await productService.unlinkTagFromProduct(userId, productId, tagId);
   });
 
+const addProductAlias = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(addProductAliasSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { productId, name } = data;
+    return await productService.addProductAlias(userId, productId, name);
+  });
+
+const updateProductAlias = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(updateProductAliasSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { aliasId, name } = data;
+    return await productService.updateProductAlias(userId, aliasId, name);
+  });
+
+const deleteProductAlias = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(deleteProductAliasSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    const { aliasId } = data;
+    return await productService.deleteProductAlias(userId, aliasId);
+  });
+
 export const productController = {
   getProducts,
   getProduct,
@@ -92,4 +122,7 @@ export const productController = {
   deleteProduct,
   linkTagToProduct,
   unlinkTagFromProduct,
+  addProductAlias,
+  updateProductAlias,
+  deleteProductAlias,
 };
