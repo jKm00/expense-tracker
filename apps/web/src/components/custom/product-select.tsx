@@ -1,11 +1,18 @@
+import { ProductWithTag } from "@/features/products/products.models";
 import { useEffect, useMemo, useState } from "react";
-import { Product } from "@/features/products/products.models";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
-import { Check, ChevronRight } from "lucide-react";
 import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Check, ChevronRight } from "lucide-react";
 
-function toSelectableProduct(name: string): Product {
+type Product = ProductWithTag;
+
+type SelectableProduct = Product & {
+  matchReason?: string;
+  matchRank?: number;
+};
+
+function toSelectableProduct(name: string): SelectableProduct {
   const now = new Date();
   return {
     id: "",
@@ -14,6 +21,8 @@ function toSelectableProduct(name: string): Product {
     updatedAt: now,
     userId: "",
     deletedAt: null,
+    tags: [],
+    aliases: [],
   };
 }
 
@@ -23,6 +32,57 @@ function resolveSelectedProduct(products: Product[], value?: string) {
   }
 
   return products.find((product) => product.name === value) ?? toSelectableProduct(value);
+}
+
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getMatchRank(product: Product, normalizedInput: string) {
+  if (!normalizedInput) {
+    return { rank: 999, reason: undefined };
+  }
+
+  const canonical = normalizeSearch(product.name);
+  const aliases = product.aliases.map((alias) => ({
+    raw: alias.name,
+    normalized: alias.normalizedName || normalizeSearch(alias.name),
+  }));
+
+  if (canonical === normalizedInput) {
+    return { rank: 1, reason: undefined };
+  }
+
+  const exactAlias = aliases.find((alias) => alias.normalized === normalizedInput);
+  if (exactAlias) {
+    return { rank: 2, reason: `alias: ${exactAlias.raw}` };
+  }
+
+  if (canonical.startsWith(normalizedInput)) {
+    return { rank: 3, reason: undefined };
+  }
+
+  const prefixAlias = aliases.find((alias) => alias.normalized.startsWith(normalizedInput));
+  if (prefixAlias) {
+    return { rank: 4, reason: `alias: ${prefixAlias.raw}` };
+  }
+
+  if (canonical.includes(normalizedInput)) {
+    return { rank: 5, reason: undefined };
+  }
+
+  const containsAlias = aliases.find((alias) => alias.normalized.includes(normalizedInput));
+  if (containsAlias) {
+    return { rank: 6, reason: `alias: ${containsAlias.raw}` };
+  }
+
+  return { rank: Number.POSITIVE_INFINITY, reason: undefined };
 }
 
 export function ProductSelect({
@@ -36,7 +96,7 @@ export function ProductSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [value, setValue] = useState<Product | null>(() =>
+  const [value, setValue] = useState<SelectableProduct | null>(() =>
     resolveSelectedProduct(products, defaultValue),
   );
 
@@ -45,9 +105,30 @@ export function ProductSelect({
   }, [defaultValue, products]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((p) =>
-      p.name.toLowerCase().includes(inputValue.toLowerCase()),
-    );
+    const normalizedInput = normalizeSearch(inputValue);
+    if (!normalizedInput) {
+      return [...products]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((product) => ({ ...product }));
+    }
+
+    return products
+      .map((product) => {
+        const match = getMatchRank(product, normalizedInput);
+        return {
+          ...product,
+          matchReason: match.reason,
+          matchRank: match.rank,
+        };
+      })
+      .filter((product) => (product.matchRank ?? Number.POSITIVE_INFINITY) < Number.POSITIVE_INFINITY)
+      .sort((a, b) => {
+        const rankDiff = (a.matchRank ?? 999) - (b.matchRank ?? 999);
+        if (rankDiff !== 0) {
+          return rankDiff;
+        }
+        return a.name.localeCompare(b.name);
+      });
   }, [products, inputValue]);
 
   function handleSelect(product: Product) {
@@ -60,10 +141,10 @@ export function ProductSelect({
     }
   }
 
-  function handleOpenChange(open: boolean) {
-    setOpen(open);
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
 
-    if (!open) {
+    if (!nextOpen) {
       setInputValue("");
     }
   }
@@ -71,18 +152,20 @@ export function ProductSelect({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-11 md:h-9 w-full justify-between font-normal text-base md:text-sm">
+        <Button variant="outline" className="h-11 w-full justify-between text-base font-normal md:h-9 md:text-sm">
           {value ? (
             <span className="truncate">{value.name}</span>
           ) : (
             <span className="text-muted-foreground">Select product</span>
           )}
           <ChevronRight
-            className={`size-3.5 ${open ? "rotate-90" : ""} transition-transform text-muted-foreground`}
+            className={`size-3.5 text-muted-foreground transition-transform ${
+              open ? "rotate-90" : ""
+            }`}
           />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="p-0 gap-0">
+      <PopoverContent align="start" className="gap-0 p-0">
         <div className="p-2 pb-1">
           <Input
             value={inputValue}
@@ -96,7 +179,7 @@ export function ProductSelect({
             onClick={() => handleSelect(toSelectableProduct(inputValue))}
             variant="ghost"
             size="sm"
-            className="mx-2 justify-start text-muted-foreground text-xs"
+            className="mx-2 justify-start text-xs text-muted-foreground"
           >
             Create '{inputValue}'
           </Button>
@@ -110,7 +193,14 @@ export function ProductSelect({
               size="sm"
               className="justify-between text-xs font-normal"
             >
-              <span className="truncate">{product.name}</span>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block truncate">{product.name}</span>
+                {product.matchReason ? (
+                  <span className="block truncate text-[10px] text-muted-foreground">
+                    {product.matchReason}
+                  </span>
+                ) : null}
+              </span>
               {value && value.name === product.name && (
                 <Check className="size-3.5 text-primary" />
               )}

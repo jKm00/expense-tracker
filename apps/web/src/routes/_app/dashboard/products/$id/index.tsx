@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
@@ -187,6 +188,20 @@ function ProductDetails() {
               readOnly
               className="bg-muted/30"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Aliases</Label>
+            {product.aliases.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No aliases</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {product.aliases.map((alias) => (
+                  <Badge key={alias.id} variant="secondary">
+                    {alias.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

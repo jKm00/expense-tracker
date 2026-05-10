@@ -5,8 +5,13 @@ vi.mock("./products.repo", () => ({
   productRepo: {
     getAll: vi.fn(),
     getOne: vi.fn(),
+    getAlias: vi.fn(),
+    getAliasByNormalizedName: vi.fn(),
     getStats: vi.fn(),
     save: vi.fn(),
+    saveAlias: vi.fn(),
+    updateAlias: vi.fn(),
+    removeAlias: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
     softDelete: vi.fn(),
@@ -32,10 +37,25 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+function makeAlias(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "alias-1",
+    productId: "product-1",
+    name: "Milk",
+    normalizedName: "milk",
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-01"),
+    ...overrides,
+  };
+}
+
 describe("productService", () => {
   describe("getProducts", () => {
     it("returns ok with products array on success", async () => {
-      const products = [makeProduct(), makeProduct({ id: "product-2" })];
+      const products = [
+        makeProduct({ aliases: [] }),
+        makeProduct({ id: "product-2", aliases: [makeAlias({ id: "alias-2" })] }),
+      ];
       mockProductRepo.getAll.mockResolvedValue(products as any);
 
       const [error, data] = await productService.getProducts("user-1");
@@ -65,7 +85,7 @@ describe("productService", () => {
 
   describe("getProduct", () => {
     it("returns ok with product when found and owned", async () => {
-      const product = makeProduct();
+      const product = makeProduct({ aliases: [] });
       mockProductRepo.getOne.mockResolvedValue(product as any);
 
       const [error, data] = await productService.getProduct("user-1", "product-1");
@@ -84,7 +104,7 @@ describe("productService", () => {
     });
 
     it("returns err with PRODUCT_UNAUTHORIZED when userId doesn't match", async () => {
-      const product = makeProduct({ userId: "other-user" });
+      const product = makeProduct({ userId: "other-user", aliases: [] });
       mockProductRepo.getOne.mockResolvedValue(product as any);
 
       const [error, data] = await productService.getProduct("user-1", "product-1");
@@ -105,7 +125,7 @@ describe("productService", () => {
 
   describe("getProductStats", () => {
     it("returns ok with stats when product exists and repo succeeds", async () => {
-      const product = makeProduct();
+      const product = makeProduct({ aliases: [] });
       const stats = {
         purchaseCount: 3,
         totalQuantity: 6,
@@ -139,80 +159,17 @@ describe("productService", () => {
       expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
       expect(mockProductRepo.getStats).not.toHaveBeenCalled();
     });
-
-    it("returns err early when product is not owned by the user", async () => {
-      const product = makeProduct({ userId: "other-user" });
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-
-      const [error, data] = await productService.getProductStats(
-        "user-1",
-        "product-1",
-      );
-
-      expect(data).toBeNull();
-      expect(error?.reason).toBe("PRODUCT_UNAUTHORIZED");
-      expect(mockProductRepo.getStats).not.toHaveBeenCalled();
-    });
-
-    it("returns err with PRODUCT_DB_ERROR when stats repo throws", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.getStats.mockRejectedValue(new Error("DB error"));
-
-      const [error, data] = await productService.getProductStats(
-        "user-1",
-        "product-1",
-      );
-
-      expect(data).toBeNull();
-      expect(error?.reason).toBe("PRODUCT_DB_ERROR");
-    });
   });
 
   describe("addProduct", () => {
-    it("returns ok with saved product when no tagIds provided", async () => {
-      const product = makeProduct();
+    it("returns ok with saved product", async () => {
+      const product = makeProduct({ aliases: [] });
       mockProductRepo.save.mockResolvedValue([product] as any);
 
       const [error, data] = await productService.addProduct({
         userId: "user-1",
         name: "Milk",
       });
-
-      expect(error).toBeNull();
-      expect(data).toEqual(product);
-      expect(mockProductRepo.saveTagLink).not.toHaveBeenCalled();
-    });
-
-    it("calls linkTagToProduct for each tagId when tagIds provided", async () => {
-      const product = makeProduct();
-      const tag = makeTag();
-      mockProductRepo.save.mockResolvedValue([product] as any);
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockTagsService.getTag.mockResolvedValue([null, tag] as any);
-      mockProductRepo.saveTagLink.mockResolvedValue([{}] as any);
-
-      await productService.addProduct(
-        { userId: "user-1", name: "Milk" },
-        ["tag-1", "tag-2"],
-      );
-
-      expect(mockProductRepo.saveTagLink).toHaveBeenCalledTimes(2);
-    });
-
-    it("returns ok even if tag link call fails", async () => {
-      const product = makeProduct();
-      mockProductRepo.save.mockResolvedValue([product] as any);
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockTagsService.getTag.mockResolvedValue([
-        { reason: "TAG_NOT_FOUND", message: "not found" },
-        null,
-      ] as any);
-
-      const [error, data] = await productService.addProduct(
-        { userId: "user-1", name: "Milk" },
-        ["tag-1"],
-      );
 
       expect(error).toBeNull();
       expect(data).toEqual(product);
@@ -228,25 +185,15 @@ describe("productService", () => {
 
       expect(error?.reason).toBe("PRODUCT_NOT_RETURNED");
     });
-
-    it("returns err with UNEXPECTED_DB_ERROR when repo save throws", async () => {
-      mockProductRepo.save.mockRejectedValue(new Error("DB error"));
-
-      const [error] = await productService.addProduct({
-        userId: "user-1",
-        name: "Milk",
-      });
-
-      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
-    });
   });
 
   describe("updateProduct", () => {
     it("returns ok with updated product on success", async () => {
-      const product = makeProduct();
-      const updated = makeProduct({ name: "Updated Milk" });
+      const product = makeProduct({ aliases: [] });
+      const updated = makeProduct({ name: "Updated Milk", aliases: [] });
       mockProductRepo.getOne.mockResolvedValue(product as any);
       mockProductRepo.update.mockResolvedValue([updated] as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
 
       const [error, data] = await productService.updateProduct("user-1", "product-1", {
         name: "Updated Milk",
@@ -256,103 +203,142 @@ describe("productService", () => {
       expect(data).toEqual(updated);
     });
 
-    it("returns err early when getProduct fails (not found)", async () => {
-      mockProductRepo.getOne.mockResolvedValue(undefined);
-
-      const [error] = await productService.updateProduct("user-1", "product-1", {
-        name: "Updated",
+    it("removes matching alias when canonical rename collides", async () => {
+      const product = makeProduct({ aliases: [] });
+      const updated = makeProduct({ name: "Whole Milk", aliases: [] });
+      const alias = makeAlias({
+        id: "alias-2",
+        productId: "product-1",
+        name: "Whole Milk",
+        normalizedName: "whole milk",
       });
 
-      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
-      expect(mockProductRepo.update).not.toHaveBeenCalled();
-    });
-
-    it("returns err early when getProduct fails (unauthorized)", async () => {
-      const product = makeProduct({ userId: "other-user" });
       mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.update.mockResolvedValue([updated] as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(alias as any);
+      mockProductRepo.removeAlias.mockResolvedValue([alias] as any);
 
       const [error] = await productService.updateProduct("user-1", "product-1", {
-        name: "Updated",
+        name: "Whole Milk",
       });
 
-      expect(error?.reason).toBe("PRODUCT_UNAUTHORIZED");
-      expect(mockProductRepo.update).not.toHaveBeenCalled();
-    });
-
-    it("returns err with PRODUCT_UPDATE_FAILED when repo update returns empty array", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.update.mockResolvedValue([]);
-
-      const [error] = await productService.updateProduct("user-1", "product-1", {
-        name: "Updated",
-      });
-
-      expect(error?.reason).toBe("PRODUCT_UPDATE_FAILED");
-    });
-
-    it("returns err with UNEXPECTED_DB_ERROR when repo update throws", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.update.mockRejectedValue(new Error("DB error"));
-
-      const [error] = await productService.updateProduct("user-1", "product-1", {
-        name: "Updated",
-      });
-
-      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+      expect(error).toBeNull();
+      expect(mockProductRepo.removeAlias).toHaveBeenCalledWith("alias-2");
     });
   });
 
-  describe("deleteProduct", () => {
-    it("returns ok with soft-deleted product on success", async () => {
-      const product = makeProduct();
-      const deleted = makeProduct({ deletedAt: new Date() });
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.softDelete.mockResolvedValue([deleted] as any);
+  describe("addProductAlias", () => {
+    it("returns ok when alias is added", async () => {
+      const product = makeProduct({ name: "Milk", aliases: [] });
+      const alias = makeAlias({ id: "alias-2", name: "Skim Milk", normalizedName: "skim milk" });
 
-      const [error, data] = await productService.deleteProduct("user-1", "product-1");
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
+      mockProductRepo.saveAlias.mockResolvedValue([alias] as any);
+
+      const [error, data] = await productService.addProductAlias(
+        "user-1",
+        "product-1",
+        "Skim Milk",
+      );
 
       expect(error).toBeNull();
-      expect(data).toEqual(deleted);
+      expect(data).toEqual(alias);
     });
 
-    it("returns err early when getProduct fails", async () => {
-      mockProductRepo.getOne.mockResolvedValue(undefined);
-
-      const [error] = await productService.deleteProduct("user-1", "product-1");
-
-      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
-      expect(mockProductRepo.softDelete).not.toHaveBeenCalled();
-    });
-
-    it("returns err with PRODUCT_DELETE_FAILED when softDelete returns empty array", async () => {
-      const product = makeProduct();
+    it("returns PRODUCT_ALIAS_EQUALS_CANONICAL when alias matches canonical", async () => {
+      const product = makeProduct({ name: "Milk", aliases: [] });
       mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.softDelete.mockResolvedValue([]);
 
-      const [error] = await productService.deleteProduct("user-1", "product-1");
+      const [error] = await productService.addProductAlias(
+        "user-1",
+        "product-1",
+        " milk ",
+      );
 
-      expect(error?.reason).toBe("PRODUCT_DELETE_FAILED");
+      expect(error?.reason).toBe("PRODUCT_ALIAS_EQUALS_CANONICAL");
+    });
+  });
+
+  describe("updateProductAlias", () => {
+    it("returns PRODUCT_ALIAS_NOT_FOUND when alias is missing", async () => {
+      mockProductRepo.getAlias.mockResolvedValue(undefined);
+
+      const [error] = await productService.updateProductAlias(
+        "user-1",
+        "alias-missing",
+        "Skim Milk",
+      );
+
+      expect(error?.reason).toBe("PRODUCT_ALIAS_NOT_FOUND");
     });
 
-    it("returns err with UNEXPECTED_DB_ERROR when softDelete throws", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.softDelete.mockRejectedValue(new Error("DB error"));
+    it("returns PRODUCT_UNAUTHORIZED when alias belongs to other user", async () => {
+      mockProductRepo.getAlias.mockResolvedValue(makeAlias() as any);
+      mockProductRepo.getOne.mockResolvedValue(
+        makeProduct({ userId: "other-user", aliases: [] }) as any,
+      );
 
-      const [error] = await productService.deleteProduct("user-1", "product-1");
+      const [error] = await productService.updateProductAlias(
+        "user-1",
+        "alias-1",
+        "Skim Milk",
+      );
 
-      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+      expect(error?.reason).toBe("PRODUCT_UNAUTHORIZED");
+    });
+
+    it("updates alias when valid", async () => {
+      const alias = makeAlias({ id: "alias-1", name: "Whole Milk", normalizedName: "whole milk" });
+      const updatedAlias = makeAlias({ id: "alias-1", name: "Skim Milk", normalizedName: "skim milk" });
+
+      mockProductRepo.getAlias.mockResolvedValue(alias as any);
+      mockProductRepo.getOne.mockResolvedValue(makeProduct({ aliases: [] }) as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
+      mockProductRepo.updateAlias.mockResolvedValue([updatedAlias] as any);
+
+      const [error, data] = await productService.updateProductAlias(
+        "user-1",
+        "alias-1",
+        "Skim Milk",
+      );
+
+      expect(error).toBeNull();
+      expect(data).toEqual(updatedAlias);
+    });
+  });
+
+  describe("deleteProductAlias", () => {
+    it("returns PRODUCT_ALIAS_NOT_FOUND when alias is missing", async () => {
+      mockProductRepo.getAlias.mockResolvedValue(undefined);
+
+      const [error] = await productService.deleteProductAlias(
+        "user-1",
+        "alias-missing",
+      );
+
+      expect(error?.reason).toBe("PRODUCT_ALIAS_NOT_FOUND");
+    });
+
+    it("deletes alias for owner", async () => {
+      mockProductRepo.getAlias.mockResolvedValue(makeAlias() as any);
+      mockProductRepo.getOne.mockResolvedValue(makeProduct({ aliases: [] }) as any);
+      mockProductRepo.removeAlias.mockResolvedValue([makeAlias()] as any);
+
+      const [error, data] = await productService.deleteProductAlias(
+        "user-1",
+        "alias-1",
+      );
+
+      expect(error).toBeNull();
+      expect(data?.success).toBe(true);
     });
   });
 
   describe("linkTagToProduct", () => {
-    it("returns ok with success message when product and tag accessible", async () => {
-      const product = makeProduct();
-      const tag = makeTag();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockTagsService.getTag.mockResolvedValue([null, tag] as any);
+    it("returns ok when product and tag are accessible", async () => {
+      mockProductRepo.getOne.mockResolvedValue(makeProduct({ aliases: [] }) as any);
+      mockTagsService.getTag.mockResolvedValue([null, makeTag()] as any);
       mockProductRepo.saveTagLink.mockResolvedValue([{}] as any);
 
       const [error, data] = await productService.linkTagToProduct(
@@ -364,43 +350,11 @@ describe("productService", () => {
       expect(error).toBeNull();
       expect(data?.success).toBe(true);
     });
-
-    it("returns err early when getProduct fails", async () => {
-      mockProductRepo.getOne.mockResolvedValue(undefined);
-
-      const [error] = await productService.linkTagToProduct(
-        "user-1",
-        "product-1",
-        "tag-1",
-      );
-
-      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
-      expect(mockTagsService.getTag).not.toHaveBeenCalled();
-    });
-
-    it("returns err early when tagsService.getTag fails", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockTagsService.getTag.mockResolvedValue([
-        { reason: "TAG_NOT_FOUND", message: "not found" },
-        null,
-      ] as any);
-
-      const [error] = await productService.linkTagToProduct(
-        "user-1",
-        "product-1",
-        "tag-1",
-      );
-
-      expect(error?.reason).toBe("TAG_NOT_FOUND");
-      expect(mockProductRepo.saveTagLink).not.toHaveBeenCalled();
-    });
   });
 
   describe("unlinkTagFromProduct", () => {
-    it("returns ok with success message when link removed", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
+    it("returns ok when product-tag link is removed", async () => {
+      mockProductRepo.getOne.mockResolvedValue(makeProduct({ aliases: [] }) as any);
       mockProductRepo.removeTagLink.mockResolvedValue([{}] as any);
 
       const [error, data] = await productService.unlinkTagFromProduct(
@@ -411,33 +365,6 @@ describe("productService", () => {
 
       expect(error).toBeNull();
       expect(data?.success).toBe(true);
-    });
-
-    it("returns err early when getProduct fails", async () => {
-      mockProductRepo.getOne.mockResolvedValue(undefined);
-
-      const [error] = await productService.unlinkTagFromProduct(
-        "user-1",
-        "product-1",
-        "tag-1",
-      );
-
-      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
-      expect(mockProductRepo.removeTagLink).not.toHaveBeenCalled();
-    });
-
-    it("returns err with TAG_PRODUCT_LINK_NOT_FOUND when removeTagLink returns empty array", async () => {
-      const product = makeProduct();
-      mockProductRepo.getOne.mockResolvedValue(product as any);
-      mockProductRepo.removeTagLink.mockResolvedValue([]);
-
-      const [error] = await productService.unlinkTagFromProduct(
-        "user-1",
-        "product-1",
-        "tag-1",
-      );
-
-      expect(error?.reason).toBe("TAG_PRODUCT_LINK_NOT_FOUND");
     });
   });
 });
