@@ -21,6 +21,7 @@ import { EntryType } from "../transactions.models";
 import { transactionMutations } from "../transactions.mutations";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function SimpleTransactionForm({ products }: { products: Product[] }) {
   const mutation = transactionMutations.saveTransaction();
@@ -78,8 +79,18 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quick Log</CardTitle>
-        <CardDescription>Add a transaction</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Quick Log</CardTitle>
+            <CardDescription>Add a transaction</CardDescription>
+          </div>
+          <Link
+            to="/dashboard/transactions/new"
+            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+          >
+            Advanced form
+          </Link>
+        </div>
       </CardHeader>
       <CardContent>
         <form className="space-y-4">
