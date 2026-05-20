@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { makeProduct, makeRecurring } from "../__test-fixtures__";
 
 vi.mock("./recurring.repo", () => ({
@@ -8,6 +8,20 @@ vi.mock("./recurring.repo", () => ({
     save: vi.fn(),
     update: vi.fn(),
     softDelete: vi.fn(),
+    getActiveRecurringForDate: vi.fn(),
+    hasTransactionForDate: vi.fn(),
+  },
+}));
+
+vi.mock("../transactions/transactions.service", () => ({
+  transactionService: {
+    saveTransaction: vi.fn(),
+  },
+}));
+
+vi.mock("@/config/env", () => ({
+  env: {
+    RECURRING_JOB_TOKEN: "test-job-token",
   },
 }));
 
@@ -21,9 +35,11 @@ vi.mock("../products/products.service", () => ({
 import { recurringService } from "./recurring.service";
 import { recurringRepo } from "./recurring.repo";
 import { productService } from "../products/products.service";
+import { transactionService } from "../transactions/transactions.service";
 
 const mockRecurringRepo = vi.mocked(recurringRepo);
 const mockProductService = vi.mocked(productService);
+const mockTransactionService = vi.mocked(transactionService);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -342,6 +358,129 @@ describe("recurringService", () => {
 
       const [error] = await recurringService.deleteRecurring("user-1", "rec-1");
 
+      expect(error?.reason).toBe("RECURRING_DB_ERROR");
+    });
+  });
+
+  describe("processRecurringJob", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-05-15T10:00:00.000Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("returns JOB_UNAUTHORIZED when token is invalid", async () => {
+      const [error, data] = await recurringService.processRecurringJob("wrong-token");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("JOB_UNAUTHORIZED");
+      expect(mockRecurringRepo.getActiveRecurringForDate).not.toHaveBeenCalled();
+    });
+
+    it("creates transaction for due item with store=product and description=interval", async () => {
+      mockRecurringRepo.getActiveRecurringForDate.mockResolvedValue([
+        {
+          recurring: makeRecurring({
+            interval: "monthly",
+            start: new Date("2024-01-15T12:00:00.000Z"),
+            price: "49.90",
+            type: "expense",
+          }) as any,
+          userId: "user-1",
+          productName: "nito",
+        },
+      ] as any);
+      mockRecurringRepo.hasTransactionForDate.mockResolvedValue(false);
+      mockTransactionService.saveTransaction.mockResolvedValue([
+        null,
+        makeRecurring(),
+      ] as any);
+
+      const [error, data] = await recurringService.processRecurringJob("test-job-token");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({ created: 1, skipped: 0, date: "2024-05-15" });
+      expect(mockTransactionService.saveTransaction).toHaveBeenCalledWith({
+        transaction: expect.objectContaining({
+          userId: "user-1",
+          source: "recurring",
+          store: "nito",
+          description: "monthly",
+        }),
+        entries: [
+          {
+            product: { id: "product-1", name: "nito" },
+            quantity: "1",
+            price: "49.9",
+            type: "expense",
+            tagIds: [],
+          },
+        ],
+      });
+    });
+
+    it("skips non-due and already-existing transactions", async () => {
+      mockRecurringRepo.getActiveRecurringForDate.mockResolvedValue([
+        {
+          recurring: makeRecurring({
+            interval: "monthly",
+            start: new Date("2024-01-14T12:00:00.000Z"),
+          }) as any,
+          userId: "user-1",
+          productName: "not-due",
+        },
+        {
+          recurring: makeRecurring({
+            id: "rec-2",
+            productId: "product-2",
+            interval: "monthly",
+            start: new Date("2024-01-15T12:00:00.000Z"),
+          }) as any,
+          userId: "user-1",
+          productName: "already-created",
+        },
+      ] as any);
+      mockRecurringRepo.hasTransactionForDate.mockResolvedValue(true);
+
+      const [error, data] = await recurringService.processRecurringJob("test-job-token");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({ created: 0, skipped: 2, date: "2024-05-15" });
+      expect(mockTransactionService.saveTransaction).not.toHaveBeenCalled();
+    });
+
+    it("returns RECURRING_JOB_SAVE_FAILED when transaction save fails", async () => {
+      mockRecurringRepo.getActiveRecurringForDate.mockResolvedValue([
+        {
+          recurring: makeRecurring({
+            interval: "monthly",
+            start: new Date("2024-01-15T12:00:00.000Z"),
+          }) as any,
+          userId: "user-1",
+          productName: "nito",
+        },
+      ] as any);
+      mockRecurringRepo.hasTransactionForDate.mockResolvedValue(false);
+      mockTransactionService.saveTransaction.mockResolvedValue([
+        { reason: "SAVE_TRANSACTION_ERROR", message: "fail" },
+        null,
+      ] as any);
+
+      const [error, data] = await recurringService.processRecurringJob("test-job-token");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("RECURRING_JOB_SAVE_FAILED");
+    });
+
+    it("returns RECURRING_DB_ERROR when fetching active recurring fails", async () => {
+      mockRecurringRepo.getActiveRecurringForDate.mockRejectedValue(new Error("DB down"));
+
+      const [error, data] = await recurringService.processRecurringJob("test-job-token");
+
+      expect(data).toBeNull();
       expect(error?.reason).toBe("RECURRING_DB_ERROR");
     });
   });

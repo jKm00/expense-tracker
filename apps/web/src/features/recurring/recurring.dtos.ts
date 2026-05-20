@@ -47,3 +47,9 @@ export const deleteRecurringSchema = z.object({
 });
 
 export type DeleteRecurringDTO = z.infer<typeof deleteRecurringSchema>;
+
+export const processRecurringJobSchema = z.object({
+  jobToken: z.string(),
+});
+
+export type ProcessRecurringJobDTO = z.infer<typeof processRecurringJobSchema>;

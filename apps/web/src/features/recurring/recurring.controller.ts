@@ -5,6 +5,7 @@ import {
   createRecurringSchema,
   deleteRecurringSchema,
   getRecurringSchema,
+  processRecurringJobSchema,
   updateRecurringSchema,
 } from "./recurring.dtos";
 
@@ -58,10 +59,17 @@ const deleteRecurring = createServerFn({ method: "POST" })
     return await recurringService.deleteRecurring(userId, recurringId);
   });
 
+const processRecurringJob = createServerFn({ method: "POST" })
+  .inputValidator(processRecurringJobSchema)
+  .handler(async ({ data }) => {
+    return await recurringService.processRecurringJob(data.jobToken);
+  });
+
 export const recurringController = {
   getRecurrings,
   getRecurring,
   createRecurring,
   updateRecurring,
   deleteRecurring,
+  processRecurringJob,
 };
