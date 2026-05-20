@@ -22,6 +22,7 @@ import { Route as AppDashboardTransactionsIndexRouteImport } from './routes/_app
 import { Route as AppDashboardTagsIndexRouteImport } from './routes/_app/dashboard/tags/index'
 import { Route as AppDashboardRecurringIndexRouteImport } from './routes/_app/dashboard/recurring/index'
 import { Route as AppDashboardProductsIndexRouteImport } from './routes/_app/dashboard/products/index'
+import { Route as ApiInternalRecurringRunRouteImport } from './routes/api/internal/recurring/run'
 import { Route as AppDashboardTransactionsNewRouteImport } from './routes/_app/dashboard/transactions/new'
 import { Route as AppDashboardTagsTagIdRouteImport } from './routes/_app/dashboard/tags/$tagId'
 import { Route as AppDashboardRecurringNewRouteImport } from './routes/_app/dashboard/recurring/new'
@@ -99,6 +100,11 @@ const AppDashboardProductsIndexRoute =
     path: '/dashboard/products/',
     getParentRoute: () => AppRoute,
   } as any)
+const ApiInternalRecurringRunRoute = ApiInternalRecurringRunRouteImport.update({
+  id: '/api/internal/recurring/run',
+  path: '/api/internal/recurring/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppDashboardTransactionsNewRoute =
   AppDashboardTransactionsNewRouteImport.update({
     id: '/dashboard/transactions/new',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
+  '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
   '/dashboard/products/': typeof AppDashboardProductsIndexRoute
   '/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/dashboard/tags/': typeof AppDashboardTagsIndexRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
+  '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
   '/dashboard/products': typeof AppDashboardProductsIndexRoute
   '/dashboard/recurring': typeof AppDashboardRecurringIndexRoute
   '/dashboard/tags': typeof AppDashboardTagsIndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/_app/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/_app/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
+  '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
   '/_app/dashboard/products/': typeof AppDashboardProductsIndexRoute
   '/_app/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/_app/dashboard/tags/': typeof AppDashboardTagsIndexRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/dashboard/recurring/new'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
+    | '/api/internal/recurring/run'
     | '/dashboard/products/'
     | '/dashboard/recurring/'
     | '/dashboard/tags/'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/dashboard/recurring/new'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
+    | '/api/internal/recurring/run'
     | '/dashboard/products'
     | '/dashboard/recurring'
     | '/dashboard/tags'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/recurring/new'
     | '/_app/dashboard/tags/$tagId'
     | '/_app/dashboard/transactions/new'
+    | '/api/internal/recurring/run'
     | '/_app/dashboard/products/'
     | '/_app/dashboard/recurring/'
     | '/_app/dashboard/tags/'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInternalRecurringRunRoute: typeof ApiInternalRecurringRunRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/products/'
       preLoaderRoute: typeof AppDashboardProductsIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/internal/recurring/run': {
+      id: '/api/internal/recurring/run'
+      path: '/api/internal/recurring/run'
+      fullPath: '/api/internal/recurring/run'
+      preLoaderRoute: typeof ApiInternalRecurringRunRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/dashboard/transactions/new': {
       id: '/_app/dashboard/transactions/new'
@@ -536,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInternalRecurringRunRoute: ApiInternalRecurringRunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

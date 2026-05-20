@@ -1,7 +1,9 @@
 import { err, ok } from "@/utils/result";
+import { env } from "@/config/env";
 import { recurringRepo } from "./recurring.repo";
 import { NewRecurring, UpdateRecurring } from "./recurring.models";
 import { productService } from "../products/products.service";
+import { transactionService } from "../transactions/transactions.service";
 
 async function getRecurrings(userId: string) {
   try {
@@ -165,10 +167,127 @@ async function deleteRecurring(userId: string, recurringId: string) {
   }
 }
 
+function toNoonUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0, 0),
+  );
+}
+
+function shouldFireOnDate(
+  interval: "weekly" | "monthly" | "yearly",
+  start: Date,
+  today: Date,
+): boolean {
+  switch (interval) {
+    case "weekly":
+      return today.getUTCDay() === start.getUTCDay();
+
+    case "monthly": {
+      const startDay = start.getUTCDate();
+      const todayDay = today.getUTCDate();
+      const lastDayOfMonth = new Date(
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0),
+      ).getUTCDate();
+
+      if (startDay > lastDayOfMonth) {
+        return todayDay === lastDayOfMonth;
+      }
+
+      return todayDay === startDay;
+    }
+
+    case "yearly":
+      return (
+        today.getUTCMonth() === start.getUTCMonth() &&
+        today.getUTCDate() === start.getUTCDate()
+      );
+  }
+}
+
+async function processRecurringJob(jobToken: string) {
+  if (!env.RECURRING_JOB_TOKEN || jobToken !== env.RECURRING_JOB_TOKEN) {
+    return err({
+      reason: "JOB_UNAUTHORIZED" as const,
+      message: "Unauthorized",
+    });
+  }
+
+  try {
+    const todayStart = toNoonUTC(new Date());
+    const activeRecurring = await recurringRepo.getActiveRecurringForDate(todayStart);
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const row of activeRecurring) {
+      const rec = row.recurring;
+
+      if (!shouldFireOnDate(rec.interval, rec.start, todayStart)) {
+        skipped++;
+        continue;
+      }
+
+      const hasTransaction = await recurringRepo.hasTransactionForDate({
+        userId: row.userId,
+        productId: rec.productId,
+        date: todayStart,
+      });
+
+      if (hasTransaction) {
+        skipped++;
+        continue;
+      }
+
+      const [saveError] = await transactionService.saveTransaction({
+        transaction: {
+          userId: row.userId,
+          source: "recurring",
+          store: row.productName,
+          description: rec.interval,
+          date: todayStart,
+        },
+        entries: [
+          {
+            product: {
+              id: rec.productId,
+              name: row.productName,
+            },
+            quantity: "1",
+            price: String(Math.abs(Number(rec.price))),
+            type: rec.type,
+            tagIds: [],
+          },
+        ],
+      });
+
+      if (saveError) {
+        return err({
+          reason: "RECURRING_JOB_SAVE_FAILED" as const,
+          message: `Failed to save recurring transaction for product ${row.productName}`,
+        });
+      }
+
+      created++;
+    }
+
+    return ok({
+      created,
+      skipped,
+      date: todayStart.toISOString().split("T")[0],
+    });
+  } catch (error) {
+    return err({
+      reason: "RECURRING_DB_ERROR" as const,
+      message: "Failed to process recurring transactions",
+    });
+  }
+}
+
 export const recurringService = {
   getRecurrings,
   getRecurring,
   createRecurring,
   updateRecurring,
   deleteRecurring,
+  processRecurringJob,
 };
