@@ -383,6 +383,10 @@ describe("transactionService", () => {
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
+      expect(mockTransactionRepo.update).toHaveBeenCalledWith(
+        "tx-1",
+        expect.objectContaining({ needsReview: false }),
+      );
     });
 
     it("returns err early when getTransaction fails", async () => {

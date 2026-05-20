@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
@@ -194,6 +195,19 @@ function TransactionDetails() {
           icon={Braces}
         />
       </div>
+
+      {transaction.needsReview ? (
+        <Card className="border-amber-500/30 bg-amber-500/10">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">Needs review</Badge>
+              <p className="text-sm text-muted-foreground">
+                This transaction was imported automatically. Edit items to confirm it.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

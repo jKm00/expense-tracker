@@ -201,11 +201,17 @@ async function updateTransaction(
   }
 
   const totalPrice = calculateTotalPrice(entries);
+  const entryChanges = hasEntryChanges(existingTransaction.entries, entries);
+  const nextNeedsReview =
+    existingTransaction.needsReview && entryChanges
+      ? false
+      : existingTransaction.needsReview;
 
   // Update transaction
   try {
     const updated = await transactionRepo.update(transactionId, {
       ...transaction,
+      needsReview: nextNeedsReview,
       totalPrice: String(totalPrice),
     });
 
@@ -438,6 +444,65 @@ function calculateTotalPrice(entries: NewEntryDTO[]): number {
       return acc + Number(curr.price) * Number(curr.quantity);
     }
   }, 0);
+}
+
+function hasEntryChanges(
+  existingEntries: Array<{
+    id: string;
+    productId: string;
+    quantity: number;
+    price: string;
+    type: "income" | "expense";
+    tags: Array<{ id: string }>;
+  }>,
+  incomingEntries: UpdateEntryDTO[],
+) {
+  if (existingEntries.length !== incomingEntries.length) {
+    return true;
+  }
+
+  const existingById = new Map(existingEntries.map((entry) => [entry.id, entry]));
+  for (const incoming of incomingEntries) {
+    if (!incoming.id) {
+      return true;
+    }
+
+    const existing = existingById.get(incoming.id);
+    if (!existing) {
+      return true;
+    }
+
+    const incomingProductId = incoming.product.id;
+    if (!incomingProductId || incomingProductId !== existing.productId) {
+      return true;
+    }
+
+    if (Number(incoming.quantity) !== existing.quantity) {
+      return true;
+    }
+
+    if (Number(incoming.price) !== Number(existing.price)) {
+      return true;
+    }
+
+    if (incoming.type !== existing.type) {
+      return true;
+    }
+
+    const existingTagIds = normalizeTagIds(existing.tags.map((tag) => tag.id)).sort();
+    const incomingTagIds = normalizeTagIds(incoming.tagIds).sort();
+    if (existingTagIds.length !== incomingTagIds.length) {
+      return true;
+    }
+
+    for (let i = 0; i < existingTagIds.length; i++) {
+      if (existingTagIds[i] !== incomingTagIds[i]) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 async function resolveProduct(

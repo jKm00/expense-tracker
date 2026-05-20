@@ -34,6 +34,7 @@ export function makeTransaction(
     store: "Supermarket",
     description: null,
     source: "manual" as const,
+    needsReview: false,
     date: new Date("2024-01-15"),
     totalPrice: "-10",
     createdAt: new Date("2024-01-15"),

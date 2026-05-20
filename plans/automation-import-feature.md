@@ -102,90 +102,90 @@ Add a new automation feature where external payment automations (starting with A
 
 ## Phase 1 - Schema and migrations
 
-- [ ] Update web transaction schema enum to include `automation`.
-- [ ] Update job transaction schema enum to include `automation`.
-- [ ] Add `needsReview` to transaction schema.
-- [ ] Create automation provider enum and automation tables.
-- [ ] Wire schema exports/relations in web and job db modules.
-- [ ] Generate and review drizzle migration.
-- [ ] Ensure migration sets existing `transactions.needs_review = false`.
+- [x] Update web transaction schema enum to include `automation`.
+- [x] Update job transaction schema enum to include `automation` *(no longer required; schema duplication in job removed by decision)*.
+- [x] Add `needsReview` to transaction schema.
+- [x] Create automation provider enum and automation tables.
+- [x] Wire schema exports/relations in web db modules *(job wiring no longer required)*.
+- [x] Generate and review drizzle migration.
+- [x] Ensure migration sets existing `transactions.needs_review = false`.
 
 ## Phase 2 - Backend automation module
 
-- [ ] Create `features/automation` module:
-  - [ ] `automation.schema.ts`
-  - [ ] `automation.models.ts`
-  - [ ] `automation.dtos.ts`
-  - [ ] `automation.repo.ts`
-  - [ ] `automation.service.ts`
-  - [ ] `automation.controller.ts`
-- [ ] Implement token creation with:
-  - [ ] name validation
-  - [ ] active-token limit (max 10)
-  - [ ] hash-only storage
-  - [ ] prefix storage
-  - [ ] return raw token once
-- [ ] Implement token listing metadata (no raw token exposure).
-- [ ] Implement token revocation.
-- [ ] Implement bearer-token verification helper for webhook.
+- [x] Create `features/automation` module:
+  - [x] `automation.schema.ts`
+  - [x] `automation.models.ts`
+  - [x] `automation.dtos.ts`
+  - [x] `automation.repo.ts`
+  - [x] `automation.service.ts`
+  - [x] `automation.controller.ts`
+- [x] Implement token creation with:
+  - [x] name validation
+  - [x] active-token limit (max 10)
+  - [x] hash-only storage
+  - [x] prefix storage
+  - [x] return raw token once
+- [x] Implement token listing metadata (no raw token exposure).
+- [x] Implement token revocation.
+- [x] Implement bearer-token verification helper for webhook.
 
 ## Phase 3 - Public webhook endpoint
 
-- [ ] Add route handler for automation imports (public POST endpoint).
-- [ ] Parse and validate `Authorization: Bearer` token.
-- [ ] Validate payload contract (`provider`, `eventId`, `amount`, `date`).
-- [ ] Enforce provider enum (`apple_pay` in v1).
-- [ ] Enforce absolute positive amount semantics.
-- [ ] Parse ISO datetime with timezone.
-- [ ] Implement idempotency flow using `automation_events`.
-- [ ] Implement mismatch detection and `409` response.
-- [ ] Implement duplicate-success response (`200`, duplicate flag).
-- [ ] Create transaction with source `automation` and `needsReview=true`.
-- [ ] Resolve/create per-user placeholder product.
-- [ ] Create placeholder expense entry.
-- [ ] Persist normalized automation event record linked to transaction.
+- [x] Add route handler for automation imports (public POST endpoint).
+- [x] Parse and validate `Authorization: Bearer` token.
+- [x] Validate payload contract (`provider`, `eventId`, `amount`, `date`).
+- [x] Enforce provider enum (`apple_pay` in v1).
+- [x] Enforce absolute positive amount semantics.
+- [x] Parse ISO datetime with timezone.
+- [x] Implement idempotency flow using `automation_events`.
+- [x] Implement mismatch detection and `409` response.
+- [x] Implement duplicate-success response (`200`, duplicate flag).
+- [x] Create transaction with source `automation` and `needsReview=true`.
+- [x] Resolve/create per-user placeholder product.
+- [x] Create placeholder expense entry.
+- [x] Persist normalized automation event record linked to transaction.
 
 ## Phase 4 - Transactions integration
 
-- [ ] Extend transaction models/types for source `automation`.
-- [ ] Ensure DTO validators accept source `automation` where relevant.
-- [ ] Propagate `needsReview` through repo/service/query return types.
-- [ ] Update transaction update flow to clear `needsReview` on first entry edit.
+- [x] Extend transaction models/types for source `automation`.
+- [x] Ensure DTO validators accept source `automation` where relevant.
+- [x] Propagate `needsReview` through repo/service/query return types.
+- [x] Update transaction update flow to clear `needsReview` on first entry edit.
 
 ## Phase 5 - Automations UI
 
-- [ ] Add route/page for Automations.
-- [ ] Implement token creation form (name input).
-- [ ] Implement inline one-time token reveal card with copy action.
-- [ ] Implement token list UI (name, prefix, status, timestamps).
-- [ ] Implement revoke action in UI.
-- [ ] Add Apple Pay setup instructions:
-  - [ ] step-by-step setup
-  - [ ] endpoint format
-  - [ ] bearer token example
-  - [ ] sample JSON payload
+- [x] Add route/page for Automations.
+- [x] Implement token creation form (name input).
+- [x] Implement inline one-time token reveal card with copy action.
+- [x] Implement token list UI (name, prefix, status, timestamps).
+- [x] Implement revoke action in UI.
+- [x] Add Apple Pay setup instructions:
+  - [x] step-by-step setup
+  - [x] endpoint format
+  - [x] bearer token example
+  - [x] sample JSON payload
 
 ## Phase 6 - Navigation
 
-- [ ] Add Automations link to desktop sidebar.
-- [ ] Add Automations link to mobile More page.
+- [x] Add Automations link to desktop sidebar.
+- [x] Add Automations link to mobile More page.
 
 ## Phase 7 - Transaction UX cues
 
-- [ ] Show `needsReview` indicator in transaction list.
-- [ ] Show `needsReview` indicator on transaction details page.
+- [x] Show `needsReview` indicator in transaction list.
+- [x] Show `needsReview` indicator on transaction details page.
 
 ## Phase 8 - Testing
 
-- [ ] Unit tests for token creation/list/revoke/hash/limit behavior.
-- [ ] Unit tests for bearer token auth failures and success.
-- [ ] Unit tests for webhook payload validation.
-- [ ] Unit tests for idempotent duplicate success path.
-- [ ] Unit tests for mismatch conflict path (`409`).
-- [ ] Unit tests for imported transaction creation semantics.
-- [ ] Unit tests for clearing `needsReview` on entry edit.
-- [ ] Update existing transaction tests for new source/flag.
-- [ ] Run `pnpm test:web` and fix regressions.
+- [x] Unit tests for token creation/list/revoke/hash/limit behavior.
+- [x] Unit tests for bearer token auth failures and success.
+- [x] Unit tests for webhook payload validation.
+- [x] Unit tests for idempotent duplicate success path.
+- [x] Unit tests for mismatch conflict path (`409`).
+- [x] Unit tests for imported transaction creation semantics.
+- [x] Unit tests for clearing `needsReview` on entry edit.
+- [x] Update existing transaction tests for new source/flag.
+- [x] Run `pnpm test:web` and fix regressions.
 
 ## Acceptance Criteria
 

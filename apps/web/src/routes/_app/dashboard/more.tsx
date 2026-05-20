@@ -4,7 +4,7 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Package, Repeat, Tag } from "lucide-react";
+import { ArrowRight, Bot, Package, Repeat, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -29,6 +29,12 @@ function RouteComponent() {
       description: "Organize with categories",
       href: "/dashboard/tags",
       icon: Tag,
+    },
+    {
+      label: "Automations",
+      description: "Manage import tokens",
+      href: "/dashboard/automations",
+      icon: Bot,
     },
   ];
 
