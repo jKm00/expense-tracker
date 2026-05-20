@@ -5,6 +5,10 @@ import {
   verification,
 } from "@/features/auth/auth.schema";
 import {
+  automationEvents,
+  automationTokens,
+} from "@/features/automation/automation.schema";
+import {
   productAliases,
   products,
   productTags,
@@ -31,6 +35,9 @@ export const relations = defineRelations(
     tags,
     productAliases,
     productTags,
+    // Automation
+    automationTokens,
+    automationEvents,
     // Transactions
     transactions,
     entries,
@@ -43,6 +50,8 @@ export const relations = defineRelations(
       products: r.many.products(),
       tags: r.many.tags(),
       transactions: r.many.transactions(),
+      automationTokens: r.many.automationTokens(),
+      automationEvents: r.many.automationEvents(),
     },
     session: {
       user: r.one.user({
@@ -112,6 +121,34 @@ export const relations = defineRelations(
       entries: r.many.entries({
         from: r.transactions.id,
         to: r.entries.transactionId,
+      }),
+      automationEvents: r.many.automationEvents({
+        from: r.transactions.id,
+        to: r.automationEvents.transactionId,
+      }),
+    },
+    automationTokens: {
+      user: r.one.user({
+        from: r.automationTokens.userId,
+        to: r.user.id,
+      }),
+      events: r.many.automationEvents({
+        from: r.automationTokens.id,
+        to: r.automationEvents.tokenId,
+      }),
+    },
+    automationEvents: {
+      user: r.one.user({
+        from: r.automationEvents.userId,
+        to: r.user.id,
+      }),
+      token: r.one.automationTokens({
+        from: r.automationEvents.tokenId,
+        to: r.automationTokens.id,
+      }),
+      transaction: r.one.transactions({
+        from: r.automationEvents.transactionId,
+        to: r.transactions.id,
       }),
     },
     entries: {
