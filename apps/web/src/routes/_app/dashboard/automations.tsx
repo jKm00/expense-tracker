@@ -107,8 +107,6 @@ function RouteComponent() {
       <CreateTokenCard />
 
       <TokenListCard tokens={tokens} />
-
-      <ApplePayInstructionsCard />
     </div>
   );
 }
@@ -190,16 +188,38 @@ function CreateTokenCard() {
         </form>
 
         {revealedToken ? (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-            <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-              Copy this token now. You will not be able to see it again.
-            </p>
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">Token ready</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Copy and store it now. You will not be able to see it again.
+                </p>
+              </div>
+              <Badge variant="outline" className="shrink-0">
+                Shown once
+              </Badge>
+            </div>
             <div className="mt-2 flex items-center gap-2">
-              <Input readOnly value={revealedToken} className="font-mono text-xs" />
-              <Button type="button" size="icon" variant="outline" onClick={handleCopyToken}>
+              <Input
+                readOnly
+                value={revealedToken}
+                className="bg-background font-mono text-xs"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={handleCopyToken}
+              >
                 <Copy className="size-4" />
-                <span className="sr-only">Copy token</span>
+                Copy token
               </Button>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs text-muted-foreground">
+                Keep this token safe. You will use it in the authorization step below.
+              </p>
             </div>
           </div>
         ) : null}
@@ -384,46 +404,5 @@ function RevokedTokenRow({
         {formatDateTime(token.createdAt)} - Revoked {formatDateTime(token.revokedAt)}
       </p>
     </div>
-  );
-}
-
-function ApplePayInstructionsCard() {
-  const samplePayload = JSON.stringify(
-    {
-      provider: "apple_pay",
-      eventId: "apple-pay-evt-123456",
-      amount: 129.9,
-      date: "2026-05-21T14:37:12+02:00",
-      store: "Apple Store",
-      description: "Order #A1234",
-    },
-    null,
-    2,
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Apple Pay setup</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <ol className="list-decimal space-y-2 pl-5 text-muted-foreground">
-          <li>Create an automation token above and copy it immediately.</li>
-          <li>
-            Configure your automation tool to send a <code>POST</code> request to
-            <code> /api/automation/import</code>.
-          </li>
-          <li>
-            Add header <code>Authorization: Bearer &lt;your-token&gt;</code>.
-          </li>
-          <li>
-            Send this JSON body:
-            <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs text-foreground">
-              <code>{samplePayload}</code>
-            </pre>
-          </li>
-        </ol>
-      </CardContent>
-    </Card>
   );
 }
