@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   numeric,
   pgEnum,
@@ -19,6 +20,7 @@ export const transactionSource = pgEnum("transaction_source", [
   "manual",
   "recurring",
   "scan",
+  "automation",
 ]);
 
 export const entryType = pgEnum("entry_type", entryTypes);
@@ -31,6 +33,7 @@ export const transactions = pgTable("transactions", {
   store: text("store"),
   description: text("description"),
   source: transactionSource().notNull(),
+  needsReview: boolean("needs_review").notNull().default(false),
   totalPrice: numeric("total_price", { precision: 10, scale: 2 }).notNull(),
   date: timestamp("date").notNull().notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),

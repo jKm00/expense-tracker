@@ -14,9 +14,11 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app/dashboard/index'
+import { Route as ApiAutomationImportRouteImport } from './routes/api/automation/import'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app/dashboard/profile'
 import { Route as AppDashboardMoreRouteImport } from './routes/_app/dashboard/more'
+import { Route as AppDashboardAutomationsRouteImport } from './routes/_app/dashboard/automations'
 import { Route as AppDashboardAnalyticsRouteImport } from './routes/_app/dashboard/analytics'
 import { Route as AppDashboardTransactionsIndexRouteImport } from './routes/_app/dashboard/transactions/index'
 import { Route as AppDashboardTagsIndexRouteImport } from './routes/_app/dashboard/tags/index'
@@ -57,6 +59,11 @@ const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiAutomationImportRoute = ApiAutomationImportRouteImport.update({
+  id: '/api/automation/import',
+  path: '/api/automation/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -70,6 +77,11 @@ const AppDashboardProfileRoute = AppDashboardProfileRouteImport.update({
 const AppDashboardMoreRoute = AppDashboardMoreRouteImport.update({
   id: '/dashboard/more',
   path: '/dashboard/more',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardAutomationsRoute = AppDashboardAutomationsRouteImport.update({
+  id: '/dashboard/automations',
+  path: '/dashboard/automations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardAnalyticsRoute = AppDashboardAnalyticsRouteImport.update({
@@ -168,9 +180,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/dashboard/automations': typeof AppDashboardAutomationsRoute
   '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/automation/import': typeof ApiAutomationImportRoute
   '/dashboard/': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -192,9 +206,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
   '/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/dashboard/automations': typeof AppDashboardAutomationsRoute
   '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/automation/import': typeof ApiAutomationImportRoute
   '/dashboard': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -219,9 +235,11 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_app/dashboard/analytics': typeof AppDashboardAnalyticsRoute
+  '/_app/dashboard/automations': typeof AppDashboardAutomationsRoute
   '/_app/dashboard/more': typeof AppDashboardMoreRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/automation/import': typeof ApiAutomationImportRoute
   '/_app/dashboard/': typeof AppDashboardIndexRoute
   '/_app/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -245,9 +263,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/analytics'
+    | '/dashboard/automations'
     | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
+    | '/api/automation/import'
     | '/dashboard/'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
@@ -269,9 +289,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard/analytics'
+    | '/dashboard/automations'
     | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
+    | '/api/automation/import'
     | '/dashboard'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
@@ -295,9 +317,11 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_auth/login'
     | '/_app/dashboard/analytics'
+    | '/_app/dashboard/automations'
     | '/_app/dashboard/more'
     | '/_app/dashboard/profile'
     | '/api/auth/$'
+    | '/api/automation/import'
     | '/_app/dashboard/'
     | '/_app/dashboard/products/new'
     | '/_app/dashboard/recurring/new'
@@ -321,6 +345,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiAutomationImportRoute: typeof ApiAutomationImportRoute
   ApiInternalRecurringRunRoute: typeof ApiInternalRecurringRunRoute
 }
 
@@ -361,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/automation/import': {
+      id: '/api/automation/import'
+      path: '/api/automation/import'
+      fullPath: '/api/automation/import'
+      preLoaderRoute: typeof ApiAutomationImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -380,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/more'
       fullPath: '/dashboard/more'
       preLoaderRoute: typeof AppDashboardMoreRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard/automations': {
+      id: '/_app/dashboard/automations'
+      path: '/dashboard/automations'
+      fullPath: '/dashboard/automations'
+      preLoaderRoute: typeof AppDashboardAutomationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard/analytics': {
@@ -499,6 +538,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardAnalyticsRoute: typeof AppDashboardAnalyticsRoute
+  AppDashboardAutomationsRoute: typeof AppDashboardAutomationsRoute
   AppDashboardMoreRoute: typeof AppDashboardMoreRoute
   AppDashboardProfileRoute: typeof AppDashboardProfileRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
@@ -520,6 +560,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardAnalyticsRoute: AppDashboardAnalyticsRoute,
+  AppDashboardAutomationsRoute: AppDashboardAutomationsRoute,
   AppDashboardMoreRoute: AppDashboardMoreRoute,
   AppDashboardProfileRoute: AppDashboardProfileRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
@@ -556,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiAutomationImportRoute: ApiAutomationImportRoute,
   ApiInternalRecurringRunRoute: ApiInternalRecurringRunRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Receipt, ShoppingBag } from "lucide-react";
 import { FullTransaction } from "../transactions.models";
 import { useMemo } from "react";
@@ -45,9 +46,14 @@ export function TransactionList({
                         <Receipt className="size-3.5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {transaction.store || "Transaction"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {transaction.store || "Transaction"}
+                          </p>
+                          {transaction.needsReview ? (
+                            <Badge variant="outline">Needs review</Badge>
+                          ) : null}
+                        </div>
                         <p className="text-[11px] text-muted-foreground">
                           {transaction.entries.length} item
                           {transaction.entries.length !== 1 ? "s" : ""}

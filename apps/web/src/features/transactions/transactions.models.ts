@@ -4,7 +4,12 @@ import { Product, ProductWithTag } from "../products/products.models";
 import type { EntryType as _EntryType } from "./transactions.schema";
 import { Tag } from "../tags/tags.models";
 
-export const transactionSources = ["manual", "recurring", "scan"] as const;
+export const transactionSources = [
+  "manual",
+  "recurring",
+  "scan",
+  "automation",
+] as const;
 export type TransactionSource = (typeof transactionSources)[number];
 
 export type Transaction = InferSelectModel<typeof transactions>;
