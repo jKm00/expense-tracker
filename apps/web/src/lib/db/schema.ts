@@ -4,3 +4,4 @@ export * from "@/features/products/products.schema";
 export * from "@/features/transactions/transactions.schema";
 export * from "@/features/recurring/recurring.schema";
 export * from "@/features/automation/automation.schema";
+export * from "@/features/shopping/shopping.schema";

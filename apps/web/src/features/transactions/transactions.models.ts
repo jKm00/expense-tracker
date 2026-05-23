@@ -9,6 +9,7 @@ export const transactionSources = [
   "recurring",
   "scan",
   "automation",
+  "shopping",
 ] as const;
 export type TransactionSource = (typeof transactionSources)[number];
 

@@ -4,7 +4,15 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bot, Package, Repeat, Tag } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  Package,
+  Repeat,
+  ShoppingBag,
+  Tag,
+  User,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -12,6 +20,12 @@ export const Route = createFileRoute("/_app/dashboard/more")({
 
 function RouteComponent() {
   const menuItems = [
+    {
+      label: "Shopping",
+      description: "Manage your grocery list",
+      href: "/dashboard/shopping",
+      icon: ShoppingBag,
+    },
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -35,6 +49,12 @@ function RouteComponent() {
       description: "Manage import tokens",
       href: "/dashboard/automations",
       icon: Bot,
+    },
+    {
+      label: "Profile",
+      description: "Manage your account",
+      href: "/dashboard/profile",
+      icon: User,
     },
   ];
 

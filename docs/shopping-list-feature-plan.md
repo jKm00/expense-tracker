@@ -37,57 +37,57 @@ Add a persistent shopping list flow for grocery shopping that can be checked off
 
 ### 1. Data model and schema
 
-- [ ] Add shopping list tables/schema for a single active per-user list.
-- [ ] Add shopping item fields for product reference and checked state.
-- [ ] Add shopping transaction source value (`shopping`).
-- [ ] Add and run the database migration.
+- [x] Add shopping list tables/schema for a single active per-user list.
+- [x] Add shopping item fields for product reference and checked state.
+- [x] Add shopping transaction source value (`shopping`).
+- [x] Add and run the database migration.
 
 ### 2. Server layer
 
-- [ ] Create shopping list repo/service/controller equivalents.
-- [ ] Add endpoints for loading the active list.
-- [ ] Add endpoints for add item, remove item, toggle checked state, and merge duplicates.
-- [ ] Add endpoint for checkout prefill data if needed.
-- [ ] Add endpoint for completing shopping and clearing/retaining leftovers.
+- [x] Create shopping list repo/service/controller equivalents.
+- [x] Add endpoints for loading the active list.
+- [x] Add endpoints for add item, remove item, toggle checked state, and merge duplicates.
+- [x] Add endpoint for checkout prefill data if needed.
+- [x] Add endpoint for completing shopping and clearing/retaining leftovers.
 
 ### 3. Client data access
 
-- [ ] Add shopping queries.
-- [ ] Add shopping mutations with optimistic updates.
-- [ ] Invalidate the correct query keys after each mutation.
+- [x] Add shopping queries.
+- [x] Add shopping mutations with optimistic updates.
+- [x] Invalidate the correct query keys after each mutation.
 
 ### 4. Shopping list page
 
-- [ ] Create `/dashboard/shopping` route.
-- [ ] Add the page to primary navigation and move Profile under More.
-- [ ] Build the active list view with checkbox + row tap behavior.
-- [ ] Render checked items clearly while keeping them visible.
-- [ ] Add the inline product search/create row at the top.
-- [ ] Support remove-only inline actions for v1.
+- [x] Create `/dashboard/shopping` route.
+- [x] Add the page to primary navigation and move Profile under More.
+- [x] Build the active list view with checkbox + row tap behavior.
+- [x] Render checked items clearly while keeping them visible.
+- [x] Add the inline product search/create row at the top.
+- [x] Support remove-only inline actions for v1.
 
 ### 5. Checkout page
 
-- [ ] Create `/dashboard/shopping/checkout` route.
-- [ ] Prefill one transaction row per checked shopping item.
-- [ ] Reuse the current unit-price/total-price calculation pattern.
-- [ ] Allow adding/removing items from the generated checkout form.
-- [ ] Keep generated products fixed and editable only for quantity/pricing.
-- [ ] Reuse store, description, and date fields from the current new transaction form.
+- [x] Create `/dashboard/shopping/checkout` route.
+- [x] Prefill one transaction row per checked shopping item.
+- [x] Reuse the current unit-price/total-price calculation pattern.
+- [x] Allow adding/removing items from the generated checkout form.
+- [x] Keep generated products fixed and editable only for quantity/pricing.
+- [x] Reuse store, description, and date fields from the current new transaction form.
 
 ### 6. Finalization flow
 
-- [ ] Block checkout when no items are checked.
-- [ ] Add the leftover-items choice: keep later or remove now.
-- [ ] Create one transaction on final submit using the `shopping` source.
-- [ ] Clear the active shopping list after success.
-- [ ] Navigate to the created transaction after completion.
+- [x] Block checkout when no items are checked.
+- [x] Add the leftover-items choice: keep later or remove now.
+- [x] Create one transaction on final submit using the `shopping` source.
+- [x] Clear the active shopping list after success.
+- [x] Navigate to the created transaction after completion.
 
 ### 7. UX polish and verification
 
-- [ ] Make the layout dense but mobile-friendly.
-- [ ] Verify optimistic updates behave correctly under slow network conditions.
-- [ ] Add tests for list toggling, merge behavior, checkout prefill, and leftover handling.
-- [ ] Verify the shopping source appears correctly in transaction history and analytics.
+- [x] Make the layout dense but mobile-friendly.
+- [x] Verify optimistic updates behave correctly under slow network conditions.
+- [x] Add tests for list toggling, merge behavior, checkout prefill, and leftover handling.
+- [x] Verify the shopping source appears correctly in transaction history and analytics.
 
 ## Notes
 

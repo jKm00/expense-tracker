@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
+  ShoppingBag,
   PackageIcon,
   RepeatIcon,
   Bot,
@@ -15,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
+  { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
   {
     label: "Transactions",
     href: "/dashboard/transactions",
@@ -89,7 +91,7 @@ export function DesktopSidebar() {
       <div className="border-t border-sidebar-border px-3 py-3">
         {user && (
           <Link
-            to="/dashboard/profile"
+            to="/dashboard/more"
             className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-sidebar-accent/50"
           >
             <Avatar className="size-7">
@@ -105,6 +107,7 @@ export function DesktopSidebar() {
               <p className="text-[13px] font-medium truncate text-sidebar-foreground">
                 {user.name}
               </p>
+              <p className="text-[11px] text-muted-foreground">More</p>
             </div>
           </Link>
         )}

@@ -21,6 +21,7 @@ export const transactionSource = pgEnum("transaction_source", [
   "recurring",
   "scan",
   "automation",
+  "shopping",
 ]);
 
 export const entryType = pgEnum("entry_type", entryTypes);
