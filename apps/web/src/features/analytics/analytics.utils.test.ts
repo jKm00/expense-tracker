@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { filterTransactionsByTags, getMergedEntryTags } from "./analytics.utils";
 import { makeEntry, makeProduct, makeTag, makeTransaction } from "../__test-fixtures__";
+import { calculateVariableTotals } from "./analytics.calculations";
 
 describe("analytics.utils", () => {
   describe("getMergedEntryTags", () => {
@@ -73,6 +74,16 @@ describe("analytics.utils", () => {
       const filtered = filterTransactionsByTags([tx as any], [food as any], []);
       expect(filtered).toHaveLength(1);
       expect(filtered[0].entries).toHaveLength(1);
+    });
+
+    it("counts shopping transactions as variable totals", () => {
+      const tx = makeTransaction({
+        source: "shopping",
+        entries: [{ ...makeEntry(), price: "12", quantity: 2 }],
+      });
+
+      const totals = calculateVariableTotals([tx as any]);
+      expect(totals.variableExpenses).toBe(24);
     });
   });
 });

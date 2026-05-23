@@ -3,15 +3,17 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
+import { Badge } from "@/components/ui/badge";
+import { env } from "@/config/env";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bot, Package, Repeat, Tag } from "lucide-react";
+import { ArrowRight, Bot, Package, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const menuItems = [
+  const mainMenuItems = [
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -30,11 +32,21 @@ function RouteComponent() {
       href: "/dashboard/tags",
       icon: Tag,
     },
+  ];
+
+  const secondaryMenuItems = [
     {
-      label: "Automations",
+      label: "Automation",
       description: "Manage import tokens",
       href: "/dashboard/automations",
       icon: Bot,
+      beta: env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false",
+    },
+    {
+      label: "Profile",
+      description: "Manage your account",
+      href: "/dashboard/profile",
+      icon: User,
     },
   ];
 
@@ -47,18 +59,60 @@ function RouteComponent() {
         </PageHeaderDescription>
       </PageHeader>
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-        {menuItems.map((item, idx) => (
+        {mainMenuItems.map((item, idx) => (
           <Link key={item.label} to={item.href} className="block">
             <div
-              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== menuItems.length - 1 ? "border-b border-border/40" : ""}`}
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== mainMenuItems.length - 1 ? "border-b border-border/40" : ""}`}
             >
               <div className="grid size-8 place-items-center rounded-lg bg-muted">
                 <item.icon className="size-4 text-primary" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  {item.label}
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {item.label}
+                  </p>
+                  {item.beta ? (
+                    <Badge
+                      variant="secondary"
+                      className="h-5 rounded-md px-1.5 text-[10px]"
+                    >
+                      BETA
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {item.description}
                 </p>
+              </div>
+              <ArrowRight className="size-3.5 text-muted-foreground/50" />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+        {secondaryMenuItems.map((item, idx) => (
+          <Link key={item.label} to={item.href} className="block">
+            <div
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== secondaryMenuItems.length - 1 ? "border-b border-border/40" : ""}`}
+            >
+              <div className="grid size-8 place-items-center rounded-lg bg-muted">
+                <item.icon className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {item.label}
+                  </p>
+                  {item.beta ? (
+                    <Badge
+                      variant="secondary"
+                      className="h-5 rounded-md px-1.5 text-[10px]"
+                    >
+                      BETA
+                    </Badge>
+                  ) : null}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {item.description}
                 </p>

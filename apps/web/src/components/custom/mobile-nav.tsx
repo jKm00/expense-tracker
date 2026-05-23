@@ -2,7 +2,6 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
-  UserIcon,
   ChartPie,
   Ellipsis,
 } from "lucide-react";
@@ -17,7 +16,6 @@ const navItems = [
   },
   { label: "Analytics", href: "/dashboard/analytics", icon: ChartPie },
   { label: "More", href: "/dashboard/more", icon: Ellipsis },
-  { label: "Profile", href: "/dashboard/profile", icon: UserIcon },
 ] as const;
 
 export function MobileNav() {

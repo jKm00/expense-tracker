@@ -13,6 +13,10 @@ import {
   products,
   productTags,
 } from "@/features/products/products.schema";
+import {
+  shoppingListItems,
+  shoppingLists,
+} from "@/features/shopping/shopping.schema";
 import { recurring } from "@/features/recurring/recurring.schema";
 import { tags } from "@/features/tags/tags.schema";
 import {
@@ -31,6 +35,8 @@ export const relations = defineRelations(
     verification,
     // Product
     products,
+    shoppingLists,
+    shoppingListItems,
     recurring,
     tags,
     productAliases,
@@ -48,6 +54,7 @@ export const relations = defineRelations(
       sessions: r.many.session(),
       accounts: r.many.account(),
       products: r.many.products(),
+      shoppingLists: r.many.shoppingLists(),
       tags: r.many.tags(),
       transactions: r.many.transactions(),
       automationTokens: r.many.automationTokens(),
@@ -85,6 +92,30 @@ export const relations = defineRelations(
       entries: r.many.entries({
         from: r.products.id,
         to: r.entries.productId,
+      }),
+      shoppingListItems: r.many.shoppingListItems({
+        from: r.products.id,
+        to: r.shoppingListItems.productId,
+      }),
+    },
+    shoppingLists: {
+      user: r.one.user({
+        from: r.shoppingLists.userId,
+        to: r.user.id,
+      }),
+      items: r.many.shoppingListItems({
+        from: r.shoppingLists.id,
+        to: r.shoppingListItems.shoppingListId,
+      }),
+    },
+    shoppingListItems: {
+      shoppingList: r.one.shoppingLists({
+        from: r.shoppingListItems.shoppingListId,
+        to: r.shoppingLists.id,
+      }),
+      product: r.one.products({
+        from: r.shoppingListItems.productId,
+        to: r.products.id,
       }),
     },
     productAliases: {

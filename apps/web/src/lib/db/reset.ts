@@ -15,6 +15,8 @@ const main = async () => {
 
   // Only reset user-generated data tables, not auth tables
   const tables = [
+    "shopping_list_items",
+    "shopping_lists",
     "entry_tags",
     "entries",
     "transactions",
