@@ -4,21 +4,14 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Bot,
-  Package,
-  Repeat,
-  Tag,
-  User,
-} from "lucide-react";
+import { ArrowRight, Bot, Package, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const menuItems = [
+  const mainMenuItems = [
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -37,15 +30,15 @@ function RouteComponent() {
       href: "/dashboard/tags",
       icon: Tag,
     },
+  ];
+
+  const secondaryMenuItems = [
     {
       label: "Automation",
       description: "Manage import tokens",
       href: "/dashboard/automations",
       icon: Bot,
     },
-  ];
-
-  const profileItems = [
     {
       label: "Profile",
       description: "Manage your account",
@@ -63,10 +56,10 @@ function RouteComponent() {
         </PageHeaderDescription>
       </PageHeader>
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-        {menuItems.map((item, idx) => (
+        {mainMenuItems.map((item, idx) => (
           <Link key={item.label} to={item.href} className="block">
             <div
-              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== menuItems.length - 1 ? "border-b border-border/40" : ""}`}
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== mainMenuItems.length - 1 ? "border-b border-border/40" : ""}`}
             >
               <div className="grid size-8 place-items-center rounded-lg bg-muted">
                 <item.icon className="size-4 text-primary" />
@@ -84,12 +77,11 @@ function RouteComponent() {
           </Link>
         ))}
       </div>
-      <div className="h-3" />
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-        {profileItems.map((item, idx) => (
+        {secondaryMenuItems.map((item, idx) => (
           <Link key={item.label} to={item.href} className="block">
             <div
-              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== profileItems.length - 1 ? "border-b border-border/40" : ""}`}
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== secondaryMenuItems.length - 1 ? "border-b border-border/40" : ""}`}
             >
               <div className="grid size-8 place-items-center rounded-lg bg-muted">
                 <item.icon className="size-4 text-primary" />

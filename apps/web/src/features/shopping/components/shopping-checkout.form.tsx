@@ -1,4 +1,8 @@
-import { FormField, FormFieldError, FormFieldLabel } from "@/components/custom/form";
+import {
+  FormField,
+  FormFieldError,
+  FormFieldLabel,
+} from "@/components/custom/form";
 import { ProductSelect } from "@/components/custom/product-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +25,7 @@ import {
   CheckoutEntry,
   getPrefilledCheckoutEntries,
 } from "./shopping-checkout.utils";
+import { Separator } from "@/components/ui/separator";
 
 function parsePositiveNumber(value?: string) {
   if (!value || value.trim().length === 0) {
@@ -69,7 +74,10 @@ export function ShoppingCheckoutForm({
 }) {
   const navigate = useNavigate();
   const mutation = shoppingMutations.completeShopping();
-  const checkedItems = useMemo(() => list.items.filter((item) => item.checked), [list.items]);
+  const checkedItems = useMemo(
+    () => list.items.filter((item) => item.checked),
+    [list.items],
+  );
 
   const [entries, setEntries] = useState<CheckoutEntry[]>(() =>
     getPrefilledCheckoutEntries(list),
@@ -124,7 +132,10 @@ export function ShoppingCheckoutForm({
         );
       });
 
-      if (next.length === prev.length && next.every((entry, index) => entry === prev[index])) {
+      if (
+        next.length === prev.length &&
+        next.every((entry, index) => entry === prev[index])
+      ) {
         return prev;
       }
 
@@ -247,7 +258,9 @@ export function ShoppingCheckoutForm({
 
   function markTouched(index: number, field: keyof EntryTouched) {
     setEntryTouched((prev) =>
-      prev.map((entry, i) => (i === index ? { ...entry, [field]: true } : entry)),
+      prev.map((entry, i) =>
+        i === index ? { ...entry, [field]: true } : entry,
+      ),
     );
   }
 
@@ -344,12 +357,22 @@ export function ShoppingCheckoutForm({
                     value={entry.quantity}
                     inputMode="numeric"
                     placeholder="1"
-                    aria-invalid={entryErrors[index]?.quantity ? true : undefined}
-                    className={entryErrors[index]?.quantity ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    aria-invalid={
+                      entryErrors[index]?.quantity ? true : undefined
+                    }
+                    className={
+                      entryErrors[index]?.quantity
+                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                        : undefined
+                    }
                     onBlur={() => markTouched(index, "quantity")}
-                    onChange={(event) => handleQuantityChange(index, event.target.value)}
+                    onChange={(event) =>
+                      handleQuantityChange(index, event.target.value)
+                    }
                   />
-                  <FormFieldError>{entryErrors[index]?.quantity}</FormFieldError>
+                  <FormFieldError>
+                    {entryErrors[index]?.quantity}
+                  </FormFieldError>
                 </FormField>
                 <FormField>
                   <FormFieldLabel>Price</FormFieldLabel>
@@ -358,9 +381,15 @@ export function ShoppingCheckoutForm({
                     inputMode="decimal"
                     placeholder="12.45,-"
                     aria-invalid={entryErrors[index]?.price ? true : undefined}
-                    className={entryErrors[index]?.price ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    className={
+                      entryErrors[index]?.price
+                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                        : undefined
+                    }
                     onBlur={() => markTouched(index, "price")}
-                    onChange={(event) => handlePriceChange(index, event.target.value)}
+                    onChange={(event) =>
+                      handlePriceChange(index, event.target.value)
+                    }
                   />
                   <FormFieldError>{entryErrors[index]?.price}</FormFieldError>
                 </FormField>
@@ -371,9 +400,15 @@ export function ShoppingCheckoutForm({
                     inputMode="decimal"
                     placeholder="24.90,-"
                     aria-invalid={entryErrors[index]?.total ? true : undefined}
-                    className={entryErrors[index]?.total ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    className={
+                      entryErrors[index]?.total
+                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                        : undefined
+                    }
                     onBlur={() => markTouched(index, "total")}
-                    onChange={(event) => handleTotalChange(index, event.target.value)}
+                    onChange={(event) =>
+                      handleTotalChange(index, event.target.value)
+                    }
                   />
                   <FormFieldError>{entryErrors[index]?.total}</FormFieldError>
                 </FormField>
@@ -388,6 +423,8 @@ export function ShoppingCheckoutForm({
           <ProductSelect products={products} onValueChange={handleAddProduct} />
         </FormField>
       </div>
+
+      <Separator className="my-6" />
 
       <div className="grid gap-2 md:grid-cols-2">
         <FormField>
@@ -430,7 +467,8 @@ export function ShoppingCheckoutForm({
 
       <FormField>
         <FormFieldLabel>
-          Description <span className="text-muted-foreground/60">(Optional)</span>
+          Description{" "}
+          <span className="text-muted-foreground/60">(Optional)</span>
         </FormFieldLabel>
         <Textarea
           value={description}
@@ -464,11 +502,7 @@ export function ShoppingCheckoutForm({
         </span>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={entries.length === 0}
-      >
+      <Button type="submit" className="w-full" disabled={entries.length === 0}>
         Complete shopping
       </Button>
     </form>
