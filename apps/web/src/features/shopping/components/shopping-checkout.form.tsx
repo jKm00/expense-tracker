@@ -50,6 +50,16 @@ function makeProductEntry(product: Product): CheckoutEntry {
   };
 }
 
+type EntryTouched = {
+  quantity: boolean;
+  price: boolean;
+  total: boolean;
+};
+
+function createEmptyTouched(): EntryTouched {
+  return { quantity: false, price: false, total: false };
+}
+
 export function ShoppingCheckoutForm({
   list,
   products,
@@ -64,20 +74,41 @@ export function ShoppingCheckoutForm({
   const [entries, setEntries] = useState<CheckoutEntry[]>(() =>
     getPrefilledCheckoutEntries(list),
   );
+  const [entryTouched, setEntryTouched] = useState<EntryTouched[]>(() =>
+    getPrefilledCheckoutEntries(list).map(() => createEmptyTouched()),
+  );
   const [store, setStore] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [keepUncheckedItems, setKeepUncheckedItems] = useState(true);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const entryErrors = useMemo(
     () =>
-      entries.map((entry) => ({
-        quantity: parsePositiveNumber(entry.quantity) ? "" : "Enter a quantity",
-        price: parsePositiveNumber(entry.price) ? "" : "Enter a price",
-        total: parsePositiveNumber(entry.total) ? "" : "Enter a total",
-      })),
-    [entries],
+      entries.map((entry, index) => {
+        const touched = entryTouched[index] ?? createEmptyTouched();
+        const hasQuantity = parsePositiveNumber(entry.quantity) !== null;
+        const hasPrice = parsePositiveNumber(entry.price) !== null;
+        const hasTotal = parsePositiveNumber(entry.total) !== null;
+        const pairInvalid = !hasPrice && !hasTotal;
+
+        return {
+          quantity:
+            !hasQuantity && (touched.quantity || submitAttempted)
+              ? "Enter a quantity"
+              : "",
+          price:
+            pairInvalid && (touched.price || submitAttempted)
+              ? "Enter a price"
+              : "",
+          total:
+            pairInvalid && (touched.total || submitAttempted)
+              ? "Enter a total"
+              : "",
+        };
+      }),
+    [entries, entryTouched, submitAttempted],
   );
 
   useEffect(() => {
@@ -96,6 +127,20 @@ export function ShoppingCheckoutForm({
       if (next.length === prev.length && next.every((entry, index) => entry === prev[index])) {
         return prev;
       }
+
+      setEntryTouched((prevTouched) => {
+        return next.map((entry) => {
+          const matchIndex = prev.findIndex(
+            (prevEntry) => prevEntry.shoppingItemId === entry.shoppingItemId,
+          );
+
+          if (matchIndex === -1) {
+            return createEmptyTouched();
+          }
+
+          return prevTouched[matchIndex] ?? createEmptyTouched();
+        });
+      });
 
       return next;
     });
@@ -192,10 +237,18 @@ export function ShoppingCheckoutForm({
 
   function handleRemoveEntry(index: number) {
     setEntries((prev) => prev.filter((_, i) => i !== index));
+    setEntryTouched((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleAddProduct(product: Product) {
     setEntries((prev) => [...prev, makeProductEntry(product)]);
+    setEntryTouched((prev) => [...prev, createEmptyTouched()]);
+  }
+
+  function markTouched(index: number, field: keyof EntryTouched) {
+    setEntryTouched((prev) =>
+      prev.map((entry, i) => (i === index ? { ...entry, [field]: true } : entry)),
+    );
   }
 
   function handleDateSelect(nextDate: Date | undefined) {
@@ -205,6 +258,7 @@ export function ShoppingCheckoutForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitAttempted(true);
 
     const hasValidationError = entries.some((entry) => {
       const hasQuantity = parsePositiveNumber(entry.quantity) !== null;
@@ -292,6 +346,7 @@ export function ShoppingCheckoutForm({
                     placeholder="1"
                     aria-invalid={entryErrors[index]?.quantity ? true : undefined}
                     className={entryErrors[index]?.quantity ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    onBlur={() => markTouched(index, "quantity")}
                     onChange={(event) => handleQuantityChange(index, event.target.value)}
                   />
                   <FormFieldError>{entryErrors[index]?.quantity}</FormFieldError>
@@ -304,6 +359,7 @@ export function ShoppingCheckoutForm({
                     placeholder="12.45,-"
                     aria-invalid={entryErrors[index]?.price ? true : undefined}
                     className={entryErrors[index]?.price ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    onBlur={() => markTouched(index, "price")}
                     onChange={(event) => handlePriceChange(index, event.target.value)}
                   />
                   <FormFieldError>{entryErrors[index]?.price}</FormFieldError>
@@ -316,6 +372,7 @@ export function ShoppingCheckoutForm({
                     placeholder="24.90,-"
                     aria-invalid={entryErrors[index]?.total ? true : undefined}
                     className={entryErrors[index]?.total ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : undefined}
+                    onBlur={() => markTouched(index, "total")}
                     onChange={(event) => handleTotalChange(index, event.target.value)}
                   />
                   <FormFieldError>{entryErrors[index]?.total}</FormFieldError>
