@@ -97,6 +97,12 @@ export function NewTransactionForm({
   const tagsById = useMemo(() => {
     return new Map(tags.map((tag) => [tag.id, tag]));
   }, [tags]);
+  const transactionTotal = useMemo(() => {
+    return entries.reduce((sum, entry) => {
+      const entryTotal = Number(entry.price) * Number(entry.quantity);
+      return sum + (entry.type === "expense" ? -entryTotal : entryTotal);
+    }, 0);
+  }, [entries]);
 
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
@@ -259,6 +265,14 @@ export function NewTransactionForm({
             initialEntry={editingEntry}
             onSave={handleSaveEntry}
           />
+          <div className="flex items-center justify-between rounded-xl border border-border bg-surface/50 px-3 py-2">
+            <span className="text-sm text-muted-foreground">Transaction total</span>
+            <span
+              className={`text-sm font-semibold tabular-nums ${transactionTotal < 0 ? "text-expense" : transactionTotal > 0 ? "text-income" : "text-foreground"}`}
+            >
+              {formatAmount(transactionTotal, { sign: true })}
+            </span>
+          </div>
           <FormFieldError>{errors.entries?.message}</FormFieldError>
 
           <Separator />
