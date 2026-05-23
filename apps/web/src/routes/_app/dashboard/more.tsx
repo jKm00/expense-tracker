@@ -9,7 +9,6 @@ import {
   Bot,
   Package,
   Repeat,
-  ShoppingBag,
   Tag,
   User,
 } from "lucide-react";
@@ -20,12 +19,6 @@ export const Route = createFileRoute("/_app/dashboard/more")({
 
 function RouteComponent() {
   const menuItems = [
-    {
-      label: "Shopping",
-      description: "Manage your grocery list",
-      href: "/dashboard/shopping",
-      icon: ShoppingBag,
-    },
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -45,11 +38,14 @@ function RouteComponent() {
       icon: Tag,
     },
     {
-      label: "Automations",
+      label: "Automation",
       description: "Manage import tokens",
       href: "/dashboard/automations",
       icon: Bot,
     },
+  ];
+
+  const profileItems = [
     {
       label: "Profile",
       description: "Manage your account",
@@ -71,6 +67,29 @@ function RouteComponent() {
           <Link key={item.label} to={item.href} className="block">
             <div
               className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== menuItems.length - 1 ? "border-b border-border/40" : ""}`}
+            >
+              <div className="grid size-8 place-items-center rounded-lg bg-muted">
+                <item.icon className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {item.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+              <ArrowRight className="size-3.5 text-muted-foreground/50" />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="h-3" />
+      <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+        {profileItems.map((item, idx) => (
+          <Link key={item.label} to={item.href} className="block">
+            <div
+              className={`flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 ${idx !== profileItems.length - 1 ? "border-b border-border/40" : ""}`}
             >
               <div className="grid size-8 place-items-center rounded-lg bg-muted">
                 <item.icon className="size-4 text-primary" />

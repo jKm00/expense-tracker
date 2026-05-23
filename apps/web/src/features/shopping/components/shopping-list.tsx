@@ -1,13 +1,9 @@
-import { FormField, FormFieldLabel } from "@/components/custom/form";
-import { LoaderButton } from "@/components/custom/loader.button";
 import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import { ProductSelect } from "@/components/custom/product-select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Product } from "@/features/products/products.models";
 import { cn } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
 import { ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 import { shoppingMutations } from "../shopping.mutations";
@@ -20,29 +16,25 @@ export function ShoppingListView({
   list: ShoppingListWithItems;
   products: Product[];
 }) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productSelectKey, setProductSelectKey] = useState(0);
 
   const addShoppingItem = shoppingMutations.addShoppingItem();
   const toggleShoppingItem = shoppingMutations.toggleShoppingItem();
   const removeShoppingItem = shoppingMutations.removeShoppingItem();
 
-  function handleAddItem() {
-    if (!selectedProduct) {
-      return;
-    }
-
+  function handleAddItem(product: Product) {
     addShoppingItem.mutate(
       {
         product: {
-          id: selectedProduct.id.length === 0 ? null : selectedProduct.id,
-          name: selectedProduct.name,
+          id: product.id.length === 0 ? null : product.id,
+          name: product.name,
         },
       },
       {
         onSuccess: (result) => {
           const [error] = result;
           if (!error) {
-            setSelectedProduct(null);
+            setProductSelectKey((value) => value + 1);
           }
         },
       },
@@ -59,38 +51,11 @@ export function ShoppingListView({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-2.5 pt-3">
-          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <FormField>
-              <FormFieldLabel>Add item</FormFieldLabel>
-              <ProductSelect
-                products={products}
-                defaultValue={selectedProduct?.name}
-                onValueChange={setSelectedProduct}
-              />
-            </FormField>
-            <LoaderButton
-              type="button"
-              isLoading={addShoppingItem.isPending}
-              onClick={handleAddItem}
-              className="w-full md:w-auto"
-            >
-              Add
-            </LoaderButton>
-            <Button
-              asChild
-              variant="outline"
-              className="w-full md:col-span-2 md:w-auto"
-            >
-              <Link to="/dashboard/shopping/checkout">Checkout</Link>
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Tap a row or checkbox to mark it done. Checked items stay in place.
-          </p>
-        </CardContent>
-      </Card>
+      <ProductSelect
+        key={productSelectKey}
+        products={products}
+        onValueChange={handleAddItem}
+      />
 
       {list.items.length === 0 ? (
         <EmptyState icon={ShoppingBag}>

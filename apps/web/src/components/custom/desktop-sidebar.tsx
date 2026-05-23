@@ -16,7 +16,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
-  { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
   {
     label: "Transactions",
     href: "/dashboard/transactions",
@@ -27,10 +26,11 @@ const navItems = [
     href: "/dashboard/analytics",
     icon: ChartPie,
   },
-  { label: "Automations", href: "/dashboard/automations", icon: Bot },
+  { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
   { label: "Products", href: "/dashboard/products", icon: PackageIcon },
   { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
   { label: "Tags", href: "/dashboard/tags", icon: Tag },
+  { label: "Automation", href: "/dashboard/automations", icon: Bot },
 ] as const;
 
 export function DesktopSidebar() {
@@ -91,7 +91,7 @@ export function DesktopSidebar() {
       <div className="border-t border-sidebar-border px-3 py-3">
         {user && (
           <Link
-            to="/dashboard/more"
+            to="/dashboard/profile"
             className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-sidebar-accent/50"
           >
             <Avatar className="size-7">
@@ -107,7 +107,7 @@ export function DesktopSidebar() {
               <p className="text-[13px] font-medium truncate text-sidebar-foreground">
                 {user.name}
               </p>
-              <p className="text-[11px] text-muted-foreground">More</p>
+              <p className="text-[11px] text-muted-foreground">Profile</p>
             </div>
           </Link>
         )}

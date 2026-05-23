@@ -2,7 +2,6 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
-  ShoppingBag,
   ChartPie,
   Ellipsis,
 } from "lucide-react";
@@ -10,7 +9,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
-  { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
   {
     label: "Transactions",
     href: "/dashboard/transactions",

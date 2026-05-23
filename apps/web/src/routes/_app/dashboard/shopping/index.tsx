@@ -110,6 +110,7 @@ function ShoppingContent() {
   }
 
   const checkedCount = shoppingList.items.filter((item) => item.checked).length;
+  const hasCheckedItems = checkedCount > 0;
 
   return (
     <div className="space-y-6">
@@ -120,12 +121,19 @@ function ShoppingContent() {
             {checkedCount} checked, {shoppingList.items.length - checkedCount} left
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard/shopping/checkout">
+        {hasCheckedItems ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to="/dashboard/shopping/checkout">
+              <ShoppingBag className="size-4" />
+              Checkout
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" disabled>
             <ShoppingBag className="size-4" />
             Checkout
-          </Link>
-        </Button>
+          </Button>
+        )}
       </div>
       <ShoppingListView list={shoppingList} products={products} />
     </div>
