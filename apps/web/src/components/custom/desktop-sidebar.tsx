@@ -13,6 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { env } from "@/config/env";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: HomeIcon },
@@ -26,11 +28,21 @@ const navItems = [
     href: "/dashboard/analytics",
     icon: ChartPie,
   },
-  { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
+  {
+    label: "Shopping",
+    href: "/dashboard/shopping",
+    icon: ShoppingBag,
+    beta: env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false",
+  },
   { label: "Products", href: "/dashboard/products", icon: PackageIcon },
   { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
   { label: "Tags", href: "/dashboard/tags", icon: Tag },
-  { label: "Automation", href: "/dashboard/automations", icon: Bot },
+  {
+    label: "Automation",
+    href: "/dashboard/automations",
+    icon: Bot,
+    beta: env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false",
+  },
 ] as const;
 
 export function DesktopSidebar() {
@@ -81,7 +93,14 @@ export function DesktopSidebar() {
               search={(prev) => prev}
             >
               <item.icon className={cn("size-4", active && "text-primary")} />
-              {item.label}
+              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <span className="truncate">{item.label}</span>
+                {item.beta ? (
+                  <Badge variant="secondary" className="h-5 rounded-md px-1.5 text-[10px]">
+                    BETA
+                  </Badge>
+                ) : null}
+              </span>
             </Link>
           );
         })}

@@ -10,9 +10,11 @@ import {
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
+import { Badge } from "@/components/ui/badge";
 import { productQueries } from "@/features/products/products.queries";
 import { ShoppingCheckoutForm } from "@/features/shopping/components/shopping-checkout.form";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
+import { env } from "@/config/env";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -25,16 +27,31 @@ export const Route = createFileRoute("/_app/dashboard/shopping/checkout")({
       ),
       context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
     ]);
+
+    const showBetaBadge = env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false";
+
+    return { showBetaBadge };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { showBetaBadge } = Route.useLoaderData();
+
   return (
     <div className="space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle>Checkout</PageHeaderTitle>
+        <PageHeaderTitle>
+          <span className="inline-flex items-center gap-2">
+            Checkout
+            {showBetaBadge ? (
+              <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
+                BETA
+              </Badge>
+            ) : null}
+          </span>
+        </PageHeaderTitle>
         <PageHeaderDescription>
           Turn checked shopping items into a transaction
         </PageHeaderDescription>
