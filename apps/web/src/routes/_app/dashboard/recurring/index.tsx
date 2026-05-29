@@ -22,6 +22,8 @@ import {
 import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { calculateFixedTotalsFromRecurrings } from "@/features/analytics/analytics.calculations";
+import { formatAmount } from "@/utils/format";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Repeat, Plus, Pause, Play } from "lucide-react";
 import { Suspense, useMemo, useState } from "react";
@@ -103,6 +105,10 @@ function RecurringContent() {
     return { activeItems, pausedItems };
   }, [sortedItems]);
 
+  const fixedTotals = useMemo(() => {
+    return calculateFixedTotalsFromRecurrings(items ?? []);
+  }, [items]);
+
   const filteredActiveItems = useMemo(() => {
     return activeItems.filter((i) =>
       i.products?.name.toLowerCase().includes(search.toLowerCase()),
@@ -145,26 +151,35 @@ function RecurringContent() {
 
   return (
     <div className="space-y-6 @container">
-      <div className="grid gap-3 @lg:grid-cols-2 @xl:grid-cols-3">
-        <div className="@lg:col-span-2 @xl:col-span-1">
-          <KpiCard
-            title="Total"
-            value={`${items.length}`}
-            subtitle="All recurring"
-            icon={Repeat}
-          />
-        </div>
+      <div className="grid gap-3 @lg:grid-cols-2 @xl:grid-cols-4">
+        <KpiCard
+          title="Recurring income"
+          value={formatAmount(fixedTotals.fixedIncome)}
+          subtitle="Monthly (active)"
+          icon={Repeat}
+          color="income"
+        />
+
+        <KpiCard
+          title="Recurring spend"
+          value={formatAmount(fixedTotals.fixedExpenses)}
+          subtitle="Monthly (active)"
+          icon={Repeat}
+          color="expense"
+        />
+
+        <KpiCard
+          title="Total"
+          value={`${items.length}`}
+          subtitle="All recurring"
+          icon={Repeat}
+        />
+
         <KpiCard
           title="Active"
           value={`${activeItems.length}`}
           subtitle="Currently running"
           icon={Play}
-        />
-        <KpiCard
-          title="Paused"
-          value={`${pausedItems.length}`}
-          subtitle="Currently paused"
-          icon={Pause}
         />
       </div>
       <Input
