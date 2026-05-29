@@ -292,6 +292,8 @@ function CreateTokenCard() {
 
 function TokenListCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
   const revokeToken = automationMutations.revokeAutomationToken();
+  const [selectedToken, setSelectedToken] =
+    useState<AutomationTokenMetadata | null>(null);
   const activeTokens = useMemo(
     () => tokens.filter((token) => !token.revokedAt),
     [tokens],
@@ -323,62 +325,76 @@ function TokenListCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tokens ({activeCount}/10 active)</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {activeTokens.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
-            <p className="text-sm font-medium text-foreground">
-              No active tokens
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Create a token above to enable Apple Pay automation imports.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-            {activeTokens.map((token, index) => (
-              <ActiveTokenRow
-                key={token.id}
-                token={token}
-                isLast={index === activeTokens.length - 1}
-                isRevoking={revokeToken.isPending}
-                onRevoke={handleRevoke}
-              />
-            ))}
-          </div>
-        )}
-
-        {revokedTokens.length > 0 ? (
-          <details className="group overflow-hidden rounded-xl border border-border/60 bg-muted/20">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 [&::-webkit-details-marker]:hidden">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  <ShieldX className="size-3" />
-                  Revoked
-                </Badge>
-                <p className="text-sm text-muted-foreground">
-                  {revokedTokens.length} token
-                  {revokedTokens.length === 1 ? "" : "s"}
-                </p>
-              </div>
-              <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-border/40">
-              {revokedTokens.map((token, index) => (
-                <RevokedTokenRow
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tokens ({activeCount}/10 active)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {activeTokens.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                No active tokens
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Create a token above to enable Apple Pay automation imports.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+              {activeTokens.map((token, index) => (
+                <ActiveTokenRow
                   key={token.id}
                   token={token}
-                  isLast={index === revokedTokens.length - 1}
+                  isLast={index === activeTokens.length - 1}
+                  isRevoking={revokeToken.isPending}
+                  onOpen={() => setSelectedToken(token)}
+                  onRevoke={handleRevoke}
                 />
               ))}
             </div>
-          </details>
-        ) : null}
-      </CardContent>
-    </Card>
+          )}
+
+          {revokedTokens.length > 0 ? (
+            <details className="group overflow-hidden rounded-xl border border-border/60 bg-muted/20">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    <ShieldX className="size-3" />
+                    Revoked
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    {revokedTokens.length} token
+                    {revokedTokens.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-border/40">
+                {revokedTokens.map((token, index) => (
+                  <RevokedTokenRow
+                    key={token.id}
+                    token={token}
+                    isLast={index === revokedTokens.length - 1}
+                    onOpen={() => setSelectedToken(token)}
+                  />
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <TokenDetailsSheet
+        token={selectedToken}
+        open={selectedToken !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedToken(null);
+          }
+        }}
+      />
+    </>
   );
 }
 
@@ -386,6 +402,7 @@ function ActiveTokenRow({
   token,
   isLast,
   isRevoking,
+  onOpen,
   onRevoke,
 }: {
   token: {
@@ -397,26 +414,27 @@ function ActiveTokenRow({
   };
   isLast: boolean;
   isRevoking: boolean;
+  onOpen: () => void;
   onRevoke: (tokenId: string) => void;
 }) {
   return (
     <div
       className={`flex items-center gap-3 px-4 py-3 ${isLast ? "" : "border-b border-border/40"}`}
     >
-      <div className="min-w-0 flex-1">
+      <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground">{token.name}</p>
+          <p className="truncate text-sm font-medium text-foreground">
+            {token.name}
+          </p>
           <Badge variant="secondary">
             <ShieldCheck className="size-3" />
             Active
           </Badge>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Prefix: <span className="font-mono">{token.tokenPrefix}</span> -
-          Created {formatDateTime(token.createdAt)} - Last used{" "}
-          {formatDateTime(token.lastUsedAt)}
+          Prefix: <span className="font-mono">{token.tokenPrefix}</span>
         </p>
-      </div>
+      </button>
       <Button
         type="button"
         variant="ghost"
@@ -434,30 +452,79 @@ function ActiveTokenRow({
 function RevokedTokenRow({
   token,
   isLast,
+  onOpen,
 }: {
   token: {
+    id: string;
     name: string;
     tokenPrefix: string;
     createdAt: Date;
     revokedAt: Date | null;
   };
   isLast: boolean;
+  onOpen: () => void;
 }) {
   return (
     <div className={`px-4 py-3 ${isLast ? "" : "border-b border-border/40"}`}>
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-medium text-foreground">{token.name}</p>
-        <Badge variant="outline">
-          <ShieldX className="size-3" />
-          Revoked
-        </Badge>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Prefix: <span className="font-mono">{token.tokenPrefix}</span> - Created{" "}
-        {formatDateTime(token.createdAt)} - Revoked{" "}
-        {formatDateTime(token.revokedAt)}
-      </p>
+      <button type="button" onClick={onOpen} className="w-full text-left">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium text-foreground">
+            {token.name}
+          </p>
+          <Badge variant="outline">
+            <ShieldX className="size-3" />
+            Revoked
+          </Badge>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Prefix: <span className="font-mono">{token.tokenPrefix}</span>
+        </p>
+      </button>
     </div>
+  );
+}
+
+function TokenDetailsSheet({
+  token,
+  open,
+  onOpenChange,
+}: {
+  token: AutomationTokenMetadata | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="data-[side=right]:w-[90vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[800px]"
+      >
+        <SheetHeader>
+          <SheetTitle>Token details</SheetTitle>
+          <SheetDescription>
+            Token metadata and lifecycle information.
+          </SheetDescription>
+        </SheetHeader>
+
+        {token ? (
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <LogDetailItem label="Name" value={token.name} />
+              <LogDetailItem
+                label="Status"
+                value={token.revokedAt ? "Revoked" : "Active"}
+              />
+              <LogDetailItem label="Prefix" value={token.tokenPrefix} />
+              <LogDetailItem label="Created at" value={formatDateTime(token.createdAt)} />
+              <LogDetailItem label="Updated at" value={formatDateTime(token.updatedAt)} />
+              <LogDetailItem label="Last used" value={formatDateTime(token.lastUsedAt)} />
+              <LogDetailItem label="Revoked at" value={formatDateTime(token.revokedAt)} />
+              <LogDetailItem label="Token id" value={token.id} />
+            </div>
+          </div>
+        ) : null}
+      </SheetContent>
+    </Sheet>
   );
 }
 
