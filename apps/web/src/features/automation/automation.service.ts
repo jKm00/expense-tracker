@@ -314,6 +314,14 @@ async function logAutomationRequest(input: {
   }
 }
 
+async function touchTokenLastUsed(tokenId: string) {
+  try {
+    await automationRepo.touchTokenLastUsed(tokenId);
+  } catch {
+    // Best effort metadata update.
+  }
+}
+
 async function revokeToken(userId: string, tokenId: string) {
   let token: Awaited<ReturnType<typeof automationRepo.getTokenById>>;
   try {
@@ -497,6 +505,7 @@ export const automationService = {
   logAutomationRequest,
   revokeToken,
   resolveBearerTokenContext,
+  touchTokenLastUsed,
   verifyBearerToken,
   toRequestTokenPrefix,
   importAutomationTransaction,

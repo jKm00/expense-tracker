@@ -41,6 +41,7 @@ export const Route = createFileRoute("/api/automation/import")({
           payload = await request.json();
         } catch {
           if (!authError) {
+            await automationService.touchTokenLastUsed(authContext.tokenId);
             await automationService.logAutomationRequest({
               userId: authContext.userId,
               tokenId: authContext.tokenId,
@@ -68,6 +69,7 @@ export const Route = createFileRoute("/api/automation/import")({
         const parsedPayload = importAutomationTransactionSchema.safeParse(payload);
         if (!parsedPayload.success) {
           if (!authError) {
+            await automationService.touchTokenLastUsed(authContext.tokenId);
             await automationService.logAutomationRequest({
               userId: authContext.userId,
               tokenId: authContext.tokenId,
