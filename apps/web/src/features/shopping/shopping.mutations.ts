@@ -208,28 +208,19 @@ function completeShopping() {
       assertOnline();
       return await shoppingController.completeShopping({ data });
     },
-    onMutate: async (data) => {
-      await qc.cancelQueries({ queryKey: [SHOPPING_QUERY_KEY] });
-
-      const previousShoppingList = getShoppingListSnapshot(qc);
-      updateShoppingListCache(qc, (list) => ({
-        ...list,
-        items: data.keepUncheckedItems
-          ? list.items.filter((item) => !data.shoppingItemIds.includes(item.id))
-          : [],
-      }));
-
-      return { previousShoppingList } satisfies ShoppingMutationContext;
-    },
-    onSuccess: (result, _variables, context) => {
+    // Do not run optimistic updates for completeShopping; it causes a UI flash
+    onSuccess: (result, _variables, _context) => {
       const [error] = result;
       if (error) {
-        restoreShoppingListSnapshot(qc, context?.previousShoppingList);
-        toast.error(error.message ?? "Something unexpected happened trying to complete shopping. Please try again!");
+        toast.error(
+          error.message ??
+            "Something unexpected happened trying to complete shopping. Please try again!",
+        );
         return;
       }
 
-      qc.invalidateQueries({ queryKey: [SHOPPING_QUERY_KEY] });
+      // Invalidate transactions and products. Skip invalidating shopping list
+      // to avoid it refetching and showing empty state before navigation.
       qc.invalidateQueries({ queryKey: [TRANSACTION_QUERY_KEY] });
       qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
     },
