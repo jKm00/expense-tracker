@@ -13,6 +13,8 @@ vi.mock("./automation.repo", () => ({
     touchTokenLastUsed: vi.fn(),
     getAutomationEventByDedupeKey: vi.fn(),
     saveAutomationEvent: vi.fn(),
+    saveAutomationRequestLog: vi.fn(),
+    getAutomationRequestLogsByUser: vi.fn(),
   },
 }));
 
@@ -110,6 +112,82 @@ describe("automationService", () => {
       expect(error).toBeNull();
       expect((result as any)?.[0]?.tokenHash).toBeUndefined();
       expect(result?.[0]?.tokenPrefix).toBe("abcd");
+    });
+  });
+
+  describe("listRequestLogs", () => {
+    it("returns paginated logs with next cursor", async () => {
+      const firstDate = new Date("2026-03-02T12:00:00.000Z");
+      const secondDate = new Date("2026-03-02T11:30:00.000Z");
+
+      mockAutomationRepo.getAutomationRequestLogsByUser.mockResolvedValue([
+        {
+          id: "log-1",
+          tokenId: "token-1",
+          tokenName: "Apple Pay iPhone",
+          tokenPrefix: "abcd",
+          requestTokenPrefix: "abcd",
+          requestMethod: "POST",
+          requestPath: "/api/automation/import",
+          provider: "apple_pay",
+          eventId: "evt-1",
+          requestBody: "{}",
+          userAgent: "test",
+          ipAddress: "127.0.0.1",
+          responseStatus: 200,
+          responseMessage: "ok",
+          responseBody: "{}",
+          errorReason: null,
+          duplicate: false,
+          durationMs: 12,
+          transactionId: "tx-1",
+          createdAt: firstDate,
+        },
+        {
+          id: "log-2",
+          tokenId: "token-1",
+          tokenName: "Apple Pay iPhone",
+          tokenPrefix: "abcd",
+          requestTokenPrefix: "abcd",
+          requestMethod: "POST",
+          requestPath: "/api/automation/import",
+          provider: "apple_pay",
+          eventId: "evt-2",
+          requestBody: "{}",
+          userAgent: "test",
+          ipAddress: "127.0.0.1",
+          responseStatus: 200,
+          responseMessage: "ok",
+          responseBody: "{}",
+          errorReason: null,
+          duplicate: false,
+          durationMs: 10,
+          transactionId: "tx-2",
+          createdAt: secondDate,
+        },
+      ] as never);
+
+      const [error, result] = await automationService.listRequestLogs("user-1", {
+        tokenId: "token-1",
+        limit: 1,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        logs: [
+          expect.objectContaining({
+            id: "log-1",
+          }),
+        ],
+        hasMore: true,
+        nextCursor: firstDate.toISOString(),
+      });
+      expect(mockAutomationRepo.getAutomationRequestLogsByUser).toHaveBeenCalledWith({
+        userId: "user-1",
+        tokenId: "token-1",
+        cursor: null,
+        limit: 2,
+      });
     });
   });
 
@@ -282,7 +360,9 @@ describe("automationService", () => {
 
     it("creates transaction and event for new import", async () => {
       setupAuth();
-      mockAutomationRepo.getAutomationEventByDedupeKey.mockResolvedValue(undefined);
+      mockAutomationRepo.getAutomationEventByDedupeKey.mockResolvedValue(
+        undefined as never,
+      );
       mockProductService.getProducts.mockResolvedValue([null, []] as any);
       mockProductService.addProduct.mockResolvedValue([
         null,

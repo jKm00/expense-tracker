@@ -6,6 +6,7 @@ import {
 } from "@/features/auth/auth.schema";
 import {
   automationEvents,
+  automationRequestLogs,
   automationTokens,
 } from "@/features/automation/automation.schema";
 import {
@@ -42,8 +43,9 @@ export const relations = defineRelations(
     productAliases,
     productTags,
     // Automation
-    automationTokens,
-    automationEvents,
+      automationTokens,
+      automationEvents,
+      automationRequestLogs,
     // Transactions
     transactions,
     entries,
@@ -59,6 +61,7 @@ export const relations = defineRelations(
       transactions: r.many.transactions(),
       automationTokens: r.many.automationTokens(),
       automationEvents: r.many.automationEvents(),
+      automationRequestLogs: r.many.automationRequestLogs(),
     },
     session: {
       user: r.one.user({
@@ -167,6 +170,10 @@ export const relations = defineRelations(
         from: r.automationTokens.id,
         to: r.automationEvents.tokenId,
       }),
+      requestLogs: r.many.automationRequestLogs({
+        from: r.automationTokens.id,
+        to: r.automationRequestLogs.tokenId,
+      }),
     },
     automationEvents: {
       user: r.one.user({
@@ -179,6 +186,20 @@ export const relations = defineRelations(
       }),
       transaction: r.one.transactions({
         from: r.automationEvents.transactionId,
+        to: r.transactions.id,
+      }),
+    },
+    automationRequestLogs: {
+      user: r.one.user({
+        from: r.automationRequestLogs.userId,
+        to: r.user.id,
+      }),
+      token: r.one.automationTokens({
+        from: r.automationRequestLogs.tokenId,
+        to: r.automationTokens.id,
+      }),
+      transaction: r.one.transactions({
+        from: r.automationRequestLogs.transactionId,
         to: r.transactions.id,
       }),
     },

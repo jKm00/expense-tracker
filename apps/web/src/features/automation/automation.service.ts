@@ -3,11 +3,15 @@ import { transactionService } from "@/features/transactions/transactions.service
 import { err, ok } from "@/utils/result";
 import { createHash, randomBytes } from "node:crypto";
 import {
+  AutomationRequestLogPage,
   AutomationProvider,
   AutomationToken,
   AutomationTokenMetadata,
 } from "./automation.models";
-import { ImportAutomationTransactionDTO } from "./automation.dtos";
+import {
+  ImportAutomationTransactionDTO,
+  ListAutomationRequestLogsDTO,
+} from "./automation.dtos";
 import { automationRepo } from "./automation.repo";
 
 const MAX_ACTIVE_TOKENS = 10;
@@ -33,6 +37,15 @@ function parseBearerToken(authorizationHeader: string | null) {
   }
 
   return token.trim();
+}
+
+function toRequestTokenPrefix(authorizationHeader: string | null) {
+  const rawToken = parseBearerToken(authorizationHeader);
+  if (!rawToken) {
+    return null;
+  }
+
+  return rawToken.slice(0, TOKEN_PREFIX_LENGTH) || null;
 }
 
 function toTokenMetadata(token: AutomationToken): AutomationTokenMetadata {
@@ -104,6 +117,13 @@ function formatAutomationErrorMessage(error: { reason: string }) {
 }
 
 async function verifyBearerToken(authorizationHeader: string | null) {
+  return await resolveBearerTokenContext(authorizationHeader);
+}
+
+async function resolveBearerTokenContext(
+  authorizationHeader: string | null,
+  options?: { touchLastUsed?: boolean },
+) {
   const rawToken = parseBearerToken(authorizationHeader);
   if (!rawToken) {
     return err({
@@ -131,10 +151,12 @@ async function verifyBearerToken(authorizationHeader: string | null) {
     });
   }
 
-  try {
-    await automationRepo.touchTokenLastUsed(token.id);
-  } catch {
-    // Best effort metadata update.
+  if (options?.touchLastUsed ?? true) {
+    try {
+      await automationRepo.touchTokenLastUsed(token.id);
+    } catch {
+      // Best effort metadata update.
+    }
   }
 
   return ok({
@@ -204,6 +226,91 @@ async function listTokens(userId: string) {
       reason: "AUTOMATION_TOKENS_FETCH_ERROR" as const,
       message: "Failed to fetch automation tokens",
     });
+  }
+}
+
+async function listRequestLogs(
+  userId: string,
+  input: ListAutomationRequestLogsDTO,
+) {
+  const limit = input.limit ?? 25;
+  const cursor = input.cursor ? new Date(input.cursor) : null;
+
+  if (cursor && Number.isNaN(cursor.getTime())) {
+    return err({
+      reason: "AUTOMATION_REQUEST_LOGS_FETCH_ERROR" as const,
+      message: "Failed to fetch automation request logs",
+    });
+  }
+
+  try {
+    const logs = await automationRepo.getAutomationRequestLogsByUser({
+      userId,
+      tokenId: input.tokenId ?? null,
+      cursor,
+      limit: limit + 1,
+    });
+
+    const pageLogs = logs.slice(0, limit);
+    const hasMore = logs.length > limit;
+    const nextCursor = hasMore
+      ? pageLogs[pageLogs.length - 1]?.createdAt.toISOString() ?? null
+      : null;
+
+    return ok<AutomationRequestLogPage>({
+      logs: pageLogs,
+      hasMore,
+      nextCursor,
+    });
+  } catch {
+    return err({
+      reason: "AUTOMATION_REQUEST_LOGS_FETCH_ERROR" as const,
+      message: "Failed to fetch automation request logs",
+    });
+  }
+}
+
+async function logAutomationRequest(input: {
+  userId: string;
+  tokenId?: string | null;
+  transactionId?: string | null;
+  requestTokenPrefix?: string | null;
+  requestMethod: string;
+  requestPath: string;
+  provider?: AutomationProvider | null;
+  eventId?: string | null;
+  requestBody?: string | null;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+  responseStatus: number;
+  responseMessage: string;
+  responseBody?: string | null;
+  errorReason?: string | null;
+  duplicate?: boolean;
+  durationMs?: number | null;
+}) {
+  try {
+    await automationRepo.saveAutomationRequestLog({
+      userId: input.userId,
+      tokenId: input.tokenId ?? null,
+      transactionId: input.transactionId ?? null,
+      requestTokenPrefix: input.requestTokenPrefix ?? null,
+      requestMethod: input.requestMethod,
+      requestPath: input.requestPath,
+      provider: input.provider ?? null,
+      eventId: input.eventId ?? null,
+      requestBody: input.requestBody ?? null,
+      userAgent: input.userAgent ?? null,
+      ipAddress: input.ipAddress ?? null,
+      responseStatus: input.responseStatus,
+      responseMessage: input.responseMessage,
+      responseBody: input.responseBody ?? null,
+      errorReason: input.errorReason ?? null,
+      duplicate: input.duplicate ?? false,
+      durationMs: input.durationMs ?? null,
+    });
+  } catch {
+    // Logging must not affect the request lifecycle.
   }
 }
 
@@ -386,7 +493,11 @@ async function importAutomationTransaction(
 export const automationService = {
   createToken,
   listTokens,
+  listRequestLogs,
+  logAutomationRequest,
   revokeToken,
+  resolveBearerTokenContext,
   verifyBearerToken,
+  toRequestTokenPrefix,
   importAutomationTransaction,
 };

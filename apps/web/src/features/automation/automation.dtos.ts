@@ -34,3 +34,13 @@ export const importAutomationTransactionSchema = z.object({
 export type ImportAutomationTransactionDTO = z.infer<
   typeof importAutomationTransactionSchema
 >;
+
+export const listAutomationRequestLogsSchema = z.object({
+  tokenId: z.string().uuid().nullable().optional(),
+  cursor: z.string().datetime({ offset: true }).nullable().optional(),
+  limit: z.coerce.number().int().min(1).max(30).optional(),
+});
+
+export type ListAutomationRequestLogsDTO = z.infer<
+  typeof listAutomationRequestLogsSchema
+>;

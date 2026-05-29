@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
 import {
   automationEvents,
+  automationRequestLogs,
   automationTokens,
 } from "@/lib/db/schema";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import {
   AutomationProvider,
+  NewAutomationRequestLog,
   NewAutomationEvent,
   NewAutomationToken,
 } from "./automation.models";
@@ -96,6 +98,61 @@ async function saveAutomationEvent(event: NewAutomationEvent) {
   return await db.insert(automationEvents).values(event).returning();
 }
 
+async function saveAutomationRequestLog(log: NewAutomationRequestLog) {
+  return await db.insert(automationRequestLogs).values(log).returning();
+}
+
+async function getAutomationRequestLogsByUser(options: {
+  userId: string;
+  tokenId?: string | null;
+  cursor?: Date | null;
+  limit: number;
+}) {
+  const filters = [eq(automationRequestLogs.userId, options.userId)] as Array<
+    ReturnType<typeof eq> | ReturnType<typeof lt>
+  >;
+
+  if (options.tokenId) {
+    filters.push(eq(automationRequestLogs.tokenId, options.tokenId));
+  }
+
+  if (options.cursor) {
+    filters.push(lt(automationRequestLogs.createdAt, options.cursor));
+  }
+
+  return await db
+    .select({
+      id: automationRequestLogs.id,
+      tokenId: automationRequestLogs.tokenId,
+      tokenName: automationTokens.name,
+      tokenPrefix: automationTokens.tokenPrefix,
+      requestTokenPrefix: automationRequestLogs.requestTokenPrefix,
+      requestMethod: automationRequestLogs.requestMethod,
+      requestPath: automationRequestLogs.requestPath,
+      provider: automationRequestLogs.provider,
+      eventId: automationRequestLogs.eventId,
+      requestBody: automationRequestLogs.requestBody,
+      userAgent: automationRequestLogs.userAgent,
+      ipAddress: automationRequestLogs.ipAddress,
+      responseStatus: automationRequestLogs.responseStatus,
+      responseMessage: automationRequestLogs.responseMessage,
+      responseBody: automationRequestLogs.responseBody,
+      errorReason: automationRequestLogs.errorReason,
+      duplicate: automationRequestLogs.duplicate,
+      durationMs: automationRequestLogs.durationMs,
+      transactionId: automationRequestLogs.transactionId,
+      createdAt: automationRequestLogs.createdAt,
+    })
+    .from(automationRequestLogs)
+    .leftJoin(
+      automationTokens,
+      eq(automationRequestLogs.tokenId, automationTokens.id),
+    )
+    .where(and(...filters))
+    .orderBy(desc(automationRequestLogs.createdAt), desc(automationRequestLogs.id))
+    .limit(options.limit);
+}
+
 export const automationRepo = {
   countActiveTokens,
   saveToken,
@@ -106,4 +163,6 @@ export const automationRepo = {
   touchTokenLastUsed,
   getAutomationEventByDedupeKey,
   saveAutomationEvent,
+  saveAutomationRequestLog,
+  getAutomationRequestLogsByUser,
 };

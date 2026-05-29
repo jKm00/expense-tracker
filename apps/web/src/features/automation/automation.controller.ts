@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import {
   createAutomationTokenSchema,
+  listAutomationRequestLogsSchema,
   revokeAutomationTokenSchema,
 } from "./automation.dtos";
 import { automationService } from "./automation.service";
@@ -19,6 +20,13 @@ const listAutomationTokens = createServerFn({ method: "GET" })
     return await automationService.listTokens(context.user.id);
   });
 
+const listAutomationRequestLogs = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(listAutomationRequestLogsSchema)
+  .handler(async ({ context, data }) => {
+    return await automationService.listRequestLogs(context.user.id, data);
+  });
+
 const revokeAutomationToken = createServerFn({ method: "POST" })
   .middleware([authenticated])
   .inputValidator(revokeAutomationTokenSchema)
@@ -29,5 +37,6 @@ const revokeAutomationToken = createServerFn({ method: "POST" })
 export const automationController = {
   createAutomationToken,
   listAutomationTokens,
+  listAutomationRequestLogs,
   revokeAutomationToken,
 };
