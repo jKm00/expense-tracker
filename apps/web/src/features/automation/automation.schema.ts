@@ -1,6 +1,9 @@
 import { user } from "@/features/auth/auth.schema";
 import { transactions } from "@/features/transactions/transactions.schema";
 import {
+  boolean,
+  index,
+  integer,
   numeric,
   pgEnum,
   pgTable,
@@ -52,6 +55,47 @@ export const automationEvents = pgTable(
       table.userId,
       table.provider,
       table.eventId,
+    ),
+  ],
+);
+
+export const automationRequestLogs = pgTable(
+  "automation_request_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    tokenId: uuid("token_id").references(() => automationTokens.id, {
+      onDelete: "set null",
+    }),
+    transactionId: uuid("transaction_id").references(() => transactions.id, {
+      onDelete: "set null",
+    }),
+    requestTokenPrefix: text("request_token_prefix"),
+    requestMethod: text("request_method").notNull(),
+    requestPath: text("request_path").notNull(),
+    provider: automationProvider(),
+    eventId: text("event_id"),
+    requestBody: text("request_body"),
+    userAgent: text("user_agent"),
+    ipAddress: text("ip_address"),
+    responseStatus: integer("response_status").notNull(),
+    responseMessage: text("response_message").notNull(),
+    responseBody: text("response_body"),
+    errorReason: text("error_reason"),
+    duplicate: boolean("duplicate").notNull().default(false),
+    durationMs: integer("duration_ms"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("automation_request_logs_user_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    index("automation_request_logs_token_created_at_idx").on(
+      table.tokenId,
+      table.createdAt,
     ),
   ],
 );

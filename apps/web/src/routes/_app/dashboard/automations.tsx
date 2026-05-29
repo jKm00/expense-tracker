@@ -12,28 +12,49 @@ import {
 import { LoaderButton } from "@/components/custom/loader.button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   createAutomationTokenSchema,
   type CreateAutomationTokenDTO,
 } from "@/features/automation/automation.dtos";
 import { automationMutations } from "@/features/automation/automation.mutations";
 import { automationQueries } from "@/features/automation/automation.queries";
+import type {
+  AutomationRequestLogListItem,
+  AutomationTokenMetadata,
+} from "@/features/automation/automation.models";
 import { env } from "@/config/env";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ChevronDown,
   Copy,
+  History,
   KeyRound,
+  LoaderCircle,
   ShieldCheck,
   ShieldX,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -42,8 +63,12 @@ export const Route = createFileRoute("/_app/dashboard/automations")({
     await context.queryClient.prefetchQuery(
       automationQueries.getAutomationTokensOptions(),
     );
+    await context.queryClient.prefetchInfiniteQuery(
+      automationQueries.getAutomationRequestLogsOptions(null),
+    );
 
-    const showBetaBadge = env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false";
+    const showBetaBadge =
+      env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false";
 
     return { showBetaBadge };
   },
@@ -64,6 +89,40 @@ function formatDateTime(value: Date | null) {
   });
 }
 
+function formatDuration(durationMs: number | null) {
+  if (durationMs == null) {
+    return "Unknown";
+  }
+
+  return `${durationMs} ms`;
+}
+
+function formatRequestPayload(value: string | null) {
+  if (!value) {
+    return "Not captured";
+  }
+
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
+}
+
+function getStatusBadgeVariant(
+  statusCode: number,
+): "secondary" | "destructive" | "outline" {
+  if (statusCode >= 400) {
+    return "destructive";
+  }
+
+  if (statusCode >= 200 && statusCode < 300) {
+    return "secondary";
+  }
+
+  return "outline";
+}
+
 function RouteComponent() {
   const { showBetaBadge } = Route.useLoaderData();
   const {
@@ -79,9 +138,7 @@ function RouteComponent() {
     return (
       <ExpectedError>
         <ExpectedErrorTitle>Automations unavailable</ExpectedErrorTitle>
-        <ExpectedErrorMessage>
-          {expectedError.message}
-        </ExpectedErrorMessage>
+        <ExpectedErrorMessage>{expectedError.message}</ExpectedErrorMessage>
       </ExpectedError>
     );
   }
@@ -107,6 +164,8 @@ function RouteComponent() {
       <CreateTokenCard />
 
       <TokenListCard tokens={tokens} />
+
+      <AutomationLogsCard tokens={tokens} />
     </div>
   );
 }
@@ -191,7 +250,9 @@ function CreateTokenCard() {
           <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-foreground">Token ready</p>
+                <p className="text-sm font-medium text-foreground">
+                  Token ready
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Copy and store it now. You will not be able to see it again.
                 </p>
@@ -218,7 +279,8 @@ function CreateTokenCard() {
             </div>
             <div className="mt-3">
               <p className="text-xs text-muted-foreground">
-                Keep this token safe. You will use it in the authorization step below.
+                Keep this token safe. You will use it in the authorization step
+                below.
               </p>
             </div>
           </div>
@@ -228,20 +290,10 @@ function CreateTokenCard() {
   );
 }
 
-function TokenListCard({
-  tokens,
-}: {
-  tokens: Array<{
-    id: string;
-    name: string;
-    tokenPrefix: string;
-    createdAt: Date;
-    updatedAt: Date;
-    lastUsedAt: Date | null;
-    revokedAt: Date | null;
-  }>;
-}) {
+function TokenListCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
   const revokeToken = automationMutations.revokeAutomationToken();
+  const [selectedToken, setSelectedToken] =
+    useState<AutomationTokenMetadata | null>(null);
   const activeTokens = useMemo(
     () => tokens.filter((token) => !token.revokedAt),
     [tokens],
@@ -273,60 +325,76 @@ function TokenListCard({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tokens ({activeCount}/10 active)</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {activeTokens.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
-            <p className="text-sm font-medium text-foreground">No active tokens</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Create a token above to enable Apple Pay automation imports.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-            {activeTokens.map((token, index) => (
-              <ActiveTokenRow
-                key={token.id}
-                token={token}
-                isLast={index === activeTokens.length - 1}
-                isRevoking={revokeToken.isPending}
-                onRevoke={handleRevoke}
-              />
-            ))}
-          </div>
-        )}
-
-        {revokedTokens.length > 0 ? (
-          <details className="group overflow-hidden rounded-xl border border-border/60 bg-muted/20">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 [&::-webkit-details-marker]:hidden">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  <ShieldX className="size-3" />
-                  Revoked
-                </Badge>
-                <p className="text-sm text-muted-foreground">
-                  {revokedTokens.length} token
-                  {revokedTokens.length === 1 ? "" : "s"}
-                </p>
-              </div>
-              <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-border/40">
-              {revokedTokens.map((token, index) => (
-                <RevokedTokenRow
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tokens ({activeCount}/10 active)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {activeTokens.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                No active tokens
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Create a token above to enable Apple Pay automation imports.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+              {activeTokens.map((token, index) => (
+                <ActiveTokenRow
                   key={token.id}
                   token={token}
-                  isLast={index === revokedTokens.length - 1}
+                  isLast={index === activeTokens.length - 1}
+                  isRevoking={revokeToken.isPending}
+                  onOpen={() => setSelectedToken(token)}
+                  onRevoke={handleRevoke}
                 />
               ))}
             </div>
-          </details>
-        ) : null}
-      </CardContent>
-    </Card>
+          )}
+
+          {revokedTokens.length > 0 ? (
+            <details className="group overflow-hidden rounded-xl border border-border/60 bg-muted/20">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    <ShieldX className="size-3" />
+                    Revoked
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    {revokedTokens.length} token
+                    {revokedTokens.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-border/40">
+                {revokedTokens.map((token, index) => (
+                  <RevokedTokenRow
+                    key={token.id}
+                    token={token}
+                    isLast={index === revokedTokens.length - 1}
+                    onOpen={() => setSelectedToken(token)}
+                  />
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <TokenDetailsSheet
+        token={selectedToken}
+        open={selectedToken !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedToken(null);
+          }
+        }}
+      />
+    </>
   );
 }
 
@@ -334,6 +402,7 @@ function ActiveTokenRow({
   token,
   isLast,
   isRevoking,
+  onOpen,
   onRevoke,
 }: {
   token: {
@@ -345,25 +414,27 @@ function ActiveTokenRow({
   };
   isLast: boolean;
   isRevoking: boolean;
+  onOpen: () => void;
   onRevoke: (tokenId: string) => void;
 }) {
   return (
     <div
       className={`flex items-center gap-3 px-4 py-3 ${isLast ? "" : "border-b border-border/40"}`}
     >
-      <div className="min-w-0 flex-1">
+      <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground">{token.name}</p>
+          <p className="truncate text-sm font-medium text-foreground">
+            {token.name}
+          </p>
           <Badge variant="secondary">
             <ShieldCheck className="size-3" />
             Active
           </Badge>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Prefix: <span className="font-mono">{token.tokenPrefix}</span> - Created{" "}
-          {formatDateTime(token.createdAt)} - Last used {formatDateTime(token.lastUsedAt)}
+          Prefix: <span className="font-mono">{token.tokenPrefix}</span>
         </p>
-      </div>
+      </button>
       <Button
         type="button"
         variant="ghost"
@@ -381,28 +452,459 @@ function ActiveTokenRow({
 function RevokedTokenRow({
   token,
   isLast,
+  onOpen,
 }: {
   token: {
+    id: string;
     name: string;
     tokenPrefix: string;
     createdAt: Date;
     revokedAt: Date | null;
   };
   isLast: boolean;
+  onOpen: () => void;
 }) {
   return (
     <div className={`px-4 py-3 ${isLast ? "" : "border-b border-border/40"}`}>
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-medium text-foreground">{token.name}</p>
-        <Badge variant="outline">
-          <ShieldX className="size-3" />
-          Revoked
-        </Badge>
+      <button type="button" onClick={onOpen} className="w-full text-left">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium text-foreground">
+            {token.name}
+          </p>
+          <Badge variant="outline">
+            <ShieldX className="size-3" />
+            Revoked
+          </Badge>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Prefix: <span className="font-mono">{token.tokenPrefix}</span>
+        </p>
+      </button>
+    </div>
+  );
+}
+
+function TokenDetailsSheet({
+  token,
+  open,
+  onOpenChange,
+}: {
+  token: AutomationTokenMetadata | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="data-[side=right]:w-[90vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[800px]"
+      >
+        <SheetHeader>
+          <SheetTitle>Token details</SheetTitle>
+          <SheetDescription>
+            Token metadata and lifecycle information.
+          </SheetDescription>
+        </SheetHeader>
+
+        {token ? (
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <LogDetailItem label="Name" value={token.name} />
+              <LogDetailItem
+                label="Status"
+                value={token.revokedAt ? "Revoked" : "Active"}
+              />
+              <LogDetailItem label="Prefix" value={token.tokenPrefix} />
+              <LogDetailItem label="Created at" value={formatDateTime(token.createdAt)} />
+              <LogDetailItem label="Updated at" value={formatDateTime(token.updatedAt)} />
+              <LogDetailItem label="Last used" value={formatDateTime(token.lastUsedAt)} />
+              <LogDetailItem label="Revoked at" value={formatDateTime(token.revokedAt)} />
+              <LogDetailItem label="Token id" value={token.id} />
+            </div>
+          </div>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
+  const [selectedTokenId, setSelectedTokenId] = useState<string>("all");
+  const [selectedLog, setSelectedLog] =
+    useState<AutomationRequestLogListItem | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedFilterTokenId =
+    selectedTokenId === "all" ? null : selectedTokenId;
+
+  const {
+    data,
+    error: logsError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+  } = useInfiniteQuery(
+    automationQueries.getAutomationRequestLogsOptions(selectedFilterTokenId),
+  );
+
+  const [expectedLogsError, logsPage] = useMemo(() => {
+    if (!data) {
+      return [null, null] as const;
+    }
+
+    const firstExpectedError = data.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
+
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
+
+    return [
+      null,
+      data.pages
+        .map(([, page]) => page)
+        .filter(
+          (page): page is NonNullable<(typeof data.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [data]);
+
+  const logs = useMemo(
+    () => logsPage?.flatMap((page) => page.logs) ?? [],
+    [logsPage],
+  );
+
+  useEffect(() => {
+    if (!selectedLog) {
+      return;
+    }
+
+    const selectedStillVisible = logs.some((log) => log.id === selectedLog.id);
+    if (!selectedStillVisible) {
+      setSelectedLog(null);
+    }
+  }, [logs, selectedLog]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage || isFetchingNextPage || expectedLogsError) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [
+    expectedLogsError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    logs.length,
+  ]);
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <History className="size-4" />
+              Automation logs
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Recent automation requests with request and response details.
+            </p>
+          </div>
+
+          <div className="w-full sm:w-64">
+            <Label htmlFor="automation-log-token-filter" className="text-xs">
+              Filter by token
+            </Label>
+            <Select value={selectedTokenId} onValueChange={setSelectedTokenId}>
+              <SelectTrigger
+                id="automation-log-token-filter"
+                className="mt-1 w-full"
+              >
+                <SelectValue placeholder="All tokens" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tokens</SelectItem>
+                {tokens.map((token) => (
+                  <SelectItem key={token.id} value={token.id}>
+                    {token.name} ({token.tokenPrefix})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {logsError ? (
+            <UnexpectedError />
+          ) : expectedLogsError ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                Unable to load logs
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {expectedLogsError.message}
+              </p>
+            </div>
+          ) : isPending ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+              Loading automation logs...
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                No logs found
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {selectedFilterTokenId
+                  ? "No requests have been logged for the selected token yet."
+                  : "Automation requests will appear here once imports start coming in."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+              {logs.map((log, index) => (
+                <AutomationLogRow
+                  key={log.id}
+                  log={log}
+                  isLast={index === logs.length - 1}
+                  onClick={() => setSelectedLog(log)}
+                />
+              ))}
+            </div>
+          )}
+
+          <div
+            ref={loadMoreRef}
+            className="flex min-h-10 items-center justify-center"
+          >
+            {isFetchingNextPage ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <LoaderCircle className="size-4 animate-spin" />
+                Loading more logs...
+              </div>
+            ) : logs.length > 0 && !hasNextPage ? (
+              <p className="text-sm text-muted-foreground">
+                You have reached the end of the log history.
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AutomationLogDetailsSheet
+        log={selectedLog}
+        open={selectedLog !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedLog(null);
+          }
+        }}
+      />
+    </>
+  );
+}
+
+function AutomationLogRow({
+  log,
+  isLast,
+  onClick,
+}: {
+  log: AutomationRequestLogListItem;
+  isLast: boolean;
+  onClick: () => void;
+}) {
+  const tokenLabel = log.tokenName
+    ? `${log.tokenName} (${log.tokenPrefix ?? log.requestTokenPrefix ?? "unknown"})`
+    : log.requestTokenPrefix
+      ? `Unknown token (${log.requestTokenPrefix})`
+      : "Unknown token";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 sm:gap-4 ${isLast ? "" : "border-b border-border/40"}`}
+    >
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-foreground">{tokenLabel}</p>
+          {log.provider ? (
+            <Badge variant="outline" className="hidden sm:inline-flex">
+              {log.provider}
+            </Badge>
+          ) : null}
+          {log.duplicate ? <Badge variant="outline">Duplicate</Badge> : null}
+        </div>
+        <p className="text-xs text-muted-foreground sm:hidden">
+          {formatDateTime(log.createdAt)}
+        </p>
+        <p className="hidden text-xs text-muted-foreground sm:block">
+          {formatDateTime(log.createdAt)} - {log.requestMethod}
+        </p>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Prefix: <span className="font-mono">{token.tokenPrefix}</span> - Created{" "}
-        {formatDateTime(token.createdAt)} - Revoked {formatDateTime(token.revokedAt)}
+
+      <div className="flex shrink-0 flex-col items-end gap-1 sm:gap-2">
+        <Badge variant={getStatusBadgeVariant(log.responseStatus)}>
+          {log.responseStatus}
+        </Badge>
+        <p className="hidden text-xs text-muted-foreground sm:block">
+          {formatDuration(log.durationMs)}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+function AutomationLogDetailsSheet({
+  log,
+  open,
+  onOpenChange,
+}: {
+  log: AutomationRequestLogListItem | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="data-[side=right]:w-[90vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[800px]"
+      >
+        <SheetHeader>
+          <SheetTitle>Automation request details</SheetTitle>
+          <SheetDescription>
+            Detailed request and response metadata for this automation log
+            entry.
+          </SheetDescription>
+        </SheetHeader>
+
+        {log ? (
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <LogDetailItem
+                label="Timestamp"
+                value={formatDateTime(log.createdAt)}
+              />
+              <LogDetailItem
+                label="Status code"
+                value={String(log.responseStatus)}
+              />
+              <LogDetailItem
+                label="Token"
+                value={log.tokenName ?? "Unknown token"}
+              />
+              <LogDetailItem
+                label="Token prefix"
+                value={log.tokenPrefix ?? log.requestTokenPrefix ?? "Unknown"}
+              />
+              <LogDetailItem label="Method" value={log.requestMethod} />
+              <LogDetailItem label="Path" value={log.requestPath} />
+              <LogDetailItem
+                label="Provider"
+                value={log.provider ?? "Unknown"}
+              />
+              <LogDetailItem
+                label="Duration"
+                value={formatDuration(log.durationMs)}
+              />
+              <LogDetailItem
+                label="Duplicate"
+                value={log.duplicate ? "Yes" : "No"}
+              />
+              <LogDetailItem
+                label="Event id"
+                value={log.eventId ?? "Not provided"}
+              />
+              <LogDetailItem
+                label="Transaction id"
+                value={log.transactionId ?? "Not created"}
+              />
+              <LogDetailItem
+                label="Error reason"
+                value={log.errorReason ?? "None"}
+              />
+              <LogDetailItem
+                label="User agent"
+                value={log.userAgent ?? "Unknown"}
+              />
+              <LogDetailItem
+                label="IP address"
+                value={log.ipAddress ?? "Unknown"}
+              />
+            </div>
+
+            <Separator />
+
+            <LogDetailBlock
+              label="Response message"
+              value={log.responseMessage}
+            />
+            <LogDetailBlock
+              label="Request body"
+              value={formatRequestPayload(log.requestBody)}
+              mono
+            />
+            <LogDetailBlock
+              label="Response body"
+              value={formatRequestPayload(log.responseBody)}
+              mono
+            />
+          </div>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function LogDetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
       </p>
+      <p className="mt-1 break-words text-sm text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function LogDetailBlock({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <pre
+        className={`overflow-x-auto rounded-lg border border-border/50 bg-muted/20 p-3 text-sm whitespace-pre-wrap break-words ${mono ? "font-mono text-xs" : ""}`}
+      >
+        {value}
+      </pre>
     </div>
   );
 }
