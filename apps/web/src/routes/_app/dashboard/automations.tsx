@@ -675,27 +675,31 @@ function AutomationLogRow({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-start gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/30 ${isLast ? "" : "border-b border-border/40"}`}
+      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 sm:gap-4 ${isLast ? "" : "border-b border-border/40"}`}
     >
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-foreground">{tokenLabel}</p>
           {log.provider ? (
-            <Badge variant="outline">{log.provider}</Badge>
+            <Badge variant="outline" className="hidden sm:inline-flex">
+              {log.provider}
+            </Badge>
           ) : null}
           {log.duplicate ? <Badge variant="outline">Duplicate</Badge> : null}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {formatDateTime(log.createdAt)} - {log.requestMethod}{" "}
-          {log.requestPath}
+        <p className="text-xs text-muted-foreground sm:hidden">
+          {formatDateTime(log.createdAt)}
+        </p>
+        <p className="hidden text-xs text-muted-foreground sm:block">
+          {formatDateTime(log.createdAt)} - {log.requestMethod}
         </p>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-2">
+      <div className="flex shrink-0 flex-col items-end gap-1 sm:gap-2">
         <Badge variant={getStatusBadgeVariant(log.responseStatus)}>
           {log.responseStatus}
         </Badge>
-        <p className="text-xs text-muted-foreground">
+        <p className="hidden text-xs text-muted-foreground sm:block">
           {formatDuration(log.durationMs)}
         </p>
       </div>
