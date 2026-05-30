@@ -703,7 +703,10 @@ export function ShoppingCheckoutForm({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link2 className="size-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium">Link transaction</h3>
+            <h3 className="text-sm font-medium">
+              Link transaction{" "}
+              <span className="text-muted-foreground">(Optional)</span>
+            </h3>
           </div>
           <p className="text-xs text-muted-foreground">
             Optional. Leave this empty to create a new transaction.
