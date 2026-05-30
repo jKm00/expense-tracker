@@ -22,6 +22,7 @@ import { Hash, LoaderCircle, SquarePen, Star, Trash, TrendingUp } from "lucide-r
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
@@ -68,6 +69,7 @@ function TagsContentSkeleton() {
 
 function TagContent() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -81,7 +83,7 @@ function TagContent() {
     hasNextPage,
     isFetchingNextPage,
     isPending: isListPending,
-  } = useInfiniteQuery(tagsQueries.getTagListOptions());
+  } = useInfiniteQuery(tagsQueries.getTagListOptions(debouncedSearch || undefined));
 
   const [listExpectedError, tagPages] = useMemo(() => {
     if (!paginatedData) {
@@ -107,26 +109,11 @@ function TagContent() {
     ] as const;
   }, [paginatedData]);
 
-  const visibleTags = useMemo(
-    () => tagPages?.flatMap((page) => page.tags) ?? [],
-    [tagPages],
-  );
-
-  const filteredTags = useMemo(() => {
-    return visibleTags.filter((t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [visibleTags, search]);
+  const visibleTags = useMemo(() => tagPages?.flatMap((page) => page.tags) ?? [], [tagPages]);
 
   useEffect(() => {
     const target = loadMoreRef.current;
-    if (
-      !target ||
-      !hasNextPage ||
-      isFetchingNextPage ||
-      listExpectedError ||
-      search.trim().length > 0
-    ) {
+    if (!target || !hasNextPage || isFetchingNextPage || listExpectedError) {
       return;
     }
 
@@ -143,7 +130,7 @@ function TagContent() {
     observer.observe(target);
 
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError, search]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError, visibleTags.length]);
 
   if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
@@ -189,16 +176,20 @@ function TagContent() {
         <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           All tags
         </h2>
-        {filteredTags.length === 0 ? (
+        {isListPending ? (
+          <SkeletonList rows={4} />
+        ) : visibleTags.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
-            <p className="text-sm text-muted-foreground">No tags created yet</p>
+            <p className="text-sm text-muted-foreground">
+              {debouncedSearch ? "No tags match your search" : "No tags created yet"}
+            </p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-            {filteredTags.map((tag, idx) => (
+            {visibleTags.map((tag, idx) => (
               <div
                 key={tag.id}
-                className={`flex items-center ${idx !== filteredTags.length - 1 ? "border-b border-border/40" : ""}`}
+                className={`flex items-center ${idx !== visibleTags.length - 1 ? "border-b border-border/40" : ""}`}
               >
                 <Link
                   to="/dashboard/tags/$tagId"
@@ -234,7 +225,7 @@ function TagContent() {
         ref={loadMoreRef}
         className="flex min-h-10 items-center justify-center"
       >
-        {search.trim().length > 0 || isListPending ? null : isFetchingNextPage ? (
+        {isListPending ? null : isFetchingNextPage ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin" />
             Loading more tags...

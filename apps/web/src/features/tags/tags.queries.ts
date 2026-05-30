@@ -10,15 +10,16 @@ function getTagsOptions() {
   });
 }
 
-function getTagListOptions() {
+function getTagListOptions(search?: string) {
   return infiniteQueryOptions({
-    queryKey: [TAG_QUERY_KEY, "list"],
+    queryKey: [TAG_QUERY_KEY, "list", search ?? ""],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       tagsController.listTags({
         data: {
           offset: pageParam,
           limit: 25,
+          search,
         },
       }),
     getNextPageParam: (lastPage) => {

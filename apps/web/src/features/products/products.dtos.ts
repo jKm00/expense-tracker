@@ -27,6 +27,8 @@ export type GetProductStatsDTO = z.infer<typeof getProductStatsSchema>;
 export const listProductsSchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),
+  group: z.enum(["tagged", "untagged"]).optional(),
+  search: z.string().trim().max(120).optional(),
 });
 
 export type ListProductsDTO = z.infer<typeof listProductsSchema>;

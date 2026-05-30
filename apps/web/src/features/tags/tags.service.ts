@@ -20,10 +20,12 @@ async function listTags(userId: string, input: ListTagsDTO) {
   try {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 25;
+    const search = input.search?.trim() || undefined;
     const tags = await tagsRepo.getPage({
       userId,
       offset,
       limit: limit + 1,
+      search,
     });
 
     const pageTags = tags.slice(0, limit);

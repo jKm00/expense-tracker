@@ -93,10 +93,13 @@ async function listProducts(userId: string, input: ListProductsDTO) {
   try {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 25;
+    const search = input.search?.trim() || undefined;
     const products = await productRepo.getPage({
       userId,
       offset,
       limit: limit + 1,
+      group: input.group,
+      search,
     });
 
     const pageProducts = products.slice(0, limit);

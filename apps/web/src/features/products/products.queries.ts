@@ -10,15 +10,20 @@ function getProductsOptions() {
   });
 }
 
-function getProductListOptions() {
+function getProductListOptions(input?: {
+  group?: "tagged" | "untagged";
+  search?: string;
+}) {
   return infiniteQueryOptions({
-    queryKey: [PRODUCT_QUERY_KEY, "list"],
+    queryKey: [PRODUCT_QUERY_KEY, "list", input?.group ?? null, input?.search ?? ""],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       productController.listProducts({
         data: {
           offset: pageParam,
           limit: 25,
+          group: input?.group,
+          search: input?.search,
         },
       }),
     getNextPageParam: (lastPage) => {

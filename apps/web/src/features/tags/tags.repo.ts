@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { NewTag, UpdateTag } from "./tags.models";
 import { tags } from "./tags.schema";
 import { productTags } from "../products/products.schema";
-import { count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 
 async function getAll(userId: string) {
   return await db.query.tags.findMany({
@@ -19,8 +19,10 @@ async function getPage(options: {
   userId: string;
   offset: number;
   limit: number;
+  search?: string;
 }) {
   const referenceCount = sql<number>`count(${productTags.productId})::int`;
+  const searchPattern = options.search ? `%${options.search}%` : null;
 
   const tagRows = await db
     .select({
@@ -29,7 +31,12 @@ async function getPage(options: {
     })
     .from(tags)
     .leftJoin(productTags, eq(productTags.tagId, tags.id))
-    .where(eq(tags.userId, options.userId))
+    .where(
+      and(
+        eq(tags.userId, options.userId),
+        searchPattern ? ilike(tags.name, searchPattern) : undefined,
+      ),
+    )
     .groupBy(tags.id)
     .orderBy(desc(referenceCount), desc(tags.createdAt), desc(tags.id))
     .limit(options.limit)
