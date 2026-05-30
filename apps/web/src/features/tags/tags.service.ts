@@ -40,7 +40,7 @@ async function listTags(userId: string, input: ListTagsDTO) {
     return err({
       reason: "UNEXPECTED_DB_ERROR",
       message:
-        "Something unexpected happen when trying to fetch paginated tags from the DB",
+        "Something unexpected happened when trying to fetch paginated tags from the DB",
     });
   }
 }
