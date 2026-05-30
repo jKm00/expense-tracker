@@ -183,16 +183,27 @@ async function completeShopping(userId: string, data: CompleteShoppingDTO) {
     });
   }
 
-  const [transactionError, transaction] = await transactionService.saveTransaction({
-    transaction: {
-      userId,
-      store: data.store,
-      description: data.description,
-      date: data.date,
-      source: "shopping",
-    },
-    entries: data.entries.map(({ shoppingItemId, ...entry }) => entry),
-  });
+  const checkoutEntries = data.entries.map(({ shoppingItemId, ...entry }) => entry);
+
+  const [transactionError, transaction] = data.transactionId
+    ? await transactionService.updateTransaction(userId, data.transactionId, {
+        transaction: {
+          store: data.store,
+          description: data.description,
+          source: "shopping",
+        },
+        entries: checkoutEntries,
+      })
+    : await transactionService.saveTransaction({
+        transaction: {
+          userId,
+          store: data.store,
+          description: data.description,
+          date: data.date,
+          source: "shopping",
+        },
+        entries: checkoutEntries,
+      });
 
   if (transactionError) {
     return err(transactionError);

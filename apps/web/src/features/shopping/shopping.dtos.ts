@@ -39,6 +39,7 @@ export const completeShoppingSchema = z.object({
   store: z.string().optional(),
   description: z.string().optional(),
   date: z.date(),
+  transactionId: z.string().optional(),
   keepUncheckedItems: z.boolean(),
   shoppingItemIds: z.string().array().default([]),
   entries: shoppingCheckoutEntrySchema.array().min(1, "Need at least one checked shopping item"),
