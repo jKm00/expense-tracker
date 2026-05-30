@@ -169,7 +169,10 @@ function TransactionLinkSelect({
                 </div>
               </ComboboxItem>
             ) : (
-              <ComboboxItem key={CREATE_NEW_TRANSACTION_VALUE} value={transaction}>
+              <ComboboxItem
+                key={CREATE_NEW_TRANSACTION_VALUE}
+                value={transaction}
+              >
                 Create a new transaction
               </ComboboxItem>
             )
@@ -802,17 +805,27 @@ export function ShoppingCheckoutForm({
         <div className="grid gap-2 md:grid-cols-2">
           <Button
             type="button"
-            variant={keepUncheckedItems ? "default" : "outline"}
+            variant={keepUncheckedItems ? "secondary" : "ghost"}
             onClick={() => setKeepUncheckedItems(true)}
+            className="justify-between"
           >
+            <Check
+              className={`${keepUncheckedItems ? "opacity-100" : "opacity-0"}`}
+            />
             Keep unchecked items
+            <Check className="opacity-0" />
           </Button>
           <Button
             type="button"
-            variant={!keepUncheckedItems ? "default" : "outline"}
+            variant={!keepUncheckedItems ? "secondary" : "ghost"}
             onClick={() => setKeepUncheckedItems(false)}
+            className="justify-between"
           >
+            <Check className="opacity-0" />
             Remove unchecked items
+            <Check
+              className={`${!keepUncheckedItems ? "opacity-100" : "opacity-0"}`}
+            />
           </Button>
         </div>
 
