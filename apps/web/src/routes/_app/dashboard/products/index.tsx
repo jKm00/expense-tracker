@@ -21,10 +21,10 @@ import {
 } from "@/features/products/components/product-list";
 import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Package, PackageX, Plus, Tag } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
+import { LoaderCircle, Package, PackageX, Plus, Tag } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 function normalizeSearch(value: string) {
@@ -55,9 +55,12 @@ function matchesProductSearch(product: ProductWithTag, searchTerm: string) {
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
-    await context.queryClient.prefetchQuery(
-      productQueries.getProductsOptions(),
-    );
+    await Promise.all([
+      context.queryClient.prefetchQuery(productQueries.getProductKpisOptions()),
+      context.queryClient.prefetchInfiniteQuery(
+        productQueries.getProductListOptions(),
+      ),
+    ]);
   },
   component: RouteComponent,
 });
@@ -101,24 +104,55 @@ function ProductsContentSkeleton() {
 
 function ProductsContent() {
   const [search, setSearch] = useState("");
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    data: [expectedError, products],
+    data: [expectedError, kpis],
     error: unexpectedError,
-  } = useSuspenseQuery(productQueries.getProductsOptions());
+  } = useSuspenseQuery(productQueries.getProductKpisOptions());
+  const {
+    data: paginatedData,
+    error: listUnexpectedError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending: isListPending,
+  } = useInfiniteQuery(productQueries.getProductListOptions());
 
-  const { taggedProducts, untaggedProducts } = useMemo(() => {
-    if (!products) {
-      return {
-        taggedProducts: [],
-        untaggedProducts: [],
-      };
+  const [listExpectedError, productPages] = useMemo(() => {
+    if (!paginatedData) {
+      return [null, null] as const;
     }
 
+    const firstExpectedError = paginatedData.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
+
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
+
+    return [
+      null,
+      paginatedData.pages
+        .map(([, page]) => page)
+        .filter(
+          (page): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [paginatedData]);
+
+  const visibleProducts = useMemo(
+    () => productPages?.flatMap((page) => page.products) ?? [],
+    [productPages],
+  );
+
+  const { visibleTaggedProducts, visibleUntaggedProducts } = useMemo(() => {
     let taggedProducts: ProductWithTag[] = [];
     let untaggedProducts: ProductWithTag[] = [];
 
-    products.forEach((p) => {
+    visibleProducts.forEach((p) => {
       if (p.tags.length === 0) {
         untaggedProducts.push(p);
       } else {
@@ -126,26 +160,53 @@ function ProductsContent() {
       }
     });
 
-    return { taggedProducts, untaggedProducts };
-  }, [products]);
+    return { visibleTaggedProducts: taggedProducts, visibleUntaggedProducts: untaggedProducts };
+  }, [visibleProducts]);
 
   const filteredTaggedProducts = useMemo(() => {
-    return taggedProducts.filter((p) => matchesProductSearch(p, search));
-  }, [taggedProducts, search]);
+    return visibleTaggedProducts.filter((p) => matchesProductSearch(p, search));
+  }, [visibleTaggedProducts, search]);
 
   const filteredUntaggedProducts = useMemo(() => {
-    return untaggedProducts.filter((p) => matchesProductSearch(p, search));
-  }, [untaggedProducts, search]);
+    return visibleUntaggedProducts.filter((p) => matchesProductSearch(p, search));
+  }, [visibleUntaggedProducts, search]);
 
-  if (unexpectedError) {
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (
+      !target ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      listExpectedError ||
+      search.trim().length > 0
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError, search]);
+
+  if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
   }
 
-  if (expectedError) {
+  if (expectedError || listExpectedError) {
     let title: string;
     let message: string;
 
-    const reason = expectedError.reason;
+    const reason = (expectedError || listExpectedError)!.reason;
     switch (reason) {
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";
@@ -171,20 +232,20 @@ function ProductsContent() {
         <div className="@lg:col-span-2 @xl:col-span-1">
           <KpiCard
             title="Total"
-            value={`${products.length}`}
+            value={`${kpis.total}`}
             subtitle="All products"
             icon={Package}
           />
         </div>
         <KpiCard
           title="Tagged"
-          value={`${taggedProducts.length}`}
+          value={`${kpis.tagged}`}
           subtitle="With categories"
           icon={Tag}
         />
         <KpiCard
           title="Untagged"
-          value={`${untaggedProducts.length}`}
+          value={`${kpis.untagged}`}
           subtitle="Needs categorizing"
           icon={PackageX}
         />
@@ -202,6 +263,21 @@ function ProductsContent() {
         <ProductListTitle>Tagged products</ProductListTitle>
         <ProductListEmpty>No tagged products found</ProductListEmpty>
       </ProductList>
+      <div
+        ref={loadMoreRef}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {search.trim().length > 0 || isListPending ? null : isFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            Loading more products...
+          </div>
+        ) : visibleProducts.length > 0 && !hasNextPage ? (
+          <p className="text-sm text-muted-foreground">
+            You have reached the end of the product list.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -24,6 +24,13 @@ export const getProductStatsSchema = z.object({
 
 export type GetProductStatsDTO = z.infer<typeof getProductStatsSchema>;
 
+export const listProductsSchema = z.object({
+  offset: z.coerce.number().int().min(0).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+
+export type ListProductsDTO = z.infer<typeof listProductsSchema>;
+
 export const addProductSchema = z.object({
   product: z.object({
     name: productNameSchema,

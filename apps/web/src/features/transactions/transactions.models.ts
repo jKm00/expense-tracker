@@ -29,3 +29,15 @@ export type FullTransaction = Transaction & {
     tags: Tag[];
   })[];
 };
+
+export type TransactionPage = {
+  transactions: FullTransaction[];
+  nextOffset: number | null;
+  hasMore: boolean;
+};
+
+export type TransactionKpis = {
+  count: number;
+  averagePerDay: number;
+  averageItemsPerTransaction: number;
+};

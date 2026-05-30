@@ -4,6 +4,8 @@ import { makeProduct, makeTag } from "../__test-fixtures__";
 vi.mock("./products.repo", () => ({
   productRepo: {
     getAll: vi.fn(),
+    getPage: vi.fn(),
+    getKpis: vi.fn(),
     getOne: vi.fn(),
     getAlias: vi.fn(),
     getAliasByNormalizedName: vi.fn(),
@@ -77,6 +79,33 @@ describe("productService", () => {
       mockProductRepo.getAll.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await productService.getProducts("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("getProductKpis", () => {
+    it("returns product counts from repo aggregates", async () => {
+      mockProductRepo.getKpis.mockResolvedValue({
+        total: 12,
+        tagged: 7,
+      } as any);
+
+      const [error, data] = await productService.getProductKpis("user-1");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        total: 12,
+        tagged: 7,
+        untagged: 5,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockProductRepo.getKpis.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await productService.getProductKpis("user-1");
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");

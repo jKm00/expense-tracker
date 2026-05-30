@@ -6,6 +6,13 @@ export const getTagSchema = z.object({
 
 export type GetTagDTO = z.infer<typeof getTagSchema>;
 
+export const listTagsSchema = z.object({
+  offset: z.coerce.number().int().min(0).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+
+export type ListTagsDTO = z.infer<typeof listTagsSchema>;
+
 export const addTagSchema = z.object({
   name: z.string().min(1, "Name is required"),
   color: z.string().optional(),

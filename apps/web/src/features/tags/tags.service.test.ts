@@ -4,6 +4,8 @@ import { makeTag } from "../__test-fixtures__";
 vi.mock("./tags.repo", () => ({
   tagsRepo: {
     getAll: vi.fn(),
+    getPage: vi.fn(),
+    getKpis: vi.fn(),
     getFirst: vi.fn(),
     getFirstByName: vi.fn(),
     save: vi.fn(),
@@ -46,6 +48,34 @@ describe("tagsService", () => {
       mockTagsRepo.getAll.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await tagsService.getTags("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("getTagKpis", () => {
+    it("returns tag kpis from repo aggregates", async () => {
+      mockTagsRepo.getKpis.mockResolvedValue({
+        count: 4,
+        totalReferences: 10,
+        mostUsedTagName: "Groceries",
+      } as any);
+
+      const [error, data] = await tagsService.getTagKpis("user-1");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        count: 4,
+        averageReferences: 2.5,
+        mostUsedTagName: "Groceries",
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockTagsRepo.getKpis.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await tagsService.getTagKpis("user-1");
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");

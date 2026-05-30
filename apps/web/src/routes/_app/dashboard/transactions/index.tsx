@@ -17,18 +17,22 @@ import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { TransactionList } from "@/features/transactions/components/transaction-list";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import dayjs from "dayjs";
-import { ArrowLeftRight, Plus, TrendingUp, Layers } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { ArrowLeftRight, Layers, LoaderCircle, Plus, TrendingUp } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/")({
   loaderDeps: ({ search: { month, year } }) => ({ month, year }),
   loader: async ({ context, deps }) => {
-    await context.queryClient.prefetchQuery(
-      transactionQueries.getTransactionsOptions(deps.year, deps.month),
-    );
+    await Promise.all([
+      context.queryClient.prefetchQuery(
+        transactionQueries.getTransactionKpisOptions(deps.year, deps.month),
+      ),
+      context.queryClient.prefetchInfiniteQuery(
+        transactionQueries.getTransactionListOptions(deps.year, deps.month),
+      ),
+    ]);
   },
   component: RouteComponent,
 });
@@ -78,48 +82,79 @@ function TransactionsContentSkeleton() {
 
 function TransactionsContent() {
   const { year, month } = Route.useSearch();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const {
-    data: [expectedError, transactions],
+    data: [expectedError, kpis],
     error: unexpectedError,
-  } = useSuspenseQuery(transactionQueries.getTransactionsOptions(year, month));
+  } = useSuspenseQuery(transactionQueries.getTransactionKpisOptions(year, month));
+  const {
+    data: paginatedData,
+    error: listUnexpectedError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending: isListPending,
+  } = useInfiniteQuery(transactionQueries.getTransactionListOptions(year, month));
 
-  const averageTransactionsPerDay = useMemo(() => {
-    if (!transactions) return 0;
+  const [listExpectedError, transactionPages] = useMemo(() => {
+    if (!paginatedData) {
+      return [null, null] as const;
+    }
 
-    const total = transactions.length;
-    const date =
-      year && month
-        ? dayjs(new Date(year, month, 1))
-        : dayjs().startOf("month");
-    const daysInMonth = date.daysInMonth();
+    const firstExpectedError = paginatedData.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
 
-    return Math.round((total / daysInMonth) * 100) / 100;
-  }, [transactions]);
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
 
-  const averageItemsPerTransaction = useMemo(() => {
-    if (!transactions) return 0;
+    return [
+      null,
+      paginatedData.pages
+        .map(([, page]) => page)
+        .filter(
+          (page): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [paginatedData]);
 
-    const totalTransactions = transactions.length;
+  const visibleTransactions = useMemo(
+    () => transactionPages?.flatMap((page) => page.transactions) ?? [],
+    [transactionPages],
+  );
 
-    if (totalTransactions === 0) return 0;
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage || isFetchingNextPage || listExpectedError) {
+      return;
+    }
 
-    const totalEntries = transactions.reduce(
-      (acc, transaction) => acc + transaction.entries.length,
-      0,
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
     );
 
-    return Math.round((totalEntries / totalTransactions) * 100) / 100;
-  }, [transactions]);
+    observer.observe(target);
 
-  if (unexpectedError) {
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError]);
+
+  if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
   }
 
-  if (expectedError) {
+  if (expectedError || listExpectedError) {
     let title: string;
     let message: string;
 
-    const reason = expectedError.reason;
+    const reason = (expectedError || listExpectedError)!.reason;
     switch (reason) {
       case "TRANSACTION_DB_ERROR":
         title = "Database error";
@@ -145,26 +180,41 @@ function TransactionsContent() {
       <div className="grid gap-3 @xl:grid-cols-2 @2xl:grid-cols-3">
         <KpiCard
           title="Transactions"
-          value={`${transactions.length}`}
+          value={`${kpis.count}`}
           subtitle="This month"
           icon={ArrowLeftRight}
         />
         <KpiCard
           title="Per day"
-          value={`${averageTransactionsPerDay}`}
+          value={`${kpis.averagePerDay}`}
           subtitle="Average per day"
           icon={TrendingUp}
         />
         <div className="@xl:col-span-2 @2xl:col-span-1">
           <KpiCard
             title="Items"
-            value={`${averageItemsPerTransaction}`}
+            value={`${kpis.averageItemsPerTransaction}`}
             subtitle="Average per transaction"
             icon={Layers}
           />
         </div>
       </div>
-      <TransactionList transactions={transactions} />
+      {isListPending ? null : <TransactionList transactions={visibleTransactions} />}
+      <div
+        ref={loadMoreRef}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {isFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            Loading more transactions...
+          </div>
+        ) : visibleTransactions.length > 0 && !hasNextPage ? (
+          <p className="text-sm text-muted-foreground">
+            You have reached the end of the transaction list.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

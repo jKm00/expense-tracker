@@ -16,3 +16,15 @@ export type NewProduct = InferInsertModel<typeof products>;
 export type UpdateProduct = Partial<
   Omit<NewProduct, "id" | "userId" | "createdAt" | "updatedAt">
 >;
+
+export type ProductPage = {
+  products: ProductWithTag[];
+  nextOffset: number | null;
+  hasMore: boolean;
+};
+
+export type ProductKpis = {
+  total: number;
+  tagged: number;
+  untagged: number;
+};
