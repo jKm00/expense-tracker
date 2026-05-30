@@ -194,6 +194,7 @@ export function ShoppingCheckoutForm({
   const mutation = shoppingMutations.completeShopping();
   const [selectedTransactionId, setSelectedTransactionId] =
     useState<string>("");
+  const [productSelectResetKey, setProductSelectResetKey] = useState(0);
   const checkedItems = useMemo(
     () => list.items.filter((item) => item.checked),
     [list.items],
@@ -422,6 +423,7 @@ export function ShoppingCheckoutForm({
   function handleAddProduct(product: Product) {
     setEntries((prev) => [...prev, makeProductEntry(product)]);
     setEntryTouched((prev) => [...prev, createEmptyTouched()]);
+    setProductSelectResetKey((prev) => prev + 1);
   }
 
   function markTouched(index: number, field: keyof EntryTouched) {
@@ -572,15 +574,6 @@ export function ShoppingCheckoutForm({
             </p>
           </div>
 
-          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <FormField>
-              <ProductSelect
-                products={products}
-                onValueChange={handleAddProduct}
-              />
-            </FormField>
-          </div>
-
           <div className="space-y-3">
             {entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-4 py-7 text-center">
@@ -689,6 +682,16 @@ export function ShoppingCheckoutForm({
                 </div>
               ))
             )}
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <FormField>
+              <ProductSelect
+                key={productSelectResetKey}
+                products={products}
+                onValueChange={handleAddProduct}
+              />
+            </FormField>
           </div>
         </div>
       </section>
