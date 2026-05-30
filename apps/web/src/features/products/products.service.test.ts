@@ -112,6 +112,66 @@ describe("productService", () => {
     });
   });
 
+  describe("listProducts", () => {
+    it("returns a trimmed page with hasMore and nextOffset", async () => {
+      const products = [
+        makeProduct({ id: "product-1", aliases: [] }),
+        makeProduct({ id: "product-2", aliases: [] }),
+        makeProduct({ id: "product-3", aliases: [] }),
+      ];
+      mockProductRepo.getPage.mockResolvedValue(products as any);
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 10,
+        limit: 2,
+        group: "tagged",
+        search: " melk ",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        products: products.slice(0, 2),
+        hasMore: true,
+        nextOffset: 12,
+      });
+      expect(mockProductRepo.getPage).toHaveBeenCalledWith({
+        userId: "user-1",
+        offset: 10,
+        limit: 3,
+        group: "tagged",
+        search: "melk",
+      });
+    });
+
+    it("returns an empty page without nextOffset when repo returns no results", async () => {
+      mockProductRepo.getPage.mockResolvedValue([] as any);
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        products: [],
+        hasMore: false,
+        nextOffset: null,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockProductRepo.getPage.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
   describe("getProduct", () => {
     it("returns ok with product when found and owned", async () => {
       const product = makeProduct({ aliases: [] });

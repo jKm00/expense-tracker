@@ -82,6 +82,64 @@ describe("tagsService", () => {
     });
   });
 
+  describe("listTags", () => {
+    it("returns a trimmed page with hasMore and nextOffset", async () => {
+      const tags = [
+        makeTag({ id: "tag-1" }),
+        makeTag({ id: "tag-2" }),
+        makeTag({ id: "tag-3" }),
+      ];
+      mockTagsRepo.getPage.mockResolvedValue(tags as any);
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 4,
+        limit: 2,
+        search: " groceries ",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        tags: tags.slice(0, 2),
+        hasMore: true,
+        nextOffset: 6,
+      });
+      expect(mockTagsRepo.getPage).toHaveBeenCalledWith({
+        userId: "user-1",
+        offset: 4,
+        limit: 3,
+        search: "groceries",
+      });
+    });
+
+    it("returns an empty page without nextOffset when repo returns no results", async () => {
+      mockTagsRepo.getPage.mockResolvedValue([] as any);
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        tags: [],
+        hasMore: false,
+        nextOffset: null,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockTagsRepo.getPage.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
   describe("getTag", () => {
     it("returns ok with tag when found and owned", async () => {
       const tag = makeTag();
