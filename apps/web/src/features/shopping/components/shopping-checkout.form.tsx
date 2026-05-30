@@ -3,9 +3,17 @@ import {
   FormFieldError,
   FormFieldLabel,
 } from "@/components/custom/form";
+import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductSelect } from "@/components/custom/product-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -13,17 +21,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { automationQueries } from "@/features/automation/automation.queries";
+import { AutomationTokenMetadata } from "@/features/automation/automation.models";
 import { Product } from "@/features/products/products.models";
+import { FullTransaction } from "@/features/transactions/transactions.models";
+import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { cn } from "@/lib/utils";
 import { formatAmount } from "@/utils/format";
 import { format } from "date-fns";
-import { ChevronDownIcon, ShoppingBag, X } from "lucide-react";
+import { ChevronDownIcon, Link2, ShoppingBag, Sparkles, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { shoppingMutations } from "../shopping.mutations";
 import { ShoppingListWithItems } from "../shopping.models";
 import {
   CheckoutEntry,
+  getCheckoutLinkSuggestion,
+  makeCheckoutEntry,
   getPrefilledCheckoutEntries,
+  getSelectableCheckoutTransactions,
+  hasActiveAutomationTokens,
 } from "./shopping-checkout.utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -65,6 +83,29 @@ function createEmptyTouched(): EntryTouched {
   return { quantity: false, price: false, total: false };
 }
 
+function formatTransactionOptionLabel(transaction: FullTransaction) {
+  const title = transaction.store || transaction.description || "Transaction";
+  return `${title} · ${formatAmount(transaction.totalPrice)}`;
+}
+
+function getActiveTokens(data: [unknown, AutomationTokenMetadata[]] | undefined) {
+  if (!data || data[0] || !data[1]) {
+    return [];
+  }
+
+  return data[1];
+}
+
+function getTransactions(data: [unknown, FullTransaction[]] | undefined) {
+  if (!data || data[0] || !data[1]) {
+    return [];
+  }
+
+  return data[1];
+}
+
+const CREATE_NEW_TRANSACTION_VALUE = "__create_new_transaction__";
+
 export function ShoppingCheckoutForm({
   list,
   products,
@@ -74,6 +115,7 @@ export function ShoppingCheckoutForm({
 }) {
   const navigate = useNavigate();
   const mutation = shoppingMutations.completeShopping();
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
   const checkedItems = useMemo(
     () => list.items.filter((item) => item.checked),
     [list.items],
@@ -91,6 +133,38 @@ export function ShoppingCheckoutForm({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [keepUncheckedItems, setKeepUncheckedItems] = useState(true);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const { data: automationTokenResult } = useQuery(
+    automationQueries.getAutomationTokensOptions(),
+  );
+  const { data: transactionResult } = useQuery(
+    transactionQueries.getTransactionsOptions(date.getFullYear(), date.getMonth()),
+  );
+
+  const automationTokens = useMemo(
+    () => getActiveTokens(automationTokenResult),
+    [automationTokenResult],
+  );
+  const transactions = useMemo(
+    () => getTransactions(transactionResult),
+    [transactionResult],
+  );
+  const hasAutomation = hasActiveAutomationTokens(automationTokens);
+  const selectableTransactions = useMemo(
+    () => getSelectableCheckoutTransactions(transactions, date),
+    [date, transactions],
+  );
+  const suggestedTransaction = useMemo(
+    () =>
+      hasAutomation ? getCheckoutLinkSuggestion(selectableTransactions, date) : undefined,
+    [date, hasAutomation, selectableTransactions],
+  );
+  const selectedTransaction = useMemo(
+    () =>
+      selectableTransactions.find(
+        (transaction) => transaction.id === selectedTransactionId,
+      ),
+    [selectableTransactions, selectedTransactionId],
+  );
 
   const entryErrors = useMemo(
     () =>
@@ -125,7 +199,7 @@ export function ShoppingCheckoutForm({
         const existing = prev.find((entry) => entry.shoppingItemId === item.id);
         return (
           existing ?? {
-            ...makeEntry(item),
+            ...makeCheckoutEntry(item),
             price: "",
             total: "",
           }
@@ -156,6 +230,17 @@ export function ShoppingCheckoutForm({
       return next;
     });
   }, [checkedItems]);
+
+  useEffect(() => {
+    if (
+      selectedTransactionId.length > 0 &&
+      !selectableTransactions.some(
+        (transaction) => transaction.id === selectedTransactionId,
+      )
+    ) {
+      setSelectedTransactionId("");
+    }
+  }, [selectableTransactions, selectedTransactionId]);
 
   const checkoutTotal = useMemo(() => {
     return entries.reduce((sum, entry) => {
@@ -293,6 +378,7 @@ export function ShoppingCheckoutForm({
         store,
         description,
         date,
+        transactionId: selectedTransactionId || undefined,
         keepUncheckedItems,
         shoppingItemIds,
         entries: entries.map(({ total, lastEditedField, ...entry }) => ({
@@ -426,6 +512,84 @@ export function ShoppingCheckoutForm({
 
       <Separator className="my-6" />
 
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Link2 className="size-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium">Link to existing transaction</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Optional. Leave this empty to create a new transaction.
+          </p>
+        </div>
+
+        {suggestedTransaction ? (
+          <button
+            type="button"
+            className={cn(
+              "w-full rounded-xl border px-3 py-3 text-left transition-colors",
+              selectedTransactionId === suggestedTransaction.id
+                ? "border-primary bg-primary/5"
+                : "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/15",
+            )}
+            onClick={() => setSelectedTransactionId(suggestedTransaction.id)}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 text-sm font-medium">
+                  <Sparkles className="size-4 text-yellow-600" />
+                  Smart suggestion
+                </div>
+                <p className="text-sm">
+                  {suggestedTransaction.store || suggestedTransaction.description || "Transaction"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {format(suggestedTransaction.date, "PPP")} · {formatAmount(suggestedTransaction.totalPrice)}
+                  {suggestedTransaction.needsReview ? " · Needs review" : ""}
+                </p>
+              </div>
+              <span className="text-xs font-medium text-primary">
+                {selectedTransactionId === suggestedTransaction.id ? "Selected" : "Use this"}
+              </span>
+            </div>
+          </button>
+        ) : null}
+
+        <FormField>
+          <FormFieldLabel>
+            {hasAutomation ? "Choose a different transaction" : "Select a transaction"}
+          </FormFieldLabel>
+          <Select
+            value={selectedTransactionId || CREATE_NEW_TRANSACTION_VALUE}
+            onValueChange={(value) =>
+              setSelectedTransactionId(
+                value === CREATE_NEW_TRANSACTION_VALUE ? "" : value,
+              )
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Create a new transaction" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CREATE_NEW_TRANSACTION_VALUE}>
+                Create a new transaction
+              </SelectItem>
+              {selectableTransactions.map((transaction) => (
+                <SelectItem key={transaction.id} value={transaction.id}>
+                  {formatTransactionOptionLabel(transaction)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+
+        {selectedTransaction ? (
+          <p className="text-xs text-muted-foreground">
+            Checkout will update this transaction instead of creating a new one.
+          </p>
+        ) : null}
+      </div>
+
       <div className="grid gap-2 md:grid-cols-2">
         <FormField>
           <FormFieldLabel>
@@ -502,9 +666,14 @@ export function ShoppingCheckoutForm({
         </span>
       </div>
 
-      <Button type="submit" className="w-full" disabled={entries.length === 0}>
+      <LoaderButton
+        type="submit"
+        className="w-full"
+        disabled={entries.length === 0}
+        isLoading={mutation.isPending}
+      >
         Complete shopping
-      </Button>
+      </LoaderButton>
     </form>
   );
 }

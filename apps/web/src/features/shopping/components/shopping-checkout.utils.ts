@@ -1,4 +1,7 @@
 import { ShoppingListWithItems } from "../shopping.models";
+import { AutomationTokenMetadata } from "@/features/automation/automation.models";
+import { FullTransaction } from "@/features/transactions/transactions.models";
+import { isSameDay } from "date-fns";
 
 export type CheckoutEntry = {
   shoppingItemId?: string;
@@ -11,7 +14,9 @@ export type CheckoutEntry = {
   tagIds: string[];
 };
 
-function makeEntry(item: ShoppingListWithItems["items"][number]): CheckoutEntry {
+export function makeCheckoutEntry(
+  item: ShoppingListWithItems["items"][number],
+): CheckoutEntry {
   return {
     shoppingItemId: item.id,
     product: {
@@ -28,5 +33,28 @@ function makeEntry(item: ShoppingListWithItems["items"][number]): CheckoutEntry 
 }
 
 export function getPrefilledCheckoutEntries(list: ShoppingListWithItems) {
-  return list.items.filter((item) => item.checked).map(makeEntry);
+  return list.items.filter((item) => item.checked).map(makeCheckoutEntry);
+}
+
+export function hasActiveAutomationTokens(tokens: AutomationTokenMetadata[]) {
+  return tokens.some((token) => token.revokedAt === null);
+}
+
+export function getCheckoutLinkSuggestion(
+  transactions: FullTransaction[],
+  date: Date,
+) {
+  return transactions
+    .filter((transaction) => transaction.needsReview)
+    .filter((transaction) => isSameDay(transaction.date, date))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+}
+
+export function getSelectableCheckoutTransactions(
+  transactions: FullTransaction[],
+  date: Date,
+) {
+  return transactions
+    .filter((transaction) => isSameDay(transaction.date, date))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 }

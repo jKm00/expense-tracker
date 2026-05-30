@@ -10,6 +10,7 @@ vi.mock("../products/products.service", () => ({
 vi.mock("../transactions/transactions.service", () => ({
   transactionService: {
     saveTransaction: vi.fn(),
+    updateTransaction: vi.fn(),
   },
 }));
 
@@ -122,8 +123,67 @@ describe("shoppingService", () => {
 
       expect(error).toBeNull();
       expect(data).toEqual(transaction);
+      expect(mockTransactionService.saveTransaction).toHaveBeenCalledOnce();
+      expect(mockTransactionService.updateTransaction).not.toHaveBeenCalled();
       expect(mockShoppingRepo.removeShoppingListItemsByIds).toHaveBeenCalledWith("list-1", ["checked-1"]);
       expect(mockShoppingRepo.clearShoppingList).not.toHaveBeenCalled();
+    });
+
+    it("updates an existing transaction when transactionId is provided", async () => {
+      const list = makeList({ items: [makeItem()] });
+      const transaction = makeTransaction({ id: "tx-linked", source: "shopping" });
+
+      mockTransactionService.updateTransaction.mockResolvedValue([
+        null,
+        transaction,
+      ] as any);
+      mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
+      mockShoppingRepo.removeShoppingListItemsByIds.mockResolvedValue([] as any);
+
+      const [error, data] = await shoppingService.completeShopping("user-1", {
+        store: "Shop",
+        description: "Groceries",
+        date: new Date("2024-01-15"),
+        transactionId: "tx-linked",
+        keepUncheckedItems: true,
+        shoppingItemIds: ["item-1"],
+        entries: [
+          {
+            shoppingItemId: "item-1",
+            product: { id: "product-1", name: "Milk" },
+            quantity: "1",
+            price: "10",
+            total: "10",
+            lastEditedField: "price",
+            type: "expense",
+            tagIds: [],
+          },
+        ],
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual(transaction);
+      expect(mockTransactionService.updateTransaction).toHaveBeenCalledWith(
+        "user-1",
+        "tx-linked",
+        expect.objectContaining({
+          transaction: expect.objectContaining({
+            store: "Shop",
+            description: "Groceries",
+            source: "shopping",
+          }),
+        }),
+      );
+      expect(mockTransactionService.updateTransaction).not.toHaveBeenCalledWith(
+        "user-1",
+        "tx-linked",
+        expect.objectContaining({
+          transaction: expect.objectContaining({
+            date: expect.any(Date),
+          }),
+        }),
+      );
+      expect(mockTransactionService.saveTransaction).not.toHaveBeenCalled();
     });
 
     it("clears all list items when unchecked items should be removed", async () => {
