@@ -2,6 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { tagsController } from "./tags.controller";
 
 export const TAG_QUERY_KEY = "tags";
+const LIST_STALE_TIME_MS = 1000 * 60 * 5;
 
 function getTagsOptions() {
   return queryOptions({
@@ -13,6 +14,7 @@ function getTagsOptions() {
 function getTagListOptions(search?: string) {
   return infiniteQueryOptions({
     queryKey: [TAG_QUERY_KEY, "list", search ?? ""],
+    staleTime: LIST_STALE_TIME_MS,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       tagsController.listTags({

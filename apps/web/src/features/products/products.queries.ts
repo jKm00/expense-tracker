@@ -2,6 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { productController } from "./products.controller";
 
 export const PRODUCT_QUERY_KEY = "products";
+const LIST_STALE_TIME_MS = 1000 * 60 * 5;
 
 function getProductsOptions() {
   return queryOptions({
@@ -16,6 +17,7 @@ function getProductListOptions(input?: {
 }) {
   return infiniteQueryOptions({
     queryKey: [PRODUCT_QUERY_KEY, "list", input?.group ?? null, input?.search ?? ""],
+    staleTime: LIST_STALE_TIME_MS,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       productController.listProducts({

@@ -2,6 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { transactionController } from "./transactions.controller";
 
 export const TRANSACTION_QUERY_KEY = "transactions";
+const LIST_STALE_TIME_MS = 1000 * 60 * 5;
 
 function getTransactionsOptions(year?: number, month?: number) {
   return queryOptions({
@@ -19,6 +20,7 @@ function getTransactionsOptions(year?: number, month?: number) {
 function getTransactionListOptions(year?: number, month?: number) {
   return infiniteQueryOptions({
     queryKey: [TRANSACTION_QUERY_KEY, "list", year, month],
+    staleTime: LIST_STALE_TIME_MS,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       transactionController.listTransactions({
