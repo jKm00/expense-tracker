@@ -18,7 +18,14 @@ import { TagBadge } from "@/features/tags/components/tag";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Hash, LoaderCircle, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
+import {
+  Hash,
+  LoaderCircle,
+  SquarePen,
+  Star,
+  Trash,
+  TrendingUp,
+} from "lucide-react";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
@@ -29,7 +36,9 @@ export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(tagsQueries.getTagKpisOptions()),
-      context.queryClient.prefetchInfiniteQuery(tagsQueries.getTagListOptions()),
+      context.queryClient.prefetchInfiniteQuery(
+        tagsQueries.getTagListOptions(),
+      ),
     ]);
   },
   component: RouteComponent,
@@ -83,7 +92,9 @@ function TagContent() {
     hasNextPage,
     isFetchingNextPage,
     isPending: isListPending,
-  } = useInfiniteQuery(tagsQueries.getTagListOptions(debouncedSearch || undefined));
+  } = useInfiniteQuery(
+    tagsQueries.getTagListOptions(debouncedSearch || undefined),
+  );
 
   const [listExpectedError, tagPages] = useMemo(() => {
     if (!paginatedData) {
@@ -103,13 +114,18 @@ function TagContent() {
       paginatedData.pages
         .map(([, page]) => page)
         .filter(
-          (page): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
+          (
+            page,
+          ): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
             page !== null,
         ),
     ] as const;
   }, [paginatedData]);
 
-  const visibleTags = useMemo(() => tagPages?.flatMap((page) => page.tags) ?? [], [tagPages]);
+  const visibleTags = useMemo(
+    () => tagPages?.flatMap((page) => page.tags) ?? [],
+    [tagPages],
+  );
 
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -130,7 +146,13 @@ function TagContent() {
     observer.observe(target);
 
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError, visibleTags.length]);
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    listExpectedError,
+    visibleTags.length,
+  ]);
 
   if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
@@ -145,11 +167,11 @@ function TagContent() {
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";
         message =
-          "Something went wrong trying to fetch your tags from the databse. Please try again!";
+          "Something went wrong trying to fetch your tags from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
-        message = `Something unexpected happend: ${reason satisfies never}. Please try again!`;
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
         break;
     }
     return (
@@ -181,7 +203,9 @@ function TagContent() {
         ) : visibleTags.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
             <p className="text-sm text-muted-foreground">
-              {debouncedSearch ? "No tags match your search" : "No tags created yet"}
+              {debouncedSearch
+                ? "No tags match your search"
+                : "No tags created yet"}
             </p>
           </div>
         ) : (

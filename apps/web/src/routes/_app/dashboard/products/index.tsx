@@ -15,7 +15,10 @@ import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
-import { ProductList, ProductListEmpty } from "@/features/products/components/product-list";
+import {
+  ProductList,
+  ProductListEmpty,
+} from "@/features/products/components/product-list";
 import { productQueries } from "@/features/products/products.queries";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -178,7 +181,8 @@ function ProductsContent() {
     activeTab === "untagged"
       ? isFetchingNextUntaggedPage
       : isFetchingNextTaggedPage;
-  const activeIsPending = activeTab === "untagged" ? isUntaggedPending : isTaggedPending;
+  const activeIsPending =
+    activeTab === "untagged" ? isUntaggedPending : isTaggedPending;
   const activeExpectedError =
     activeTab === "untagged" ? untaggedExpectedError : taggedExpectedError;
   const activeFetchNextPage =
@@ -186,7 +190,12 @@ function ProductsContent() {
 
   useEffect(() => {
     const target = loadMoreRef.current;
-    if (!target || !activeHasNextPage || activeIsFetchingNextPage || activeExpectedError) {
+    if (
+      !target ||
+      !activeHasNextPage ||
+      activeIsFetchingNextPage ||
+      activeExpectedError
+    ) {
       return;
     }
 
@@ -224,11 +233,11 @@ function ProductsContent() {
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";
         message =
-          "Something went wrong trying to fetch your products from the databse. Please try again!";
+          "Something went wrong trying to fetch your products from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
-        message = `Something unexpected happend: ${reason satisfies never}. Please try again!`;
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
         break;
     }
     return (
