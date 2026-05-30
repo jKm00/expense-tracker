@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { shoppingMutations } from "../shopping.mutations";
 import { ShoppingListWithItems } from "../shopping.models";
 import {
@@ -207,6 +207,7 @@ export function ShoppingCheckoutForm({
   const [entryTouched, setEntryTouched] = useState<EntryTouched[]>(() =>
     getPrefilledCheckoutEntries(list).map(() => createEmptyTouched()),
   );
+  const entryCardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [store, setStore] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
@@ -454,6 +455,21 @@ export function ShoppingCheckoutForm({
     });
 
     if (hasValidationError) {
+      const firstInvalidIndex = entries.findIndex((entry) => {
+        const hasQuantity = parsePositiveNumber(entry.quantity) !== null;
+        const hasPrice = parsePositiveNumber(entry.price) !== null;
+        const hasTotal = parsePositiveNumber(entry.total) !== null;
+        return !hasQuantity || (!hasPrice && !hasTotal);
+      });
+
+      const firstInvalidEntry =
+        firstInvalidIndex === -1 ? null : entryCardRefs.current[firstInvalidIndex];
+
+      firstInvalidEntry?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
       return;
     }
 
@@ -590,6 +606,9 @@ export function ShoppingCheckoutForm({
             ) : (
               entries.map((entry, index) => (
                 <div
+                  ref={(element) => {
+                    entryCardRefs.current[index] = element;
+                  }}
                   key={`${entry.shoppingItemId ?? entry.product.name}-${index}`}
                   className="space-y-3 rounded-xl border border-border bg-background/50 p-3"
                 >
