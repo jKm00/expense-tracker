@@ -60,7 +60,7 @@ async function getTagKpis(userId: string) {
     return err({
       reason: "UNEXPECTED_DB_ERROR",
       message:
-        "Something unexpected happen when trying to fetch tag kpis from the DB",
+        "Something unexpected happened when trying to fetch tag kpis from the DB",
     });
   }
 }
