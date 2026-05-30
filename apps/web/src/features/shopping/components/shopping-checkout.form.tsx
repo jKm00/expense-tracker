@@ -52,6 +52,7 @@ import {
   getSelectableCheckoutTransactions,
   hasActiveAutomationTokens,
 } from "./shopping-checkout.utils";
+import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
 
 function parsePositiveNumber(value?: string) {
   if (!value || value.trim().length === 0) {
@@ -221,6 +222,8 @@ export function ShoppingCheckoutForm({
       date.getMonth(),
     ),
   );
+
+  const isMobile = useBreakpoint(BREAKPOINTS.md);
 
   const automationTokens = useMemo(
     () => getActiveTokens(automationTokenResult),
@@ -824,11 +827,21 @@ export function ShoppingCheckoutForm({
             onClick={() => setKeepUncheckedItems(false)}
             className="justify-between"
           >
-            <Check className="opacity-0" />
+            {isMobile ? (
+              <Check
+                className={`${!keepUncheckedItems ? "opacity-100" : "opacity-0"}`}
+              />
+            ) : (
+              <Check className="opacity-0" />
+            )}
             Remove unchecked items
-            <Check
-              className={`${!keepUncheckedItems ? "opacity-100" : "opacity-0"}`}
-            />
+            {!isMobile ? (
+              <Check
+                className={`${!keepUncheckedItems ? "opacity-100" : "opacity-0"}`}
+              />
+            ) : (
+              <Check className="opacity-0" />
+            )}
           </Button>
         </div>
 
