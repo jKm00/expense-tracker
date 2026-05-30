@@ -6,14 +6,16 @@ import {
 import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductSelect } from "@/components/custom/product-select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -29,7 +31,14 @@ import { transactionQueries } from "@/features/transactions/transactions.queries
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/utils/format";
 import { format } from "date-fns";
-import { ChevronDownIcon, Link2, ShoppingBag, Sparkles, X } from "lucide-react";
+import {
+  Check,
+  ChevronDownIcon,
+  Link2,
+  ShoppingBag,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -43,7 +52,6 @@ import {
   getSelectableCheckoutTransactions,
   hasActiveAutomationTokens,
 } from "./shopping-checkout.utils";
-import { Separator } from "@/components/ui/separator";
 
 function parsePositiveNumber(value?: string) {
   if (!value || value.trim().length === 0) {
@@ -85,10 +93,16 @@ function createEmptyTouched(): EntryTouched {
 
 function formatTransactionOptionLabel(transaction: FullTransaction) {
   const title = transaction.store || transaction.description || "Transaction";
-  return `${title} · ${formatAmount(transaction.totalPrice)}`;
+  return `${format(transaction.date, "HH:mm")} ${title}`;
 }
 
-function getActiveTokens(data: [unknown, AutomationTokenMetadata[]] | undefined) {
+function formatTransactionSuggestionDate(transaction: FullTransaction) {
+  return format(transaction.date, "do MMMM - HH:mm");
+}
+
+function getActiveTokens(
+  data: [unknown, AutomationTokenMetadata[]] | undefined,
+) {
   if (!data || data[0] || !data[1]) {
     return [];
   }
@@ -106,6 +120,66 @@ function getTransactions(data: [unknown, FullTransaction[]] | undefined) {
 
 const CREATE_NEW_TRANSACTION_VALUE = "__create_new_transaction__";
 
+function TransactionLinkSelect({
+  transactions,
+  value,
+  onChange,
+}: {
+  transactions: FullTransaction[];
+  value?: FullTransaction;
+  onChange: (transaction?: FullTransaction) => void;
+}) {
+  const anchor = useComboboxAnchor();
+  const items = useMemo(
+    () => [null, ...transactions] as Array<FullTransaction | null>,
+    [transactions],
+  );
+
+  return (
+    <Combobox
+      items={items}
+      value={value ?? null}
+      itemToStringValue={(item) => item?.id ?? CREATE_NEW_TRANSACTION_VALUE}
+      itemToStringLabel={(item) =>
+        item ? formatTransactionOptionLabel(item) : "Create a new transaction"
+      }
+      isItemEqualToValue={(item, currentValue) => item?.id === currentValue?.id}
+      onValueChange={(nextValue) => onChange(nextValue ?? undefined)}
+    >
+      <div ref={anchor}>
+        <ComboboxInput
+          className="w-full"
+          placeholder="Create a new transaction"
+          showClear={Boolean(value)}
+        />
+      </div>
+      <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>No transactions found.</ComboboxEmpty>
+        <ComboboxList>
+          {(transaction) =>
+            transaction ? (
+              <ComboboxItem key={transaction.id} value={transaction}>
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                  <span className="truncate">
+                    {formatTransactionOptionLabel(transaction)}
+                  </span>
+                  <span className="shrink-0 tabular-nums">
+                    {formatAmount(transaction.totalPrice)}
+                  </span>
+                </div>
+              </ComboboxItem>
+            ) : (
+              <ComboboxItem key={CREATE_NEW_TRANSACTION_VALUE} value={transaction}>
+                Create a new transaction
+              </ComboboxItem>
+            )
+          }
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
+
 export function ShoppingCheckoutForm({
   list,
   products,
@@ -115,7 +189,8 @@ export function ShoppingCheckoutForm({
 }) {
   const navigate = useNavigate();
   const mutation = shoppingMutations.completeShopping();
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
+  const [selectedTransactionId, setSelectedTransactionId] =
+    useState<string>("");
   const checkedItems = useMemo(
     () => list.items.filter((item) => item.checked),
     [list.items],
@@ -137,7 +212,10 @@ export function ShoppingCheckoutForm({
     automationQueries.getAutomationTokensOptions(),
   );
   const { data: transactionResult } = useQuery(
-    transactionQueries.getTransactionsOptions(date.getFullYear(), date.getMonth()),
+    transactionQueries.getTransactionsOptions(
+      date.getFullYear(),
+      date.getMonth(),
+    ),
   );
 
   const automationTokens = useMemo(
@@ -155,7 +233,9 @@ export function ShoppingCheckoutForm({
   );
   const suggestedTransaction = useMemo(
     () =>
-      hasAutomation ? getCheckoutLinkSuggestion(selectableTransactions, date) : undefined,
+      hasAutomation
+        ? getCheckoutLinkSuggestion(selectableTransactions, date)
+        : undefined,
     [date, hasAutomation, selectableTransactions],
   );
   const selectedTransaction = useMemo(
@@ -401,279 +481,350 @@ export function ShoppingCheckoutForm({
   }
 
   return (
-    <form className="space-y-3" onSubmit={handleSubmit}>
-      <div className="space-y-3">
-        {entries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-4 py-7 text-center">
-            <div className="mb-2 grid size-8 place-items-center rounded-lg bg-muted">
-              <ShoppingBag className="size-3.5 text-muted-foreground" />
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">Trip details</h3>
+          <p className="text-xs text-muted-foreground">
+            Add context for the checkout before assigning items.
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <FormField>
+            <FormFieldLabel>
+              Store <span className="text-muted-foreground/60">(Optional)</span>
+            </FormFieldLabel>
+            <Input
+              value={store}
+              onChange={(event) => setStore(event.target.value)}
+              placeholder="Rema 1000, Coop Extra..."
+            />
+          </FormField>
+          <FormField>
+            <FormFieldLabel>
+              Date <span className="text-muted-foreground/60">(Optional)</span>
+            </FormFieldLabel>
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-empty={!date}
+                  className="w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                  type="button"
+                >
+                  {format(date, "PPP")}
+                  <ChevronDownIcon className="size-3.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={handleDateSelect}
+                  defaultMonth={new Date()}
+                />
+              </PopoverContent>
+            </Popover>
+          </FormField>
+        </div>
+
+        <FormField>
+          <FormFieldLabel>
+            Description{" "}
+            <span className="text-muted-foreground/60">(Optional)</span>
+          </FormFieldLabel>
+          <Textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Add a note for this grocery trip"
+            className="resize-none"
+          />
+        </FormField>
+      </section>
+
+      <section className="space-y-4">
+        <div className="sticky top-2 z-20 rounded-xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Checkout total
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {entries.length} row{entries.length !== 1 ? "s" : ""} in
+                checkout
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              No rows left. Add a product or go back to the list.
+            <span className="text-base font-semibold tabular-nums">
+              {formatAmount(checkoutTotal)}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">Items and pricing</h3>
+            <p className="text-xs text-muted-foreground">
+              Add products and adjust quantities, price, or total per row.
             </p>
           </div>
-        ) : (
-          entries.map((entry, index) => (
-            <div
-              key={`${entry.shoppingItemId ?? entry.product.name}-${index}`}
-              className="space-y-3 rounded-xl border border-border bg-card p-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {entry.product.name}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Quantity defaults to 1
-                  </p>
+
+          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <FormField>
+              <ProductSelect
+                products={products}
+                onValueChange={handleAddProduct}
+              />
+            </FormField>
+          </div>
+
+          <div className="space-y-3">
+            {entries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 px-4 py-7 text-center">
+                <div className="mb-2 grid size-8 place-items-center rounded-lg bg-muted">
+                  <ShoppingBag className="size-3.5 text-muted-foreground" />
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => handleRemoveEntry(index)}
+                <p className="text-sm text-muted-foreground">
+                  No rows left. Add a product or go back to the list.
+                </p>
+              </div>
+            ) : (
+              entries.map((entry, index) => (
+                <div
+                  key={`${entry.shoppingItemId ?? entry.product.name}-${index}`}
+                  className="space-y-3 rounded-xl border border-border bg-background/50 p-3"
                 >
-                  <X className="size-3" />
-                </Button>
-              </div>
-              <div className="grid gap-2.5 sm:grid-cols-3">
-                <FormField>
-                  <FormFieldLabel>Quantity</FormFieldLabel>
-                  <Input
-                    value={entry.quantity}
-                    inputMode="numeric"
-                    placeholder="1"
-                    aria-invalid={
-                      entryErrors[index]?.quantity ? true : undefined
-                    }
-                    className={
-                      entryErrors[index]?.quantity
-                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
-                        : undefined
-                    }
-                    onBlur={() => markTouched(index, "quantity")}
-                    onChange={(event) =>
-                      handleQuantityChange(index, event.target.value)
-                    }
-                  />
-                  <FormFieldError>
-                    {entryErrors[index]?.quantity}
-                  </FormFieldError>
-                </FormField>
-                <FormField>
-                  <FormFieldLabel>Price</FormFieldLabel>
-                  <Input
-                    value={entry.price}
-                    inputMode="decimal"
-                    placeholder="12.45,-"
-                    aria-invalid={entryErrors[index]?.price ? true : undefined}
-                    className={
-                      entryErrors[index]?.price
-                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
-                        : undefined
-                    }
-                    onBlur={() => markTouched(index, "price")}
-                    onChange={(event) =>
-                      handlePriceChange(index, event.target.value)
-                    }
-                  />
-                  <FormFieldError>{entryErrors[index]?.price}</FormFieldError>
-                </FormField>
-                <FormField>
-                  <FormFieldLabel>Total</FormFieldLabel>
-                  <Input
-                    value={entry.total}
-                    inputMode="decimal"
-                    placeholder="24.90,-"
-                    aria-invalid={entryErrors[index]?.total ? true : undefined}
-                    className={
-                      entryErrors[index]?.total
-                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
-                        : undefined
-                    }
-                    onBlur={() => markTouched(index, "total")}
-                    onChange={(event) =>
-                      handleTotalChange(index, event.target.value)
-                    }
-                  />
-                  <FormFieldError>{entryErrors[index]?.total}</FormFieldError>
-                </FormField>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {entry.product.name}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Quantity defaults to 1
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => handleRemoveEntry(index)}
+                    >
+                      <X className="size-3" />
+                    </Button>
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    <FormField>
+                      <FormFieldLabel>Quantity</FormFieldLabel>
+                      <Input
+                        value={entry.quantity}
+                        inputMode="numeric"
+                        placeholder="1"
+                        aria-invalid={
+                          entryErrors[index]?.quantity ? true : undefined
+                        }
+                        className={
+                          entryErrors[index]?.quantity
+                            ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                            : undefined
+                        }
+                        onBlur={() => markTouched(index, "quantity")}
+                        onChange={(event) =>
+                          handleQuantityChange(index, event.target.value)
+                        }
+                      />
+                      <FormFieldError>
+                        {entryErrors[index]?.quantity}
+                      </FormFieldError>
+                    </FormField>
+                    <FormField>
+                      <FormFieldLabel>Price</FormFieldLabel>
+                      <Input
+                        value={entry.price}
+                        inputMode="decimal"
+                        placeholder="12.45,-"
+                        aria-invalid={
+                          entryErrors[index]?.price ? true : undefined
+                        }
+                        className={
+                          entryErrors[index]?.price
+                            ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                            : undefined
+                        }
+                        onBlur={() => markTouched(index, "price")}
+                        onChange={(event) =>
+                          handlePriceChange(index, event.target.value)
+                        }
+                      />
+                      <FormFieldError>
+                        {entryErrors[index]?.price}
+                      </FormFieldError>
+                    </FormField>
+                    <FormField>
+                      <FormFieldLabel>Total</FormFieldLabel>
+                      <Input
+                        value={entry.total}
+                        inputMode="decimal"
+                        placeholder="24.90,-"
+                        aria-invalid={
+                          entryErrors[index]?.total ? true : undefined
+                        }
+                        className={
+                          entryErrors[index]?.total
+                            ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                            : undefined
+                        }
+                        onBlur={() => markTouched(index, "total")}
+                        onChange={(event) =>
+                          handleTotalChange(index, event.target.value)
+                        }
+                      />
+                      <FormFieldError>
+                        {entryErrors[index]?.total}
+                      </FormFieldError>
+                    </FormField>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
 
-      <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <FormField>
-          <ProductSelect products={products} onValueChange={handleAddProduct} />
-        </FormField>
-      </div>
-
-      <Separator className="my-6" />
-
-      <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link2 className="size-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium">Link to existing transaction</h3>
+            <h3 className="text-sm font-medium">Link transaction</h3>
           </div>
           <p className="text-xs text-muted-foreground">
             Optional. Leave this empty to create a new transaction.
           </p>
         </div>
 
+        <div className="rounded-xl border border-border bg-muted/20 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {selectedTransaction
+                  ? "Linked transaction selected"
+                  : "A new transaction will be created"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {selectedTransaction
+                  ? `${selectedTransaction.store || selectedTransaction.description || "Transaction"} · ${formatAmount(selectedTransaction.totalPrice)}`
+                  : "Use the smart suggestion or choose a transaction manually if you want to update an existing one."}
+              </p>
+            </div>
+            {selectedTransaction ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedTransactionId("")}
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
         {suggestedTransaction ? (
           <button
             type="button"
             className={cn(
-              "w-full rounded-xl border px-3 py-3 text-left transition-colors",
+              "w-full rounded-xl border px-4 py-4 text-left transition-all",
               selectedTransactionId === suggestedTransaction.id
-                ? "border-primary bg-primary/5"
-                : "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/15",
+                ? "border-primary bg-primary/5 shadow-sm"
+                : "border-border bg-background hover:border-border/80 hover:bg-muted/30",
             )}
             onClick={() => setSelectedTransactionId(suggestedTransaction.id)}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="size-4 text-yellow-600" />
+                  <Sparkles className="size-4 text-muted-foreground" />
                   Smart suggestion
                 </div>
-                <p className="text-sm">
-                  {suggestedTransaction.store || suggestedTransaction.description || "Transaction"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {format(suggestedTransaction.date, "PPP")} · {formatAmount(suggestedTransaction.totalPrice)}
-                  {suggestedTransaction.needsReview ? " · Needs review" : ""}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {suggestedTransaction.store || "Transaction"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatTransactionSuggestionDate(suggestedTransaction)} ·{" "}
+                    {formatAmount(suggestedTransaction.totalPrice)}
+                  </p>
+                </div>
               </div>
-              <span className="text-xs font-medium text-primary">
-                {selectedTransactionId === suggestedTransaction.id ? "Selected" : "Use this"}
-              </span>
+              <div
+                className={cn(
+                  "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors",
+                  selectedTransactionId === suggestedTransaction.id
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-transparent",
+                )}
+              >
+                <Check className="size-3.5" />
+              </div>
             </div>
           </button>
         ) : null}
 
         <FormField>
           <FormFieldLabel>
-            {hasAutomation ? "Choose a different transaction" : "Select a transaction"}
+            {hasAutomation
+              ? "Or choose another transaction"
+              : "Select a transaction"}
           </FormFieldLabel>
-          <Select
-            value={selectedTransactionId || CREATE_NEW_TRANSACTION_VALUE}
-            onValueChange={(value) =>
-              setSelectedTransactionId(
-                value === CREATE_NEW_TRANSACTION_VALUE ? "" : value,
-              )
+          <TransactionLinkSelect
+            transactions={selectableTransactions}
+            value={selectedTransaction}
+            onChange={(transaction) =>
+              setSelectedTransactionId(transaction?.id ?? "")
             }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Create a new transaction" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={CREATE_NEW_TRANSACTION_VALUE}>
-                Create a new transaction
-              </SelectItem>
-              {selectableTransactions.map((transaction) => (
-                <SelectItem key={transaction.id} value={transaction.id}>
-                  {formatTransactionOptionLabel(transaction)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-
-        {selectedTransaction ? (
-          <p className="text-xs text-muted-foreground">
-            Checkout will update this transaction instead of creating a new one.
-          </p>
-        ) : null}
-      </div>
-
-      <div className="grid gap-2 md:grid-cols-2">
-        <FormField>
-          <FormFieldLabel>
-            Store <span className="text-muted-foreground/60">(Optional)</span>
-          </FormFieldLabel>
-          <Input
-            value={store}
-            onChange={(event) => setStore(event.target.value)}
-            placeholder="Rema 1000, Coop Extra..."
           />
         </FormField>
-        <FormField>
-          <FormFieldLabel>
-            Date <span className="text-muted-foreground/60">(Optional)</span>
-          </FormFieldLabel>
-          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                data-empty={!date}
-                className="w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                type="button"
-              >
-                {format(date, "PPP")}
-                <ChevronDownIcon className="size-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                defaultMonth={new Date()}
-              />
-            </PopoverContent>
-          </Popover>
-        </FormField>
-      </div>
 
-      <FormField>
-        <FormFieldLabel>
-          Description{" "}
-          <span className="text-muted-foreground/60">(Optional)</span>
-        </FormFieldLabel>
-        <Textarea
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          placeholder="Add a note for this grocery trip"
-          className="resize-none"
-        />
-      </FormField>
+        {selectableTransactions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            No transactions found for {format(date, "PPP")}.
+          </p>
+        ) : null}
+      </section>
 
-      <div className="grid gap-2 md:grid-cols-2">
-        <Button
-          type="button"
-          variant={keepUncheckedItems ? "default" : "outline"}
-          onClick={() => setKeepUncheckedItems(true)}
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">Finish checkout</h3>
+          <p className="text-xs text-muted-foreground">
+            Decide what should happen with the unchecked items after checkout.
+          </p>
+        </div>
+
+        <div className="grid gap-2 md:grid-cols-2">
+          <Button
+            type="button"
+            variant={keepUncheckedItems ? "default" : "outline"}
+            onClick={() => setKeepUncheckedItems(true)}
+          >
+            Keep unchecked items
+          </Button>
+          <Button
+            type="button"
+            variant={!keepUncheckedItems ? "default" : "outline"}
+            onClick={() => setKeepUncheckedItems(false)}
+          >
+            Remove unchecked items
+          </Button>
+        </div>
+
+        <LoaderButton
+          type="submit"
+          className="w-full"
+          disabled={entries.length === 0}
+          isLoading={mutation.isPending}
         >
-          Keep unchecked items
-        </Button>
-        <Button
-          type="button"
-          variant={!keepUncheckedItems ? "default" : "outline"}
-          onClick={() => setKeepUncheckedItems(false)}
-        >
-          Remove unchecked items
-        </Button>
-      </div>
-
-      <div className="flex items-center justify-between rounded-xl border border-border bg-surface/50 px-3 py-2">
-        <span className="text-sm text-muted-foreground">Checkout total</span>
-        <span className="text-sm font-semibold tabular-nums">
-          {formatAmount(checkoutTotal)}
-        </span>
-      </div>
-
-      <LoaderButton
-        type="submit"
-        className="w-full"
-        disabled={entries.length === 0}
-        isLoading={mutation.isPending}
-      >
-        Complete shopping
-      </LoaderButton>
+          Complete shopping
+        </LoaderButton>
+      </section>
     </form>
   );
 }
