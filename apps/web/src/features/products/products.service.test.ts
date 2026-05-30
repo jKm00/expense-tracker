@@ -4,6 +4,8 @@ import { makeProduct, makeTag } from "../__test-fixtures__";
 vi.mock("./products.repo", () => ({
   productRepo: {
     getAll: vi.fn(),
+    getPage: vi.fn(),
+    getKpis: vi.fn(),
     getOne: vi.fn(),
     getAlias: vi.fn(),
     getAliasByNormalizedName: vi.fn(),
@@ -77,6 +79,93 @@ describe("productService", () => {
       mockProductRepo.getAll.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await productService.getProducts("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("getProductKpis", () => {
+    it("returns product counts from repo aggregates", async () => {
+      mockProductRepo.getKpis.mockResolvedValue({
+        total: 12,
+        tagged: 7,
+      } as any);
+
+      const [error, data] = await productService.getProductKpis("user-1");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        total: 12,
+        tagged: 7,
+        untagged: 5,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockProductRepo.getKpis.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await productService.getProductKpis("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("listProducts", () => {
+    it("returns a trimmed page with hasMore and nextOffset", async () => {
+      const products = [
+        makeProduct({ id: "product-1", aliases: [] }),
+        makeProduct({ id: "product-2", aliases: [] }),
+        makeProduct({ id: "product-3", aliases: [] }),
+      ];
+      mockProductRepo.getPage.mockResolvedValue(products as any);
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 10,
+        limit: 2,
+        group: "tagged",
+        search: " melk ",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        products: products.slice(0, 2),
+        hasMore: true,
+        nextOffset: 12,
+      });
+      expect(mockProductRepo.getPage).toHaveBeenCalledWith({
+        userId: "user-1",
+        offset: 10,
+        limit: 3,
+        group: "tagged",
+        search: "melk",
+      });
+    });
+
+    it("returns an empty page without nextOffset when repo returns no results", async () => {
+      mockProductRepo.getPage.mockResolvedValue([] as any);
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        products: [],
+        hasMore: false,
+        nextOffset: null,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockProductRepo.getPage.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await productService.listProducts("user-1", {
+        offset: 0,
+        limit: 25,
+      });
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");

@@ -4,6 +4,8 @@ import { makeTag } from "../__test-fixtures__";
 vi.mock("./tags.repo", () => ({
   tagsRepo: {
     getAll: vi.fn(),
+    getPage: vi.fn(),
+    getKpis: vi.fn(),
     getFirst: vi.fn(),
     getFirstByName: vi.fn(),
     save: vi.fn(),
@@ -46,6 +48,92 @@ describe("tagsService", () => {
       mockTagsRepo.getAll.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await tagsService.getTags("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("getTagKpis", () => {
+    it("returns tag kpis from repo aggregates", async () => {
+      mockTagsRepo.getKpis.mockResolvedValue({
+        count: 4,
+        totalReferences: 10,
+        mostUsedTagName: "Groceries",
+      } as any);
+
+      const [error, data] = await tagsService.getTagKpis("user-1");
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        count: 4,
+        averageReferences: 2.5,
+        mostUsedTagName: "Groceries",
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockTagsRepo.getKpis.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await tagsService.getTagKpis("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");
+    });
+  });
+
+  describe("listTags", () => {
+    it("returns a trimmed page with hasMore and nextOffset", async () => {
+      const tags = [
+        makeTag({ id: "tag-1" }),
+        makeTag({ id: "tag-2" }),
+        makeTag({ id: "tag-3" }),
+      ];
+      mockTagsRepo.getPage.mockResolvedValue(tags as any);
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 4,
+        limit: 2,
+        search: " groceries ",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        tags: tags.slice(0, 2),
+        hasMore: true,
+        nextOffset: 6,
+      });
+      expect(mockTagsRepo.getPage).toHaveBeenCalledWith({
+        userId: "user-1",
+        offset: 4,
+        limit: 3,
+        search: "groceries",
+      });
+    });
+
+    it("returns an empty page without nextOffset when repo returns no results", async () => {
+      mockTagsRepo.getPage.mockResolvedValue([] as any);
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        tags: [],
+        hasMore: false,
+        nextOffset: null,
+      });
+    });
+
+    it("returns UNEXPECTED_DB_ERROR when repo throws", async () => {
+      mockTagsRepo.getPage.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await tagsService.listTags("user-1", {
+        offset: 0,
+        limit: 25,
+      });
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("UNEXPECTED_DB_ERROR");

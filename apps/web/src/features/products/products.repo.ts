@@ -2,7 +2,20 @@ import { db } from "@/lib/db";
 import { products, productTags, productAliases } from "./products.schema";
 import { entries, transactions } from "../transactions/transactions.schema";
 import { NewProduct, UpdateProduct } from "./products.models";
-import { and, count, eq, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  isNotNull,
+  isNull as drizzleIsNull,
+  or,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 async function getAll(userId: string) {
   return await db.query.products.findMany({
@@ -15,6 +28,92 @@ async function getAll(userId: string) {
       deletedAt: { isNull: true },
     },
   });
+}
+
+async function getPage(options: {
+  userId: string;
+  offset: number;
+  limit: number;
+  group?: "tagged" | "untagged";
+  search?: string;
+}) {
+  const searchPattern = options.search ? `%${options.search}%` : null;
+
+  const productRows = await db
+    .select({
+      id: products.id,
+    })
+    .from(products)
+    .leftJoin(productTags, eq(productTags.productId, products.id))
+    .leftJoin(productAliases, eq(productAliases.productId, products.id))
+    .where(
+      and(
+        eq(products.userId, options.userId),
+        drizzleIsNull(products.deletedAt),
+        options.group === "tagged"
+          ? isNotNull(productTags.tagId)
+          : options.group === "untagged"
+            ? drizzleIsNull(productTags.tagId)
+            : undefined,
+        searchPattern
+          ? or(
+              ilike(products.name, searchPattern),
+              ilike(productAliases.name, searchPattern),
+            )
+          : undefined,
+      ),
+    )
+    .groupBy(products.id)
+    .orderBy(desc(products.createdAt), desc(products.id))
+    .limit(options.limit)
+    .offset(options.offset);
+
+  if (productRows.length === 0) {
+    return [];
+  }
+
+  const pagedProducts = await db.query.products.findMany({
+    with: {
+      aliases: true,
+      tags: true,
+    },
+    where: (product, { inArray }) =>
+      inArray(
+        product.id,
+        productRows.map((row) => row.id),
+      ),
+  });
+
+  const productMap = new Map(pagedProducts.map((product) => [product.id, product]));
+
+  return productRows
+    .map((row) => productMap.get(row.id))
+    .filter(
+      (product): product is NonNullable<(typeof pagedProducts)[number]> =>
+        Boolean(product),
+    );
+}
+
+async function getKpis(userId: string) {
+  const [{ total }] = await db
+    .select({
+      total: count(products.id),
+    })
+    .from(products)
+    .where(and(eq(products.userId, userId), isNull(products.deletedAt)));
+
+  const [{ tagged }] = await db
+    .select({
+      tagged: count(sql`distinct ${products.id}`),
+    })
+    .from(products)
+    .innerJoin(productTags, eq(productTags.productId, products.id))
+    .where(and(eq(products.userId, userId), isNull(products.deletedAt)));
+
+  return {
+    total: Number(total ?? 0),
+    tagged: Number(tagged ?? 0),
+  };
 }
 
 async function getOne(id: string) {
@@ -129,6 +228,8 @@ async function getStats(productId: string) {
 
 export const productRepo = {
   getAll,
+  getPage,
+  getKpis,
   getOne,
   getStats,
   save,

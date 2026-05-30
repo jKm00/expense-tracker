@@ -10,6 +10,11 @@ export const getTransactionsSchema = z.object({
   month: z.number().optional(),
 });
 
+export const listTransactionsSchema = getTransactionsSchema.extend({
+  offset: z.coerce.number().int().min(0).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+
 export const getTransactionSchema = z.object({
   transactionId: z.string(),
 });
@@ -60,6 +65,8 @@ export const updateTransactionSchema = z.object({
 });
 
 export type UpdateTransactionDTO = z.infer<typeof updateTransactionSchema>;
+
+export type ListTransactionsDTO = z.infer<typeof listTransactionsSchema>;
 
 export const linkTagToEntrySchema = z.object({
   transactionId: z.string(),

@@ -9,6 +9,8 @@ import {
 vi.mock("./transactions.repo", () => ({
   transactionRepo: {
     getAll: vi.fn(),
+    getPage: vi.fn(),
+    getKpis: vi.fn(),
     getOne: vi.fn(),
     save: vi.fn(),
     saveEntry: vi.fn(),
@@ -109,6 +111,96 @@ describe("transactionService", () => {
       mockTransactionRepo.getAll.mockRejectedValue(new Error("DB error"));
 
       const [error, data] = await transactionService.getTransactions("user-1");
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("TRANSACTION_DB_ERROR");
+    });
+  });
+
+  describe("getTransactionKpis", () => {
+    it("returns computed kpis from repo aggregates", async () => {
+      mockTransactionRepo.getKpis.mockResolvedValue({
+        transactionCount: 10,
+        totalEntries: 25,
+      } as any);
+
+      const [error, data] = await transactionService.getTransactionKpis("user-1", {
+        year: 2024,
+        month: 0,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        count: 10,
+        averagePerDay: 0.32,
+        averageItemsPerTransaction: 2.5,
+      });
+    });
+
+    it("returns TRANSACTION_DB_ERROR when repo throws", async () => {
+      mockTransactionRepo.getKpis.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await transactionService.getTransactionKpis("user-1", {});
+
+      expect(data).toBeNull();
+      expect(error?.reason).toBe("TRANSACTION_DB_ERROR");
+    });
+  });
+
+  describe("listTransactions", () => {
+    it("returns a trimmed page with hasMore and nextOffset", async () => {
+      const txs = [
+        makeTransaction({ id: "tx-1" }),
+        makeTransaction({ id: "tx-2" }),
+        makeTransaction({ id: "tx-3" }),
+      ];
+      mockTransactionRepo.getPage.mockResolvedValue(txs as any);
+
+      const [error, data] = await transactionService.listTransactions("user-1", {
+        year: 2024,
+        month: 0,
+        offset: 5,
+        limit: 2,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        transactions: txs.slice(0, 2),
+        hasMore: true,
+        nextOffset: 7,
+      });
+      expect(mockTransactionRepo.getPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-1",
+          offset: 5,
+          limit: 3,
+        }),
+      );
+    });
+
+    it("returns an empty page without nextOffset when repo returns no results", async () => {
+      mockTransactionRepo.getPage.mockResolvedValue([] as any);
+
+      const [error, data] = await transactionService.listTransactions("user-1", {
+        offset: 0,
+        limit: 25,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual({
+        transactions: [],
+        hasMore: false,
+        nextOffset: null,
+      });
+    });
+
+    it("returns TRANSACTION_DB_ERROR when repo throws", async () => {
+      mockTransactionRepo.getPage.mockRejectedValue(new Error("DB error"));
+
+      const [error, data] = await transactionService.listTransactions("user-1", {
+        offset: 0,
+        limit: 25,
+      });
 
       expect(data).toBeNull();
       expect(error?.reason).toBe("TRANSACTION_DB_ERROR");

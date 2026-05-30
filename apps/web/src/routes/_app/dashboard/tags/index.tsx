@@ -15,19 +15,31 @@ import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { NewTagDialog } from "@/features/tags/components/new-tag.dialog";
 import { TagBadge } from "@/features/tags/components/tag";
-import { TagWithProduct } from "@/features/tags/tags.models";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Hash, SquarePen, Star, Trash, TrendingUp } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
+import {
+  Hash,
+  LoaderCircle,
+  SquarePen,
+  Star,
+  Trash,
+  TrendingUp,
+} from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
   loader: async ({ context }) => {
-    context.queryClient.prefetchQuery(tagsQueries.getTagsOptions());
+    await Promise.all([
+      context.queryClient.prefetchQuery(tagsQueries.getTagKpisOptions()),
+      context.queryClient.prefetchInfiniteQuery(
+        tagsQueries.getTagListOptions(),
+      ),
+    ]);
   },
   component: RouteComponent,
 });
@@ -66,42 +78,100 @@ function TagsContentSkeleton() {
 
 function TagContent() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    data: [expectedError, tags],
+    data: [expectedError, kpis],
     error: unexpectedError,
-  } = useSuspenseQuery(tagsQueries.getTagsOptions());
+  } = useSuspenseQuery(tagsQueries.getTagKpisOptions());
+  const {
+    data: paginatedData,
+    error: listUnexpectedError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending: isListPending,
+  } = useInfiniteQuery(
+    tagsQueries.getTagListOptions(debouncedSearch || undefined),
+  );
 
-  const sortedTags = useMemo(() => {
-    if (!tags) return [];
-    return tags.sort((a, b) => b.products.length - a.products.length);
-  }, [tags]);
+  const [listExpectedError, tagPages] = useMemo(() => {
+    if (!paginatedData) {
+      return [null, null] as const;
+    }
 
-  const filteredTags = useMemo(() => {
-    if (!sortedTags) return [];
-    return sortedTags.filter((t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()),
+    const firstExpectedError = paginatedData.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
+
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
+
+    return [
+      null,
+      paginatedData.pages
+        .map(([, page]) => page)
+        .filter(
+          (
+            page,
+          ): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [paginatedData]);
+
+  const visibleTags = useMemo(
+    () => tagPages?.flatMap((page) => page.tags) ?? [],
+    [tagPages],
+  );
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage || isFetchingNextPage || listExpectedError) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
     );
-  }, [sortedTags, search]);
 
-  if (unexpectedError) {
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    listExpectedError,
+    visibleTags.length,
+  ]);
+
+  if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
   }
 
-  if (expectedError) {
+  if (expectedError || listExpectedError) {
     let title: string;
     let message: string;
 
-    const reason = expectedError.reason;
+    const reason = (expectedError || listExpectedError)!.reason;
     switch (reason) {
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";
         message =
-          "Something went wrong trying to fetch your tags from the databse. Please try again!";
+          "Something went wrong trying to fetch your tags from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
-        message = `Something unexpected happend: ${reason satisfies never}. Please try again!`;
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
         break;
     }
     return (
@@ -114,7 +184,11 @@ function TagContent() {
 
   return (
     <div className="space-y-6 @container">
-      <TagKpis tags={tags} />
+      <TagKpis
+        count={kpis.count}
+        averageReferences={kpis.averageReferences}
+        mostUsedTagName={kpis.mostUsedTagName}
+      />
       <Input
         placeholder="Search..."
         value={search}
@@ -124,16 +198,22 @@ function TagContent() {
         <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           All tags
         </h2>
-        {filteredTags.length === 0 ? (
+        {isListPending ? (
+          <SkeletonList rows={4} />
+        ) : visibleTags.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
-            <p className="text-sm text-muted-foreground">No tags created yet</p>
+            <p className="text-sm text-muted-foreground">
+              {debouncedSearch
+                ? "No tags match your search"
+                : "No tags created yet"}
+            </p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-            {filteredTags.map((tag, idx) => (
+            {visibleTags.map((tag, idx) => (
               <div
                 key={tag.id}
-                className={`flex items-center ${idx !== filteredTags.length - 1 ? "border-b border-border/40" : ""}`}
+                className={`flex items-center ${idx !== visibleTags.length - 1 ? "border-b border-border/40" : ""}`}
               >
                 <Link
                   to="/dashboard/tags/$tagId"
@@ -165,39 +245,40 @@ function TagContent() {
           </div>
         )}
       </div>
+      <div
+        ref={loadMoreRef}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {isListPending ? null : isFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            Loading more tags...
+          </div>
+        ) : visibleTags.length > 0 && !hasNextPage ? (
+          <p className="text-sm text-muted-foreground">
+            You have reached the end of the tag list.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-function TagKpis({ tags }: { tags: TagWithProduct[] }) {
-  const mostUsedTag = useMemo(() => {
-    if (tags.length === 0) return null;
-
-    const first = tags[0];
-    let max = { count: first.products.length, tag: first };
-    tags.forEach((tag) => {
-      const count = tag.products.length;
-      if (count > max.count) {
-        max = { count, tag };
-      }
-    });
-
-    return max.tag;
-  }, [tags]);
-
-  const averageReferences = useMemo(() => {
-    if (tags.length === 0) return 0;
-
-    const sum = tags.reduce((acc, curr) => acc + curr.products.length, 0);
-    return Math.round((sum / tags.length) * 100) / 100;
-  }, [tags]);
-
+function TagKpis({
+  count,
+  averageReferences,
+  mostUsedTagName,
+}: {
+  count: number;
+  averageReferences: number;
+  mostUsedTagName: string | null;
+}) {
   return (
     <div className="grid gap-3 @md:grid-cols-2 @xl:grid-cols-3">
       <KpiCard
         title="Count"
         subtitle="Total tags"
-        value={`${tags.length}`}
+        value={`${count}`}
         icon={Hash}
       />
       <KpiCard
@@ -210,7 +291,7 @@ function TagKpis({ tags }: { tags: TagWithProduct[] }) {
         <KpiCard
           title="Most used"
           subtitle="Top tag"
-          value={mostUsedTag?.name || "-"}
+          value={mostUsedTagName || "-"}
           icon={Star}
         />
       </div>

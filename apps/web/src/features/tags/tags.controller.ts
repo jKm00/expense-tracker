@@ -5,6 +5,7 @@ import {
   addTagSchema,
   deleteTagSchema,
   getTagSchema,
+  listTagsSchema,
   updateTagSchema,
 } from "./tags.dtos";
 
@@ -22,6 +23,21 @@ const getTag = createServerFn({ method: "GET" })
     const userId = context.user.id;
     const tagId = data.tagId;
     return await tagsService.getTag(userId, tagId);
+  });
+
+const listTags = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(listTagsSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await tagsService.listTags(userId, data);
+  });
+
+const getTagKpis = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    const userId = context.user.id;
+    return await tagsService.getTagKpis(userId);
   });
 
 const addTag = createServerFn({ method: "POST" })
@@ -55,6 +71,8 @@ const deleteTag = createServerFn({ method: "POST" })
 
 export const tagsController = {
   getTags,
+  listTags,
+  getTagKpis,
   getTag,
   addTag,
   updateTag,

@@ -5,6 +5,7 @@ import {
   deleteTransactionSchema,
   getTransactionSchema,
   getTransactionsSchema,
+  listTransactionsSchema,
   linkTagToEntrySchema,
   saveTransactionSchema,
   updateTransactionSchema,
@@ -26,6 +27,22 @@ const getTransaction = createServerFn({ method: "GET" })
     const userId = context.user.id;
     const transactionId = data.transactionId;
     return await transactionService.getTransaction(userId, transactionId);
+  });
+
+const listTransactions = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(listTransactionsSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await transactionService.listTransactions(userId, data);
+  });
+
+const getTransactionKpis = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(getTransactionsSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await transactionService.getTransactionKpis(userId, data);
   });
 
 const saveTransaction = createServerFn({ method: "POST" })
@@ -100,6 +117,8 @@ const unlinkTagFromEntry = createServerFn({ method: "POST" })
 
 export const transactionController = {
   getTransactions,
+  listTransactions,
+  getTransactionKpis,
   getTransaction,
   saveTransaction,
   deleteTransaction,

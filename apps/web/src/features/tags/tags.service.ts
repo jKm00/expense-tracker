@@ -1,6 +1,7 @@
 import { err, ok } from "@/utils/result";
+import { ListTagsDTO } from "./tags.dtos";
 import { tagsRepo } from "./tags.repo";
-import { NewTag, UpdateTag } from "./tags.models";
+import { NewTag, TagKpis, TagPage, UpdateTag } from "./tags.models";
 
 async function getTags(userId: string) {
   try {
@@ -11,6 +12,55 @@ async function getTags(userId: string) {
       reason: "UNEXPECTED_DB_ERROR",
       message:
         "Something unexpected happen when trying to fetch tags from the DB",
+    });
+  }
+}
+
+async function listTags(userId: string, input: ListTagsDTO) {
+  try {
+    const offset = input.offset ?? 0;
+    const limit = input.limit ?? 25;
+    const search = input.search?.trim() || undefined;
+    const tags = await tagsRepo.getPage({
+      userId,
+      offset,
+      limit: limit + 1,
+      search,
+    });
+
+    const pageTags = tags.slice(0, limit);
+    const hasMore = tags.length > limit;
+
+    return ok<TagPage>({
+      tags: pageTags,
+      hasMore,
+      nextOffset: hasMore ? offset + pageTags.length : null,
+    });
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR",
+      message:
+        "Something unexpected happened when trying to fetch paginated tags from the DB",
+    });
+  }
+}
+
+async function getTagKpis(userId: string) {
+  try {
+    const { count, totalReferences, mostUsedTagName } = await tagsRepo.getKpis(
+      userId,
+    );
+
+    return ok<TagKpis>({
+      count,
+      averageReferences: count === 0 ? 0 : Math.round((totalReferences / count) * 100) / 100,
+      mostUsedTagName,
+    });
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR",
+      message:
+        "Something unexpected happened when trying to fetch tag kpis from the DB",
     });
   }
 }
@@ -148,6 +198,8 @@ async function deleteTag(userId: string, tagId: string) {
 
 export const tagsService = {
   getTags,
+  listTags,
+  getTagKpis,
   getTag,
   addTag,
   updateTag,

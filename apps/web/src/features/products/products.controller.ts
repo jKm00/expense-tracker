@@ -6,6 +6,7 @@ import {
   deleteProductSchema,
   getProductSchema,
   getProductStatsSchema,
+  listProductsSchema,
   linkTagSchema,
   updateProductSchema,
   addProductAliasSchema,
@@ -27,6 +28,21 @@ const getProduct = createServerFn({ method: "GET" })
     const userId = context.user.id;
     const productId = data.productId;
     return await productService.getProduct(userId, productId);
+  });
+
+const listProducts = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .inputValidator(listProductsSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await productService.listProducts(userId, data);
+  });
+
+const getProductKpis = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    const userId = context.user.id;
+    return await productService.getProductKpis(userId);
   });
 
 const getProductStats = createServerFn({ method: "GET" })
@@ -115,6 +131,8 @@ const deleteProductAlias = createServerFn({ method: "POST" })
 
 export const productController = {
   getProducts,
+  listProducts,
+  getProductKpis,
   getProduct,
   getProductStats,
   addProduct,

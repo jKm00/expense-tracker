@@ -4,6 +4,7 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -17,47 +18,25 @@ import { Button } from "@/components/ui/button";
 import {
   ProductList,
   ProductListEmpty,
-  ProductListTitle,
 } from "@/features/products/components/product-list";
-import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Package, PackageX, Plus, Tag } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
+import { LoaderCircle, Package, PackageX, Plus, Tag } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
-function normalizeSearch(value: string) {
-  return value
-    .normalize("NFKD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]+/gu, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function matchesProductSearch(product: ProductWithTag, searchTerm: string) {
-  const normalizedSearch = normalizeSearch(searchTerm);
-  if (normalizedSearch.length === 0) {
-    return true;
-  }
-
-  if (normalizeSearch(product.name).includes(normalizedSearch)) {
-    return true;
-  }
-
-  return product.aliases.some((alias) => {
-    const normalizedAliasName = alias.normalizedName || normalizeSearch(alias.name);
-    return normalizedAliasName.includes(normalizedSearch);
-  });
-}
+type ProductTab = "untagged" | "tagged";
 
 export const Route = createFileRoute("/_app/dashboard/products/")({
   loader: async ({ context }) => {
-    await context.queryClient.prefetchQuery(
-      productQueries.getProductsOptions(),
-    );
+    await Promise.all([
+      context.queryClient.prefetchQuery(productQueries.getProductKpisOptions()),
+      context.queryClient.prefetchInfiniteQuery(
+        productQueries.getProductListOptions({ group: "untagged" }),
+      ),
+    ]);
   },
   component: RouteComponent,
 });
@@ -101,60 +80,164 @@ function ProductsContentSkeleton() {
 
 function ProductsContent() {
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<ProductTab>("untagged");
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    data: [expectedError, products],
+    data: [expectedError, kpis],
     error: unexpectedError,
-  } = useSuspenseQuery(productQueries.getProductsOptions());
+  } = useSuspenseQuery(productQueries.getProductKpisOptions());
+  const {
+    data: untaggedData,
+    error: untaggedUnexpectedError,
+    fetchNextPage: fetchNextUntaggedPage,
+    hasNextPage: hasNextUntaggedPage,
+    isFetchingNextPage: isFetchingNextUntaggedPage,
+    isPending: isUntaggedPending,
+  } = useInfiniteQuery(
+    productQueries.getProductListOptions({
+      group: "untagged",
+      search: debouncedSearch || undefined,
+    }),
+  );
+  const {
+    data: taggedData,
+    error: taggedUnexpectedError,
+    fetchNextPage: fetchNextTaggedPage,
+    hasNextPage: hasNextTaggedPage,
+    isFetchingNextPage: isFetchingNextTaggedPage,
+    isPending: isTaggedPending,
+  } = useInfiniteQuery(
+    productQueries.getProductListOptions({
+      group: "tagged",
+      search: debouncedSearch || undefined,
+    }),
+  );
 
-  const { taggedProducts, untaggedProducts } = useMemo(() => {
-    if (!products) {
-      return {
-        taggedProducts: [],
-        untaggedProducts: [],
-      };
+  const [untaggedExpectedError, untaggedPages] = useMemo(() => {
+    if (!untaggedData) {
+      return [null, null] as const;
     }
 
-    let taggedProducts: ProductWithTag[] = [];
-    let untaggedProducts: ProductWithTag[] = [];
+    const firstExpectedError = untaggedData.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
 
-    products.forEach((p) => {
-      if (p.tags.length === 0) {
-        untaggedProducts.push(p);
-      } else {
-        taggedProducts.push(p);
-      }
-    });
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
 
-    return { taggedProducts, untaggedProducts };
-  }, [products]);
+    return [
+      null,
+      untaggedData.pages
+        .map(([, page]) => page)
+        .filter(
+          (page): page is NonNullable<(typeof untaggedData.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [untaggedData]);
 
-  const filteredTaggedProducts = useMemo(() => {
-    return taggedProducts.filter((p) => matchesProductSearch(p, search));
-  }, [taggedProducts, search]);
+  const [taggedExpectedError, taggedPages] = useMemo(() => {
+    if (!taggedData) {
+      return [null, null] as const;
+    }
 
-  const filteredUntaggedProducts = useMemo(() => {
-    return untaggedProducts.filter((p) => matchesProductSearch(p, search));
-  }, [untaggedProducts, search]);
+    const firstExpectedError = taggedData.pages
+      .map(([pageError]) => pageError)
+      .find(Boolean);
 
-  if (unexpectedError) {
+    if (firstExpectedError) {
+      return [firstExpectedError, null] as const;
+    }
+
+    return [
+      null,
+      taggedData.pages
+        .map(([, page]) => page)
+        .filter(
+          (page): page is NonNullable<(typeof taggedData.pages)[number][1]> =>
+            page !== null,
+        ),
+    ] as const;
+  }, [taggedData]);
+
+  const visibleUntaggedProducts = useMemo(
+    () => untaggedPages?.flatMap((page) => page.products) ?? [],
+    [untaggedPages],
+  );
+
+  const visibleTaggedProducts = useMemo(
+    () => taggedPages?.flatMap((page) => page.products) ?? [],
+    [taggedPages],
+  );
+
+  const activeProducts =
+    activeTab === "untagged" ? visibleUntaggedProducts : visibleTaggedProducts;
+  const activeHasNextPage =
+    activeTab === "untagged" ? hasNextUntaggedPage : hasNextTaggedPage;
+  const activeIsFetchingNextPage =
+    activeTab === "untagged"
+      ? isFetchingNextUntaggedPage
+      : isFetchingNextTaggedPage;
+  const activeIsPending =
+    activeTab === "untagged" ? isUntaggedPending : isTaggedPending;
+  const activeExpectedError =
+    activeTab === "untagged" ? untaggedExpectedError : taggedExpectedError;
+  const activeFetchNextPage =
+    activeTab === "untagged" ? fetchNextUntaggedPage : fetchNextTaggedPage;
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (
+      !target ||
+      !activeHasNextPage ||
+      activeIsFetchingNextPage ||
+      activeExpectedError
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          activeFetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [
+    activeExpectedError,
+    activeFetchNextPage,
+    activeHasNextPage,
+    activeIsFetchingNextPage,
+    activeProducts.length,
+  ]);
+
+  if (unexpectedError || untaggedUnexpectedError || taggedUnexpectedError) {
     return <UnexpectedError />;
   }
 
-  if (expectedError) {
+  if (expectedError || activeExpectedError) {
     let title: string;
     let message: string;
 
-    const reason = expectedError.reason;
+    const reason = (expectedError || activeExpectedError)!.reason;
     switch (reason) {
       case "UNEXPECTED_DB_ERROR":
         title = "Database error";
         message =
-          "Something went wrong trying to fetch your products from the databse. Please try again!";
+          "Something went wrong trying to fetch your products from the database. Please try again!";
         break;
       default:
         title = "Unexpected error";
-        message = `Something unexpected happend: ${reason satisfies never}. Please try again!`;
+        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
         break;
     }
     return (
@@ -171,20 +254,20 @@ function ProductsContent() {
         <div className="@lg:col-span-2 @xl:col-span-1">
           <KpiCard
             title="Total"
-            value={`${products.length}`}
+            value={`${kpis.total}`}
             subtitle="All products"
             icon={Package}
           />
         </div>
         <KpiCard
           title="Tagged"
-          value={`${taggedProducts.length}`}
+          value={`${kpis.tagged}`}
           subtitle="With categories"
           icon={Tag}
         />
         <KpiCard
           title="Untagged"
-          value={`${untaggedProducts.length}`}
+          value={`${kpis.untagged}`}
           subtitle="Needs categorizing"
           icon={PackageX}
         />
@@ -194,14 +277,68 @@ function ProductsContent() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <ProductList products={filteredUntaggedProducts}>
-        <ProductListTitle>Untagged products</ProductListTitle>
-        <ProductListEmpty>No untagged products found</ProductListEmpty>
-      </ProductList>
-      <ProductList products={filteredTaggedProducts}>
-        <ProductListTitle>Tagged products</ProductListTitle>
-        <ProductListEmpty>No tagged products found</ProductListEmpty>
-      </ProductList>
+      <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("untagged")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            activeTab === "untagged"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Untagged
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("tagged")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            activeTab === "tagged"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Tagged
+        </button>
+      </div>
+      {activeIsPending ? (
+        <SkeletonList rows={6} />
+      ) : activeProducts.length === 0 ? (
+        <EmptyState icon={activeTab === "untagged" ? PackageX : Tag}>
+          <EmptyStateMessage>
+            {activeTab === "untagged"
+              ? debouncedSearch
+                ? "No untagged products match your search"
+                : "No untagged products found"
+              : debouncedSearch
+                ? "No tagged products match your search"
+                : "No tagged products found"}
+          </EmptyStateMessage>
+        </EmptyState>
+      ) : (
+        <ProductList products={activeProducts}>
+          <ProductListEmpty>
+            {activeTab === "untagged"
+              ? "No untagged products found"
+              : "No tagged products found"}
+          </ProductListEmpty>
+        </ProductList>
+      )}
+      <div
+        ref={loadMoreRef}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {activeIsPending ? null : activeIsFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            Loading more products...
+          </div>
+        ) : activeProducts.length > 0 && !activeHasNextPage ? (
+          <p className="text-sm text-muted-foreground">
+            You have reached the end of the product list.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

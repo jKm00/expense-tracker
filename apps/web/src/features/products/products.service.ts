@@ -1,6 +1,13 @@
 import { err, ok } from "@/utils/result";
+import { ListProductsDTO } from "./products.dtos";
 import { tagsService } from "../tags/tags.service";
-import { NewProduct, Product, UpdateProduct } from "./products.models";
+import {
+  NewProduct,
+  Product,
+  ProductKpis,
+  ProductPage,
+  UpdateProduct,
+} from "./products.models";
 import { productRepo } from "./products.repo";
 
 function normalizeName(value: string) {
@@ -78,6 +85,52 @@ async function getProducts(userId: string) {
     return err({
       reason: "UNEXPECTED_DB_ERROR" as const,
       message: `Failed to fetch products for user ${userId}`,
+    });
+  }
+}
+
+async function listProducts(userId: string, input: ListProductsDTO) {
+  try {
+    const offset = input.offset ?? 0;
+    const limit = input.limit ?? 25;
+    const search = input.search?.trim() || undefined;
+    const products = await productRepo.getPage({
+      userId,
+      offset,
+      limit: limit + 1,
+      group: input.group,
+      search,
+    });
+
+    const pageProducts = products.slice(0, limit);
+    const hasMore = products.length > limit;
+
+    return ok<ProductPage>({
+      products: pageProducts,
+      hasMore,
+      nextOffset: hasMore ? offset + pageProducts.length : null,
+    });
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR" as const,
+      message: `Failed to fetch paginated products for user ${userId}`,
+    });
+  }
+}
+
+async function getProductKpis(userId: string) {
+  try {
+    const { total, tagged } = await productRepo.getKpis(userId);
+
+    return ok<ProductKpis>({
+      total,
+      tagged,
+      untagged: total - tagged,
+    });
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR" as const,
+      message: `Failed to fetch product kpis for user ${userId}`,
     });
   }
 }
@@ -424,6 +477,8 @@ async function deleteProduct(userId: string, productId: string) {
 
 export const productService = {
   getProducts,
+  listProducts,
+  getProductKpis,
   getProduct,
   getProductStats,
   addProduct,
