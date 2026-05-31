@@ -1,7 +1,7 @@
 import z from "zod";
-import { automationProviders } from "./automation.models";
+import { integrationProviders } from "./integration.models";
 
-export const createAutomationTokenSchema = z.object({
+export const createIntegrationTokenSchema = z.object({
   name: z
     .string()
     .trim()
@@ -9,16 +9,16 @@ export const createAutomationTokenSchema = z.object({
     .max(64, "Token name must be at most 64 characters"),
 });
 
-export type CreateAutomationTokenDTO = z.infer<typeof createAutomationTokenSchema>;
+export type CreateIntegrationTokenDTO = z.infer<typeof createIntegrationTokenSchema>;
 
-export const revokeAutomationTokenSchema = z.object({
+export const revokeIntegrationTokenSchema = z.object({
   tokenId: z.string().uuid("Invalid token id"),
 });
 
-export type RevokeAutomationTokenDTO = z.infer<typeof revokeAutomationTokenSchema>;
+export type RevokeIntegrationTokenDTO = z.infer<typeof revokeIntegrationTokenSchema>;
 
-export const importAutomationTransactionSchema = z.object({
-  provider: z.enum(automationProviders),
+export const importIntegrationTransactionSchema = z.object({
+  provider: z.enum(integrationProviders),
   eventId: z.string().trim().min(1, "eventId is required").max(255),
   amount: z.coerce
     .number()
@@ -31,16 +31,16 @@ export const importAutomationTransactionSchema = z.object({
   description: z.string().trim().min(1).max(500).optional(),
 });
 
-export type ImportAutomationTransactionDTO = z.infer<
-  typeof importAutomationTransactionSchema
+export type ImportIntegrationTransactionDTO = z.infer<
+  typeof importIntegrationTransactionSchema
 >;
 
-export const listAutomationRequestLogsSchema = z.object({
+export const listIntegrationRequestLogsSchema = z.object({
   tokenId: z.string().uuid().nullable().optional(),
   cursor: z.string().datetime({ offset: true }).nullable().optional(),
   limit: z.coerce.number().int().min(1).max(30).optional(),
 });
 
-export type ListAutomationRequestLogsDTO = z.infer<
-  typeof listAutomationRequestLogsSchema
+export type ListIntegrationRequestLogsDTO = z.infer<
+  typeof listIntegrationRequestLogsSchema
 >;

@@ -20,7 +20,7 @@ export const transactionSource = pgEnum("transaction_source", [
   "manual",
   "recurring",
   "scan",
-  "automation",
+  "integration",
   "shopping",
 ]);
 

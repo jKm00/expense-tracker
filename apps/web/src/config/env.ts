@@ -4,6 +4,6 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL || "",
   BASE_URL: process.env.BASE_URL || "",
   RECURRING_JOB_TOKEN: process.env.RECURRING_JOB_TOKEN || "",
-  AUTOMATION_BETA_BADGE: process.env.AUTOMATION_BETA_BADGE ?? "true",
+  INTEGRATION_BETA_BADGE: process.env.INTEGRATION_BETA_BADGE ?? "true",
   SHOPPING_BETA_BADGE: process.env.SHOPPING_BETA_BADGE ?? "true",
 } as const;

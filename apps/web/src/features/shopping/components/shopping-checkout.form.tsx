@@ -23,8 +23,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { automationQueries } from "@/features/automation/automation.queries";
-import { AutomationTokenMetadata } from "@/features/automation/automation.models";
+import { integrationQueries } from "@/features/integrations/integration.queries";
+import { IntegrationTokenMetadata } from "@/features/integrations/integration.models";
 import { Product } from "@/features/products/products.models";
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
@@ -50,7 +50,7 @@ import {
   makeCheckoutEntry,
   getPrefilledCheckoutEntries,
   getSelectableCheckoutTransactions,
-  hasActiveAutomationTokens,
+  hasActiveIntegrationTokens,
 } from "./shopping-checkout.utils";
 import { BREAKPOINTS, useBreakpoint } from "@/hooks/use-breakpoint";
 
@@ -102,7 +102,7 @@ function formatTransactionSuggestionDate(transaction: FullTransaction) {
 }
 
 function getActiveTokens(
-  data: [unknown, AutomationTokenMetadata[]] | undefined,
+  data: [unknown, IntegrationTokenMetadata[]] | undefined,
 ) {
   if (!data || data[0] || !data[1]) {
     return [];
@@ -214,8 +214,8 @@ export function ShoppingCheckoutForm({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [keepUncheckedItems, setKeepUncheckedItems] = useState(true);
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const { data: automationTokenResult } = useQuery(
-    automationQueries.getAutomationTokensOptions(),
+  const { data: integrationTokenResult } = useQuery(
+    integrationQueries.getIntegrationTokensOptions(),
   );
   const { data: transactionResult } = useQuery(
     transactionQueries.getTransactionsOptions(
@@ -226,25 +226,25 @@ export function ShoppingCheckoutForm({
 
   const isMobile = useBreakpoint(BREAKPOINTS.md);
 
-  const automationTokens = useMemo(
-    () => getActiveTokens(automationTokenResult),
-    [automationTokenResult],
+  const integrationTokens = useMemo(
+    () => getActiveTokens(integrationTokenResult),
+    [integrationTokenResult],
   );
   const transactions = useMemo(
     () => getTransactions(transactionResult),
     [transactionResult],
   );
-  const hasAutomation = hasActiveAutomationTokens(automationTokens);
+  const hasIntegration = hasActiveIntegrationTokens(integrationTokens);
   const selectableTransactions = useMemo(
     () => getSelectableCheckoutTransactions(transactions, date),
     [date, transactions],
   );
   const suggestedTransaction = useMemo(
     () =>
-      hasAutomation
+      hasIntegration
         ? getCheckoutLinkSuggestion(selectableTransactions, date)
         : undefined,
-    [date, hasAutomation, selectableTransactions],
+    [date, hasIntegration, selectableTransactions],
   );
   const selectedTransaction = useMemo(
     () =>
@@ -802,9 +802,9 @@ export function ShoppingCheckoutForm({
 
         <FormField>
           <FormFieldLabel>
-            {hasAutomation
-              ? "Or choose another transaction"
-              : "Select a transaction"}
+            {hasIntegration
+               ? "Or choose another transaction"
+               : "Select a transaction"}
           </FormFieldLabel>
           <TransactionLinkSelect
             transactions={selectableTransactions}

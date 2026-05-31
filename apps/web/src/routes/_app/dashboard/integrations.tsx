@@ -31,15 +31,15 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  createAutomationTokenSchema,
-  type CreateAutomationTokenDTO,
-} from "@/features/automation/automation.dtos";
-import { automationMutations } from "@/features/automation/automation.mutations";
-import { automationQueries } from "@/features/automation/automation.queries";
+  createIntegrationTokenSchema,
+  type CreateIntegrationTokenDTO,
+} from "@/features/integrations/integration.dtos";
+import { integrationMutations } from "@/features/integrations/integration.mutations";
+import { integrationQueries } from "@/features/integrations/integration.queries";
 import type {
-  AutomationRequestLogListItem,
-  AutomationTokenMetadata,
-} from "@/features/automation/automation.models";
+  IntegrationRequestLogListItem,
+  IntegrationTokenMetadata,
+} from "@/features/integrations/integration.models";
 import { env } from "@/config/env";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,17 +58,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/dashboard/automations")({
+export const Route = createFileRoute("/_app/dashboard/integrations")({
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(
-      automationQueries.getAutomationTokensOptions(),
+      integrationQueries.getIntegrationTokensOptions(),
     );
     await context.queryClient.prefetchInfiniteQuery(
-      automationQueries.getAutomationRequestLogsOptions(null),
+      integrationQueries.getIntegrationRequestLogsOptions(null),
     );
 
     const showBetaBadge =
-      env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false";
+      env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false";
 
     return { showBetaBadge };
   },
@@ -128,7 +128,7 @@ function RouteComponent() {
   const {
     data: [expectedError, tokens],
     error: unexpectedError,
-  } = useSuspenseQuery(automationQueries.getAutomationTokensOptions());
+  } = useSuspenseQuery(integrationQueries.getIntegrationTokensOptions());
 
   if (unexpectedError) {
     return <UnexpectedError />;
@@ -137,7 +137,7 @@ function RouteComponent() {
   if (expectedError) {
     return (
       <ExpectedError>
-        <ExpectedErrorTitle>Automations unavailable</ExpectedErrorTitle>
+        <ExpectedErrorTitle>Integrations unavailable</ExpectedErrorTitle>
         <ExpectedErrorMessage>{expectedError.message}</ExpectedErrorMessage>
       </ExpectedError>
     );
@@ -148,7 +148,7 @@ function RouteComponent() {
       <PageHeader>
         <PageHeaderTitle>
           <span className="inline-flex items-center gap-2">
-            Automations
+            Integrations
             {showBetaBadge ? (
               <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
                 BETA
@@ -165,21 +165,21 @@ function RouteComponent() {
 
       <TokenListCard tokens={tokens} />
 
-      <AutomationLogsCard tokens={tokens} />
+      <IntegrationLogsCard tokens={tokens} />
     </div>
   );
 }
 
 function CreateTokenCard() {
   const [revealedToken, setRevealedToken] = useState<string | null>(null);
-  const createToken = automationMutations.createAutomationToken();
+  const createToken = integrationMutations.createIntegrationToken();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateAutomationTokenDTO>({
-    resolver: zodResolver(createAutomationTokenSchema),
+  } = useForm<CreateIntegrationTokenDTO>({
+    resolver: zodResolver(createIntegrationTokenSchema),
     defaultValues: { name: "" },
   });
 
@@ -189,7 +189,7 @@ function CreateTokenCard() {
         if (error) {
           const reason = error.reason;
           const message =
-            reason === "AUTOMATION_TOKEN_LIMIT_REACHED"
+            reason === "INTEGRATION_TOKEN_LIMIT_REACHED"
               ? "You already have 10 active tokens. Revoke one before creating another."
               : "Failed to create token. Please try again.";
           toast.error(message);
@@ -224,9 +224,9 @@ function CreateTokenCard() {
       <CardContent className="space-y-4">
         <form onSubmit={onSubmit} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="automation-token-name">Token name</Label>
+            <Label htmlFor="integration-token-name">Token name</Label>
             <Input
-              id="automation-token-name"
+              id="integration-token-name"
               placeholder="Apple Pay iPhone"
               {...register("name")}
             />
@@ -290,10 +290,10 @@ function CreateTokenCard() {
   );
 }
 
-function TokenListCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
-  const revokeToken = automationMutations.revokeAutomationToken();
+function TokenListCard({ tokens }: { tokens: IntegrationTokenMetadata[] }) {
+  const revokeToken = integrationMutations.revokeIntegrationToken();
   const [selectedToken, setSelectedToken] =
-    useState<AutomationTokenMetadata | null>(null);
+    useState<IntegrationTokenMetadata | null>(null);
   const activeTokens = useMemo(
     () => tokens.filter((token) => !token.revokedAt),
     [tokens],
@@ -337,7 +337,7 @@ function TokenListCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
                 No active tokens
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Create a token above to enable Apple Pay automation imports.
+                Create a token above to enable Apple Pay integration imports.
               </p>
             </div>
           ) : (
@@ -489,7 +489,7 @@ function TokenDetailsSheet({
   open,
   onOpenChange,
 }: {
-  token: AutomationTokenMetadata | null;
+  token: IntegrationTokenMetadata | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -528,10 +528,10 @@ function TokenDetailsSheet({
   );
 }
 
-function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
+function IntegrationLogsCard({ tokens }: { tokens: IntegrationTokenMetadata[] }) {
   const [selectedTokenId, setSelectedTokenId] = useState<string>("all");
   const [selectedLog, setSelectedLog] =
-    useState<AutomationRequestLogListItem | null>(null);
+    useState<IntegrationRequestLogListItem | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const selectedFilterTokenId =
@@ -545,7 +545,7 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
     isFetchingNextPage,
     isPending,
   } = useInfiniteQuery(
-    automationQueries.getAutomationRequestLogsOptions(selectedFilterTokenId),
+    integrationQueries.getIntegrationRequestLogsOptions(selectedFilterTokenId),
   );
 
   const [expectedLogsError, logsPage] = useMemo(() => {
@@ -622,20 +622,20 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="size-4" />
-              Automation logs
+              Integration logs
             </CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              Recent automation requests with request and response details.
+              Recent integration requests with request and response details.
             </p>
           </div>
 
           <div className="w-full sm:w-64">
-            <Label htmlFor="automation-log-token-filter" className="text-xs">
+            <Label htmlFor="integration-log-token-filter" className="text-xs">
               Filter by token
             </Label>
             <Select value={selectedTokenId} onValueChange={setSelectedTokenId}>
               <SelectTrigger
-                id="automation-log-token-filter"
+                id="integration-log-token-filter"
                 className="mt-1 w-full"
               >
                 <SelectValue placeholder="All tokens" />
@@ -666,7 +666,7 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
             </div>
           ) : isPending ? (
             <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
-              Loading automation logs...
+              Loading integration logs...
             </div>
           ) : logs.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center">
@@ -676,13 +676,13 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
               <p className="mt-1 text-xs text-muted-foreground">
                 {selectedFilterTokenId
                   ? "No requests have been logged for the selected token yet."
-                  : "Automation requests will appear here once imports start coming in."}
+                  : "Integration requests will appear here once imports start coming in."}
               </p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
               {logs.map((log, index) => (
-                <AutomationLogRow
+                <IntegrationLogRow
                   key={log.id}
                   log={log}
                   isLast={index === logs.length - 1}
@@ -710,7 +710,7 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
         </CardContent>
       </Card>
 
-      <AutomationLogDetailsSheet
+      <IntegrationLogDetailsSheet
         log={selectedLog}
         open={selectedLog !== null}
         onOpenChange={(open) => {
@@ -723,12 +723,12 @@ function AutomationLogsCard({ tokens }: { tokens: AutomationTokenMetadata[] }) {
   );
 }
 
-function AutomationLogRow({
+function IntegrationLogRow({
   log,
   isLast,
   onClick,
 }: {
-  log: AutomationRequestLogListItem;
+  log: IntegrationRequestLogListItem;
   isLast: boolean;
   onClick: () => void;
 }) {
@@ -774,12 +774,12 @@ function AutomationLogRow({
   );
 }
 
-function AutomationLogDetailsSheet({
+function IntegrationLogDetailsSheet({
   log,
   open,
   onOpenChange,
 }: {
-  log: AutomationRequestLogListItem | null;
+  log: IntegrationRequestLogListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -790,9 +790,9 @@ function AutomationLogDetailsSheet({
         className="data-[side=right]:w-[90vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[800px]"
       >
         <SheetHeader>
-          <SheetTitle>Automation request details</SheetTitle>
+          <SheetTitle>Integration request details</SheetTitle>
           <SheetDescription>
-            Detailed request and response metadata for this automation log
+            Detailed request and response metadata for this integration log
             entry.
           </SheetDescription>
         </SheetHeader>

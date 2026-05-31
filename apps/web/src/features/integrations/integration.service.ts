@@ -3,20 +3,20 @@ import { transactionService } from "@/features/transactions/transactions.service
 import { err, ok } from "@/utils/result";
 import { createHash, randomBytes } from "node:crypto";
 import {
-  AutomationRequestLogPage,
-  AutomationProvider,
-  AutomationToken,
-  AutomationTokenMetadata,
-} from "./automation.models";
+  IntegrationRequestLogPage,
+  IntegrationProvider,
+  IntegrationToken,
+  IntegrationTokenMetadata,
+} from "./integration.models";
 import {
-  ImportAutomationTransactionDTO,
-  ListAutomationRequestLogsDTO,
-} from "./automation.dtos";
-import { automationRepo } from "./automation.repo";
+  ImportIntegrationTransactionDTO,
+  ListIntegrationRequestLogsDTO,
+} from "./integration.dtos";
+import { integrationRepo } from "./integration.repo";
 
 const MAX_ACTIVE_TOKENS = 10;
 const TOKEN_PREFIX_LENGTH = 4;
-const PLACEHOLDER_PRODUCT_NAME = "Automation import item";
+const PLACEHOLDER_PRODUCT_NAME = "Integration import item";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token, "utf8").digest("hex");
@@ -48,7 +48,7 @@ function toRequestTokenPrefix(authorizationHeader: string | null) {
   return rawToken.slice(0, TOKEN_PREFIX_LENGTH) || null;
 }
 
-function toTokenMetadata(token: AutomationToken): AutomationTokenMetadata {
+function toTokenMetadata(token: IntegrationToken): IntegrationTokenMetadata {
   return {
     id: token.id,
     name: token.name,
@@ -60,10 +60,10 @@ function toTokenMetadata(token: AutomationToken): AutomationTokenMetadata {
   };
 }
 
-function getDefaultDescription(provider: AutomationProvider) {
+function getDefaultDescription(provider: IntegrationProvider) {
   switch (provider) {
     case "apple_pay":
-      return "Automation import (Apple Pay)";
+      return "Integration import (Apple Pay)";
   }
 }
 
@@ -71,7 +71,7 @@ async function resolvePlaceholderProduct(userId: string) {
   const [productsError, products] = await productService.getProducts(userId);
   if (productsError) {
     return err({
-      reason: "AUTOMATION_PLACEHOLDER_PRODUCT_ERROR" as const,
+      reason: "INTEGRATION_PLACEHOLDER_PRODUCT_ERROR" as const,
       message: "Failed to load products when resolving placeholder product",
     });
   }
@@ -89,7 +89,7 @@ async function resolvePlaceholderProduct(userId: string) {
   });
   if (createError) {
     return err({
-      reason: "AUTOMATION_PLACEHOLDER_PRODUCT_ERROR" as const,
+      reason: "INTEGRATION_PLACEHOLDER_PRODUCT_ERROR" as const,
       message: "Failed to create placeholder product",
     });
   }
@@ -97,7 +97,7 @@ async function resolvePlaceholderProduct(userId: string) {
   return ok(created);
 }
 
-function formatAutomationErrorMessage(error: { reason: string }) {
+function formatIntegrationErrorMessage(error: { reason: string }) {
   switch (error.reason) {
     case "PRODUCT_NOT_FOUND":
     case "PRODUCT_UNAUTHORIZED":
@@ -110,9 +110,9 @@ function formatAutomationErrorMessage(error: { reason: string }) {
     case "TAG_UNATHORIZED":
     case "TAG_NOT_FOUND":
     case "TAG_DB_ERROR":
-      return "Failed to create transaction from automation import";
+      return "Failed to create transaction from integration import";
     default:
-      return "Failed to create transaction from automation import";
+      return "Failed to create transaction from integration import";
   }
 }
 
@@ -127,33 +127,33 @@ async function resolveBearerTokenContext(
   const rawToken = parseBearerToken(authorizationHeader);
   if (!rawToken) {
     return err({
-      reason: "AUTOMATION_UNAUTHORIZED" as const,
+      reason: "INTEGRATION_UNAUTHORIZED" as const,
       message: "Unauthorized",
     });
   }
 
   const tokenHash = hashToken(rawToken);
 
-  let token: Awaited<ReturnType<typeof automationRepo.getTokenByHash>>;
+  let token: Awaited<ReturnType<typeof integrationRepo.getTokenByHash>>;
   try {
-    token = await automationRepo.getTokenByHash(tokenHash);
-  } catch (error) {
+    token = await integrationRepo.getTokenByHash(tokenHash);
+  } catch {
     return err({
-      reason: "AUTOMATION_UNAUTHORIZED" as const,
+      reason: "INTEGRATION_UNAUTHORIZED" as const,
       message: "Unauthorized",
     });
   }
 
   if (!token || token.revokedAt) {
     return err({
-      reason: "AUTOMATION_UNAUTHORIZED" as const,
+      reason: "INTEGRATION_UNAUTHORIZED" as const,
       message: "Unauthorized",
     });
   }
 
   if (options?.touchLastUsed ?? true) {
     try {
-      await automationRepo.touchTokenLastUsed(token.id);
+      await integrationRepo.touchTokenLastUsed(token.id);
     } catch {
       // Best effort metadata update.
     }
@@ -170,18 +170,18 @@ async function createToken(userId: string, name: string) {
 
   let activeTokenCount: number;
   try {
-    activeTokenCount = await automationRepo.countActiveTokens(userId);
+    activeTokenCount = await integrationRepo.countActiveTokens(userId);
   } catch {
     return err({
-      reason: "AUTOMATION_TOKEN_CREATE_ERROR" as const,
-      message: "Failed to create automation token",
+      reason: "INTEGRATION_TOKEN_CREATE_ERROR" as const,
+      message: "Failed to create integration token",
     });
   }
 
   if (activeTokenCount >= MAX_ACTIVE_TOKENS) {
     return err({
-      reason: "AUTOMATION_TOKEN_LIMIT_REACHED" as const,
-      message: "You have reached the maximum number of active automation tokens",
+      reason: "INTEGRATION_TOKEN_LIMIT_REACHED" as const,
+      message: "You have reached the maximum number of active integration tokens",
     });
   }
 
@@ -189,9 +189,9 @@ async function createToken(userId: string, name: string) {
   const tokenHash = hashToken(rawToken);
   const tokenPrefix = rawToken.slice(0, TOKEN_PREFIX_LENGTH);
 
-  let createdTokens: Awaited<ReturnType<typeof automationRepo.saveToken>>;
+  let createdTokens: Awaited<ReturnType<typeof integrationRepo.saveToken>>;
   try {
-    createdTokens = await automationRepo.saveToken({
+    createdTokens = await integrationRepo.saveToken({
       userId,
       name: tokenName,
       tokenHash,
@@ -199,15 +199,15 @@ async function createToken(userId: string, name: string) {
     });
   } catch {
     return err({
-      reason: "AUTOMATION_TOKEN_CREATE_ERROR" as const,
-      message: "Failed to create automation token",
+      reason: "INTEGRATION_TOKEN_CREATE_ERROR" as const,
+      message: "Failed to create integration token",
     });
   }
 
   if (createdTokens.length === 0) {
     return err({
-      reason: "AUTOMATION_TOKEN_CREATE_ERROR" as const,
-      message: "Failed to create automation token",
+      reason: "INTEGRATION_TOKEN_CREATE_ERROR" as const,
+      message: "Failed to create integration token",
     });
   }
 
@@ -219,32 +219,32 @@ async function createToken(userId: string, name: string) {
 
 async function listTokens(userId: string) {
   try {
-    const tokens = await automationRepo.getTokensByUser(userId);
+    const tokens = await integrationRepo.getTokensByUser(userId);
     return ok(tokens.map(toTokenMetadata));
   } catch {
     return err({
-      reason: "AUTOMATION_TOKENS_FETCH_ERROR" as const,
-      message: "Failed to fetch automation tokens",
+      reason: "INTEGRATION_TOKENS_FETCH_ERROR" as const,
+      message: "Failed to fetch integration tokens",
     });
   }
 }
 
 async function listRequestLogs(
   userId: string,
-  input: ListAutomationRequestLogsDTO,
+  input: ListIntegrationRequestLogsDTO,
 ) {
   const limit = input.limit ?? 25;
   const cursor = input.cursor ? new Date(input.cursor) : null;
 
   if (cursor && Number.isNaN(cursor.getTime())) {
     return err({
-      reason: "AUTOMATION_REQUEST_LOGS_FETCH_ERROR" as const,
-      message: "Failed to fetch automation request logs",
+      reason: "INTEGRATION_REQUEST_LOGS_FETCH_ERROR" as const,
+      message: "Failed to fetch integration request logs",
     });
   }
 
   try {
-    const logs = await automationRepo.getAutomationRequestLogsByUser({
+    const logs = await integrationRepo.getIntegrationRequestLogsByUser({
       userId,
       tokenId: input.tokenId ?? null,
       cursor,
@@ -257,27 +257,27 @@ async function listRequestLogs(
       ? pageLogs[pageLogs.length - 1]?.createdAt.toISOString() ?? null
       : null;
 
-    return ok<AutomationRequestLogPage>({
+    return ok<IntegrationRequestLogPage>({
       logs: pageLogs,
       hasMore,
       nextCursor,
     });
   } catch {
     return err({
-      reason: "AUTOMATION_REQUEST_LOGS_FETCH_ERROR" as const,
-      message: "Failed to fetch automation request logs",
+      reason: "INTEGRATION_REQUEST_LOGS_FETCH_ERROR" as const,
+      message: "Failed to fetch integration request logs",
     });
   }
 }
 
-async function logAutomationRequest(input: {
+async function logIntegrationRequest(input: {
   userId: string;
   tokenId?: string | null;
   transactionId?: string | null;
   requestTokenPrefix?: string | null;
   requestMethod: string;
   requestPath: string;
-  provider?: AutomationProvider | null;
+  provider?: IntegrationProvider | null;
   eventId?: string | null;
   requestBody?: string | null;
   userAgent?: string | null;
@@ -290,7 +290,7 @@ async function logAutomationRequest(input: {
   durationMs?: number | null;
 }) {
   try {
-    await automationRepo.saveAutomationRequestLog({
+    await integrationRepo.saveIntegrationRequestLog({
       userId: input.userId,
       tokenId: input.tokenId ?? null,
       transactionId: input.transactionId ?? null,
@@ -316,33 +316,33 @@ async function logAutomationRequest(input: {
 
 async function touchTokenLastUsed(tokenId: string) {
   try {
-    await automationRepo.touchTokenLastUsed(tokenId);
+    await integrationRepo.touchTokenLastUsed(tokenId);
   } catch {
     // Best effort metadata update.
   }
 }
 
 async function revokeToken(userId: string, tokenId: string) {
-  let token: Awaited<ReturnType<typeof automationRepo.getTokenById>>;
+  let token: Awaited<ReturnType<typeof integrationRepo.getTokenById>>;
   try {
-    token = await automationRepo.getTokenById(tokenId);
+    token = await integrationRepo.getTokenById(tokenId);
   } catch {
     return err({
-      reason: "AUTOMATION_TOKEN_REVOKE_ERROR" as const,
-      message: "Failed to revoke automation token",
+      reason: "INTEGRATION_TOKEN_REVOKE_ERROR" as const,
+      message: "Failed to revoke integration token",
     });
   }
 
   if (!token) {
     return err({
-      reason: "AUTOMATION_TOKEN_NOT_FOUND" as const,
-      message: "Automation token not found",
+      reason: "INTEGRATION_TOKEN_NOT_FOUND" as const,
+      message: "Integration token not found",
     });
   }
 
   if (token.userId !== userId) {
     return err({
-      reason: "AUTOMATION_TOKEN_UNAUTHORIZED" as const,
+      reason: "INTEGRATION_TOKEN_UNAUTHORIZED" as const,
       message: "You do not have permission to revoke this token",
     });
   }
@@ -352,26 +352,26 @@ async function revokeToken(userId: string, tokenId: string) {
   }
 
   try {
-    const revoked = await automationRepo.revokeToken(tokenId);
+    const revoked = await integrationRepo.revokeToken(tokenId);
     if (revoked.length === 0) {
       return err({
-        reason: "AUTOMATION_TOKEN_REVOKE_ERROR" as const,
-        message: "Failed to revoke automation token",
+        reason: "INTEGRATION_TOKEN_REVOKE_ERROR" as const,
+        message: "Failed to revoke integration token",
       });
     }
 
     return ok(toTokenMetadata(revoked[0]));
   } catch {
     return err({
-      reason: "AUTOMATION_TOKEN_REVOKE_ERROR" as const,
-      message: "Failed to revoke automation token",
+      reason: "INTEGRATION_TOKEN_REVOKE_ERROR" as const,
+      message: "Failed to revoke integration token",
     });
   }
 }
 
-async function importAutomationTransaction(
+async function importIntegrationTransaction(
   authorizationHeader: string | null,
-  payload: ImportAutomationTransactionDTO,
+  payload: ImportIntegrationTransactionDTO,
 ) {
   const [authError, authContext] = await verifyBearerToken(authorizationHeader);
   if (authError) {
@@ -386,24 +386,24 @@ async function importAutomationTransaction(
 
   if (Number.isNaN(normalizedDate.getTime())) {
     return err({
-      reason: "AUTOMATION_IMPORT_VALIDATION_ERROR" as const,
+      reason: "INTEGRATION_IMPORT_VALIDATION_ERROR" as const,
       message: "Invalid date payload",
     });
   }
 
   let existingEvent: Awaited<
-    ReturnType<typeof automationRepo.getAutomationEventByDedupeKey>
+    ReturnType<typeof integrationRepo.getIntegrationEventByDedupeKey>
   >;
   try {
-    existingEvent = await automationRepo.getAutomationEventByDedupeKey(
+    existingEvent = await integrationRepo.getIntegrationEventByDedupeKey(
       authContext.userId,
       payload.provider,
       payload.eventId,
     );
   } catch {
     return err({
-      reason: "AUTOMATION_IMPORT_EVENT_ERROR" as const,
-      message: "Failed to resolve automation event",
+      reason: "INTEGRATION_IMPORT_EVENT_ERROR" as const,
+      message: "Failed to resolve integration event",
     });
   }
 
@@ -416,8 +416,8 @@ async function importAutomationTransaction(
 
     if (!isSamePayload) {
       return err({
-        reason: "AUTOMATION_IMPORT_CONFLICT" as const,
-        message: "Automation event already exists with different payload",
+        reason: "INTEGRATION_IMPORT_CONFLICT" as const,
+        message: "Integration event already exists with different payload",
       });
     }
 
@@ -438,7 +438,7 @@ async function importAutomationTransaction(
     {
       transaction: {
         userId: authContext.userId,
-        source: "automation",
+        source: "integration",
         needsReview: true,
         store: normalizedStore,
         description: normalizedDescription,
@@ -461,13 +461,13 @@ async function importAutomationTransaction(
 
   if (transactionError) {
     return err({
-      reason: "AUTOMATION_IMPORT_TRANSACTION_ERROR" as const,
-      message: formatAutomationErrorMessage(transactionError),
+      reason: "INTEGRATION_IMPORT_TRANSACTION_ERROR" as const,
+      message: formatIntegrationErrorMessage(transactionError),
     });
   }
 
   try {
-    const savedEvents = await automationRepo.saveAutomationEvent({
+    const savedEvents = await integrationRepo.saveIntegrationEvent({
       userId: authContext.userId,
       tokenId: authContext.tokenId,
       provider: payload.provider,
@@ -481,14 +481,14 @@ async function importAutomationTransaction(
 
     if (savedEvents.length === 0) {
       return err({
-        reason: "AUTOMATION_IMPORT_EVENT_ERROR" as const,
-        message: "Failed to persist automation event",
+        reason: "INTEGRATION_IMPORT_EVENT_ERROR" as const,
+        message: "Failed to persist integration event",
       });
     }
   } catch {
     return err({
-      reason: "AUTOMATION_IMPORT_EVENT_ERROR" as const,
-      message: "Failed to persist automation event",
+      reason: "INTEGRATION_IMPORT_EVENT_ERROR" as const,
+      message: "Failed to persist integration event",
     });
   }
 
@@ -498,15 +498,15 @@ async function importAutomationTransaction(
   });
 }
 
-export const automationService = {
+export const integrationService = {
   createToken,
   listTokens,
   listRequestLogs,
-  logAutomationRequest,
+  logIntegrationRequest,
   revokeToken,
   resolveBearerTokenContext,
   touchTokenLastUsed,
   verifyBearerToken,
   toRequestTokenPrefix,
-  importAutomationTransaction,
+  importIntegrationTransaction,
 };

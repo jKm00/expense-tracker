@@ -4,7 +4,7 @@ import {
   getCheckoutLinkSuggestion,
   getPrefilledCheckoutEntries,
   getSelectableCheckoutTransactions,
-  hasActiveAutomationTokens,
+  hasActiveIntegrationTokens,
 } from "./shopping-checkout.utils";
 
 describe("getPrefilledCheckoutEntries", () => {
@@ -46,9 +46,9 @@ describe("getPrefilledCheckoutEntries", () => {
 });
 
 describe("checkout link helpers", () => {
-  it("detects active automation tokens", () => {
+  it("detects active integration tokens", () => {
     expect(
-      hasActiveAutomationTokens([
+      hasActiveIntegrationTokens([
         {
           id: "token-1",
           name: "Main",

@@ -1,5 +1,5 @@
-import { importAutomationTransactionSchema } from "@/features/automation/automation.dtos";
-import { automationService } from "@/features/automation/automation.service";
+import { importIntegrationTransactionSchema } from "@/features/integrations/integration.dtos";
+import { integrationService } from "@/features/integrations/integration.service";
 import { createFileRoute } from "@tanstack/react-router";
 
 function getIpAddress(request: Request) {
@@ -18,17 +18,17 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   });
 }
 
-export const Route = createFileRoute("/api/automation/import")({
+export const Route = createFileRoute("/api/integrations/import")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const startedAt = Date.now();
         const authorizationHeader = request.headers.get("authorization");
-        const requestTokenPrefix = automationService.toRequestTokenPrefix(
+        const requestTokenPrefix = integrationService.toRequestTokenPrefix(
           authorizationHeader,
         );
         const [authError, authContext] =
-          await automationService.resolveBearerTokenContext(authorizationHeader, {
+          await integrationService.resolveBearerTokenContext(authorizationHeader, {
             touchLastUsed: false,
           });
         const requestMethod = request.method;
@@ -41,8 +41,8 @@ export const Route = createFileRoute("/api/automation/import")({
           payload = await request.json();
         } catch {
           if (!authError) {
-            await automationService.touchTokenLastUsed(authContext.tokenId);
-            await automationService.logAutomationRequest({
+            await integrationService.touchTokenLastUsed(authContext.tokenId);
+            await integrationService.logIntegrationRequest({
               userId: authContext.userId,
               tokenId: authContext.tokenId,
               requestTokenPrefix,
@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/automation/import")({
               responseStatus: 400,
               responseMessage: "Invalid JSON payload",
               responseBody: JSON.stringify({ ok: false, error: "Invalid JSON payload" }),
-              errorReason: "AUTOMATION_IMPORT_INVALID_JSON",
+              errorReason: "INTEGRATION_IMPORT_INVALID_JSON",
               durationMs: Date.now() - startedAt,
             });
           }
@@ -66,11 +66,11 @@ export const Route = createFileRoute("/api/automation/import")({
 
         const rawRequestBody = JSON.stringify(payload);
 
-        const parsedPayload = importAutomationTransactionSchema.safeParse(payload);
+        const parsedPayload = importIntegrationTransactionSchema.safeParse(payload);
         if (!parsedPayload.success) {
           if (!authError) {
-            await automationService.touchTokenLastUsed(authContext.tokenId);
-            await automationService.logAutomationRequest({
+            await integrationService.touchTokenLastUsed(authContext.tokenId);
+            await integrationService.logIntegrationRequest({
               userId: authContext.userId,
               tokenId: authContext.tokenId,
               requestTokenPrefix,
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/automation/import")({
               responseStatus: 400,
               responseMessage: "Invalid webhook payload",
               responseBody: JSON.stringify({ ok: false, error: "Invalid webhook payload" }),
-              errorReason: "AUTOMATION_IMPORT_VALIDATION_ERROR",
+              errorReason: "INTEGRATION_IMPORT_VALIDATION_ERROR",
               durationMs: Date.now() - startedAt,
             });
           }
@@ -90,23 +90,23 @@ export const Route = createFileRoute("/api/automation/import")({
           return jsonResponse({ ok: false, error: "Invalid webhook payload" }, 400);
         }
 
-        const [error, result] = await automationService.importAutomationTransaction(
+        const [error, result] = await integrationService.importIntegrationTransaction(
           authorizationHeader,
           parsedPayload.data,
         );
 
         if (error) {
           const status =
-            error.reason === "AUTOMATION_UNAUTHORIZED"
+            error.reason === "INTEGRATION_UNAUTHORIZED"
               ? 401
-              : error.reason === "AUTOMATION_IMPORT_CONFLICT"
+              : error.reason === "INTEGRATION_IMPORT_CONFLICT"
                 ? 409
-                : error.reason === "AUTOMATION_IMPORT_VALIDATION_ERROR"
+                : error.reason === "INTEGRATION_IMPORT_VALIDATION_ERROR"
                   ? 400
                   : 500;
 
           if (!authError) {
-            await automationService.logAutomationRequest({
+            await integrationService.logIntegrationRequest({
               userId: authContext.userId,
               tokenId: authContext.tokenId,
               requestTokenPrefix,
@@ -135,7 +135,7 @@ export const Route = createFileRoute("/api/automation/import")({
         };
 
         if (!authError) {
-          await automationService.logAutomationRequest({
+          await integrationService.logIntegrationRequest({
             userId: authContext.userId,
             tokenId: authContext.tokenId,
             transactionId: result.transactionId,
@@ -149,8 +149,8 @@ export const Route = createFileRoute("/api/automation/import")({
             ipAddress,
             responseStatus: 200,
             responseMessage: result.duplicate
-              ? "Automation event already imported"
-              : "Automation import processed successfully",
+              ? "Integration event already imported"
+              : "Integration import processed successfully",
             responseBody: JSON.stringify(responseBody),
             duplicate: result.duplicate,
             durationMs: Date.now() - startedAt,

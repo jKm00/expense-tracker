@@ -6,7 +6,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { env } from "@/config/env";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bot, Package, Repeat, Tag, User } from "lucide-react";
+import { ArrowRight, Package, Plug, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -36,11 +36,11 @@ function RouteComponent() {
 
   const secondaryMenuItems = [
     {
-      label: "Automation",
+      label: "Integrations",
       description: "Manage import tokens",
-      href: "/dashboard/automations",
-      icon: Bot,
-      beta: env.AUTOMATION_BETA_BADGE.trim().toLowerCase() !== "false",
+      href: "/dashboard/integrations",
+      icon: Plug,
+      beta: env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false",
     },
     {
       label: "Profile",
