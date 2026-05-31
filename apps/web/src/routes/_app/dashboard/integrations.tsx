@@ -6,6 +6,7 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
+  PageHeaderActions,
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
@@ -25,8 +26,10 @@ import {
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -45,18 +48,112 @@ import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  Check,
   ChevronDown,
   Copy,
   History,
+  Info,
   KeyRound,
   LoaderCircle,
+  TerminalSquare,
   ShieldCheck,
   ShieldX,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+
+type HowItWorksTab = "overview" | "example" | "api";
+type TokenExampleTab = "curl" | "javascript" | "python";
+
+const integrationEndpointPath = "/api/integrations/transactions";
+const integrationOriginPlaceholder = "https://ex.edvardsen.dev";
+
+const integrationJsonExample = `{
+  "provider": "apple_pay",
+  "eventId": "apple-pay-2026-06-01-001",
+  "amount": 149.90,
+  "date": "2026-06-01T12:30:00+02:00",
+  "store": "Joe & The Juice",
+  "description": "Apple Pay card tap"
+}`;
+
+function getIntegrationEndpointUrl(origin: string | null) {
+  const baseUrl = origin?.replace(/\/$/, "") || integrationOriginPlaceholder;
+  return `${baseUrl}${integrationEndpointPath}`;
+}
+
+function useIntegrationEndpointUrl() {
+  const [endpointUrl, setEndpointUrl] = useState(() =>
+    getIntegrationEndpointUrl(null),
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setEndpointUrl(getIntegrationEndpointUrl(window.location.origin));
+  }, []);
+
+  return endpointUrl;
+}
+
+function getCurlExample(token: string, endpointUrl: string) {
+  return `curl -X POST "${endpointUrl}" \\
+  -H "Authorization: Bearer ${token}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "provider": "apple_pay",
+    "eventId": "apple-pay-2026-06-01-001",
+    "amount": 149.90,
+    "date": "2026-06-01T12:30:00+02:00",
+    "store": "Joe & The Juice",
+    "description": "Apple Pay card tap"
+  }'`;
+}
+
+function getJsExample(token: string, endpointUrl: string) {
+  return `await fetch("${endpointUrl}", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer ${token}",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    provider: "apple_pay",
+    eventId: "apple-pay-2026-06-01-001",
+    amount: 149.90,
+    date: "2026-06-01T12:30:00+02:00",
+    store: "Joe & The Juice",
+    description: "Apple Pay card tap"
+  })
+});`;
+}
+
+function getPythonExample(token: string, endpointUrl: string) {
+  return `import requests
+
+response = requests.post(
+    "${endpointUrl}",
+    headers={
+        "Authorization": "Bearer ${token}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "provider": "apple_pay",
+        "eventId": "apple-pay-2026-06-01-001",
+        "amount": 149.90,
+        "date": "2026-06-01T12:30:00+02:00",
+        "store": "Joe & The Juice",
+        "description": "Apple Pay card tap",
+    },
+)
+
+print(response.status_code)
+print(response.text)`;
+}
 
 export const Route = createFileRoute("/_app/dashboard/integrations")({
   loader: async ({ context }) => {
@@ -125,6 +222,7 @@ function getStatusBadgeVariant(
 
 function RouteComponent() {
   const { showBetaBadge } = Route.useLoaderData();
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const {
     data: [expectedError, tokens],
     error: unexpectedError,
@@ -157,8 +255,20 @@ function RouteComponent() {
           </span>
         </PageHeaderTitle>
         <PageHeaderDescription>
-          Manage API tokens and configure Apple Pay imports.
+          Create a token to let trusted automations and apps send transactions
+          into your account.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setHowItWorksOpen(true)}
+          >
+            <Info className="size-4" />
+            How it works
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
 
       <CreateTokenCard />
@@ -166,12 +276,335 @@ function RouteComponent() {
       <TokenListCard tokens={tokens} />
 
       <IntegrationLogsCard tokens={tokens} />
+
+      <HowItWorksSheet open={howItWorksOpen} onOpenChange={setHowItWorksOpen} />
+    </div>
+  );
+}
+
+function HowItWorksSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<HowItWorksTab>("overview");
+  const endpointUrl = useIntegrationEndpointUrl();
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab("overview");
+    }
+  }, [open]);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="data-[side=right]:w-[100vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[880px]"
+      >
+        <SheetHeader>
+          <SheetTitle>How integrations work</SheetTitle>
+          <SheetDescription>
+            Learn how to connect trusted automations and apps to create
+            transactions securely.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="px-4 pb-6">
+          <div className="flex flex-wrap gap-2 border-b border-border/60 pb-4">
+            <TabButton
+              active={activeTab === "overview"}
+              onClick={() => setActiveTab("overview")}
+            >
+              Overview
+            </TabButton>
+            <TabButton
+              active={activeTab === "example"}
+              onClick={() => setActiveTab("example")}
+            >
+              Example
+            </TabButton>
+            <TabButton
+              active={activeTab === "api"}
+              onClick={() => setActiveTab("api")}
+            >
+              API
+            </TabButton>
+          </div>
+
+          <div className="mt-6 max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto pr-1 max-md:pb-10">
+            {activeTab === "overview" ? <OverviewTabContent /> : null}
+            {activeTab === "example" ? <ExampleTabContent /> : null}
+            {activeTab === "api" ? <ApiTabContent endpointUrl={endpointUrl} /> : null}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+        active
+          ? "border-primary bg-primary/10 text-foreground"
+          : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function OverviewTabContent() {
+  return (
+    <div className="space-y-6">
+      <InfoSection
+        title="What this does"
+        description="Integrations let other tools send transactions into Expense Tracker using a secure token you generate on this page."
+      />
+
+      <InfoSection
+        title="How it works"
+        description="Use this feature when you have a trusted app, script, or phone automation that can collect payment details and send them to Expense Tracker. For the exact endpoint, headers, and request body, see the API tab."
+      >
+        <StepList
+          steps={[
+            "Create a token on this page.",
+            "Configure your automation or app to send a request to the integrations API using that token.",
+            "Expense Tracker creates the transaction automatically and marks it for review.",
+          ]}
+        />
+      </InfoSection>
+
+      <InfoSection
+        title="What happens after sending"
+        description="A successful request creates a transaction in your account with the values you sent. Duplicate events can be detected so the same transaction is not created twice."
+      />
+
+      <InfoSection
+        title="Tips and troubleshooting"
+        description="If a request fails, start by checking the logs on this page. They show request details, response codes, and error messages that can help you verify your token, payload, and endpoint configuration."
+      />
+    </div>
+  );
+}
+
+function ExampleTabContent() {
+  return (
+    <div className="space-y-6">
+      <InfoSection
+        title="Concrete example"
+        description="You can create an iPhone automation that runs after a card tap. The automation can extract the merchant, amount, and timestamp from the payment notification, then send that data to Expense Tracker to automatically create a transaction. For the exact API path, headers, and body format, see the API tab."
+      />
+
+      <InfoSection title="Suggested setup">
+        <StepList
+          steps={[
+            "Create an integration token on this page and save it in your automation.",
+            "Create an iPhone automation that runs when an Apple Pay card tap is detected or when a payment notification is received.",
+            "Extract values such as merchant, amount, and timestamp from the automation input.",
+            "Send those values to Expense Tracker using the integrations endpoint and your token.",
+            "Review the created transaction later to add products, tags, or other details.",
+          ]}
+        />
+      </InfoSection>
+
+      <InfoSection title="Values your automation can send">
+        <KeyValueList
+          items={[
+            ["Merchant", "Saved as the transaction store name when provided."],
+            ["Amount", "Used as the transaction amount."],
+            ["Date or timestamp", "Used as the transaction date and time."],
+            ["Optional note", "Can be sent as the description."],
+          ]}
+        />
+      </InfoSection>
+    </div>
+  );
+}
+
+function ApiTabContent({ endpointUrl }: { endpointUrl: string }) {
+  return (
+    <div className="space-y-6">
+      <InfoSection title="Endpoint">
+        <CodeBlock value={`POST ${integrationEndpointPath}`} />
+      </InfoSection>
+
+      <InfoSection
+        title="Authentication"
+        description="Every request must include a bearer token that you generate on this page. Tokens are shown only once when created, so store them safely."
+      >
+        <CodeBlock value={`Authorization: Bearer <your-token>`} />
+      </InfoSection>
+
+      <InfoSection title="Required fields">
+        <KeyValueList
+          items={[
+            ["provider", "The integration source. Currently `apple_pay`."],
+            [
+              "eventId",
+              "A unique identifier for the event so duplicates can be detected. If you do not have a natural event id, you can include a timestamp as part of the identifier.",
+            ],
+            ["amount", "A positive number for the transaction amount."],
+            ["date", "An ISO datetime string including timezone offset."],
+          ]}
+        />
+      </InfoSection>
+
+      <InfoSection title="Optional fields">
+        <KeyValueList
+          items={[
+            ["store", "Merchant or store name."],
+            ["description", "Optional note or fallback description."],
+          ]}
+        />
+      </InfoSection>
+
+      <InfoSection title="JSON example">
+        <CodeBlock value={integrationJsonExample} language="json" />
+      </InfoSection>
+
+      <InfoSection title="curl example">
+        <CodeBlock
+          value={getCurlExample("<your-token>", endpointUrl)}
+          language="bash"
+          copyable
+        />
+      </InfoSection>
+    </div>
+  );
+}
+
+function InfoSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {description ? (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function StepList({ steps }: { steps: string[] }) {
+  return (
+    <ol className="space-y-2">
+      {steps.map((step, index) => (
+        <li
+          key={step}
+          className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3"
+        >
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            {index + 1}
+          </span>
+          <span className="text-sm text-foreground">{step}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function KeyValueList({ items }: { items: Array<[string, string]> }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map(([label, value]) => (
+        <div
+          key={label}
+          className="rounded-lg border border-border/50 bg-muted/20 p-3"
+        >
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 text-sm text-foreground">{value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CodeBlock({
+  value,
+  language,
+  copyable = false,
+}: {
+  value: string;
+  language?: string;
+  copyable?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+
+    return () => window.clearTimeout(timeout);
+  }, [copied]);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {}
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/20">
+      <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {language ?? "text"}
+        </span>
+        {copyable ? (
+          <Button type="button" variant="ghost" size="sm" onClick={handleCopy}>
+            {copied ? (
+              <Check className="size-4" />
+            ) : (
+              <Copy className="size-4" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        ) : null}
+      </div>
+      <pre className="overflow-x-auto p-3 text-xs whitespace-pre-wrap break-words font-mono text-foreground">
+        {value}
+      </pre>
     </div>
   );
 }
 
 function CreateTokenCard() {
   const [revealedToken, setRevealedToken] = useState<string | null>(null);
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
   const createToken = integrationMutations.createIntegrationToken();
   const {
     register,
@@ -197,11 +630,25 @@ function CreateTokenCard() {
         }
 
         setRevealedToken(result.token);
+        setExamplesOpen(false);
+        setTokenCopied(false);
         reset({ name: "" });
         toast.success("Token created. Copy it now - it is shown only once.");
       },
     });
   });
+
+  useEffect(() => {
+    if (!tokenCopied) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setTokenCopied(false);
+    }, 2000);
+
+    return () => window.clearTimeout(timeout);
+  }, [tokenCopied]);
 
   async function handleCopyToken() {
     if (!revealedToken) {
@@ -210,10 +657,8 @@ function CreateTokenCard() {
 
     try {
       await navigator.clipboard.writeText(revealedToken);
-      toast.success("Token copied");
-    } catch {
-      toast.error("Failed to copy token");
-    }
+      setTokenCopied(true);
+    } catch {}
   }
 
   return (
@@ -273,8 +718,12 @@ function CreateTokenCard() {
                 variant="secondary"
                 onClick={handleCopyToken}
               >
-                <Copy className="size-4" />
-                Copy token
+                {tokenCopied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+                {tokenCopied ? "Copied" : "Copy token"}
               </Button>
             </div>
             <div className="mt-3">
@@ -282,11 +731,137 @@ function CreateTokenCard() {
                 Keep this token safe. You will use it in the authorization step
                 below.
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setExamplesOpen(true)}
+                >
+                  <TerminalSquare className="size-4" />
+                  View code examples
+                </Button>
+              </div>
             </div>
           </div>
         ) : null}
       </CardContent>
+
+      <TokenExamplesSheet
+        open={examplesOpen}
+        onOpenChange={setExamplesOpen}
+        token={revealedToken}
+      />
     </Card>
+  );
+}
+
+function TokenExamplesSheet({
+  open,
+  onOpenChange,
+  token,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  token: string | null;
+}) {
+  const [activeTab, setActiveTab] = useState<TokenExampleTab>("curl");
+  const endpointUrl = useIntegrationEndpointUrl();
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab("curl");
+    }
+  }, [open]);
+
+  if (!token) {
+    return null;
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="p-0 data-[side=right]:w-[100vw] data-[side=right]:sm:w-[85vw] data-[side=right]:sm:max-w-[880px]"
+      >
+        <SheetHeader className="pr-12">
+          <SheetTitle>Use this token</SheetTitle>
+          <SheetDescription>
+            These examples are ready to test with the token you just created.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="px-4 pb-6">
+          <div className="flex flex-wrap gap-2 border-b border-border/60 pb-4">
+            <TabButton
+              active={activeTab === "curl"}
+              onClick={() => setActiveTab("curl")}
+            >
+              curl
+            </TabButton>
+            <TabButton
+              active={activeTab === "javascript"}
+              onClick={() => setActiveTab("javascript")}
+            >
+              JS
+            </TabButton>
+            <TabButton
+              active={activeTab === "python"}
+              onClick={() => setActiveTab("python")}
+            >
+              Python
+            </TabButton>
+          </div>
+
+          <div className="mt-6 flex-1 overflow-y-auto pr-1">
+            {activeTab === "curl" ? (
+              <InfoSection
+                title="curl example"
+                description="Use this to quickly test the integrations endpoint from your terminal."
+              >
+                <CodeBlock
+                  value={getCurlExample(token, endpointUrl)}
+                  language="bash"
+                  copyable
+                />
+              </InfoSection>
+            ) : null}
+
+            {activeTab === "javascript" ? (
+              <InfoSection
+                title="JavaScript example"
+                description="Use this in a script, automation step, or app that can call fetch."
+              >
+                <CodeBlock
+                  value={getJsExample(token, endpointUrl)}
+                  language="javascript"
+                  copyable
+                />
+              </InfoSection>
+            ) : null}
+
+            {activeTab === "python" ? (
+              <InfoSection
+                title="Python example"
+                description="Use this from a script or backend job with the requests library."
+              >
+                <CodeBlock
+                  value={getPythonExample(token, endpointUrl)}
+                  language="python"
+                  copyable
+                />
+              </InfoSection>
+            ) : null}
+          </div>
+        </div>
+
+        <SheetFooter className="border-t bg-muted/30">
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -421,7 +996,11 @@ function ActiveTokenRow({
     <div
       className={`flex items-center gap-3 px-4 py-3 ${isLast ? "" : "border-b border-border/40"}`}
     >
-      <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="min-w-0 flex-1 text-left"
+      >
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium text-foreground">
             {token.name}
@@ -515,10 +1094,22 @@ function TokenDetailsSheet({
                 value={token.revokedAt ? "Revoked" : "Active"}
               />
               <LogDetailItem label="Prefix" value={token.tokenPrefix} />
-              <LogDetailItem label="Created at" value={formatDateTime(token.createdAt)} />
-              <LogDetailItem label="Updated at" value={formatDateTime(token.updatedAt)} />
-              <LogDetailItem label="Last used" value={formatDateTime(token.lastUsedAt)} />
-              <LogDetailItem label="Revoked at" value={formatDateTime(token.revokedAt)} />
+              <LogDetailItem
+                label="Created at"
+                value={formatDateTime(token.createdAt)}
+              />
+              <LogDetailItem
+                label="Updated at"
+                value={formatDateTime(token.updatedAt)}
+              />
+              <LogDetailItem
+                label="Last used"
+                value={formatDateTime(token.lastUsedAt)}
+              />
+              <LogDetailItem
+                label="Revoked at"
+                value={formatDateTime(token.revokedAt)}
+              />
               <LogDetailItem label="Token id" value={token.id} />
             </div>
           </div>
@@ -528,7 +1119,11 @@ function TokenDetailsSheet({
   );
 }
 
-function IntegrationLogsCard({ tokens }: { tokens: IntegrationTokenMetadata[] }) {
+function IntegrationLogsCard({
+  tokens,
+}: {
+  tokens: IntegrationTokenMetadata[];
+}) {
   const [selectedTokenId, setSelectedTokenId] = useState<string>("all");
   const [selectedLog, setSelectedLog] =
     useState<IntegrationRequestLogListItem | null>(null);
