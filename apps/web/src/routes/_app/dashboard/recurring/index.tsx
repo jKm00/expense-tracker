@@ -200,7 +200,10 @@ function RecurringContent() {
           </EmptyStateMessage>
           <EmptyStateAction>
             <Button asChild size="sm" variant="outline">
-              <Link to="/dashboard/recurring/new">Create recurring entry</Link>
+              <Link to="/dashboard/recurring/new">
+                <Plus className="size-4" />
+                Create recurring entry
+              </Link>
             </Button>
           </EmptyStateAction>
         </EmptyState>

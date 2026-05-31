@@ -21,7 +21,7 @@ import {
 } from "@/components/custom/empty-state";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { ChevronsUpDown, ChartArea } from "lucide-react";
+import { ChevronsUpDown, ChartArea, Plus } from "lucide-react";
 import { TOP_LIMIT } from "@/features/analytics/analytics.constants";
 import { formatAmountNoDecimals } from "@/utils/format";
 
@@ -64,7 +64,10 @@ export function HorizontalExpensesBarChart({
             </EmptyStateMessage>
             <EmptyStateAction>
               <Button asChild size="sm" variant="outline">
-                <Link to="/dashboard/transactions/new">Create transaction</Link>
+                <Link to="/dashboard/transactions/new">
+                  <Plus className="size-4" />
+                  Create transaction
+                </Link>
               </Button>
             </EmptyStateAction>
           </EmptyState>

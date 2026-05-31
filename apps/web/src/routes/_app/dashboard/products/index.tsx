@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
     await Promise.all([
       context.queryClient.prefetchQuery(productQueries.getProductKpisOptions()),
       context.queryClient.prefetchInfiniteQuery(
-        productQueries.getProductListOptions({ group: "untagged" }),
+        productQueries.getProductListOptions({ group: "tagged" }),
       ),
     ]);
   },
@@ -84,7 +84,7 @@ function ProductsContentSkeleton() {
 
 function ProductsContent() {
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<ProductTab>("untagged");
+  const [activeTab, setActiveTab] = useState<ProductTab>("tagged");
   const debouncedSearch = useDebouncedValue(search, 300);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -284,17 +284,6 @@ function ProductsContent() {
       <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
         <button
           type="button"
-          onClick={() => setActiveTab("untagged")}
-          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
-            activeTab === "untagged"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Untagged
-        </button>
-        <button
-          type="button"
           onClick={() => setActiveTab("tagged")}
           className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
             activeTab === "tagged"
@@ -302,7 +291,18 @@ function ProductsContent() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Tagged
+          Tagged ({kpis.tagged})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("untagged")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            activeTab === "untagged"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Untagged ({kpis.untagged})
         </button>
       </div>
       {activeIsPending ? (
@@ -330,7 +330,10 @@ function ProductsContent() {
               </EmptyStateMessage>
               <EmptyStateAction>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/dashboard/products/new">Create first product</Link>
+                  <Link to="/dashboard/products/new">
+                    <Plus className="size-4" />
+                    Create first product
+                  </Link>
                 </Button>
               </EmptyStateAction>
             </>

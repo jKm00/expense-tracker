@@ -6,7 +6,7 @@ import {
 } from "@/components/custom/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Receipt, ShoppingBag } from "lucide-react";
+import { ChevronRight, Plus, Receipt, ShoppingBag } from "lucide-react";
 import { FullTransaction } from "../transactions.models";
 import { useMemo } from "react";
 import { transactionUtils } from "../transactions.utils";
@@ -84,7 +84,10 @@ export function TransactionList({
           </EmptyStateMessage>
           <EmptyStateAction>
             <Button asChild size="sm" variant="outline">
-              <Link to="/dashboard/transactions/new">Create transaction</Link>
+              <Link to="/dashboard/transactions/new">
+                <Plus className="size-4" />
+                Create transaction
+              </Link>
             </Button>
           </EmptyStateAction>
         </EmptyState>

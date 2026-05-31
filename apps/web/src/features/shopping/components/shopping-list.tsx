@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Product } from "@/features/products/products.models";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, X } from "lucide-react";
+import { Plus, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 import { shoppingMutations } from "../shopping.mutations";
 import { ShoppingListWithItems } from "../shopping.models";
@@ -72,7 +72,10 @@ export function ShoppingListView({
           {products.length === 0 ? (
             <EmptyStateAction>
               <Button asChild size="sm" variant="outline">
-                <Link to="/dashboard/products/new">Create first product</Link>
+                <Link to="/dashboard/products/new">
+                  <Plus className="size-4" />
+                  Create first product
+                </Link>
               </Button>
             </EmptyStateAction>
           ) : null}
