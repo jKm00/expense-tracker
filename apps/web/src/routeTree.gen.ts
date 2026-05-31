@@ -14,7 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app/dashboard/index'
-import { Route as ApiIntegrationsImportRouteImport } from './routes/api/integrations/import'
+import { Route as ApiIntegrationsTransactionsRouteImport } from './routes/api/integrations/transactions'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDashboardProfileRouteImport } from './routes/_app/dashboard/profile'
 import { Route as AppDashboardMoreRouteImport } from './routes/_app/dashboard/more'
@@ -61,11 +61,12 @@ const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiIntegrationsImportRoute = ApiIntegrationsImportRouteImport.update({
-  id: '/api/integrations/import',
-  path: '/api/integrations/import',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiIntegrationsTransactionsRoute =
+  ApiIntegrationsTransactionsRouteImport.update({
+    id: '/api/integrations/transactions',
+    path: '/api/integrations/transactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -199,7 +200,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/integrations/import': typeof ApiIntegrationsImportRoute
+  '/api/integrations/transactions': typeof ApiIntegrationsTransactionsRoute
   '/dashboard/': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -227,7 +228,7 @@ export interface FileRoutesByTo {
   '/dashboard/more': typeof AppDashboardMoreRoute
   '/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/integrations/import': typeof ApiIntegrationsImportRoute
+  '/api/integrations/transactions': typeof ApiIntegrationsTransactionsRoute
   '/dashboard': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -258,7 +259,7 @@ export interface FileRoutesById {
   '/_app/dashboard/more': typeof AppDashboardMoreRoute
   '/_app/dashboard/profile': typeof AppDashboardProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/integrations/import': typeof ApiIntegrationsImportRoute
+  '/api/integrations/transactions': typeof ApiIntegrationsTransactionsRoute
   '/_app/dashboard/': typeof AppDashboardIndexRoute
   '/_app/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
@@ -288,7 +289,7 @@ export interface FileRouteTypes {
     | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
-    | '/api/integrations/import'
+    | '/api/integrations/transactions'
     | '/dashboard/'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
@@ -316,7 +317,7 @@ export interface FileRouteTypes {
     | '/dashboard/more'
     | '/dashboard/profile'
     | '/api/auth/$'
-    | '/api/integrations/import'
+    | '/api/integrations/transactions'
     | '/dashboard'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
@@ -346,7 +347,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/more'
     | '/_app/dashboard/profile'
     | '/api/auth/$'
-    | '/api/integrations/import'
+    | '/api/integrations/transactions'
     | '/_app/dashboard/'
     | '/_app/dashboard/products/new'
     | '/_app/dashboard/recurring/new'
@@ -372,7 +373,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiIntegrationsImportRoute: typeof ApiIntegrationsImportRoute
+  ApiIntegrationsTransactionsRoute: typeof ApiIntegrationsTransactionsRoute
   ApiInternalRecurringRunRoute: typeof ApiInternalRecurringRunRoute
 }
 
@@ -413,11 +414,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/integrations/import': {
-      id: '/api/integrations/import'
-      path: '/api/integrations/import'
-      fullPath: '/api/integrations/import'
-      preLoaderRoute: typeof ApiIntegrationsImportRouteImport
+    '/api/integrations/transactions': {
+      id: '/api/integrations/transactions'
+      path: '/api/integrations/transactions'
+      fullPath: '/api/integrations/transactions'
+      preLoaderRoute: typeof ApiIntegrationsTransactionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -642,7 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiIntegrationsImportRoute: ApiIntegrationsImportRoute,
+  ApiIntegrationsTransactionsRoute: ApiIntegrationsTransactionsRoute,
   ApiInternalRecurringRunRoute: ApiInternalRecurringRunRoute,
 }
 export const routeTree = rootRouteImport

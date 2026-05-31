@@ -18,7 +18,7 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   });
 }
 
-export const Route = createFileRoute("/api/integrations/import")({
+export const Route = createFileRoute("/api/integrations/transactions")({
   server: {
     handlers: {
       POST: async ({ request }) => {
