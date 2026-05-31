@@ -1,5 +1,5 @@
 import { ShoppingListWithItems } from "../shopping.models";
-import { AutomationTokenMetadata } from "@/features/automation/automation.models";
+import { IntegrationTokenMetadata } from "@/features/integrations/integration.models";
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { isSameDay } from "date-fns";
 
@@ -36,7 +36,7 @@ export function getPrefilledCheckoutEntries(list: ShoppingListWithItems) {
   return list.items.filter((item) => item.checked).map(makeCheckoutEntry);
 }
 
-export function hasActiveAutomationTokens(tokens: AutomationTokenMetadata[]) {
+export function hasActiveIntegrationTokens(tokens: IntegrationTokenMetadata[]) {
   return tokens.some((token) => token.revokedAt === null);
 }
 

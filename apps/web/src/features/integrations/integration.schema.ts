@@ -13,9 +13,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const automationProvider = pgEnum("automation_provider", ["apple_pay"]);
+export const integrationProvider = pgEnum("integration_provider", ["apple_pay"]);
 
-export const automationTokens = pgTable("automation_tokens", {
+export const integrationTokens = pgTable("integration_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
@@ -29,8 +29,8 @@ export const automationTokens = pgTable("automation_tokens", {
   revokedAt: timestamp("revoked_at"),
 });
 
-export const automationEvents = pgTable(
-  "automation_events",
+export const integrationEvents = pgTable(
+  "integration_events",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id")
@@ -38,8 +38,8 @@ export const automationEvents = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     tokenId: uuid("token_id")
       .notNull()
-      .references(() => automationTokens.id, { onDelete: "cascade" }),
-    provider: automationProvider().notNull(),
+      .references(() => integrationTokens.id, { onDelete: "cascade" }),
+    provider: integrationProvider().notNull(),
     eventId: text("event_id").notNull(),
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     date: timestamp("date").notNull(),
@@ -51,7 +51,7 @@ export const automationEvents = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("automation_events_user_provider_event_unique").on(
+    uniqueIndex("integration_events_user_provider_event_unique").on(
       table.userId,
       table.provider,
       table.eventId,
@@ -59,14 +59,14 @@ export const automationEvents = pgTable(
   ],
 );
 
-export const automationRequestLogs = pgTable(
-  "automation_request_logs",
+export const integrationRequestLogs = pgTable(
+  "integration_request_logs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    tokenId: uuid("token_id").references(() => automationTokens.id, {
+    tokenId: uuid("token_id").references(() => integrationTokens.id, {
       onDelete: "set null",
     }),
     transactionId: uuid("transaction_id").references(() => transactions.id, {
@@ -75,7 +75,7 @@ export const automationRequestLogs = pgTable(
     requestTokenPrefix: text("request_token_prefix"),
     requestMethod: text("request_method").notNull(),
     requestPath: text("request_path").notNull(),
-    provider: automationProvider(),
+    provider: integrationProvider(),
     eventId: text("event_id"),
     requestBody: text("request_body"),
     userAgent: text("user_agent"),
@@ -89,11 +89,11 @@ export const automationRequestLogs = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    index("automation_request_logs_user_created_at_idx").on(
+    index("integration_request_logs_user_created_at_idx").on(
       table.userId,
       table.createdAt,
     ),
-    index("automation_request_logs_token_created_at_idx").on(
+    index("integration_request_logs_token_created_at_idx").on(
       table.tokenId,
       table.createdAt,
     ),

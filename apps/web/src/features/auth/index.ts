@@ -12,7 +12,6 @@ export const auth = betterAuth({
       clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
-  baseUrl: env.BASE_URL,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

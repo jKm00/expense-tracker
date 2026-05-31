@@ -1,8 +1,8 @@
-# Automation Transaction Import Plan
+# Integration Transaction Import Plan
 
 ## Goal
 
-Add a new automation feature where external payment automations (starting with Apple Pay) can create transactions automatically with the correct total and date, while users later enrich the transaction with products, entries, and tags.
+Add a new integration feature where external payment integrations (starting with Apple Pay) can create transactions automatically with the correct total and date, while users later enrich the transaction with products, entries, and tags.
 
 ## Finalized Decisions
 

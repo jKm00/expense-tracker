@@ -5,10 +5,10 @@ import {
   verification,
 } from "@/features/auth/auth.schema";
 import {
-  automationEvents,
-  automationRequestLogs,
-  automationTokens,
-} from "@/features/automation/automation.schema";
+  integrationEvents,
+  integrationRequestLogs,
+  integrationTokens,
+} from "@/features/integrations/integration.schema";
 import {
   productAliases,
   products,
@@ -42,10 +42,10 @@ export const relations = defineRelations(
     tags,
     productAliases,
     productTags,
-    // Automation
-      automationTokens,
-      automationEvents,
-      automationRequestLogs,
+    // Integrations
+    integrationTokens,
+    integrationEvents,
+    integrationRequestLogs,
     // Transactions
     transactions,
     entries,
@@ -59,9 +59,9 @@ export const relations = defineRelations(
       shoppingLists: r.many.shoppingLists(),
       tags: r.many.tags(),
       transactions: r.many.transactions(),
-      automationTokens: r.many.automationTokens(),
-      automationEvents: r.many.automationEvents(),
-      automationRequestLogs: r.many.automationRequestLogs(),
+      integrationTokens: r.many.integrationTokens(),
+      integrationEvents: r.many.integrationEvents(),
+      integrationRequestLogs: r.many.integrationRequestLogs(),
     },
     session: {
       user: r.one.user({
@@ -156,50 +156,50 @@ export const relations = defineRelations(
         from: r.transactions.id,
         to: r.entries.transactionId,
       }),
-      automationEvents: r.many.automationEvents({
+      integrationEvents: r.many.integrationEvents({
         from: r.transactions.id,
-        to: r.automationEvents.transactionId,
+        to: r.integrationEvents.transactionId,
       }),
     },
-    automationTokens: {
+    integrationTokens: {
       user: r.one.user({
-        from: r.automationTokens.userId,
+        from: r.integrationTokens.userId,
         to: r.user.id,
       }),
-      events: r.many.automationEvents({
-        from: r.automationTokens.id,
-        to: r.automationEvents.tokenId,
+      events: r.many.integrationEvents({
+        from: r.integrationTokens.id,
+        to: r.integrationEvents.tokenId,
       }),
-      requestLogs: r.many.automationRequestLogs({
-        from: r.automationTokens.id,
-        to: r.automationRequestLogs.tokenId,
+      requestLogs: r.many.integrationRequestLogs({
+        from: r.integrationTokens.id,
+        to: r.integrationRequestLogs.tokenId,
       }),
     },
-    automationEvents: {
+    integrationEvents: {
       user: r.one.user({
-        from: r.automationEvents.userId,
+        from: r.integrationEvents.userId,
         to: r.user.id,
       }),
-      token: r.one.automationTokens({
-        from: r.automationEvents.tokenId,
-        to: r.automationTokens.id,
+      token: r.one.integrationTokens({
+        from: r.integrationEvents.tokenId,
+        to: r.integrationTokens.id,
       }),
       transaction: r.one.transactions({
-        from: r.automationEvents.transactionId,
+        from: r.integrationEvents.transactionId,
         to: r.transactions.id,
       }),
     },
-    automationRequestLogs: {
+    integrationRequestLogs: {
       user: r.one.user({
-        from: r.automationRequestLogs.userId,
+        from: r.integrationRequestLogs.userId,
         to: r.user.id,
       }),
-      token: r.one.automationTokens({
-        from: r.automationRequestLogs.tokenId,
-        to: r.automationTokens.id,
+      token: r.one.integrationTokens({
+        from: r.integrationRequestLogs.tokenId,
+        to: r.integrationTokens.id,
       }),
       transaction: r.one.transactions({
-        from: r.automationRequestLogs.transactionId,
+        from: r.integrationRequestLogs.transactionId,
         to: r.transactions.id,
       }),
     },
