@@ -1,7 +1,11 @@
 import { Tag } from "@/features/tags/tags.models";
 import { ProductWithTag } from "../products.models";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
 import {
   Card,
   CardContent,
@@ -74,7 +78,9 @@ export function LinkTagForm({
           </p>
           {product.tags.length === 0 ? (
             <EmptyState icon={TagIcon} size="md">
-              <EmptyStateMessage>No tags applied</EmptyStateMessage>
+              <EmptyStateMessage>
+                No tags are linked to this product yet.
+              </EmptyStateMessage>
             </EmptyState>
           ) : (
             <div className="flex flex-wrap gap-1.5">
@@ -105,7 +111,18 @@ export function LinkTagForm({
           />
           {filteredTags.length === 0 ? (
             <EmptyState icon={TagIcon} size="md">
-              <EmptyStateMessage>No tags available</EmptyStateMessage>
+              <EmptyStateMessage>
+                {tags.length === 0
+                  ? "You have not created any tags yet. Add your first tag to start organizing products."
+                  : search
+                    ? "No tags match your search"
+                    : "All available tags are already linked to this product."}
+              </EmptyStateMessage>
+              {tags.length === 0 ? (
+                <EmptyStateAction>
+                  <NewTagDialog />
+                </EmptyStateAction>
+              ) : null}
             </EmptyState>
           ) : (
             <div className="flex flex-wrap gap-1.5">

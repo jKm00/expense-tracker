@@ -1,10 +1,15 @@
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
 import { ProductSelect } from "@/components/custom/product-select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Product } from "@/features/products/products.models";
 import { cn } from "@/lib/utils";
-import { ShoppingBag, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Plus, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 import { shoppingMutations } from "../shopping.mutations";
 import { ShoppingListWithItems } from "../shopping.models";
@@ -59,7 +64,21 @@ export function ShoppingListView({
 
       {list.items.length === 0 ? (
         <EmptyState icon={ShoppingBag}>
-          <EmptyStateMessage>No items on your shopping list yet</EmptyStateMessage>
+          <EmptyStateMessage>
+            {products.length === 0
+              ? "You do not have any products yet. Create one before building your shopping list."
+              : "Your shopping list is clear. Add something above when you need it."}
+          </EmptyStateMessage>
+          {products.length === 0 ? (
+            <EmptyStateAction>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard/products/new">
+                  <Plus className="size-4" />
+                  Create first product
+                </Link>
+              </Button>
+            </EmptyStateAction>
+          ) : null}
         </EmptyState>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">

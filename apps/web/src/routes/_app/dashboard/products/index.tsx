@@ -4,7 +4,11 @@ import {
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -34,7 +38,7 @@ export const Route = createFileRoute("/_app/dashboard/products/")({
     await Promise.all([
       context.queryClient.prefetchQuery(productQueries.getProductKpisOptions()),
       context.queryClient.prefetchInfiniteQuery(
-        productQueries.getProductListOptions({ group: "untagged" }),
+        productQueries.getProductListOptions({ group: "tagged" }),
       ),
     ]);
   },
@@ -80,7 +84,7 @@ function ProductsContentSkeleton() {
 
 function ProductsContent() {
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<ProductTab>("untagged");
+  const [activeTab, setActiveTab] = useState<ProductTab>("tagged");
   const debouncedSearch = useDebouncedValue(search, 300);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -280,17 +284,6 @@ function ProductsContent() {
       <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
         <button
           type="button"
-          onClick={() => setActiveTab("untagged")}
-          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
-            activeTab === "untagged"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Untagged
-        </button>
-        <button
-          type="button"
           onClick={() => setActiveTab("tagged")}
           className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
             activeTab === "tagged"
@@ -298,22 +291,85 @@ function ProductsContent() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Tagged
+          Tagged ({kpis.tagged})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("untagged")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            activeTab === "untagged"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Untagged ({kpis.untagged})
         </button>
       </div>
       {activeIsPending ? (
         <SkeletonList rows={6} />
       ) : activeProducts.length === 0 ? (
         <EmptyState icon={activeTab === "untagged" ? PackageX : Tag}>
-          <EmptyStateMessage>
-            {activeTab === "untagged"
-              ? debouncedSearch
-                ? "No untagged products match your search"
-                : "No untagged products found"
-              : debouncedSearch
-                ? "No tagged products match your search"
-                : "No tagged products found"}
-          </EmptyStateMessage>
+          {debouncedSearch ? (
+            <>
+              <EmptyStateMessage>
+                {activeTab === "untagged"
+                  ? "No untagged products match your search"
+                  : "No tagged products match your search"}
+              </EmptyStateMessage>
+              <EmptyStateAction>
+                <Button type="button" size="sm" variant="outline" onClick={() => setSearch("")}>
+                  Clear search
+                </Button>
+              </EmptyStateAction>
+            </>
+          ) : kpis.total === 0 ? (
+            <>
+              <EmptyStateMessage>
+                You have not added any products yet. Create your first one to get
+                started.
+              </EmptyStateMessage>
+              <EmptyStateAction>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/dashboard/products/new">
+                    <Plus className="size-4" />
+                    Create first product
+                  </Link>
+                </Button>
+              </EmptyStateAction>
+            </>
+          ) : activeTab === "tagged" ? (
+            <>
+              <EmptyStateMessage>
+                Tag products to see them show up in your tagged list.
+              </EmptyStateMessage>
+              <EmptyStateAction>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveTab("untagged")}
+                >
+                  View untagged products
+                </Button>
+              </EmptyStateAction>
+            </>
+          ) : (
+            <>
+              <EmptyStateMessage>
+                You have tagged all your products. Nothing to do here right now.
+              </EmptyStateMessage>
+              <EmptyStateAction>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveTab("tagged")}
+                >
+                  View tagged products
+                </Button>
+              </EmptyStateAction>
+            </>
+          )}
         </EmptyState>
       ) : (
         <ProductList products={activeProducts}>

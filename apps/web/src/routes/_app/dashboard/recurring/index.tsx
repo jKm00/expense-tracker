@@ -5,6 +5,11 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
+import {
   PageHeader,
   PageHeaderTitle,
   PageHeaderDescription,
@@ -187,18 +192,43 @@ function RecurringContent() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
+      {items.length === 0 && !search ? (
+        <EmptyState icon={Repeat}>
+          <EmptyStateMessage>
+            You do not have any recurring entries yet. Add one to keep fixed
+            income and expenses on track.
+          </EmptyStateMessage>
+          <EmptyStateAction>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/recurring/new">
+                <Plus className="size-4" />
+                Create recurring entry
+              </Link>
+            </Button>
+          </EmptyStateAction>
+        </EmptyState>
+      ) : (
+        <>
       <RecurringList items={filteredActiveItems}>
         <RecurringListTitle>Active</RecurringListTitle>
         <RecurringListEmpty>
-          No active recurring transactions
+          {search
+            ? "No active recurring entries match your search"
+            : pausedItems.length > 0
+              ? "No active recurring entries right now. Everything is currently paused."
+              : "No active recurring entries yet"}
         </RecurringListEmpty>
       </RecurringList>
       <RecurringList items={filteredPausedItems}>
         <RecurringListTitle>Paused</RecurringListTitle>
         <RecurringListEmpty>
-          No paused recurring transactions
+          {search
+            ? "No paused recurring entries match your search"
+            : "No paused recurring entries. Nice and tidy."}
         </RecurringListEmpty>
       </RecurringList>
+        </>
+      )}
     </div>
   );
 }

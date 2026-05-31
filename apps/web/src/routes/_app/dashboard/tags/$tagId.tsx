@@ -5,6 +5,11 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
+import {
   PageHeader,
   PageHeaderActions,
   PageHeaderBackButton,
@@ -22,6 +27,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -186,11 +192,17 @@ function TagDetailsContent() {
           Products
         </h2>
         {tag.products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              No products are linked to this tag
-            </p>
-          </div>
+          <EmptyState icon={Package}>
+            <EmptyStateMessage>
+              No products are linked to this tag yet. Link this tag to products to
+              see them listed here.
+            </EmptyStateMessage>
+            <EmptyStateAction>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard/products">Browse products</Link>
+              </Button>
+            </EmptyStateAction>
+          </EmptyState>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border bg-card">
             {tag.products.map((product, idx) => (

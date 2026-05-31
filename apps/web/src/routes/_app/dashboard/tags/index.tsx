@@ -5,6 +5,11 @@ import {
 } from "@/components/custom/errors/expected-error";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
+import {
   PageHeader,
   PageHeaderTitle,
   PageHeaderDescription,
@@ -201,13 +206,18 @@ function TagContent() {
         {isListPending ? (
           <SkeletonList rows={4} />
         ) : visibleTags.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 px-6 py-10 text-center">
-            <p className="text-sm text-muted-foreground">
+          <EmptyState icon={Hash}>
+            <EmptyStateMessage>
               {debouncedSearch
                 ? "No tags match your search"
-                : "No tags created yet"}
-            </p>
-          </div>
+                : "You have not created any tags yet. Add one to start organizing your products."}
+            </EmptyStateMessage>
+            {debouncedSearch ? null : (
+              <EmptyStateAction>
+                <NewTagDialog />
+              </EmptyStateAction>
+            )}
+          </EmptyState>
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
             {visibleTags.map((tag, idx) => (

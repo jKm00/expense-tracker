@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   EmptyState,
+  EmptyStateAction,
   EmptyStateMessage,
 } from "@/components/custom/empty-state";
 import {
@@ -55,6 +56,10 @@ function EntryList({
 
   const emptyMessage = React.Children.toArray(children).find(
     (child) => React.isValidElement(child) && child.type === EntryListEmpty,
+  );
+
+  const emptyAction = React.Children.toArray(children).find(
+    (child) => React.isValidElement(child) && child.type === EntryListEmptyAction,
   );
 
   return (
@@ -114,7 +119,10 @@ function EntryList({
           ))}
         </div>
       ) : (
-        emptyMessage
+        <EmptyState icon={Package}>
+          {emptyMessage}
+          {emptyAction}
+        </EmptyState>
       )}
 
       {canEditTags && transactionId && activeEntry && (
@@ -225,7 +233,11 @@ function EntryTagsDialog({
               Applied tags
             </p>
             {selectedTags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tags applied</p>
+              <EmptyState icon={TagIcon} size="md">
+                <EmptyStateMessage>
+                  No tags are linked to this item yet.
+                </EmptyStateMessage>
+              </EmptyState>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {selectedTags.map((tag) => (
@@ -264,7 +276,20 @@ function EntryTagsDialog({
             />
 
             {availableTags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tags available</p>
+              <EmptyState icon={TagIcon} size="md">
+                <EmptyStateMessage>
+                  {tags.length === 0
+                    ? "You have not created any tags yet. Add one to start tagging transaction items."
+                    : search
+                      ? "No tags match your search"
+                      : "All available tags are already linked to this item."}
+                </EmptyStateMessage>
+                {tags.length === 0 ? (
+                  <EmptyStateAction>
+                    <NewTagDialog />
+                  </EmptyStateAction>
+                ) : null}
+              </EmptyState>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {availableTags.map((tag) => (
@@ -301,11 +326,11 @@ function EntryListTitle({ children }: { children: React.ReactNode }) {
 }
 
 function EntryListEmpty({ children }: { children: React.ReactNode }) {
-  return (
-    <EmptyState icon={Package}>
-      <EmptyStateMessage>{children}</EmptyStateMessage>
-    </EmptyState>
-  );
+  return <EmptyStateMessage>{children}</EmptyStateMessage>;
 }
 
-export { EntryList, EntryListTitle, EntryListEmpty };
+function EntryListEmptyAction({ children }: { children: React.ReactNode }) {
+  return <EmptyStateAction>{children}</EmptyStateAction>;
+}
+
+export { EntryList, EntryListTitle, EntryListEmpty, EntryListEmptyAction };
