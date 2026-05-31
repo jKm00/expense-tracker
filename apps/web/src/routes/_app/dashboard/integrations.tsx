@@ -334,10 +334,12 @@ function HowItWorksSheet({
             </TabButton>
           </div>
 
-          <div className="mt-6 max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto pr-1 max-md:pb-10">
+          <div className="mt-6 max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto pr-1 pb-10">
             {activeTab === "overview" ? <OverviewTabContent /> : null}
             {activeTab === "example" ? <ExampleTabContent /> : null}
-            {activeTab === "api" ? <ApiTabContent endpointUrl={endpointUrl} /> : null}
+            {activeTab === "api" ? (
+              <ApiTabContent endpointUrl={endpointUrl} />
+            ) : null}
           </div>
         </div>
       </SheetContent>
@@ -438,6 +440,9 @@ function ExampleTabContent() {
 }
 
 function ApiTabContent({ endpointUrl }: { endpointUrl: string }) {
+  const [activeExampleTab, setActiveExampleTab] =
+    useState<TokenExampleTab>("curl");
+
   return (
     <div className="space-y-6">
       <InfoSection title="Endpoint">
@@ -478,12 +483,53 @@ function ApiTabContent({ endpointUrl }: { endpointUrl: string }) {
         <CodeBlock value={integrationJsonExample} language="json" />
       </InfoSection>
 
-      <InfoSection title="curl example">
-        <CodeBlock
-          value={getCurlExample("<your-token>", endpointUrl)}
-          language="bash"
-          copyable
-        />
+      <InfoSection title="Examples">
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 border-b border-border/60">
+            <TabButton
+              active={activeExampleTab === "curl"}
+              onClick={() => setActiveExampleTab("curl")}
+            >
+              curl
+            </TabButton>
+            <TabButton
+              active={activeExampleTab === "javascript"}
+              onClick={() => setActiveExampleTab("javascript")}
+            >
+              JS
+            </TabButton>
+            <TabButton
+              active={activeExampleTab === "python"}
+              onClick={() => setActiveExampleTab("python")}
+            >
+              Python
+            </TabButton>
+          </div>
+
+          {activeExampleTab === "curl" ? (
+            <CodeBlock
+              value={getCurlExample("<your-token>", endpointUrl)}
+              language="bash"
+              copyable
+            />
+          ) : null}
+
+          {activeExampleTab === "javascript" ? (
+            <CodeBlock
+              value={getJsExample("<your-token>", endpointUrl)}
+              language="javascript"
+              copyable
+            />
+          ) : null}
+
+          {activeExampleTab === "python" ? (
+            <CodeBlock
+              value={getPythonExample("<your-token>", endpointUrl)}
+              language="python"
+              copyable
+            />
+          ) : null}
+        </div>
       </InfoSection>
     </div>
   );
