@@ -28,6 +28,7 @@ import { DeleteTransactionDialog } from "@/features/transactions/components/dele
 import {
   EntryList,
   EntryListEmpty,
+  EntryListEmptyAction,
   EntryListTitle,
 } from "@/features/transactions/components/entry-list";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -243,7 +244,16 @@ function TransactionDetails() {
         availableTags={tags || []}
       >
         <EntryListTitle>Transaction Items</EntryListTitle>
-        <EntryListEmpty>No transaction items found...</EntryListEmpty>
+        <EntryListEmpty>
+          This transaction does not have any items yet.
+        </EntryListEmpty>
+        <EntryListEmptyAction>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/dashboard/transactions/$id/edit" params={{ id: transaction.id }}>
+              Add items
+            </Link>
+          </Button>
+        </EntryListEmptyAction>
       </EntryList>
     </div>
   );

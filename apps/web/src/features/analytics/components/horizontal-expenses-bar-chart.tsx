@@ -14,8 +14,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { ChevronsUpDown, ChartArea } from "lucide-react";
 import { TOP_LIMIT } from "@/features/analytics/analytics.constants";
 import { formatAmountNoDecimals } from "@/utils/format";
@@ -53,7 +58,15 @@ export function HorizontalExpensesBarChart({
       <CardContent>
         {allData.length === 0 ? (
           <EmptyState icon={ChartArea}>
-            <EmptyStateMessage>No data available</EmptyStateMessage>
+            <EmptyStateMessage>
+              No transaction data yet. Add a transaction to start seeing insights
+              here.
+            </EmptyStateMessage>
+            <EmptyStateAction>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard/transactions/new">Create transaction</Link>
+              </Button>
+            </EmptyStateAction>
           </EmptyState>
         ) : (
           <ChartContainer

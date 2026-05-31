@@ -1,6 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ChevronRight, Receipt, ShoppingBag } from "lucide-react";
 import { FullTransaction } from "../transactions.models";
 import { useMemo } from "react";
@@ -74,7 +79,14 @@ export function TransactionList({
         </div>
       ) : (
         <EmptyState icon={ShoppingBag}>
-          <EmptyStateMessage>No transactions available</EmptyStateMessage>
+          <EmptyStateMessage>
+            You do not have any transactions for this period yet.
+          </EmptyStateMessage>
+          <EmptyStateAction>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/transactions/new">Create transaction</Link>
+            </Button>
+          </EmptyStateAction>
         </EmptyState>
       )}
     </div>

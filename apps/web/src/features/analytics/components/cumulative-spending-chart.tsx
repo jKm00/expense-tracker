@@ -17,7 +17,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
+import {
+  EmptyState,
+  EmptyStateAction,
+  EmptyStateMessage,
+} from "@/components/custom/empty-state";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { ChartArea } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -72,7 +78,15 @@ export function CumulativeSpendingChart({
       <CardContent>
         {isEmpty ? (
           <EmptyState icon={ChartArea}>
-            <EmptyStateMessage>No data available</EmptyStateMessage>
+            <EmptyStateMessage>
+              No cumulative spending data yet. Add a transaction to start tracking
+              the curve.
+            </EmptyStateMessage>
+            <EmptyStateAction>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard/transactions/new">Create transaction</Link>
+              </Button>
+            </EmptyStateAction>
           </EmptyState>
         ) : (
           <ChartContainer config={chartConfig}>
