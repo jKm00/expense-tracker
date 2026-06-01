@@ -30,12 +30,6 @@ export type FullTransaction = Transaction & {
   })[];
 };
 
-export type TransactionPage = {
-  transactions: FullTransaction[];
-  nextOffset: number | null;
-  hasMore: boolean;
-};
-
 export type TransactionKpis = {
   count: number;
   averagePerDay: number;

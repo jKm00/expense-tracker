@@ -21,41 +21,10 @@ async function getAll(userId: string, start: Date, end: Date) {
       userId,
       date: { gte: start, lte: end },
     },
-  });
-}
-
-async function getPage(options: {
-  userId: string;
-  start: Date;
-  end: Date;
-  offset: number;
-  limit: number;
-}) {
-  return await db.query.transactions.findMany({
-    with: {
-      entries: {
-        with: {
-          products: {
-            with: {
-              tags: true,
-            },
-          },
-          tags: true,
-        },
-      },
-    },
-    where: (transaction, { and, eq, gte, lt }) =>
-      and(
-        eq(transaction.userId, options.userId),
-        gte(transaction.date, options.start),
-        lt(transaction.date, options.end),
-      ),
     orderBy: (transaction, { desc }) => [
       desc(transaction.date),
       desc(transaction.id),
     ],
-    limit: options.limit,
-    offset: options.offset,
   });
 }
 
@@ -165,7 +134,6 @@ async function removeAllEntryTagLinks(entryId: string) {
 
 export const transactionRepo = {
   getAll,
-  getPage,
   getKpis,
   getOne,
   save,

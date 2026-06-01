@@ -1,17 +1,8 @@
 import { err, ok } from "@/utils/result";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
-import {
-  ListTransactionsDTO,
-  NewEntryDTO,
-  UpdateEntryDTO,
-} from "./transactions.dtos";
-import {
-  NewTransaction,
-  Transaction,
-  TransactionKpis,
-  TransactionPage,
-} from "./transactions.models";
+import { GetTransactionsDTO, NewEntryDTO, UpdateEntryDTO } from "./transactions.dtos";
+import { NewTransaction, Transaction, TransactionKpis } from "./transactions.models";
 import { productService } from "../products/products.service";
 import { tagsService } from "../tags/tags.service";
 
@@ -35,45 +26,9 @@ async function getTransactions(userId: string, year?: number, month?: number) {
   }
 }
 
-async function listTransactions(userId: string, input: ListTransactionsDTO) {
-  try {
-    let start: Date;
-    if (input.year === undefined || input.month === undefined) {
-      start = dayjs().startOf("month").toDate();
-    } else {
-      start = new Date(input.year, input.month, 1);
-    }
-
-    const end = dayjs(start).add(1, "month").toDate();
-    const offset = input.offset ?? 0;
-    const limit = input.limit ?? 25;
-    const transactions = await transactionRepo.getPage({
-      userId,
-      start,
-      end,
-      offset,
-      limit: limit + 1,
-    });
-
-    const pageTransactions = transactions.slice(0, limit);
-    const hasMore = transactions.length > limit;
-
-    return ok<TransactionPage>({
-      transactions: pageTransactions,
-      hasMore,
-      nextOffset: hasMore ? offset + pageTransactions.length : null,
-    });
-  } catch (error) {
-    return err({
-      reason: "TRANSACTION_DB_ERROR",
-      message: `Failed to fetch paginated transactions for user ${userId}`,
-    });
-  }
-}
-
 async function getTransactionKpis(
   userId: string,
-  input: Pick<ListTransactionsDTO, "year" | "month">,
+  input: GetTransactionsDTO,
 ) {
   try {
     let start: Date;
@@ -601,7 +556,6 @@ async function resolveProduct(
 
 export const transactionService = {
   getTransactions,
-  listTransactions,
   getTransactionKpis,
   getTransaction,
   saveTransaction,
