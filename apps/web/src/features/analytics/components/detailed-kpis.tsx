@@ -66,7 +66,7 @@ export function DetailedKpis({
       calculateComparisonDelta(
         metrics.activeDays,
         comparisonMetrics.activeDays,
-        "up",
+        "down",
       ),
     [metrics.activeDays, comparisonMetrics.activeDays],
   );
