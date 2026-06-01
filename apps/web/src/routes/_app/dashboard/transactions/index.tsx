@@ -17,10 +17,10 @@ import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { TransactionList } from "@/features/transactions/components/transaction-list";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Layers, LoaderCircle, Plus, TrendingUp } from "lucide-react";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { ArrowLeftRight, Layers, Plus, TrendingUp } from "lucide-react";
+import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/")({
   loaderDeps: ({ search: { month, year } }) => ({ month, year }),
@@ -29,8 +29,8 @@ export const Route = createFileRoute("/_app/dashboard/transactions/")({
       context.queryClient.prefetchQuery(
         transactionQueries.getTransactionKpisOptions(deps.year, deps.month),
       ),
-      context.queryClient.prefetchInfiniteQuery(
-        transactionQueries.getTransactionListOptions(deps.year, deps.month),
+      context.queryClient.prefetchQuery(
+        transactionQueries.getTransactionsOptions(deps.year, deps.month),
       ),
     ]);
   },
@@ -82,69 +82,14 @@ function TransactionsContentSkeleton() {
 
 function TransactionsContent() {
   const { year, month } = Route.useSearch();
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const {
     data: [expectedError, kpis],
     error: unexpectedError,
   } = useSuspenseQuery(transactionQueries.getTransactionKpisOptions(year, month));
   const {
-    data: paginatedData,
+    data: [listExpectedError, transactions],
     error: listUnexpectedError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isPending: isListPending,
-  } = useInfiniteQuery(transactionQueries.getTransactionListOptions(year, month));
-
-  const [listExpectedError, transactionPages] = useMemo(() => {
-    if (!paginatedData) {
-      return [null, null] as const;
-    }
-
-    const firstExpectedError = paginatedData.pages
-      .map(([pageError]) => pageError)
-      .find(Boolean);
-
-    if (firstExpectedError) {
-      return [firstExpectedError, null] as const;
-    }
-
-    return [
-      null,
-      paginatedData.pages
-        .map(([, page]) => page)
-        .filter(
-          (page): page is NonNullable<(typeof paginatedData.pages)[number][1]> =>
-            page !== null,
-        ),
-    ] as const;
-  }, [paginatedData]);
-
-  const visibleTransactions = useMemo(
-    () => transactionPages?.flatMap((page) => page.transactions) ?? [],
-    [transactionPages],
-  );
-
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage || isFetchingNextPage || listExpectedError) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, listExpectedError]);
+  } = useSuspenseQuery(transactionQueries.getTransactionsOptions(year, month));
 
   if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;
@@ -199,22 +144,7 @@ function TransactionsContent() {
           />
         </div>
       </div>
-      {isListPending ? null : <TransactionList transactions={visibleTransactions} />}
-      <div
-        ref={loadMoreRef}
-        className="flex min-h-10 items-center justify-center"
-      >
-        {isFetchingNextPage ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <LoaderCircle className="size-4 animate-spin" />
-            Loading more transactions...
-          </div>
-        ) : visibleTransactions.length > 0 && !hasNextPage ? (
-          <p className="text-sm text-muted-foreground">
-            You have reached the end of the transaction list.
-          </p>
-        ) : null}
-      </div>
+      <TransactionList transactions={transactions ?? []} />
     </div>
   );
 }
