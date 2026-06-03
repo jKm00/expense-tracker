@@ -32,7 +32,11 @@ export const importIntegrationTransactionSchema = z.object({
       typeof value === "string" && value.trim().length === 0 ? undefined : value,
     z.string().trim().min(1).max(255).optional(),
   ),
-  description: z.string().trim().min(1).max(500).optional(),
+  description: z.preprocess(
+    (value) =>
+      typeof value === "string" && value.trim().length === 0 ? undefined : value,
+    z.string().trim().min(1).max(500).optional(),
+  ),
 });
 
 export type ImportIntegrationTransactionDTO = z.infer<
