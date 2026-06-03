@@ -27,7 +27,11 @@ export const importIntegrationTransactionSchema = z.object({
   date: z
     .string()
     .datetime({ offset: true, message: "date must include timezone offset" }),
-  store: z.string().trim().min(1).max(255).optional(),
+  store: z.preprocess(
+    (value) =>
+      typeof value === "string" && value.trim().length === 0 ? undefined : value,
+    z.string().trim().min(1).max(255).optional(),
+  ),
   description: z.string().trim().min(1).max(500).optional(),
 });
 
