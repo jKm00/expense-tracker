@@ -245,10 +245,11 @@ describe("integrationService", () => {
     it("returns unauthorized for missing header", async () => {
       const [error, result] = await integrationService.verifyBearerToken(null);
       expect(result).toBeNull();
-      expect(error?.reason).toBe("INTEGRATION_UNAUTHORIZED");
+      expect(error?.reason).toBe("INTEGRATION_NO_TOKEN");
+      expect(error?.message).toBe("Missing or malformed bearer token");
     });
 
-    it("returns unauthorized for revoked token", async () => {
+    it("returns forbidden for revoked token", async () => {
       mockIntegrationRepo.getTokenByHash.mockResolvedValue({
         id: "token-1",
         userId: "user-1",
@@ -260,7 +261,12 @@ describe("integrationService", () => {
       );
 
       expect(result).toBeNull();
-      expect(error?.reason).toBe("INTEGRATION_UNAUTHORIZED");
+      expect(error).toEqual({
+        reason: "INTEGRATION_TOKEN_REVOKED",
+        message: "Token has been revoked and can no longer be used",
+        userId: "user-1",
+        tokenId: "token-1",
+      });
     });
 
     it("returns token context for valid bearer token", async () => {
@@ -315,7 +321,10 @@ describe("integrationService", () => {
       } as any);
 
       const [error, result] = await integrationService.importIntegrationTransaction(
-        "Bearer abcdef",
+        {
+          userId: "user-1",
+          tokenId: "token-1",
+        },
         {
           provider: "apple_pay",
           eventId: "evt-1",
@@ -345,7 +354,10 @@ describe("integrationService", () => {
       } as any);
 
       const [error, result] = await integrationService.importIntegrationTransaction(
-        "Bearer abcdef",
+        {
+          userId: "user-1",
+          tokenId: "token-1",
+        },
         {
           provider: "apple_pay",
           eventId: "evt-1",
@@ -377,7 +389,10 @@ describe("integrationService", () => {
       ] as any);
 
       const [error, result] = await integrationService.importIntegrationTransaction(
-        "Bearer abcdef",
+        {
+          userId: "user-1",
+          tokenId: "token-1",
+        },
         {
           provider: "apple_pay",
           eventId: "evt-2",

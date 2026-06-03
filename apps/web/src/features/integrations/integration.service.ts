@@ -120,15 +120,12 @@ async function verifyBearerToken(authorizationHeader: string | null) {
   return await resolveBearerTokenContext(authorizationHeader);
 }
 
-async function resolveBearerTokenContext(
-  authorizationHeader: string | null,
-  options?: { touchLastUsed?: boolean },
-) {
+async function resolveBearerTokenContext(authorizationHeader: string | null) {
   const rawToken = parseBearerToken(authorizationHeader);
   if (!rawToken) {
     return err({
-      reason: "INTEGRATION_UNAUTHORIZED" as const,
-      message: "Unauthorized",
+      reason: "INTEGRATION_NO_TOKEN" as const,
+      message: "Missing or malformed bearer token",
     });
   }
 
@@ -139,24 +136,31 @@ async function resolveBearerTokenContext(
     token = await integrationRepo.getTokenByHash(tokenHash);
   } catch {
     return err({
-      reason: "INTEGRATION_UNAUTHORIZED" as const,
-      message: "Unauthorized",
+      reason: "INTEGRATION_DB_ERROR" as const,
+      message: "Bearer token is invalid or no longer active",
     });
   }
 
-  if (!token || token.revokedAt) {
+  if (!token) {
     return err({
-      reason: "INTEGRATION_UNAUTHORIZED" as const,
-      message: "Unauthorized",
+      reason: "INTEGRATION_TOKEN_NOT_FOUND" as const,
+      message: "Bearer token is invalid",
     });
   }
 
-  if (options?.touchLastUsed ?? true) {
-    try {
-      await integrationRepo.touchTokenLastUsed(token.id);
-    } catch {
-      // Best effort metadata update.
-    }
+  if (token.revokedAt) {
+    return err({
+      reason: "INTEGRATION_TOKEN_REVOKED" as const,
+      message: "Token has been revoked and can no longer be used",
+      userId: token.userId,
+      tokenId: token.id,
+    });
+  }
+
+  try {
+    await integrationRepo.touchTokenLastUsed(token.id);
+  } catch {
+    // Best effort metadata update.
   }
 
   return ok({
@@ -181,7 +185,8 @@ async function createToken(userId: string, name: string) {
   if (activeTokenCount >= MAX_ACTIVE_TOKENS) {
     return err({
       reason: "INTEGRATION_TOKEN_LIMIT_REACHED" as const,
-      message: "You have reached the maximum number of active integration tokens",
+      message:
+        "You have reached the maximum number of active integration tokens",
     });
   }
 
@@ -254,7 +259,7 @@ async function listRequestLogs(
     const pageLogs = logs.slice(0, limit);
     const hasMore = logs.length > limit;
     const nextCursor = hasMore
-      ? pageLogs[pageLogs.length - 1]?.createdAt.toISOString() ?? null
+      ? (pageLogs[pageLogs.length - 1]?.createdAt.toISOString() ?? null)
       : null;
 
     return ok<IntegrationRequestLogPage>({
@@ -370,14 +375,12 @@ async function revokeToken(userId: string, tokenId: string) {
 }
 
 async function importIntegrationTransaction(
-  authorizationHeader: string | null,
+  authContext: {
+    userId: string;
+    tokenId: string;
+  },
   payload: ImportIntegrationTransactionDTO,
 ) {
-  const [authError, authContext] = await verifyBearerToken(authorizationHeader);
-  if (authError) {
-    return err(authError);
-  }
-
   const normalizedAmount = payload.amount.toFixed(2);
   const normalizedDate = new Date(payload.date);
   const normalizedStore = payload.store ?? null;
@@ -427,15 +430,14 @@ async function importIntegrationTransaction(
     });
   }
 
-  const [placeholderError, placeholderProduct] = await resolvePlaceholderProduct(
-    authContext.userId,
-  );
+  const [placeholderError, placeholderProduct] =
+    await resolvePlaceholderProduct(authContext.userId);
   if (placeholderError) {
     return err(placeholderError);
   }
 
-  const [transactionError, transaction] = await transactionService.saveTransaction(
-    {
+  const [transactionError, transaction] =
+    await transactionService.saveTransaction({
       transaction: {
         userId: authContext.userId,
         source: "integration",
@@ -456,8 +458,7 @@ async function importIntegrationTransaction(
           tagIds: [],
         },
       ],
-    },
-  );
+    });
 
   if (transactionError) {
     return err({
