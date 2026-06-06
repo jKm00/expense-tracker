@@ -1,15 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { analyticsV2Service } from "./analytics-v2.service";
-import { z } from "zod";
 import { featureFlagService } from "../feature-flags/feature-flags.service";
 import { err } from "@/utils/result";
-
-export const getDashboardDataSchema = z.object({
-  year: z.number().optional(),
-  month: z.number().optional(),
-  tagIds: z.array(z.string()).optional(),
-});
+import { getDashboardDataSchema } from "./analytics-v2.dtos";
 
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([authenticated])

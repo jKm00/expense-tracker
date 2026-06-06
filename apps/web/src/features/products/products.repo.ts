@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { products, productTags, productAliases } from "./products.schema";
+import { tags } from "../tags/tags.schema";
 import { entries, transactions } from "../transactions/transactions.schema";
-import { NewProduct, UpdateProduct } from "./products.models";
+import { NewProduct, ProductTagRow, UpdateProduct } from "./products.models";
 import {
   and,
   count,
@@ -128,6 +129,31 @@ async function getOne(id: string) {
   });
 }
 
+async function getTagRows(
+  userId: string,
+  productIds: string[],
+): Promise<ProductTagRow[]> {
+  if (productIds.length === 0) return [];
+
+  return await db
+    .select({
+      productId: productTags.productId,
+      tagId: tags.id,
+      tagName: tags.name,
+      tagColor: tags.color,
+    })
+    .from(productTags)
+    .innerJoin(products, eq(productTags.productId, products.id))
+    .innerJoin(tags, eq(productTags.tagId, tags.id))
+    .where(
+      and(
+        eq(products.userId, userId),
+        isNull(products.deletedAt),
+        inArray(productTags.productId, productIds),
+      ),
+    );
+}
+
 async function getAlias(id: string) {
   return await db.query.productAliases.findFirst({
     where: {
@@ -231,6 +257,7 @@ export const productRepo = {
   getPage,
   getKpis,
   getOne,
+  getTagRows,
   getStats,
   save,
   saveTagLink,

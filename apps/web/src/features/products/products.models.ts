@@ -11,6 +11,12 @@ export type ProductWithTag = Product & {
 };
 export type ProductWithDetails = ProductWithTag;
 
+export type ProductTagRow = {
+  productId: string;
+  tagId: string;
+  tagName: string;
+  tagColor: string | null;
+};
 
 export type NewProduct = InferInsertModel<typeof products>;
 export type UpdateProduct = Partial<

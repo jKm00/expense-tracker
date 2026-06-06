@@ -1,20 +1,5 @@
-import { db } from "@/lib/db";
-import { productTags, products } from "@/features/products/products.schema";
-import { tags } from "@/features/tags/tags.schema";
-import {
-  entries,
-  entryTags,
-  transactions,
-} from "@/features/transactions/transactions.schema";
 import { err, ok } from "@/utils/result";
-import {
-  and,
-  asc,
-  eq,
-  gte,
-  inArray,
-  lte,
-} from "drizzle-orm";
+import { productService } from "../products/products.service";
 import {
   differenceInCalendarDays,
   eachDayOfInterval,
@@ -29,24 +14,8 @@ import {
   subMonths,
   subYears,
 } from "date-fns";
-
-type EntryRow = {
-  id: string;
-  transactionId: string;
-  price: string;
-  quantity: number;
-  type: "income" | "expense";
-  date: Date;
-  store: string | null;
-  description: string | null;
-  source: "manual" | "recurring" | "scan" | "integration" | "shopping";
-  needsReview: boolean;
-  productId: string;
-  productName: string;
-  tagId: string | null;
-  tagName: string | null;
-  tagColor: string | null;
-};
+import { analyticsV2Repo } from "./analytics-v2.repo";
+import { type AnalyticsV2EntryRow } from "./analytics-v2.models";
 
 type AnalyticsEntry = {
   id: string;
@@ -57,7 +26,7 @@ type AnalyticsEntry = {
   date: Date;
   store: string | null;
   description: string | null;
-  source: EntryRow["source"];
+  source: AnalyticsV2EntryRow["source"];
   needsReview: boolean;
   productId: string;
   productName: string;
@@ -85,14 +54,14 @@ export const analyticsV2Service = {
       const comparisonPeriod = getComparisonPeriod(period, month);
 
       const [periodRows, comparisonRows] = await Promise.all([
-        getEntryRows(userId, period),
-        getEntryRows(userId, comparisonPeriod),
+        analyticsV2Repo.getEntryRows(userId, period),
+        analyticsV2Repo.getEntryRows(userId, comparisonPeriod),
       ]);
 
-      const productTagMap = await getProductTagMap([
+      const productTagMap = await getProductTagMap(userId, [
         ...new Set(periodRows.map((entry) => entry.productId)),
       ]);
-      const comparisonProductTagMap = await getProductTagMap([
+      const comparisonProductTagMap = await getProductTagMap(userId, [
         ...new Set(comparisonRows.map((entry) => entry.productId)),
       ]);
 
@@ -172,54 +141,17 @@ function getComparisonPeriod(period: Period, month?: number): Period {
   };
 }
 
-async function getEntryRows(userId: string, period: Period) {
-  return db
-    .select({
-      id: entries.id,
-      transactionId: transactions.id,
-      price: entries.price,
-      quantity: entries.quantity,
-      type: entries.type,
-      date: transactions.date,
-      store: transactions.store,
-      description: transactions.description,
-      source: transactions.source,
-      needsReview: transactions.needsReview,
-      productId: products.id,
-      productName: products.name,
-      tagId: tags.id,
-      tagName: tags.name,
-      tagColor: tags.color,
-    })
-    .from(entries)
-    .innerJoin(transactions, eq(entries.transactionId, transactions.id))
-    .innerJoin(products, eq(entries.productId, products.id))
-    .leftJoin(entryTags, eq(entries.id, entryTags.entryId))
-    .leftJoin(tags, eq(entryTags.tagId, tags.id))
-    .where(
-      and(
-        eq(transactions.userId, userId),
-        gte(transactions.date, period.startDate),
-        lte(transactions.date, period.endDate),
-      ),
-    )
-    .orderBy(asc(transactions.date));
-}
-
-async function getProductTagMap(productIds: string[]) {
+async function getProductTagMap(userId: string, productIds: string[]) {
   const map = new Map<string, { id: string; name: string; color: string | null }[]>();
   if (productIds.length === 0) return map;
 
-  const rows = await db
-    .select({
-      productId: productTags.productId,
-      tagId: tags.id,
-      tagName: tags.name,
-      tagColor: tags.color,
-    })
-    .from(productTags)
-    .innerJoin(tags, eq(productTags.tagId, tags.id))
-    .where(inArray(productTags.productId, productIds));
+  const [error, rows] = await productService.getProductTagRows(
+    userId,
+    productIds,
+  );
+  if (error) {
+    throw new Error(error.message);
+  }
 
   for (const row of rows) {
     const productTagsForProduct = map.get(row.productId) ?? [];
@@ -235,7 +167,7 @@ async function getProductTagMap(productIds: string[]) {
 }
 
 function hydrateEntries(
-  rows: EntryRow[],
+  rows: AnalyticsV2EntryRow[],
   productTagMap: Map<string, { id: string; name: string; color: string | null }[]>,
 ) {
   const entriesById = new Map<string, AnalyticsEntry>();

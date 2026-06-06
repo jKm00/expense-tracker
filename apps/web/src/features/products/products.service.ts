@@ -144,6 +144,18 @@ async function getProduct(userId: string, productId: string) {
   return ok(product);
 }
 
+async function getProductTagRows(userId: string, productIds: string[]) {
+  try {
+    const rows = await productRepo.getTagRows(userId, productIds);
+    return ok(rows);
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DB_ERROR" as const,
+      message: `Failed to fetch product tags for user ${userId}`,
+    });
+  }
+}
+
 async function getProductStats(userId: string, productId: string) {
   const [productError] = await getOwnedProduct(userId, productId);
   if (productError) {
@@ -480,6 +492,7 @@ export const productService = {
   listProducts,
   getProductKpis,
   getProduct,
+  getProductTagRows,
   getProductStats,
   addProduct,
   updateProduct,
