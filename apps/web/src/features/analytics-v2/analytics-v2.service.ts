@@ -15,29 +15,28 @@ import {
   subYears,
 } from "date-fns";
 import { analyticsV2Repo } from "./analytics-v2.repo";
-import { type AnalyticsV2EntryRow } from "./analytics-v2.models";
-
-type AnalyticsEntry = {
-  id: string;
-  transactionId: string;
-  amount: number;
-  quantity: number;
-  type: "income" | "expense";
-  date: Date;
-  store: string | null;
-  description: string | null;
-  source: AnalyticsV2EntryRow["source"];
-  needsReview: boolean;
-  productId: string;
-  productName: string;
-  tags: { id: string; name: string; color: string | null }[];
-};
-
-type Period = {
-  startDate: Date;
-  endDate: Date;
-  isYearly: boolean;
-};
+import type {
+  AnalyticsV2AvailableTag,
+  AnalyticsV2CategoryAccumulator,
+  AnalyticsV2CategoryBreakdownItem,
+  AnalyticsV2Entry,
+  AnalyticsV2EntryRow,
+  AnalyticsV2Insight,
+  AnalyticsV2Kpis,
+  AnalyticsV2Period,
+  AnalyticsV2ProductAccumulator,
+  AnalyticsV2ProductBreakdownItem,
+  AnalyticsV2ProductTagMap,
+  AnalyticsV2SourceBreakdownItem,
+  AnalyticsV2StoreAccumulator,
+  AnalyticsV2StoreBreakdownItem,
+  AnalyticsV2Tag,
+  AnalyticsV2TransactionDrilldownAccumulator,
+  AnalyticsV2TrendBucket,
+  AnalyticsV2TrendPoint,
+  AnalyticsV2WeekdayAccumulator,
+  AnalyticsV2WeekdayBreakdownItem,
+} from "./analytics-v2.models";
 
 const fallbackTag = {
   id: "untagged",
@@ -45,68 +44,71 @@ const fallbackTag = {
   color: "#94a3b8",
 };
 
-export const analyticsV2Service = {
-  async getDashboardData(userId: string, year?: number, month?: number, tagIds?: string[]) {
-    try {
-      const now = new Date();
-      const targetYear = year ?? now.getFullYear();
-      const period = getPeriod(targetYear, month);
-      const comparisonPeriod = getComparisonPeriod(period, month);
+async function getDashboardData(
+  userId: string,
+  year?: number,
+  month?: number,
+  tagIds?: string[],
+) {
+  try {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const period = getPeriod(targetYear, month);
+    const comparisonPeriod = getComparisonPeriod(period, month);
 
-      const [periodRows, comparisonRows] = await Promise.all([
-        analyticsV2Repo.getEntryRows(userId, period),
-        analyticsV2Repo.getEntryRows(userId, comparisonPeriod),
-      ]);
+    const [periodRows, comparisonRows] = await Promise.all([
+      analyticsV2Repo.getEntryRows(userId, period),
+      analyticsV2Repo.getEntryRows(userId, comparisonPeriod),
+    ]);
 
-      const productTagMap = await getProductTagMap(userId, [
-        ...new Set(periodRows.map((entry) => entry.productId)),
-      ]);
-      const comparisonProductTagMap = await getProductTagMap(userId, [
-        ...new Set(comparisonRows.map((entry) => entry.productId)),
-      ]);
+    const productTagMap = await getProductTagMap(userId, [
+      ...new Set(periodRows.map((entry) => entry.productId)),
+    ]);
+    const comparisonProductTagMap = await getProductTagMap(userId, [
+      ...new Set(comparisonRows.map((entry) => entry.productId)),
+    ]);
 
-      const periodEntries = hydrateEntries(periodRows, productTagMap);
-      const comparisonEntries = hydrateEntries(
-        comparisonRows,
-        comparisonProductTagMap,
-      );
-      const availableTags = buildAvailableTags(periodEntries);
-      const filteredEntries =
-        tagIds && tagIds.length > 0
-          ? periodEntries.filter((entry) =>
-              entry.tags.some((tag) => tagIds.includes(tag.id)),
-            )
-          : periodEntries;
+    const periodEntries = hydrateEntries(periodRows, productTagMap);
+    const comparisonEntries = hydrateEntries(
+      comparisonRows,
+      comparisonProductTagMap,
+    );
+    const availableTags = buildAvailableTags(periodEntries);
+    const filteredEntries =
+      tagIds && tagIds.length > 0
+        ? periodEntries.filter((entry) =>
+            entry.tags.some((tag) => tagIds.includes(tag.id)),
+          )
+        : periodEntries;
 
-      return ok({
-        period: {
-          start: format(period.startDate, "yyyy-MM-dd"),
-          end: format(period.endDate, "yyyy-MM-dd"),
-          label: period.isYearly
-            ? format(period.startDate, "yyyy")
-            : format(period.startDate, "MMMM yyyy"),
-          isYearly: period.isYearly,
-        },
-        availableTags,
-        selectedTagIds: tagIds ?? [],
-        ...buildDashboardPayload(
-          filteredEntries,
-          comparisonEntries,
-          period,
-          comparisonPeriod,
-          now,
-        ),
-      });
-    } catch (error) {
-      return err({
-        reason: "ANALYTICS_V2_ERROR",
-        message: "Failed to fetch analytics v2 dashboard data",
-      });
-    }
-  },
-};
+    return ok({
+      period: {
+        start: format(period.startDate, "yyyy-MM-dd"),
+        end: format(period.endDate, "yyyy-MM-dd"),
+        label: period.isYearly
+          ? format(period.startDate, "yyyy")
+          : format(period.startDate, "MMMM yyyy"),
+        isYearly: period.isYearly,
+      },
+      availableTags,
+      selectedTagIds: tagIds ?? [],
+      ...buildDashboardPayload(
+        filteredEntries,
+        comparisonEntries,
+        period,
+        comparisonPeriod,
+        now,
+      ),
+    });
+  } catch (error) {
+    return err({
+      reason: "ANALYTICS_V2_ERROR",
+      message: "Failed to fetch analytics v2 dashboard data",
+    });
+  }
+}
 
-function getPeriod(year: number, month?: number): Period {
+function getPeriod(year: number, month?: number): AnalyticsV2Period {
   if (month === undefined) {
     const date = new Date(year, 0, 1);
     return {
@@ -124,7 +126,10 @@ function getPeriod(year: number, month?: number): Period {
   };
 }
 
-function getComparisonPeriod(period: Period, month?: number): Period {
+function getComparisonPeriod(
+  period: AnalyticsV2Period,
+  month?: number,
+): AnalyticsV2Period {
   if (period.isYearly) {
     return {
       startDate: startOfYear(subYears(period.startDate, 1)),
@@ -142,7 +147,7 @@ function getComparisonPeriod(period: Period, month?: number): Period {
 }
 
 async function getProductTagMap(userId: string, productIds: string[]) {
-  const map = new Map<string, { id: string; name: string; color: string | null }[]>();
+  const map: AnalyticsV2ProductTagMap = new Map();
   if (productIds.length === 0) return map;
 
   const [error, rows] = await productService.getProductTagRows(
@@ -168,29 +173,27 @@ async function getProductTagMap(userId: string, productIds: string[]) {
 
 function hydrateEntries(
   rows: AnalyticsV2EntryRow[],
-  productTagMap: Map<string, { id: string; name: string; color: string | null }[]>,
+  productTagMap: AnalyticsV2ProductTagMap,
 ) {
-  const entriesById = new Map<string, AnalyticsEntry>();
+  const entriesById = new Map<string, AnalyticsV2Entry>();
 
   for (const row of rows) {
     const existing = entriesById.get(row.id);
-    const entry =
-      existing ??
-      {
-        id: row.id,
-        transactionId: row.transactionId,
-        amount: Math.abs(Number(row.price)) * row.quantity,
-        quantity: row.quantity,
-        type: row.type,
-        date: row.date,
-        store: row.store,
-        description: row.description,
-        source: row.source,
-        needsReview: row.needsReview,
-        productId: row.productId,
-        productName: row.productName,
-        tags: [],
-      };
+    const entry = existing ?? {
+      id: row.id,
+      transactionId: row.transactionId,
+      amount: Math.abs(Number(row.price)) * row.quantity,
+      quantity: row.quantity,
+      type: row.type,
+      date: row.date,
+      store: row.store,
+      description: row.description,
+      source: row.source,
+      needsReview: row.needsReview,
+      productId: row.productId,
+      productName: row.productName,
+      tags: [],
+    };
 
     if (row.tagId && !entry.tags.some((tag) => tag.id === row.tagId)) {
       entry.tags.push({
@@ -212,8 +215,10 @@ function hydrateEntries(
   return Array.from(entriesById.values());
 }
 
-function buildAvailableTags(entries: AnalyticsEntry[]) {
-  const tagMap = new Map<string, { id: string; name: string; color: string | null; amount: number }>();
+function buildAvailableTags(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2AvailableTag[] {
+  const tagMap = new Map<string, AnalyticsV2AvailableTag>();
 
   for (const entry of entries) {
     if (entry.type !== "expense") continue;
@@ -233,10 +238,10 @@ function buildAvailableTags(entries: AnalyticsEntry[]) {
 }
 
 function buildDashboardPayload(
-  entries: AnalyticsEntry[],
-  comparisonEntries: AnalyticsEntry[],
-  period: Period,
-  comparisonPeriod: Period,
+  entries: AnalyticsV2Entry[],
+  comparisonEntries: AnalyticsV2Entry[],
+  period: AnalyticsV2Period,
+  comparisonPeriod: AnalyticsV2Period,
   now: Date,
 ) {
   const kpis = buildKpis(entries, period, now);
@@ -269,7 +274,11 @@ function buildDashboardPayload(
   };
 }
 
-function buildKpis(entries: AnalyticsEntry[], period: Period, now: Date) {
+function buildKpis(
+  entries: AnalyticsV2Entry[],
+  period: AnalyticsV2Period,
+  now: Date,
+): AnalyticsV2Kpis {
   const transactionIds = new Set<string>();
   const activeDays = new Set<string>();
   const reviewTransactionIds = new Set<string>();
@@ -298,7 +307,8 @@ function buildKpis(entries: AnalyticsEntry[], period: Period, now: Date) {
     }
   }
 
-  const periodDays = differenceInCalendarDays(period.endDate, period.startDate) + 1;
+  const periodDays =
+    differenceInCalendarDays(period.endDate, period.startDate) + 1;
   const elapsedDays = getElapsedDays(period, now, periodDays);
   const averageDailySpend = elapsedDays === 0 ? 0 : totalExpense / elapsedDays;
   const projectedExpense = averageDailySpend * periodDays;
@@ -330,7 +340,11 @@ function buildKpis(entries: AnalyticsEntry[], period: Period, now: Date) {
   };
 }
 
-function getElapsedDays(period: Period, now: Date, periodDays: number) {
+function getElapsedDays(
+  period: AnalyticsV2Period,
+  now: Date,
+  periodDays: number,
+) {
   const isCurrentPeriod = period.isYearly
     ? isSameYear(period.startDate, now)
     : isSameMonth(period.startDate, now);
@@ -339,20 +353,27 @@ function getElapsedDays(period: Period, now: Date, periodDays: number) {
   return Math.max(1, differenceInCalendarDays(now, period.startDate) + 1);
 }
 
-function buildTrends(entries: AnalyticsEntry[], period: Period) {
-  const buckets = period.isYearly
-    ? eachMonthOfInterval({ start: period.startDate, end: period.endDate }).map((date) => ({
-        key: format(date, "yyyy-MM"),
-        label: format(date, "MMM"),
-        income: 0,
-        expense: 0,
-      }))
-    : eachDayOfInterval({ start: period.startDate, end: period.endDate }).map((date) => ({
-        key: format(date, "yyyy-MM-dd"),
-        label: format(date, "d"),
-        income: 0,
-        expense: 0,
-      }));
+function buildTrends(
+  entries: AnalyticsV2Entry[],
+  period: AnalyticsV2Period,
+): AnalyticsV2TrendPoint[] {
+  const buckets: AnalyticsV2TrendBucket[] = period.isYearly
+    ? eachMonthOfInterval({ start: period.startDate, end: period.endDate }).map(
+        (date) => ({
+          key: format(date, "yyyy-MM"),
+          label: format(date, "MMM"),
+          income: 0,
+          expense: 0,
+        }),
+      )
+    : eachDayOfInterval({ start: period.startDate, end: period.endDate }).map(
+        (date) => ({
+          key: format(date, "yyyy-MM-dd"),
+          label: format(date, "d"),
+          income: 0,
+          expense: 0,
+        }),
+      );
 
   const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
 
@@ -382,11 +403,10 @@ function buildTrends(entries: AnalyticsEntry[], period: Period) {
   });
 }
 
-function buildCategoryBreakdown(entries: AnalyticsEntry[]) {
-  const categoryMap = new Map<
-    string,
-    { id: string; name: string; color: string | null; amount: number; count: number }
-  >();
+function buildCategoryBreakdown(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2CategoryBreakdownItem[] {
+  const categoryMap = new Map<string, AnalyticsV2CategoryAccumulator>();
   const totalExpense = entries
     .filter((entry) => entry.type === "expense")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -415,8 +435,10 @@ function buildCategoryBreakdown(entries: AnalyticsEntry[]) {
     .sort((a, b) => b.amount - a.amount);
 }
 
-function buildStoreBreakdown(entries: AnalyticsEntry[]) {
-  const stores = new Map<string, { name: string; amount: number; count: number }>();
+function buildStoreBreakdown(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2StoreBreakdownItem[] {
+  const stores = new Map<string, AnalyticsV2StoreAccumulator>();
 
   for (const entry of entries) {
     if (entry.type !== "expense") continue;
@@ -436,11 +458,10 @@ function buildStoreBreakdown(entries: AnalyticsEntry[]) {
     .slice(0, 10);
 }
 
-function buildProductBreakdown(entries: AnalyticsEntry[]) {
-  const products = new Map<
-    string,
-    { id: string; name: string; amount: number; quantity: number; count: number }
-  >();
+function buildProductBreakdown(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2ProductBreakdownItem[] {
+  const products = new Map<string, AnalyticsV2ProductAccumulator>();
 
   for (const entry of entries) {
     if (entry.type !== "expense") continue;
@@ -466,8 +487,10 @@ function buildProductBreakdown(entries: AnalyticsEntry[]) {
     .slice(0, 10);
 }
 
-function buildSourceBreakdown(entries: AnalyticsEntry[]) {
-  const sources = new Map<string, { source: string; amount: number; count: number }>();
+function buildSourceBreakdown(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2SourceBreakdownItem[] {
+  const sources = new Map<string, AnalyticsV2SourceBreakdownItem>();
 
   for (const entry of entries) {
     if (entry.type !== "expense") continue;
@@ -484,10 +507,18 @@ function buildSourceBreakdown(entries: AnalyticsEntry[]) {
   return Array.from(sources.values()).sort((a, b) => b.amount - a.amount);
 }
 
-function buildWeekdayBreakdown(entries: AnalyticsEntry[]) {
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-    (day) => ({ day, amount: 0, count: 0 }),
-  );
+function buildWeekdayBreakdown(
+  entries: AnalyticsV2Entry[],
+): AnalyticsV2WeekdayBreakdownItem[] {
+  const weekdays: AnalyticsV2WeekdayAccumulator[] = [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun",
+  ].map((day) => ({ day, amount: 0, count: 0 }));
 
   for (const entry of entries) {
     if (entry.type !== "expense") continue;
@@ -502,38 +533,25 @@ function buildWeekdayBreakdown(entries: AnalyticsEntry[]) {
   }));
 }
 
-function buildTransactionDrilldown(entries: AnalyticsEntry[]) {
+function buildTransactionDrilldown(entries: AnalyticsV2Entry[]) {
   const transactions = new Map<
     string,
-    {
-      id: string;
-      date: string;
-      store: string | null;
-      description: string | null;
-      source: AnalyticsEntry["source"];
-      needsReview: boolean;
-      income: number;
-      expense: number;
-      itemCount: number;
-      tags: Map<string, { id: string; name: string; color: string | null }>;
-    }
+    AnalyticsV2TransactionDrilldownAccumulator
   >();
 
   for (const entry of entries) {
-    const existing =
-      transactions.get(entry.transactionId) ??
-      {
-        id: entry.transactionId,
-        date: format(entry.date, "yyyy-MM-dd"),
-        store: entry.store,
-        description: entry.description,
-        source: entry.source,
-        needsReview: entry.needsReview,
-        income: 0,
-        expense: 0,
-        itemCount: 0,
-        tags: new Map<string, { id: string; name: string; color: string | null }>(),
-      };
+    const existing = transactions.get(entry.transactionId) ?? {
+      id: entry.transactionId,
+      date: format(entry.date, "yyyy-MM-dd"),
+      store: entry.store,
+      description: entry.description,
+      source: entry.source,
+      needsReview: entry.needsReview,
+      income: 0,
+      expense: 0,
+      itemCount: 0,
+      tags: new Map<string, AnalyticsV2Tag>(),
+    };
 
     if (entry.type === "income") existing.income += entry.amount;
     else existing.expense += entry.amount;
@@ -554,23 +572,22 @@ function buildTransactionDrilldown(entries: AnalyticsEntry[]) {
 }
 
 function buildInsights(
-  kpis: ReturnType<typeof buildKpis>,
-  comparisonKpis: ReturnType<typeof buildKpis>,
-  categoryBreakdown: ReturnType<typeof buildCategoryBreakdown>,
-  topStores: ReturnType<typeof buildStoreBreakdown>,
+  kpis: AnalyticsV2Kpis,
+  comparisonKpis: AnalyticsV2Kpis,
+  categoryBreakdown: AnalyticsV2CategoryBreakdownItem[],
+  topStores: AnalyticsV2StoreBreakdownItem[],
 ) {
-  const insights: {
-    title: string;
-    description: string;
-    severity: "good" | "warning" | "critical" | "info";
-  }[] = [];
+  const insights: AnalyticsV2Insight[] = [];
 
   const expenseDelta = kpis.totalExpense - comparisonKpis.totalExpense;
   if (expenseDelta > 0) {
     insights.push({
       title: "Spending is up",
       description: `Expenses increased by ${Math.round(expenseDelta)} compared with the previous period.`,
-      severity: expenseDelta > comparisonKpis.totalExpense * 0.2 ? "critical" : "warning",
+      severity:
+        expenseDelta > comparisonKpis.totalExpense * 0.2
+          ? "critical"
+          : "warning",
     });
   } else if (comparisonKpis.totalExpense > 0) {
     insights.push({
@@ -591,7 +608,8 @@ function buildInsights(
   if (kpis.projectedExpense > kpis.totalIncome && kpis.totalIncome > 0) {
     insights.push({
       title: "Current pace outruns income",
-      description: "At this spend pace, projected expenses exceed period income.",
+      description:
+        "At this spend pace, projected expenses exceed period income.",
       severity: "critical",
     });
   }
@@ -625,10 +643,15 @@ function buildInsights(
   if (insights.length === 0) {
     insights.push({
       title: "Nothing urgent detected",
-      description: "Cashflow, pace, and recurring pressure look stable for this period.",
+      description:
+        "Cashflow, pace, and recurring pressure look stable for this period.",
       severity: "good",
     });
   }
 
   return insights.slice(0, 5);
 }
+
+export const analyticsV2Service = {
+  getDashboardData,
+};
