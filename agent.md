@@ -25,6 +25,11 @@ It's important to follow this structure to make sure each thing handles one resp
 - Services/controllers should return ok/err. Each err should have a unique reason which will be used as a key when displaying error messages in the frontend.
 - Make sure to always handle errors in the frontend. Both unexpected errors (errors returned/thrown from queries/mutations) and expected errors (when services/controller returns an err). All expected errors cases should be handled. Its fine to handle them the same way if it makes sense, as long as all are handled.
 
+## Testing
+
+- All services should be unit tested as this is where the business logic is.
+- When testing, mock the DB so they can be ran without connecting to a real DB
+
 ## General concepts
 
 - Re-use logic if its already implemented (might be implemented in another feature)
