@@ -40,8 +40,6 @@ export const Route = createFileRoute("/_app")({
       }),
     };
 
-    console.log("Feature flags: ", featureFlags);
-
     return { user: session.user, featureFlags };
   },
   loader: async ({ context }) => {
