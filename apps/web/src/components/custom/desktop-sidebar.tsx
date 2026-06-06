@@ -33,6 +33,11 @@ const navSections = [
         icon: ChartPie,
       },
       {
+        label: "Analytics v2",
+        href: "/dashboard/v2/analytics",
+        icon: ChartPie,
+      },
+      {
         label: "Shopping",
         href: "/dashboard/shopping",
         icon: ShoppingBag,

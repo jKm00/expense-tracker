@@ -3,7 +3,8 @@ import { OfflineBanner } from "@/components/custom/offline-banner";
 import { getSession } from "@/features/auth/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
 import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
@@ -30,6 +31,9 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
+  const location = useLocation();
+  const isWideScreen = location.pathname.startsWith("/dashboard/v2/analytics");
+
   return (
     <AuthProvider>
       <OfflineBanner />
@@ -38,7 +42,7 @@ function AppLayout() {
         <div className="hidden md:flex">
           <DesktopSidebar />
           <main className="flex-1 min-w-0">
-            <div className="mx-auto max-w-4xl px-6 py-8">
+            <div className={cn("mx-auto px-6 py-8", isWideScreen ? "w-full max-w-full" : "max-w-4xl")}>
               <Outlet />
             </div>
           </main>
