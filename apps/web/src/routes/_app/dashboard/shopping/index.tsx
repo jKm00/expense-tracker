@@ -6,7 +6,6 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
-  PageHeaderActions,
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
@@ -30,7 +29,8 @@ export const Route = createFileRoute("/_app/dashboard/shopping/")({
       context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
     ]);
 
-    const showBetaBadge = env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false";
+    const showBetaBadge =
+      env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false";
 
     return { showBetaBadge };
   },
@@ -133,9 +133,12 @@ function ShoppingContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
         <div>
-          <p className="text-sm font-medium">{shoppingList.items.length} items</p>
+          <p className="text-sm font-medium">
+            {shoppingList.items.length} items
+          </p>
           <p className="text-xs text-muted-foreground">
-            {checkedCount} checked, {shoppingList.items.length - checkedCount} left
+            {checkedCount} checked, {shoppingList.items.length - checkedCount}{" "}
+            left
           </p>
         </div>
         {hasCheckedItems ? (

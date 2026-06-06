@@ -16,6 +16,8 @@ import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { env } from "@/config/env";
+import { FeatureFlagsDTO } from "@/features/feature-flags/feature-flags.service";
+import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 
 const navSections = [
   {
@@ -31,6 +33,12 @@ const navSections = [
         label: "Analytics",
         href: "/dashboard/analytics",
         icon: ChartPie,
+      },
+      {
+        label: "Analytics v2",
+        href: "/dashboard/v2/analytics",
+        icon: ChartPie,
+        alpha: true,
       },
       {
         label: "Shopping",
@@ -70,6 +78,8 @@ export function DesktopSidebar() {
   const location = useLocation();
   const { user } = useAuth();
 
+  const featureFlags = useFeatureFlags();
+
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
       return (
@@ -102,6 +112,13 @@ export function DesktopSidebar() {
               {section.label}
             </p>
             {section.items.map((item) => {
+              if (
+                item.href === "/dashboard/v2/analytics" &&
+                !featureFlags.ANALYTICS_V2
+              ) {
+                return null;
+              }
+
               const active = isActive(item.href);
               return (
                 <Link
@@ -115,10 +132,19 @@ export function DesktopSidebar() {
                   )}
                   search={(prev) => prev}
                 >
-                  <item.icon className={cn("size-4", active && "text-primary")} />
+                  <item.icon
+                    className={cn("size-4", active && "text-primary")}
+                  />
                   <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                     <span className="truncate">{item.label}</span>
-                    {item.beta ? (
+                    {item.alpha ? (
+                      <Badge
+                        variant="secondary"
+                        className="h-5 rounded-md px-1.5 text-[10px]"
+                      >
+                        ALPHA
+                      </Badge>
+                    ) : item.beta ? (
                       <Badge
                         variant="secondary"
                         className="h-5 rounded-md px-1.5 text-[10px]"
