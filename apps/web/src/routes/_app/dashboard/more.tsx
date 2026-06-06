@@ -6,7 +6,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { env } from "@/config/env";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Package, Plug, Repeat, Tag, User } from "lucide-react";
+import {
+  ArrowRight,
+  ChartPie,
+  Package,
+  Plug,
+  Repeat,
+  Tag,
+  User,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -14,6 +22,13 @@ export const Route = createFileRoute("/_app/dashboard/more")({
 
 function RouteComponent() {
   const mainMenuItems = [
+    {
+      label: "Analytics v2",
+      description: "Detailed insight into you economy",
+      href: "/dashboard/v2/analytics",
+      icon: ChartPie,
+      version: "alpha",
+    },
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -40,7 +55,10 @@ function RouteComponent() {
       description: "Manage import tokens",
       href: "/dashboard/integrations",
       icon: Plug,
-      beta: env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false",
+      version:
+        env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false"
+          ? "beta"
+          : undefined,
     },
     {
       label: "Profile",
@@ -72,12 +90,12 @@ function RouteComponent() {
                   <p className="text-sm font-medium text-foreground">
                     {item.label}
                   </p>
-                  {item.beta ? (
+                  {item.version ? (
                     <Badge
-                      variant="secondary"
+                      variant="outline"
                       className="h-5 rounded-md px-1.5 text-[10px]"
                     >
-                      BETA
+                      {item.version.toUpperCase()}
                     </Badge>
                   ) : null}
                 </div>
@@ -104,12 +122,12 @@ function RouteComponent() {
                   <p className="text-sm font-medium text-foreground">
                     {item.label}
                   </p>
-                  {item.beta ? (
+                  {item.version ? (
                     <Badge
-                      variant="secondary"
+                      variant="outline"
                       className="h-5 rounded-md px-1.5 text-[10px]"
                     >
-                      BETA
+                      {item.version.toUpperCase()}
                     </Badge>
                   ) : null}
                 </div>

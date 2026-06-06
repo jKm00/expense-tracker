@@ -1,8 +1,6 @@
 import { useMemo, useState, type ComponentType } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
-  ArrowDownRight,
-  ArrowUpRight,
   BadgeCheck,
   CalendarDays,
   ChevronDown,
@@ -14,6 +12,7 @@ import {
   ReceiptText,
   Sparkles,
   Tags,
+  TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -57,6 +56,11 @@ import {
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/utils/format";
 import { getDashboardDataOptions } from "../analytics-v2.queries";
+import {
+  ExpectedError,
+  ExpectedErrorMessage,
+  ExpectedErrorTitle,
+} from "@/components/custom/errors/expected-error";
 
 const moneyFlowConfig = {
   cumulativeIncome: {
@@ -94,8 +98,10 @@ const sourceColors: Record<string, string> = {
 
 const insightStyles = {
   good: "border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100",
-  warning: "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100",
-  critical: "border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100",
+  warning:
+    "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100",
+  critical:
+    "border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100",
   info: "border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100",
 };
 
@@ -146,12 +152,30 @@ export function AnalyticsV2Dashboard({
   );
 
   if (error || !data) {
+    let title: string;
+    let message: string;
+
+    switch (error.reason) {
+      case "ANALYTICS_V2_FORBIDDEN":
+        title = "Forbidden";
+        message = "You do not have access to this page";
+        break;
+      case "ANALYTICS_V2_ERROR":
+        title = "Error";
+        message =
+          "Something went wrong getting your insight data. Please try again!";
+        break;
+      default:
+        title = "Unexpected error";
+        message = `Something unexpected happened: ${error.reason satisfies never}. Please try again!`;
+        break;
+    }
+
     return (
-      <Card>
-        <CardContent className="py-10 text-sm text-destructive">
-          Failed to load analytics data.
-        </CardContent>
-      </Card>
+      <ExpectedError>
+        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
+        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
+      </ExpectedError>
     );
   }
 
@@ -169,61 +193,130 @@ export function AnalyticsV2Dashboard({
   }
 
   return (
-    <div className="space-y-6 @container">
-      <section className="grid items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Card className="h-fit overflow-hidden border-border/70">
-          <CardHeader className="border-b bg-muted/30">
-            <div className="flex flex-col gap-4 @xl:flex-row @xl:items-start @xl:justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Wallet className="size-5 text-primary" />
-                  Money position
-                </CardTitle>
-                <CardDescription>
-                  {data.period.label} cashflow, pace, and recurring pressure.
-                </CardDescription>
+    <div className="space-y-4 @container">
+      <section className="grid items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-4">
+          <Card className="h-fit">
+            <CardHeader className="border-b bg-muted/30">
+              <div className="flex flex-col gap-3 @xl:flex-row @xl:items-start @xl:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="size-4 text-primary" />
+                    Money position
+                  </CardTitle>
+                  <CardDescription>
+                    {data.period.label} cashflow, pace, and recurring pressure.
+                  </CardDescription>
+                </div>
+                <Badge
+                  variant={kpis.netFlow >= 0 ? "default" : "destructive"}
+                  className="w-fit"
+                >
+                  {kpis.netFlow >= 0
+                    ? "Positive cashflow"
+                    : "Negative cashflow"}
+                </Badge>
               </div>
-              <Badge variant={kpis.netFlow >= 0 ? "default" : "destructive"}>
-                {kpis.netFlow >= 0 ? "Positive cashflow" : "Negative cashflow"}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 p-4 @md:grid-cols-2 @3xl:grid-cols-4">
-            <KpiTile
-              label="Net flow"
-              value={formatCurrency(kpis.netFlow)}
-              delta={formatCurrency(data.deltas.netFlow, true)}
-              intent={kpis.netFlow >= 0 ? "good" : "bad"}
-              icon={PiggyBank}
-            />
-            <KpiTile
-              label="Savings rate"
-              value={formatPercent(kpis.savingsRate)}
-              delta={formatPercent(data.deltas.savingsRate, true)}
-              intent={kpis.savingsRate >= 20 ? "good" : "neutral"}
-              icon={TrendingUp}
-            />
-            <KpiTile
-              label="Daily spend pace"
-              value={formatCurrency(kpis.averageDailySpend)}
-              delta={formatCurrency(data.deltas.dailySpend, true)}
-              intent={data.deltas.dailySpend <= 0 ? "good" : "bad"}
-              icon={CalendarDays}
-            />
-            <KpiTile
-              label="Projected expense"
-              value={formatCurrency(kpis.projectedExpense)}
-              delta={`${formatPercent(kpis.discretionaryShare)} variable`}
-              intent={kpis.projectedExpense <= kpis.totalIncome ? "good" : "bad"}
-              icon={CreditCard}
-            />
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="grid gap-2 pt-0 @md:grid-cols-2 @3xl:grid-cols-4">
+              <KpiTile
+                label="Net flow"
+                value={formatCurrency(kpis.netFlow)}
+                delta={formatCurrency(data.deltas.netFlow, true)}
+                intent={kpis.netFlow >= 0 ? "good" : "bad"}
+                icon={PiggyBank}
+              />
+              <KpiTile
+                label="Savings rate"
+                value={formatPercent(kpis.savingsRate)}
+                delta={formatPercent(data.deltas.savingsRate, true)}
+                intent={kpis.savingsRate >= 20 ? "good" : "neutral"}
+                icon={TrendingUp}
+              />
+              <KpiTile
+                label="Daily spend"
+                value={formatCurrency(kpis.averageDailySpend)}
+                delta={formatCurrency(data.deltas.dailySpend, true)}
+                intent={data.deltas.dailySpend <= 0 ? "good" : "bad"}
+                icon={CalendarDays}
+              />
+              <KpiTile
+                label="Projection"
+                value={formatCurrency(kpis.projectedExpense)}
+                delta={`${formatPercent(kpis.discretionaryShare)} variable`}
+                intent={
+                  kpis.projectedExpense <= kpis.totalIncome ? "good" : "bad"
+                }
+                icon={CreditCard}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="gap-3">
+              <div className="flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tags className="size-4 text-primary" />
+                    Tag lens
+                  </CardTitle>
+                  <CardDescription>
+                    Focus the whole dashboard on actionable categories.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-fit"
+                  disabled={!hasFilters}
+                  onClick={() => setSelectedTagIds([])}
+                >
+                  <FilterX className="size-3.5" />
+                  Clear filters
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {data.availableTags.length === 0 ? (
+                  <span className="text-sm text-muted-foreground">
+                    Add tags to products or entries to unlock category
+                    filtering.
+                  </span>
+                ) : (
+                  data.availableTags.map((tag) => {
+                    const selected = selectedTagIds.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        className={cn(
+                          "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:bg-muted",
+                        )}
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: tag.color ?? "#94a3b8" }}
+                        />
+                        <span>{tag.name}</span>
+                        <span className="text-[11px] opacity-70">
+                          {formatCurrency(tag.amount)}
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
 
         <Card className="h-fit">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="size-5 text-primary" />
+              <Sparkles className="size-4 text-primary" />
               Action signals
             </CardTitle>
             <CardDescription>What deserves attention first.</CardDescription>
@@ -239,9 +332,9 @@ export function AnalyticsV2Dashboard({
               >
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   {insight.severity === "good" ? (
-                    <BadgeCheck className="size-4" />
+                    <BadgeCheck className="size-3.5" />
                   ) : (
-                    <CircleAlert className="size-4" />
+                    <CircleAlert className="size-3.5" />
                   )}
                   {insight.title}
                 </div>
@@ -252,65 +345,6 @@ export function AnalyticsV2Dashboard({
         </Card>
       </section>
 
-      <Card>
-        <CardHeader className="gap-4">
-          <div className="flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Tags className="size-5 text-primary" />
-                Tag lens
-              </CardTitle>
-              <CardDescription>
-                Focus the whole dashboard on the categories you can actually act on.
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-fit"
-              disabled={!hasFilters}
-              onClick={() => setSelectedTagIds([])}
-            >
-              <FilterX className="size-4" />
-              Clear filters
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {data.availableTags.length === 0 ? (
-              <span className="text-sm text-muted-foreground">
-                Add tags to products or entries to unlock category filtering.
-              </span>
-            ) : (
-              data.availableTags.map((tag) => {
-                const selected = selectedTagIds.includes(tag.id);
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    className={cn(
-                      "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors",
-                      selected
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:bg-muted",
-                    )}
-                    onClick={() => toggleTag(tag.id)}
-                  >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: tag.color ?? "#94a3b8" }}
-                    />
-                    <span>{tag.name}</span>
-                    <span className="text-[11px] opacity-70">
-                      {formatCurrency(tag.amount)}
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </CardHeader>
-      </Card>
-
       <section className="grid gap-4 @3xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <Card>
           <CardHeader>
@@ -318,7 +352,8 @@ export function AnalyticsV2Dashboard({
               <div>
                 <CardTitle>Cashflow trend</CardTitle>
                 <CardDescription>
-                  Cumulative income, expenses, and net movement through the period.
+                  Cumulative income, expenses, and net movement through the
+                  period.
                 </CardDescription>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
@@ -608,7 +643,9 @@ export function AnalyticsV2Dashboard({
                           {transaction.date}
                         </TableCell>
                         <TableCell className="min-w-36 font-medium">
-                          {transaction.store ?? transaction.description ?? "Unknown"}
+                          {transaction.store ??
+                            transaction.description ??
+                            "Unknown"}
                           {transaction.needsReview ? (
                             <Badge variant="outline" className="ml-2">
                               Review
@@ -652,29 +689,31 @@ type KpiTileProps = {
 };
 
 function KpiTile({ label, value, delta, intent, icon: Icon }: KpiTileProps) {
+  const DeltaIcon = intent === "bad" ? TrendingUp : TrendingDown;
+
   return (
-    <div className="rounded-md border bg-background p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <Icon className="size-4 text-muted-foreground" />
+    <div className="rounded-lg border border-border/60 bg-background px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <div className="grid size-6 place-items-center rounded-md">
+          <Icon className="size-3 text-primary" />
+        </div>
+        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
       </div>
-      <div className="mt-3 truncate text-2xl font-semibold tracking-normal">
-        {value}
-      </div>
-      <div
-        className={cn(
-          "mt-2 inline-flex items-center gap-1 text-xs font-medium",
-          intent === "good" && "text-emerald-600 dark:text-emerald-400",
-          intent === "bad" && "text-rose-600 dark:text-rose-400",
-          intent === "neutral" && "text-muted-foreground",
-        )}
-      >
-        {intent === "bad" ? (
-          <ArrowUpRight className="size-3.5" />
-        ) : (
-          <ArrowDownRight className="size-3.5" />
-        )}
-        {delta}
+      <div className="mt-1">
+        <p className="truncate text-xl font-semibold tracking-tight">{value}</p>
+        <div
+          className={cn(
+            "mt-0.5 inline-flex items-center gap-0.5 text-xs font-medium",
+            intent === "good" && "text-income",
+            intent === "bad" && "text-expense",
+            intent === "neutral" && "text-muted-foreground",
+          )}
+        >
+          <DeltaIcon className="size-3" />
+          <span>{delta}</span>
+        </div>
       </div>
     </div>
   );
@@ -779,17 +818,25 @@ function BreakdownCard({
             <div key={row.id} className="space-y-1.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{row.label}</div>
-                  <div className="text-xs text-muted-foreground">{row.meta}</div>
+                  <div className="truncate text-sm font-medium">
+                    {row.label}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {row.meta}
+                  </div>
                 </div>
-                <div className="shrink-0 text-sm font-semibold">{row.value}</div>
+                <div className="shrink-0 text-sm font-semibold">
+                  {row.value}
+                </div>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-primary"
                   style={{
                     width:
-                      maxAmount === 0 ? "0%" : `${(row.amount / maxAmount) * 100}%`,
+                      maxAmount === 0
+                        ? "0%"
+                        : `${(row.amount / maxAmount) * 100}%`,
                   }}
                 />
               </div>

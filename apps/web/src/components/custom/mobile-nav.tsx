@@ -16,7 +16,6 @@ const navItems = [
     icon: ReceiptTextIcon,
   },
   { label: "Analytics", href: "/dashboard/analytics", icon: ChartPie },
-  { label: "Analytics v2", href: "/dashboard/v2/analytics", icon: ChartPie },
   { label: "Shopping", href: "/dashboard/shopping", icon: ShoppingBag },
   { label: "More", href: "/dashboard/more", icon: Ellipsis },
 ] as const;
