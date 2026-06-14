@@ -464,12 +464,6 @@ async function unlinkTagFromEntry(
   if (transactionError) {
     return err(transactionError);
   }
-  getLogger().addAttrs({
-    transactionAction: "unlinkTagFromEntry",
-    transactionId,
-    entryId,
-    tagId,
-  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {
