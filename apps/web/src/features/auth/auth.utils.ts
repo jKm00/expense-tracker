@@ -3,6 +3,8 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import { auth } from "@/features/auth";
 import { redirect } from "@tanstack/react-router";
 
+const ADMINS = ["joakimedvardsen2000@gmail.com2"];
+
 export const getSession = createServerFn({ method: "GET" }).handler(
   async () => {
     const headers = getRequestHeaders();
@@ -32,3 +34,16 @@ export const authenticated = createMiddleware().server(
     });
   },
 );
+
+export const adminAuthenticated = createMiddleware()
+  .middleware([authenticated])
+  .server(async ({ next, context }) => {
+    const email = context.user.email;
+    if (!ADMINS.includes(email)) {
+      throw redirect({
+        to: "/dashboard",
+      });
+    }
+
+    return next();
+  });
