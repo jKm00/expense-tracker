@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import { analyticsV2Service } from "./analytics-v2.service";
 import { featureFlagService } from "../feature-flags/feature-flags.service";
-import { err } from "@/utils/result";
 import { getDashboardDataSchema } from "./analytics-v2.dtos";
+import { err } from "../logger/logger.result";
 
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([authenticated])

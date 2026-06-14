@@ -1,17 +1,31 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import { RequestLogContext } from "./logger.types";
 import pino from "pino";
 
 const baseLogger = pino();
 
-const als = new AsyncLocalStorage<RequestLogContext>();
+type RequestAsyncLocalStorage = import("node:async_hooks").AsyncLocalStorage<RequestLogContext>;
 
-export function runWithLogContext<T>(ctx: RequestLogContext, fn: () => T): T {
-  return als.run(ctx, fn);
+let als: RequestAsyncLocalStorage | undefined;
+
+async function getAsyncLocalStorage() {
+  if (!als) {
+    const { AsyncLocalStorage } = await import("node:async_hooks");
+    als = new AsyncLocalStorage<RequestLogContext>();
+  }
+
+  return als;
+}
+
+export async function runWithLogContext<T>(
+  ctx: RequestLogContext,
+  fn: () => T,
+): Promise<T> {
+  const store = await getAsyncLocalStorage();
+  return store.run(ctx, fn);
 }
 
 export function getLogger() {
-  const ctx = als.getStore();
+  const ctx = als?.getStore();
 
   const shouldLogInfo = () => {
     if (!ctx) return true;

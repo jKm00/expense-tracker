@@ -23,10 +23,20 @@ export const loggingMiddleware = createMiddleware().server(
           result instanceof Response ? result.status : result.response?.status;
 
         const durationMs = Date.now() - startedAt;
+        const isError =
+          (status ?? 200) >= 400 ||
+          ctx.attrs.appError === true ||
+          typeof ctx.attrs.errorReason === "string";
 
-        const shouldLog = ctx.sampled || status >= 400 || durationMs > 1000;
+        const shouldLog = ctx.sampled || isError || durationMs > 1000;
 
-        if (shouldLog) {
+        if (isError) {
+          getLogger().error("Request failed", {
+            status,
+            durationMs,
+            sampled: ctx.sampled,
+          });
+        } else if (shouldLog) {
           getLogger().info("Request completed", {
             status,
             durationMs,

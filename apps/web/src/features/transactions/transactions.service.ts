@@ -1,4 +1,6 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
+import { getLogger } from "../logger/logger.context";
 import { transactionRepo } from "./transactions.repo";
 import dayjs from "dayjs";
 import { GetTransactionsDTO, NewEntryDTO, UpdateEntryDTO } from "./transactions.dtos";
@@ -7,6 +9,9 @@ import { productService } from "../products/products.service";
 import { tagsService } from "../tags/tags.service";
 
 async function getTransactions(userId: string, year?: number, month?: number) {
+  const logger = getLogger();
+  logger.addAttrs({ transactionAction: "getTransactions", year, month });
+
   try {
     let start: Date;
     if (year === undefined || month === undefined) {
@@ -17,6 +22,7 @@ async function getTransactions(userId: string, year?: number, month?: number) {
 
     const end = dayjs(start).add(1, "month").toDate();
     const transactions = await transactionRepo.getAll(userId, start, end);
+    logger.addAttrs({ transactionCount: transactions.length });
     return ok(transactions);
   } catch (error) {
     return err({
@@ -30,6 +36,13 @@ async function getTransactionKpis(
   userId: string,
   input: GetTransactionsDTO,
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    transactionAction: "getTransactionKpis",
+    year: input.year,
+    month: input.month,
+  });
+
   try {
     let start: Date;
     if (input.year === undefined || input.month === undefined) {
@@ -45,6 +58,7 @@ async function getTransactionKpis(
       end,
     );
     const daysInMonth = dayjs(start).daysInMonth();
+    logger.addAttrs({ transactionCount, transactionEntryCount: totalEntries });
 
     return ok<TransactionKpis>({
       count: transactionCount,
@@ -63,6 +77,8 @@ async function getTransactionKpis(
 }
 
 async function getTransaction(userId: string, transactionId: string) {
+  getLogger().addAttrs({ transactionAction: "getTransaction", transactionId });
+
   try {
     const transaction = await transactionRepo.getOne(transactionId);
     if (!transaction) {
@@ -101,6 +117,14 @@ async function saveTransaction({
   transaction: Omit<NewTransaction, "totalPrice">;
   entries: NewEntryDTO[];
 }) {
+  const logger = getLogger();
+  logger.addAttrs({
+    transactionAction: "saveTransaction",
+    transactionSource: transaction.source,
+    transactionEntryCount: entries.length,
+    transactionStorePresent: Boolean(transaction.store),
+  });
+
   const totalPrice = calculateTotalPrice(entries);
 
   let savedTransactions: Transaction[];
@@ -124,6 +148,10 @@ async function saveTransaction({
   }
 
   const savedTransaction = savedTransactions[0];
+  logger.addAttrs({
+    transactionId: savedTransaction.id,
+    transactionTotalPrice: totalPrice,
+  });
   for (const entry of entries) {
     const [saveEntryError] = await saveEntry(
       transaction.userId,
@@ -179,10 +207,13 @@ async function saveEntry(
 }
 
 async function deleteTransaction(userId: string, transactionId: string) {
+  getLogger().addAttrs({ transactionAction: "deleteTransaction", transactionId });
+
   const [foundError] = await getTransaction(userId, transactionId);
   if (foundError) {
     return err(foundError);
   }
+  getLogger().addAttrs({ transactionAction: "deleteTransaction", transactionId });
 
   try {
     const removed = await transactionRepo.remove(transactionId);
@@ -212,6 +243,14 @@ async function updateTransaction(
     entries: UpdateEntryDTO[];
   },
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    transactionAction: "updateTransaction",
+    transactionId,
+    transactionEntryCount: entries.length,
+    transactionUpdateFields: Object.keys(transaction),
+  });
+
   // Verify ownership
   const [foundError, existingTransaction] = await getTransaction(
     userId,
@@ -220,6 +259,7 @@ async function updateTransaction(
   if (foundError) {
     return err(foundError);
   }
+  logger.addAttrs({ transactionAction: "updateTransaction", transactionId });
 
   // Validate that all provided entry IDs belong to this transaction
   const existingEntryIds = new Set(
@@ -271,6 +311,10 @@ async function updateTransaction(
   const entriesToDelete = [...existingEntryIds].filter(
     (id) => !updatedEntryIds.has(id),
   );
+  logger.addAttrs({
+    transactionEntriesToDeleteCount: entriesToDelete.length,
+    transactionHasEntryChanges: entryChanges,
+  });
 
   // Delete removed entries
   for (const entryId of entriesToDelete) {
@@ -351,6 +395,13 @@ async function linkTagToEntry(
   entryId: string,
   tagId: string,
 ) {
+  getLogger().addAttrs({
+    transactionAction: "linkTagToEntry",
+    transactionId,
+    entryId,
+    tagId,
+  });
+
   const [transactionError, transaction] = await getTransaction(
     userId,
     transactionId,
@@ -358,6 +409,12 @@ async function linkTagToEntry(
   if (transactionError) {
     return err(transactionError);
   }
+  getLogger().addAttrs({
+    transactionAction: "linkTagToEntry",
+    transactionId,
+    entryId,
+    tagId,
+  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {
@@ -401,6 +458,13 @@ async function unlinkTagFromEntry(
   entryId: string,
   tagId: string,
 ) {
+  getLogger().addAttrs({
+    transactionAction: "unlinkTagFromEntry",
+    transactionId,
+    entryId,
+    tagId,
+  });
+
   const [transactionError, transaction] = await getTransaction(
     userId,
     transactionId,
@@ -408,6 +472,12 @@ async function unlinkTagFromEntry(
   if (transactionError) {
     return err(transactionError);
   }
+  getLogger().addAttrs({
+    transactionAction: "unlinkTagFromEntry",
+    transactionId,
+    entryId,
+    tagId,
+  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {

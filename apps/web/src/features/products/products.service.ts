@@ -1,4 +1,6 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
+import { getLogger } from "../logger/logger.context";
 import { ListProductsDTO } from "./products.dtos";
 import { tagsService } from "../tags/tags.service";
 import {
@@ -78,8 +80,12 @@ function isUniqueConstraintError(error: unknown) {
 }
 
 async function getProducts(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ productAction: "getProducts" });
+
   try {
     const products = await productRepo.getAll(userId);
+    logger.addAttrs({ productCount: products.length });
     return ok(products);
   } catch (error) {
     return err({
@@ -90,6 +96,15 @@ async function getProducts(userId: string) {
 }
 
 async function listProducts(userId: string, input: ListProductsDTO) {
+  const logger = getLogger();
+  logger.addAttrs({
+    productAction: "listProducts",
+    productOffset: input.offset ?? 0,
+    productLimit: input.limit ?? 25,
+    productGroup: input.group,
+    productHasSearch: Boolean(input.search?.trim()),
+  });
+
   try {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 25;
@@ -104,6 +119,10 @@ async function listProducts(userId: string, input: ListProductsDTO) {
 
     const pageProducts = products.slice(0, limit);
     const hasMore = products.length > limit;
+    logger.addAttrs({
+      productPageCount: pageProducts.length,
+      productHasMore: hasMore,
+    });
 
     return ok<ProductPage>({
       products: pageProducts,
@@ -119,8 +138,12 @@ async function listProducts(userId: string, input: ListProductsDTO) {
 }
 
 async function getProductKpis(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ productAction: "getProductKpis" });
+
   try {
     const { total, tagged } = await productRepo.getKpis(userId);
+    logger.addAttrs({ productTotal: total, productTagged: tagged });
 
     return ok<ProductKpis>({
       total,
@@ -136,6 +159,8 @@ async function getProductKpis(userId: string) {
 }
 
 async function getProduct(userId: string, productId: string) {
+  getLogger().addAttrs({ productAction: "getProduct", productId });
+
   const [productError, product] = await getOwnedProduct(userId, productId);
   if (productError) {
     return err(productError);
@@ -145,8 +170,15 @@ async function getProduct(userId: string, productId: string) {
 }
 
 async function getProductTagRows(userId: string, productIds: string[]) {
+  const logger = getLogger();
+  logger.addAttrs({
+    productAction: "getProductTagRows",
+    productIdsCount: productIds.length,
+  });
+
   try {
     const rows = await productRepo.getTagRows(userId, productIds);
+    logger.addAttrs({ productTagRowCount: rows.length });
     return ok(rows);
   } catch (error) {
     return err({
@@ -157,6 +189,8 @@ async function getProductTagRows(userId: string, productIds: string[]) {
 }
 
 async function getProductStats(userId: string, productId: string) {
+  getLogger().addAttrs({ productAction: "getProductStats", productId });
+
   const [productError] = await getOwnedProduct(userId, productId);
   if (productError) {
     return err(productError);
@@ -174,6 +208,12 @@ async function getProductStats(userId: string, productId: string) {
 }
 
 async function addProduct(product: NewProduct, tagIds?: string[]) {
+  const logger = getLogger();
+  logger.addAttrs({
+    productAction: "addProduct",
+    productTagCount: tagIds?.length ?? 0,
+  });
+
   const trimmedProductName = trimName(product.name);
 
   let saved: Product;
@@ -186,6 +226,7 @@ async function addProduct(product: NewProduct, tagIds?: string[]) {
       });
     }
     saved = res[0];
+    logger.addAttrs({ productId: saved.id });
   } catch (error) {
     return err({
       reason: "UNEXPECTED_DB_ERROR" as const,
@@ -203,6 +244,13 @@ async function addProduct(product: NewProduct, tagIds?: string[]) {
 }
 
 async function updateProduct(userId: string, productId: string, data: UpdateProduct) {
+  const logger = getLogger();
+  logger.addAttrs({
+    productAction: "updateProduct",
+    productId,
+    productUpdateFields: Object.keys(data),
+  });
+
   const [foundError] = await getOwnedProduct(userId, productId);
   if (foundError) {
     return err(foundError);
@@ -225,6 +273,7 @@ async function updateProduct(userId: string, productId: string, data: UpdateProd
       });
     }
     updated = res[0];
+    logger.addAttrs({ productNameChanged: data.name !== undefined });
   } catch (error) {
     return err({
       reason: "UNEXPECTED_DB_ERROR" as const,
@@ -246,6 +295,8 @@ async function updateProduct(userId: string, productId: string, data: UpdateProd
 }
 
 async function addProductAlias(userId: string, productId: string, name: string) {
+  getLogger().addAttrs({ productAction: "addProductAlias", productId });
+
   const [productError, product] = await getOwnedProduct(userId, productId);
   if (productError) {
     return err(productError);
@@ -304,6 +355,8 @@ async function addProductAlias(userId: string, productId: string, name: string) 
 }
 
 async function updateProductAlias(userId: string, aliasId: string, name: string) {
+  getLogger().addAttrs({ productAction: "updateProductAlias", aliasId });
+
   let aliasWithOwner: Awaited<ReturnType<typeof getAliasWithOwner>>;
   try {
     aliasWithOwner = await getAliasWithOwner(aliasId);
@@ -381,6 +434,8 @@ async function updateProductAlias(userId: string, aliasId: string, name: string)
 }
 
 async function deleteProductAlias(userId: string, aliasId: string) {
+  getLogger().addAttrs({ productAction: "deleteProductAlias", aliasId });
+
   let aliasWithOwner: Awaited<ReturnType<typeof getAliasWithOwner>>;
   try {
     aliasWithOwner = await getAliasWithOwner(aliasId);
@@ -427,6 +482,8 @@ async function deleteProductAlias(userId: string, aliasId: string) {
 }
 
 async function linkTagToProduct(userId: string, productId: string, tagId: string) {
+  getLogger().addAttrs({ productAction: "linkTagToProduct", productId, tagId });
+
   const [foundProductError] = await getOwnedProduct(userId, productId);
   if (foundProductError) {
     return err(foundProductError);
@@ -445,6 +502,12 @@ async function linkTagToProduct(userId: string, productId: string, tagId: string
 }
 
 async function unlinkTagFromProduct(userId: string, productId: string, tagId: string) {
+  getLogger().addAttrs({
+    productAction: "unlinkTagFromProduct",
+    productId,
+    tagId,
+  });
+
   const [foundProductError] = await getOwnedProduct(userId, productId);
   if (foundProductError) {
     return err(foundProductError);
@@ -465,6 +528,8 @@ async function unlinkTagFromProduct(userId: string, productId: string, tagId: st
 }
 
 async function deleteProduct(userId: string, productId: string) {
+  getLogger().addAttrs({ productAction: "deleteProduct", productId });
+
   const [foundError] = await getOwnedProduct(userId, productId);
   if (foundError) {
     return err(foundError);
