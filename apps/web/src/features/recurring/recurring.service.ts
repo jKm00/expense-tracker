@@ -137,7 +137,6 @@ async function updateRecurring(
   if (foundError) {
     return err(foundError);
   }
-  logger.addAttrs({ recurringAction: "updateRecurring", recurringId });
 
   let resolvedProductId: string | undefined;
   if (data.product) {
