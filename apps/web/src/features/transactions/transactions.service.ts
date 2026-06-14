@@ -213,7 +213,6 @@ async function deleteTransaction(userId: string, transactionId: string) {
   if (foundError) {
     return err(foundError);
   }
-  getLogger().addAttrs({ transactionAction: "deleteTransaction", transactionId });
 
   try {
     const removed = await transactionRepo.remove(transactionId);
