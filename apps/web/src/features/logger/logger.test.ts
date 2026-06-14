@@ -101,7 +101,7 @@ describe("logger context", () => {
     );
   });
 
-  it("keeps concurrent request context isloated", async () => {
+  it("keeps concurrent request context isolated", async () => {
     const ctxA = {
       requestId: "req_A",
       sampled: true,
