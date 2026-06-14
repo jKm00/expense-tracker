@@ -3,7 +3,7 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import { auth } from "@/features/auth";
 import { redirect } from "@tanstack/react-router";
 
-const ADMINS = ["joakimedvardsen2000@gmail.com2"];
+const ADMINS = ["joakimedvardsen2000@gmail.com"];
 
 export const getSession = createServerFn({ method: "GET" }).handler(
   async () => {
