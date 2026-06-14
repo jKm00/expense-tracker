@@ -4,17 +4,8 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { Badge } from "@/components/ui/badge";
-import { env } from "@/config/env";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  ChartPie,
-  Package,
-  Plug,
-  Repeat,
-  Tag,
-  User,
-} from "lucide-react";
+import { ArrowRight, Package, Plug, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
