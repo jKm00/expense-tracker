@@ -407,12 +407,6 @@ async function linkTagToEntry(
   if (transactionError) {
     return err(transactionError);
   }
-  getLogger().addAttrs({
-    transactionAction: "linkTagToEntry",
-    transactionId,
-    entryId,
-    tagId,
-  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {
