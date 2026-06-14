@@ -7,7 +7,9 @@ import * as schema from "./schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(__dirname, "../../..");
-config({ path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")] });
+config({
+  path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")],
+});
 
 // Seeded random number generator for deterministic output
 class SeededRandom {
@@ -243,7 +245,7 @@ const main = async () => {
   ];
 
   const minDate = new Date("2025-01-01");
-  const maxDate = new Date("2026-04-30");
+  const maxDate = new Date("2026-06-07");
 
   console.log("Creating tags...");
   const tags: (typeof schema.tags.$inferSelect)[] = [];
@@ -266,74 +268,74 @@ const main = async () => {
 
   console.log("Creating products...");
   const products = [];
-  
+
   // Define which tags should be assigned to which product names
   const productTagMapping: Record<string, string[]> = {
     // Groceries - Dairy
-    "Milk": ["Groceries", "Food", "Dairy", "Beverages"],
-    "Cheese": ["Groceries", "Food", "Dairy"],
-    "Butter": ["Groceries", "Food", "Dairy"],
-    "Yogurt": ["Groceries", "Food", "Dairy"],
-    
+    Milk: ["Groceries", "Food", "Dairy", "Beverages"],
+    Cheese: ["Groceries", "Food", "Dairy"],
+    Butter: ["Groceries", "Food", "Dairy"],
+    Yogurt: ["Groceries", "Food", "Dairy"],
+
     // Groceries - Meat
     "Chicken Breast": ["Groceries", "Food", "Meat"],
     "Ground Beef": ["Groceries", "Food", "Meat"],
-    "Salmon": ["Groceries", "Food", "Meat"],
-    
+    Salmon: ["Groceries", "Food", "Meat"],
+
     // Groceries - Produce
-    "Apples": ["Groceries", "Food", "Produce"],
-    "Bananas": ["Groceries", "Food", "Produce"],
-    "Oranges": ["Groceries", "Food", "Produce"],
-    "Tomatoes": ["Groceries", "Food", "Produce"],
-    "Lettuce": ["Groceries", "Food", "Produce"],
-    "Broccoli": ["Groceries", "Food", "Produce"],
-    
+    Apples: ["Groceries", "Food", "Produce"],
+    Bananas: ["Groceries", "Food", "Produce"],
+    Oranges: ["Groceries", "Food", "Produce"],
+    Tomatoes: ["Groceries", "Food", "Produce"],
+    Lettuce: ["Groceries", "Food", "Produce"],
+    Broccoli: ["Groceries", "Food", "Produce"],
+
     // Groceries - Pantry
-    "Bread": ["Groceries", "Food"],
-    "Eggs": ["Groceries", "Food"],
-    "Rice": ["Groceries", "Food"],
-    "Pasta": ["Groceries", "Food"],
-    
+    Bread: ["Groceries", "Food"],
+    Eggs: ["Groceries", "Food"],
+    Rice: ["Groceries", "Food"],
+    Pasta: ["Groceries", "Food"],
+
     // Groceries - Beverages
-    "Coffee": ["Groceries", "Food", "Beverages"],
-    "Tea": ["Groceries", "Food", "Beverages"],
+    Coffee: ["Groceries", "Food", "Beverages"],
+    Tea: ["Groceries", "Food", "Beverages"],
     "Orange Juice": ["Groceries", "Food", "Beverages", "Produce"],
-    
+
     // Electronics
-    "Laptop": ["Electronics", "Technology", "Shopping"],
-    "Phone": ["Electronics", "Technology", "Shopping"],
-    "Headphones": ["Electronics", "Technology", "Shopping"],
-    "Tablet": ["Electronics", "Technology", "Shopping"],
-    "Monitor": ["Electronics", "Technology", "Shopping"],
-    "Keyboard": ["Electronics", "Technology", "Shopping"],
-    "Mouse": ["Electronics", "Technology", "Shopping"],
+    Laptop: ["Electronics", "Technology", "Shopping"],
+    Phone: ["Electronics", "Technology", "Shopping"],
+    Headphones: ["Electronics", "Technology", "Shopping"],
+    Tablet: ["Electronics", "Technology", "Shopping"],
+    Monitor: ["Electronics", "Technology", "Shopping"],
+    Keyboard: ["Electronics", "Technology", "Shopping"],
+    Mouse: ["Electronics", "Technology", "Shopping"],
     "USB Cable": ["Electronics", "Technology", "Shopping"],
     "Power Bank": ["Electronics", "Technology", "Shopping"],
     "Smart Watch": ["Electronics", "Technology", "Shopping"],
-    
+
     // Home
     "Dish Soap": ["Home", "Household", "Shopping"],
     "Paper Towels": ["Home", "Household", "Shopping"],
     "Laundry Detergent": ["Home", "Household", "Shopping"],
     "Trash Bags": ["Home", "Household", "Shopping"],
     "Light Bulbs": ["Home", "Household", "Shopping"],
-    "Furniture": ["Home", "Shopping"],
-    "Bedding": ["Home", "Shopping"],
-    "Towels": ["Home", "Shopping"],
+    Furniture: ["Home", "Shopping"],
+    Bedding: ["Home", "Shopping"],
+    Towels: ["Home", "Shopping"],
     "Storage Bins": ["Home", "Shopping"],
     "Cleaning Supplies": ["Home", "Household", "Shopping"],
-    
+
     // Entertainment
     "Movie Ticket": ["Entertainment"],
     "Concert Ticket": ["Entertainment"],
     "Streaming Subscription": ["Entertainment", "Subscription"],
     "Video Game": ["Entertainment", "Electronics"],
-    "Book": ["Entertainment", "Education", "Shopping"],
-    "Magazine": ["Entertainment", "Shopping"],
+    Book: ["Entertainment", "Education", "Shopping"],
+    Magazine: ["Entertainment", "Shopping"],
     "Sports Event Ticket": ["Entertainment"],
-    
+
     // Transport
-    "Gas": ["Transport", "Utilities"],
+    Gas: ["Transport", "Utilities"],
     "Bus Ticket": ["Transport", "Travel"],
     "Train Ticket": ["Transport", "Travel"],
     "Uber Ride": ["Transport"],
@@ -341,27 +343,27 @@ const main = async () => {
     "Parking Fee": ["Transport"],
     "Toll Fee": ["Transport"],
     "Car Wash": ["Transport", "Personal"],
-    
+
     // Dining
-    "Lunch": ["Dining Out", "Food"],
-    "Dinner": ["Dining Out", "Food"],
-    "Breakfast": ["Dining Out", "Food"],
-    "Snacks": ["Dining Out", "Food"],
-    "Dessert": ["Dining Out", "Food"],
-    "Drinks": ["Dining Out", "Food", "Beverages"],
+    Lunch: ["Dining Out", "Food"],
+    Dinner: ["Dining Out", "Food"],
+    Breakfast: ["Dining Out", "Food"],
+    Snacks: ["Dining Out", "Food"],
+    Dessert: ["Dining Out", "Food"],
+    Drinks: ["Dining Out", "Food", "Beverages"],
     "Fast Food": ["Dining Out", "Food"],
     "Restaurant Meal": ["Dining Out", "Food"],
-    
+
     // Income
-    "Salary": ["Business"],
+    Salary: ["Business"],
     "Freelance Payment": ["Business"],
-    "Bonus": ["Business"],
+    Bonus: ["Business"],
     "Investment Return": ["Investment", "Business"],
-    "Gift": ["Gifts", "Personal"],
-    "Refund": ["Personal"],
+    Gift: ["Gifts", "Personal"],
+    Refund: ["Personal"],
     "Side Hustle": ["Business"],
   };
-  
+
   for (let i = 0; i < 100; i++) {
     const category = rng.weighted([
       { weight: 0.4, value: "groceries" },
@@ -384,7 +386,7 @@ const main = async () => {
       })
       .returning();
     products.push(product);
-    
+
     // Link product to tags
     const tagNamesForProduct = productTagMapping[productName] || [];
     for (const tagName of tagNamesForProduct) {
