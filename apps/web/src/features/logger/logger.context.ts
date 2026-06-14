@@ -13,12 +13,19 @@ export function runWithLogContext<T>(ctx: RequestLogContext, fn: () => T): T {
 export function getLogger() {
   const ctx = als.getStore();
 
+  const shouldLogInfo = () => {
+    if (!ctx) return true;
+    return ctx.sampled;
+  };
+
   return {
     addAttrs(attrs: Record<string, unknown>) {
       if (!ctx) return;
       Object.assign(ctx.attrs, attrs);
     },
     info(message: string, attrs?: Record<string, unknown>) {
+      if (!shouldLogInfo()) return;
+
       baseLogger.info(
         {
           requestId: ctx?.requestId,

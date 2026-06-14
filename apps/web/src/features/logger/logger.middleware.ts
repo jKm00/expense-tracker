@@ -6,6 +6,7 @@ export const loggingMiddleware = createMiddleware().server(
   async ({ request, pathname, next }) => {
     const ctx: RequestLogContext = {
       requestId: crypto.randomUUID(),
+      sampled: Math.random() < 0.2,
       attrs: {
         method: request.method,
         path: pathname,
@@ -21,10 +22,17 @@ export const loggingMiddleware = createMiddleware().server(
         const status =
           result instanceof Response ? result.status : result.response?.status;
 
-        getLogger().info("Request completed", {
-          status,
-          durationMs: Date.now() - startedAt,
-        });
+        const durationMs = Date.now() - startedAt;
+
+        const shouldLog = ctx.sampled || status >= 400 || durationMs > 1000;
+
+        if (shouldLog) {
+          getLogger().info("Request completed", {
+            status,
+            durationMs,
+            sampled: ctx.sampled,
+          });
+        }
 
         return result;
       } catch (error) {
@@ -32,6 +40,7 @@ export const loggingMiddleware = createMiddleware().server(
           status: 500,
           durationMs: Date.now() - startedAt,
           error: error instanceof Error ? error.message : String(error),
+          sampled: ctx.sampled,
         });
 
         throw error;
