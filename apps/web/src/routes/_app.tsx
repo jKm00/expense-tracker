@@ -12,11 +12,9 @@ import {
 import { cn } from "@/lib/utils";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
-import {
-  FeatureFlagsDTO,
-  featureFlagService,
-} from "@/features/feature-flags/feature-flags.service";
+import { featureFlagService } from "@/features/feature-flags/feature-flags.service";
 import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
+import { FeatureFlagsDTO } from "@/features/feature-flags/feature-flags.types";
 
 const appSearchSchema = z.object({
   month: z.number().optional(),

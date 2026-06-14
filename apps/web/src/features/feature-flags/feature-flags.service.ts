@@ -1,15 +1,6 @@
-import { env } from "@/config/env";
 import { getLogger } from "../logger/logger.context";
-
-type FeatureFlagContext = {
-  userIdentifier?: string;
-};
-
-const featureFlags = {
-  ANALYTICS_V2: env.ANALYTICS_V2_ACCESS,
-} as const;
-
-export type FeatureFlagsDTO = { [k in keyof typeof featureFlags]: boolean };
+import { featureFlags } from "./feature-flags.constants";
+import { FeatureFlagContext } from "./feature-flags.types";
 
 function isEnabled(name: keyof typeof featureFlags, ctx?: FeatureFlagContext) {
   const logger = getLogger();
@@ -37,7 +28,10 @@ function isEnabled(name: keyof typeof featureFlags, ctx?: FeatureFlagContext) {
   }
 
   if (!ctx || !ctx.userIdentifier) {
-    logger.addAttrs({ featureFlagEnabled: false, featureFlagRequiresUser: true });
+    logger.addAttrs({
+      featureFlagEnabled: false,
+      featureFlagRequiresUser: true,
+    });
     return false;
   }
 

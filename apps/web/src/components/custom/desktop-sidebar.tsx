@@ -16,7 +16,6 @@ import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { env } from "@/config/env";
-import { FeatureFlagsDTO } from "@/features/feature-flags/feature-flags.service";
 import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 
 const navSections = [
