@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { env } from "@/config/env";
 
 const navSections = [
   {
@@ -36,7 +35,6 @@ const navSections = [
         label: "Shopping",
         href: "/dashboard/shopping",
         icon: ShoppingBag,
-        beta: env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false",
       },
     ],
   },

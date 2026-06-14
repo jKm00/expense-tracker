@@ -10,11 +10,9 @@ import {
   PageHeaderTitle,
 } from "@/components/custom/page-header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { productQueries } from "@/features/products/products.queries";
 import { ShoppingListView } from "@/features/shopping/components/shopping-list";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
-import { env } from "@/config/env";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShoppingBag } from "lucide-react";
@@ -28,30 +26,16 @@ export const Route = createFileRoute("/_app/dashboard/shopping/")({
       ),
       context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
     ]);
-
-    const showBetaBadge =
-      env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false";
-
-    return { showBetaBadge };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { showBetaBadge } = Route.useLoaderData();
-
   return (
     <div className="space-y-6">
       <PageHeader>
         <PageHeaderTitle>
-          <span className="inline-flex items-center gap-2">
-            Shopping
-            {showBetaBadge ? (
-              <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
-                BETA
-              </Badge>
-            ) : null}
-          </span>
+          <span className="inline-flex items-center gap-2">Shopping</span>
         </PageHeaderTitle>
         <PageHeaderDescription>
           Build a grocery list and check items off while shopping
