@@ -55,7 +55,6 @@ const navSections = [
         label: "Integrations",
         href: "/dashboard/integrations",
         icon: Plug,
-        beta: env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false",
       },
       {
         label: "Settings",

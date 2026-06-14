@@ -51,10 +51,7 @@ function RouteComponent() {
       description: "Manage import tokens",
       href: "/dashboard/integrations",
       icon: Plug,
-      version:
-        env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false"
-          ? "beta"
-          : undefined,
+      version: undefined,
     },
     {
       label: "Profile",
