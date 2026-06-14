@@ -32,29 +32,19 @@ export const Route = createFileRoute("/_app")({
       });
     }
 
-    const featureFlags: FeatureFlagsDTO = {
-      ANALYTICS_V2: featureFlagService.isEnabled("ANALYTICS_V2", {
-        userIdentifier: session.user.email,
-      }),
-    };
-
-    return { user: session.user, featureFlags };
-  },
-  loader: async ({ context }) => {
-    return { featureFlags: context.featureFlags };
+    return { user: session.user };
   },
   validateSearch: zodValidator(appSearchSchema),
   component: AppLayout,
 });
 
 function AppLayout() {
-  const { featureFlags } = Route.useLoaderData();
   const location = useLocation();
   const isWideScreen = location.pathname.startsWith("/dashboard/v2/analytics");
 
   return (
     <AuthProvider>
-      <FeatureFlagsProvider featureFlags={featureFlags}>
+      <FeatureFlagsProvider featureFlags={{}}>
         <OfflineBanner />
         <div className="min-h-screen bg-background">
           {/* Desktop: sidebar + content */}
