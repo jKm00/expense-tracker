@@ -258,7 +258,6 @@ async function updateTransaction(
   if (foundError) {
     return err(foundError);
   }
-  logger.addAttrs({ transactionAction: "updateTransaction", transactionId });
 
   // Validate that all provided entry IDs belong to this transaction
   const existingEntryIds = new Set(
