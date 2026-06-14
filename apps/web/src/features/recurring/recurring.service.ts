@@ -177,7 +177,6 @@ async function deleteRecurring(userId: string, recurringId: string) {
   if (foundError) {
     return err(foundError);
   }
-  getLogger().addAttrs({ recurringAction: "deleteRecurring", recurringId });
 
   try {
     const res = await recurringRepo.softDelete(recurringId);
