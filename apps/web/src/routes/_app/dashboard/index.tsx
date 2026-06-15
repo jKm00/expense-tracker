@@ -3,12 +3,12 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { KpiCardSkeleton } from "@/features/analytics/components/analytics-skeletons";
-import { FinancialOverview } from "@/features/analytics/components/financial-overview";
-import { productQueries } from "@/features/products/products.queries";
-import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { SimpleTransactionForm } from "@/features/transactions/components/simple-transaction.form";
-import { useAuth } from "@/features/auth/auth.provider";
+import { KpiCardSkeleton } from "@/features/analytics/client/components/analytics-skeletons";
+import { FinancialOverview } from "@/features/analytics/client/components/financial-overview";
+import { productQueries } from "@/features/products/client/products.queries";
+import { transactionQueries } from "@/features/transactions/client/transactions.queries";
+import { SimpleTransactionForm } from "@/features/transactions/client/components/simple-transaction.form";
+import { useAuth } from "@/features/auth/client/auth.provider";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";

@@ -1,0 +1,193 @@
+import { assertOnline } from "@/lib/offline-guard";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  AddProductAliasDTO,
+  AddProductDTO,
+  DeleteProductAliasDTO,
+  DeleteProductDTO,
+  LinkTagDTO,
+  UpdateProductAliasDTO,
+  UpdateProductDTO,
+} from "@/features/products/shared/products.dtos";
+import { productController } from "@/features/products/server/products.controller";
+import { PRODUCT_QUERY_KEY } from "./products.queries";
+import { toast } from "sonner";
+
+function createProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: AddProductDTO) => {
+      assertOnline();
+      return await productController.addProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened to save your product. Please try again!",
+      );
+    },
+  });
+}
+
+function updateProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateProductDTO) => {
+      assertOnline();
+      return await productController.updateProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to update your product. Please try again!",
+      );
+    },
+  });
+}
+
+function linkTagToProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagDTO) => {
+      assertOnline();
+      return await productController.linkTagToProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to link tag to product. Please try again!",
+      );
+    },
+  });
+}
+
+function deleteProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteProductDTO) => {
+      assertOnline();
+      return await productController.deleteProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to delete your product. Please try again!",
+      );
+    },
+  });
+}
+
+function unlinkTagFromProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: LinkTagDTO) => {
+      assertOnline();
+      return await productController.unlinkTagFromProduct({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to unlink tag from product. Please try again!",
+      );
+    },
+  });
+}
+
+function addProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: AddProductAliasDTO) => {
+      assertOnline();
+      return await productController.addProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to add alias. Please try again!",
+      );
+    },
+  });
+}
+
+function updateProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateProductAliasDTO) => {
+      assertOnline();
+      return await productController.updateProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to update alias. Please try again!",
+      );
+    },
+  });
+}
+
+function deleteProductAlias() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteProductAliasDTO) => {
+      assertOnline();
+      return await productController.deleteProductAlias({ data });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
+      });
+    },
+    onError: () => {
+      toast.error(
+        "Something unexpected happened trying to delete alias. Please try again!",
+      );
+    },
+  });
+}
+
+export const productMutations = {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  linkTagToProduct,
+  unlinkTagFromProduct,
+  addProductAlias,
+  updateProductAlias,
+  deleteProductAlias,
+};

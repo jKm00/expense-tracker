@@ -1,0 +1,44 @@
+import { queryOptions } from "@tanstack/react-query";
+import { transactionController } from "@/features/transactions/server/transactions.controller";
+
+export const TRANSACTION_QUERY_KEY = "transactions";
+
+function getTransactionsOptions(year?: number, month?: number) {
+  return queryOptions({
+    queryKey: [TRANSACTION_QUERY_KEY, year, month],
+    queryFn: () =>
+      transactionController.getTransactions({
+        data: {
+          year,
+          month,
+        },
+      }),
+  });
+}
+
+function getTransactionKpisOptions(year?: number, month?: number) {
+  return queryOptions({
+    queryKey: [TRANSACTION_QUERY_KEY, "kpis", year, month],
+    queryFn: () =>
+      transactionController.getTransactionKpis({
+        data: {
+          year,
+          month,
+        },
+      }),
+  });
+}
+
+function getTransactionOptions(transactionId: string) {
+  return queryOptions({
+    queryKey: [TRANSACTION_QUERY_KEY, transactionId],
+    queryFn: () =>
+      transactionController.getTransaction({ data: { transactionId } }),
+  });
+}
+
+export const transactionQueries = {
+  getTransactionsOptions,
+  getTransactionKpisOptions,
+  getTransactionOptions,
+};

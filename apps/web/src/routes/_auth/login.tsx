@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { authClient } from "@/features/auth/auth-client";
+import { authClient } from "@/features/auth/client/auth-client";
 import { Button } from "@/components/ui/button";
 import { GithubIcon, ArrowLeftIcon, Gem } from "lucide-react";
 

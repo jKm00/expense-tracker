@@ -1,5 +1,5 @@
-import { importIntegrationTransactionSchema } from "@/features/integrations/integration.dtos";
-import { integrationService } from "@/features/integrations/integration.service";
+import { importIntegrationTransactionSchema } from "@/features/integrations/shared/integration.dtos";
+import { integrationService } from "@/features/integrations/server/integration.service";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 

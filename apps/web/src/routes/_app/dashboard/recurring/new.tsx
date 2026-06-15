@@ -5,8 +5,8 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import { NewRecurringForm } from "@/features/recurring/components/new-recurring.form";
-import { productQueries } from "@/features/products/products.queries";
+import { NewRecurringForm } from "@/features/recurring/client/components/new-recurring.form";
+import { productQueries } from "@/features/products/client/products.queries";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 

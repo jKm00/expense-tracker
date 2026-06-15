@@ -5,8 +5,8 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import { NewProductForm } from "@/features/products/components/new-product.form";
-import { tagsQueries } from "@/features/tags/tags.queries";
+import { NewProductForm } from "@/features/products/client/components/new-product.form";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 

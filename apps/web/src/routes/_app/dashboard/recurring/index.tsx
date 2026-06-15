@@ -15,7 +15,7 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
 } from "@/components/custom/page-header";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,11 @@ import {
   RecurringList,
   RecurringListEmpty,
   RecurringListTitle,
-} from "@/features/recurring/components/recurring-list";
-import { RecurringWithProduct } from "@/features/recurring/recurring.models";
-import { recurringQueries } from "@/features/recurring/recurring.queries";
+} from "@/features/recurring/client/components/recurring-list";
+import { RecurringWithProduct } from "@/features/recurring/shared/recurring.models";
+import { recurringQueries } from "@/features/recurring/client/recurring.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { calculateFixedTotalsFromRecurrings } from "@/features/analytics/analytics.calculations";
+import { calculateFixedTotalsFromRecurrings } from "@/features/analytics/shared/analytics.calculations";
 import { formatAmount } from "@/utils/format";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Repeat, Plus, Pause, Play } from "lucide-react";

@@ -36,13 +36,13 @@ import {
 import {
   createIntegrationTokenSchema,
   type CreateIntegrationTokenDTO,
-} from "@/features/integrations/integration.dtos";
-import { integrationMutations } from "@/features/integrations/integration.mutations";
-import { integrationQueries } from "@/features/integrations/integration.queries";
+} from "@/features/integrations/shared/integration.dtos";
+import { integrationMutations } from "@/features/integrations/client/integration.mutations";
+import { integrationQueries } from "@/features/integrations/client/integration.queries";
 import type {
   IntegrationRequestLogListItem,
   IntegrationTokenMetadata,
-} from "@/features/integrations/integration.models";
+} from "@/features/integrations/shared/integration.models";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";

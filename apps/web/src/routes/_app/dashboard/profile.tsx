@@ -1,5 +1,5 @@
-import { useAuth } from "@/features/auth/auth.provider";
-import { authClient } from "@/features/auth/auth-client";
+import { useAuth } from "@/features/auth/client/auth.provider";
+import { authClient } from "@/features/auth/client/auth-client";
 import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

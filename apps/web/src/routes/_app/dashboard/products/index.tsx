@@ -15,15 +15,15 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
 } from "@/components/custom/page-header";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
 import {
   ProductList,
   ProductListEmpty,
-} from "@/features/products/components/product-list";
-import { productQueries } from "@/features/products/products.queries";
+} from "@/features/products/client/components/product-list";
+import { productQueries } from "@/features/products/client/products.queries";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";

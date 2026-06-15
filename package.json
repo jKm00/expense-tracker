@@ -12,7 +12,16 @@
     "db:studio": "pnpm --filter @expense-tracker/web db:studio",
     "db:seed": "pnpm --filter @expense-tracker/web db:seed",
     "db:reset": "pnpm --filter @expense-tracker/web db:reset",
+    "analyze": "fallow",
+    "analyze:audit": "fallow audit",
+    "analyze:dead-code": "fallow dead-code",
+    "analyze:dupes": "fallow dupes",
+    "analyze:boundaries": "fallow dead-code --boundary-violations --policy-violations",
+    "analyze:config": "fallow config",
     "test:web": "pnpm --filter @expense-tracker/web test",
     "test:job": "pnpm --filter @expense-tracker/job test"
+  },
+  "devDependencies": {
+    "fallow": "^2.96.0"
   }
 }

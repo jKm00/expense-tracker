@@ -23,16 +23,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
-import { DeleteTransactionDialog } from "@/features/transactions/components/delete-transaction.alert";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
+import { DeleteTransactionDialog } from "@/features/transactions/client/components/delete-transaction.alert";
 import {
   EntryList,
   EntryListEmpty,
   EntryListEmptyAction,
   EntryListTitle,
-} from "@/features/transactions/components/entry-list";
-import { tagsQueries } from "@/features/tags/tags.queries";
-import { transactionQueries } from "@/features/transactions/transactions.queries";
+} from "@/features/transactions/client/components/entry-list";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
+import { transactionQueries } from "@/features/transactions/client/transactions.queries";
 import { formatAmount } from "@/utils/format";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";

@@ -10,9 +10,9 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { productQueries } from "@/features/products/products.queries";
-import { tagsQueries } from "@/features/tags/tags.queries";
-import { NewTransactionForm } from "@/features/transactions/components/new-transaction.form";
+import { productQueries } from "@/features/products/client/products.queries";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
+import { NewTransactionForm } from "@/features/transactions/client/components/new-transaction.form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";

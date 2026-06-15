@@ -8,19 +8,19 @@ import { Suspense, useState } from "react";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { tagsQueries } from "@/features/tags/tags.queries";
-import { Tag } from "@/features/tags/tags.models";
-import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { recurringQueries } from "@/features/recurring/recurring.queries";
-import { getComparisonDate } from "@/features/analytics/analytics.utils";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
+import { Tag } from "@/features/tags/shared/tags.models";
+import { transactionQueries } from "@/features/transactions/client/transactions.queries";
+import { recurringQueries } from "@/features/recurring/client/recurring.queries";
+import { getComparisonDate } from "@/features/analytics/shared/analytics.utils";
 import { MonthSelect } from "@/components/custom/month-select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CalendarRange, ChevronDown, SlidersHorizontal } from "lucide-react";
-import { AnalyticsContentSkeleton } from "@/features/analytics/components/analytics-skeletons";
-import { AnalyticsLoader } from "@/features/analytics/components/analytics-loader";
-import { CompareSelect } from "@/features/analytics/components/compare.select";
-import { TagSelect } from "@/features/tags/components/tag.select";
+import { AnalyticsContentSkeleton } from "@/features/analytics/client/components/analytics-skeletons";
+import { AnalyticsLoader } from "@/features/analytics/client/components/analytics-loader";
+import { CompareSelect } from "@/features/analytics/client/components/compare.select";
+import { TagSelect } from "@/features/tags/client/tag.select";
 import { cn } from "@/lib/utils";
 
 const anaylyticsSchema = z.object({
@@ -61,6 +61,7 @@ export const Route = createFileRoute("/_app/dashboard/analytics")({
 });
 
 function RouteComponent() {
+  const { month, year, comparison } = Route.useSearch();
   const {
     data: [_, tags],
   } = useSuspenseQuery(tagsQueries.getTagsOptions());
@@ -266,7 +267,7 @@ function RouteComponent() {
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Compare
               </p>
-              <CompareSelect className="h-8 w-full" />
+              <CompareSelect className="h-8 w-full" comparison={comparison} />
             </div>
           </div>
         </div>
@@ -292,14 +293,20 @@ function RouteComponent() {
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Compare
               </p>
-              <CompareSelect className="h-8 w-full" />
+              <CompareSelect className="h-8 w-full" comparison={comparison} />
             </div>
           </div>
         </div>
       </div>
 
       <Suspense fallback={<AnalyticsContentSkeleton />}>
-        <AnalyticsLoader includeTags={includeTags} excludeTags={excludeTags} />
+        <AnalyticsLoader
+          includeTags={includeTags}
+          excludeTags={excludeTags}
+          month={month}
+          year={year}
+          comparison={comparison}
+        />
       </Suspense>
     </div>
   );
