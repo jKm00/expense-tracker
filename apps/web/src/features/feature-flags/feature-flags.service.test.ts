@@ -15,15 +15,15 @@ describe("featureFlagService", () => {
   describe("isEnabled", () => {
     it("returns false when env is missing", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: undefined },
+        env: { EXAMPLE: undefined },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
     });
 
     it("returns false when env var is empty string", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "" },
+        env: { EXAMPLE: "" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
@@ -31,59 +31,59 @@ describe("featureFlagService", () => {
 
     it("returns false for literal 'false'", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "false" },
+        env: { EXAMPLE: "false" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
     });
 
     it("returns false for literal '0'", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "0" },
+        env: { EXAMPLE: "0" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
     });
 
     it("returns true for literal 'true'", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "true" },
+        env: { EXAMPLE: "true" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(true);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
     });
 
     it("returns true for literal '1'", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "1" },
+        env: { EXAMPLE: "1" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(true);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
     });
 
     it("is case-insensitive for true/false/0/1", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "TRUE" },
+        env: { EXAMPLE: "TRUE" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(true);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
     });
 
     it("returns false when no context is provided for allow-list", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "test@user.com" },
+        env: { EXAMPLE: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
     });
 
     it("returns true for single user in allow-list", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "test@user.com" },
+        env: { EXAMPLE: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("ANALYTICS_V2", {
+        featureFlagService.isEnabled("EXAMPLE", {
           userIdentifier: "test@user.com",
         }),
       ).toBe(true);
@@ -91,11 +91,11 @@ describe("featureFlagService", () => {
 
     it("returns true for user among many in allow-list", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "test@user.com, another@user.com" },
+        env: { EXAMPLE: "test@user.com, another@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("ANALYTICS_V2", {
+        featureFlagService.isEnabled("EXAMPLE", {
           userIdentifier: "test@user.com",
         }),
       ).toBe(true);
@@ -103,11 +103,11 @@ describe("featureFlagService", () => {
 
     it("returns false for user not in allow-list", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "test@user.com" },
+        env: { EXAMPLE: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("ANALYTICS_V2", {
+        featureFlagService.isEnabled("EXAMPLE", {
           userIdentifier: "another@user.com",
         }),
       ).toBe(false);
@@ -115,11 +115,11 @@ describe("featureFlagService", () => {
 
     it("trims spaces around user identifiers", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "  alice@x.com ,   bob@x.com  " },
+        env: { EXAMPLE: "  alice@x.com ,   bob@x.com  " },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("ANALYTICS_V2", {
+        featureFlagService.isEnabled("EXAMPLE", {
           userIdentifier: "alice@x.com",
         }),
       ).toBe(true);
@@ -127,11 +127,11 @@ describe("featureFlagService", () => {
 
     it("rejects unknown literal", async () => {
       vi.doMock("@/config/env", () => ({
-        env: { ANALYTICS_V2_ACCESS: "enabled" },
+        env: { EXAMPLE: "enabled" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("ANALYTICS_V2", {
+        featureFlagService.isEnabled("EXAMPLE", {
           userIdentifier: "alice@x.com",
         }),
       ).toBe(false);

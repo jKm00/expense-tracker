@@ -4,4 +4,6 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL || "",
   RECURRING_JOB_TOKEN: process.env.RECURRING_JOB_TOKEN || "",
   ADMINS: process.env.ADMINS || "",
+  // Feature Flags
+  EXAMPLE: process.env.EXAMPLE || "false",
 } as const;
