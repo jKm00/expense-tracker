@@ -15,9 +15,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { env } from "@/config/env";
-import { FeatureFlagsDTO } from "@/features/feature-flags/feature-flags.service";
-import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 
 const navSections = [
   {
@@ -35,16 +32,9 @@ const navSections = [
         icon: ChartPie,
       },
       {
-        label: "Analytics v2",
-        href: "/dashboard/v2/analytics",
-        icon: ChartPie,
-        alpha: true,
-      },
-      {
         label: "Shopping",
         href: "/dashboard/shopping",
         icon: ShoppingBag,
-        beta: env.SHOPPING_BETA_BADGE.trim().toLowerCase() !== "false",
       },
     ],
   },
@@ -63,7 +53,6 @@ const navSections = [
         label: "Integrations",
         href: "/dashboard/integrations",
         icon: Plug,
-        beta: env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false",
       },
       {
         label: "Settings",
@@ -77,8 +66,6 @@ const navSections = [
 export function DesktopSidebar() {
   const location = useLocation();
   const { user } = useAuth();
-
-  const featureFlags = useFeatureFlags();
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
@@ -112,13 +99,6 @@ export function DesktopSidebar() {
               {section.label}
             </p>
             {section.items.map((item) => {
-              if (
-                item.href === "/dashboard/v2/analytics" &&
-                !featureFlags.ANALYTICS_V2
-              ) {
-                return null;
-              }
-
               const active = isActive(item.href);
               return (
                 <Link

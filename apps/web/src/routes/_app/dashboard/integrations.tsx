@@ -43,7 +43,6 @@ import type {
   IntegrationRequestLogListItem,
   IntegrationTokenMetadata,
 } from "@/features/integrations/integration.models";
-import { env } from "@/config/env";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -163,11 +162,6 @@ export const Route = createFileRoute("/_app/dashboard/integrations")({
     await context.queryClient.prefetchInfiniteQuery(
       integrationQueries.getIntegrationRequestLogsOptions(null),
     );
-
-    const showBetaBadge =
-      env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false";
-
-    return { showBetaBadge };
   },
   component: RouteComponent,
 });
@@ -221,7 +215,6 @@ function getStatusBadgeVariant(
 }
 
 function RouteComponent() {
-  const { showBetaBadge } = Route.useLoaderData();
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const {
     data: [expectedError, tokens],
@@ -245,14 +238,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader>
         <PageHeaderTitle>
-          <span className="inline-flex items-center gap-2">
-            Integrations
-            {showBetaBadge ? (
-              <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
-                BETA
-              </Badge>
-            ) : null}
-          </span>
+          <span className="inline-flex items-center gap-2">Integrations</span>
         </PageHeaderTitle>
         <PageHeaderDescription>
           Create a token to let trusted automations and apps send transactions

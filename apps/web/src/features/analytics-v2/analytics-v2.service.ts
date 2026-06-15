@@ -1,4 +1,6 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
+import { getLogger } from "../logger/logger.context";
 import { productService } from "../products/products.service";
 import {
   differenceInCalendarDays,
@@ -50,6 +52,14 @@ async function getDashboardData(
   month?: number,
   tagIds?: string[],
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    analyticsAction: "getDashboardData",
+    analyticsYear: year,
+    analyticsMonth: month,
+    analyticsTagFilterCount: tagIds?.length ?? 0,
+  });
+
   try {
     const now = new Date();
     const targetYear = year ?? now.getFullYear();
@@ -80,6 +90,15 @@ async function getDashboardData(
             entry.tags.some((tag) => tagIds.includes(tag.id)),
           )
         : periodEntries;
+
+    logger.addAttrs({
+      analyticsPeriodStart: format(period.startDate, "yyyy-MM-dd"),
+      analyticsPeriodEnd: format(period.endDate, "yyyy-MM-dd"),
+      analyticsIsYearly: period.isYearly,
+      analyticsEntryCount: periodEntries.length,
+      analyticsFilteredEntryCount: filteredEntries.length,
+      analyticsComparisonEntryCount: comparisonEntries.length,
+    });
 
     return ok({
       period: {

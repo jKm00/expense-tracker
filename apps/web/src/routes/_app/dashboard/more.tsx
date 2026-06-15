@@ -4,34 +4,15 @@ import {
   PageHeaderDescription,
 } from "@/components/custom/page-header";
 import { Badge } from "@/components/ui/badge";
-import { env } from "@/config/env";
-import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  ChartPie,
-  Package,
-  Plug,
-  Repeat,
-  Tag,
-  User,
-} from "lucide-react";
+import { ArrowRight, Package, Plug, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const featureFlags = useFeatureFlags();
-
   const mainMenuItems = [
-    {
-      label: "Analytics v2",
-      description: "Detailed insight into you economy",
-      href: "/dashboard/v2/analytics",
-      icon: ChartPie,
-      version: "alpha",
-    },
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -61,10 +42,7 @@ function RouteComponent() {
       description: "Manage import tokens",
       href: "/dashboard/integrations",
       icon: Plug,
-      version:
-        env.INTEGRATION_BETA_BADGE.trim().toLowerCase() !== "false"
-          ? "beta"
-          : undefined,
+      version: undefined,
     },
     {
       label: "Profile",
@@ -84,13 +62,6 @@ function RouteComponent() {
       </PageHeader>
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
         {mainMenuItems.map((item, idx) => {
-          if (
-            item.href === "/dashboard/v2/analytics" &&
-            !featureFlags.ANALYTICS_V2
-          ) {
-            return null;
-          }
-
           return (
             <Link key={item.label} to={item.href} className="block">
               <div

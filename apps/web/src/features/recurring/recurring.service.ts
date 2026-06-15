@@ -1,13 +1,19 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
 import { env } from "@/config/env";
+import { getLogger } from "../logger/logger.context";
 import { recurringRepo } from "./recurring.repo";
 import { NewRecurring, UpdateRecurring } from "./recurring.models";
 import { productService } from "../products/products.service";
 import { transactionService } from "../transactions/transactions.service";
 
 async function getRecurrings(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ recurringAction: "getRecurrings" });
+
   try {
     const items = await recurringRepo.getAll(userId);
+    logger.addAttrs({ recurringCount: items.length });
     return ok(items);
   } catch (error) {
     return err({
@@ -18,6 +24,8 @@ async function getRecurrings(userId: string) {
 }
 
 async function getRecurring(userId: string, recurringId: string) {
+  getLogger().addAttrs({ recurringAction: "getRecurring", recurringId });
+
   try {
     const item = await recurringRepo.getOne(recurringId);
     if (!item) {
@@ -70,6 +78,15 @@ async function createRecurring(
     product: { id: string | null; name: string };
   },
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    recurringAction: "createRecurring",
+    recurringInterval: data.interval,
+    recurringType: data.type,
+    recurringIsActive: data.isActive,
+    productId: data.product.id,
+  });
+
   const [productError, product] = await resolveProduct(userId, data.product);
   if (productError) {
     return err(productError);
@@ -91,6 +108,7 @@ async function createRecurring(
         message: "No recurring transaction returned after saving",
       });
     }
+    logger.addAttrs({ recurringId: res[0].id, productId: product.id });
     return ok(res[0]);
   } catch (error) {
     return err({
@@ -107,6 +125,14 @@ async function updateRecurring(
     product?: { id: string | null; name: string };
   },
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    recurringAction: "updateRecurring",
+    recurringId,
+    recurringUpdateFields: Object.keys(data),
+    productId: data.product?.id,
+  });
+
   const [foundError] = await getRecurring(userId, recurringId);
   if (foundError) {
     return err(foundError);
@@ -145,6 +171,8 @@ async function updateRecurring(
 }
 
 async function deleteRecurring(userId: string, recurringId: string) {
+  getLogger().addAttrs({ recurringAction: "deleteRecurring", recurringId });
+
   const [foundError] = await getRecurring(userId, recurringId);
   if (foundError) {
     return err(foundError);
@@ -205,6 +233,9 @@ function shouldFireOnDate(
 }
 
 async function processRecurringJob(jobToken: string) {
+  const logger = getLogger();
+  logger.addAttrs({ recurringAction: "processRecurringJob" });
+
   if (!env.RECURRING_JOB_TOKEN || jobToken !== env.RECURRING_JOB_TOKEN) {
     return err({
       reason: "JOB_UNAUTHORIZED" as const,
@@ -215,6 +246,7 @@ async function processRecurringJob(jobToken: string) {
   try {
     const todayStart = toNoonUTC(new Date());
     const activeRecurring = await recurringRepo.getActiveRecurringForDate(todayStart);
+    logger.addAttrs({ recurringActiveCount: activeRecurring.length });
 
     let created = 0;
     let skipped = 0;
@@ -269,6 +301,8 @@ async function processRecurringJob(jobToken: string) {
 
       created++;
     }
+
+    logger.addAttrs({ recurringCreatedCount: created, recurringSkippedCount: skipped });
 
     return ok({
       created,

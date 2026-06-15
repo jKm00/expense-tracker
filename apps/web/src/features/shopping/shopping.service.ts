@@ -1,4 +1,6 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
+import { getLogger } from "../logger/logger.context";
 import { productService } from "../products/products.service";
 import { transactionService } from "../transactions/transactions.service";
 import {
@@ -8,6 +10,9 @@ import {
 import { shoppingRepo } from "./shopping.repo";
 
 async function getShoppingList(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ shoppingAction: "getShoppingList" });
+
   try {
     const list = await shoppingRepo.getOrCreateShoppingList(userId);
     if (!list) {
@@ -17,6 +22,7 @@ async function getShoppingList(userId: string) {
       });
     }
 
+    logger.addAttrs({ shoppingListId: list.id, shoppingItemCount: list.items.length });
     return ok(list);
   } catch (error) {
     return err({
@@ -53,6 +59,13 @@ async function getOwnedListItem(userId: string, shoppingItemId: string) {
 }
 
 async function addShoppingItem(userId: string, data: AddShoppingItemDTO) {
+  const logger = getLogger();
+  logger.addAttrs({
+    shoppingAction: "addShoppingItem",
+    productId: data.product.id,
+    shoppingProductWasExisting: Boolean(data.product.id),
+  });
+
   const productResult = data.product.id
     ? await productService.getProduct(userId, data.product.id)
     : await productService.addProduct({
@@ -86,6 +99,11 @@ async function addShoppingItem(userId: string, data: AddShoppingItemDTO) {
 
     if (existing) {
       await shoppingRepo.touchShoppingList(list.id);
+      logger.addAttrs({
+        shoppingListId: list.id,
+        shoppingItemId: existing.id,
+        shoppingItemAlreadyExisted: true,
+      });
       return ok(existing);
     }
 
@@ -103,6 +121,11 @@ async function addShoppingItem(userId: string, data: AddShoppingItemDTO) {
     }
 
     await shoppingRepo.touchShoppingList(list.id);
+    logger.addAttrs({
+      shoppingListId: list.id,
+      shoppingItemId: saved[0].id,
+      shoppingItemAlreadyExisted: false,
+    });
 
     return ok({
       ...saved[0],
@@ -121,6 +144,13 @@ async function toggleShoppingItem(
   shoppingItemId: string,
   checked: boolean,
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    shoppingAction: "toggleShoppingItem",
+    shoppingItemId,
+    shoppingChecked: checked,
+  });
+
   const [foundError, item] = await getOwnedListItem(userId, shoppingItemId);
   if (foundError) {
     return err(foundError);
@@ -139,6 +169,7 @@ async function toggleShoppingItem(
     }
 
     await shoppingRepo.touchShoppingList(item.list.id);
+    logger.addAttrs({ shoppingListId: item.list.id });
 
     return ok(updated[0]);
   } catch (error) {
@@ -150,6 +181,9 @@ async function toggleShoppingItem(
 }
 
 async function removeShoppingItem(userId: string, shoppingItemId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ shoppingAction: "removeShoppingItem", shoppingItemId });
+
   const [foundError, item] = await getOwnedListItem(userId, shoppingItemId);
   if (foundError) {
     return err(foundError);
@@ -165,6 +199,7 @@ async function removeShoppingItem(userId: string, shoppingItemId: string) {
     }
 
     await shoppingRepo.touchShoppingList(item.list.id);
+    logger.addAttrs({ shoppingListId: item.list.id });
 
     return ok(removed[0]);
   } catch (error) {
@@ -176,6 +211,15 @@ async function removeShoppingItem(userId: string, shoppingItemId: string) {
 }
 
 async function completeShopping(userId: string, data: CompleteShoppingDTO) {
+  const logger = getLogger();
+  logger.addAttrs({
+    shoppingAction: "completeShopping",
+    shoppingItemCount: data.shoppingItemIds.length,
+    shoppingEntryCount: data.entries.length,
+    shoppingKeepUncheckedItems: data.keepUncheckedItems,
+    transactionId: data.transactionId,
+  });
+
   if (data.shoppingItemIds.length === 0) {
     return err({
       reason: "SHOPPING_NO_CHECKED_ITEMS" as const,
@@ -215,6 +259,8 @@ async function completeShopping(userId: string, data: CompleteShoppingDTO) {
       message: "No transaction returned after completing shopping",
     });
   }
+
+  logger.addAttrs({ transactionId: transaction.id });
 
   try {
     const list = await shoppingRepo.getOrCreateShoppingList(userId);

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { FeatureFlagsDTO } from "./feature-flags.service";
+import { FeatureFlagsDTO } from "./feature-flags.types";
 
 const FeatureFlagsContext = createContext<FeatureFlagsDTO | null>(null);
 

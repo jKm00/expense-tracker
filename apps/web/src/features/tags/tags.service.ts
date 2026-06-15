@@ -1,11 +1,17 @@
-import { err, ok } from "@/utils/result";
+import { ok } from "@/utils/result";
+import { err } from "../logger/logger.result";
+import { getLogger } from "../logger/logger.context";
 import { ListTagsDTO } from "./tags.dtos";
 import { tagsRepo } from "./tags.repo";
 import { NewTag, TagKpis, TagPage, UpdateTag } from "./tags.models";
 
 async function getTags(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ tagAction: "getTags" });
+
   try {
     const tags = await tagsRepo.getAll(userId);
+    logger.addAttrs({ tagCount: tags.length });
     return ok(tags);
   } catch (error) {
     return err({
@@ -17,6 +23,14 @@ async function getTags(userId: string) {
 }
 
 async function listTags(userId: string, input: ListTagsDTO) {
+  const logger = getLogger();
+  logger.addAttrs({
+    tagAction: "listTags",
+    tagOffset: input.offset ?? 0,
+    tagLimit: input.limit ?? 25,
+    tagHasSearch: Boolean(input.search?.trim()),
+  });
+
   try {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 25;
@@ -30,6 +44,7 @@ async function listTags(userId: string, input: ListTagsDTO) {
 
     const pageTags = tags.slice(0, limit);
     const hasMore = tags.length > limit;
+    logger.addAttrs({ tagPageCount: pageTags.length, tagHasMore: hasMore });
 
     return ok<TagPage>({
       tags: pageTags,
@@ -46,10 +61,14 @@ async function listTags(userId: string, input: ListTagsDTO) {
 }
 
 async function getTagKpis(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ tagAction: "getTagKpis" });
+
   try {
     const { count, totalReferences, mostUsedTagName } = await tagsRepo.getKpis(
       userId,
     );
+    logger.addAttrs({ tagTotal: count, tagTotalReferences: totalReferences });
 
     return ok<TagKpis>({
       count,
@@ -66,6 +85,8 @@ async function getTagKpis(userId: string) {
 }
 
 async function getTag(userId: string, tagId: string) {
+  getLogger().addAttrs({ tagAction: "getTag", tagId });
+
   try {
     const tag = await tagsRepo.getFirst(tagId);
     if (!tag) {
@@ -118,6 +139,9 @@ async function getTagByName(userId: string, tagName: string) {
 }
 
 async function addTag(tag: NewTag) {
+  const logger = getLogger();
+  logger.addAttrs({ tagAction: "addTag" });
+
   const [foundError] = await getTagByName(tag.userId, tag.name);
   if (foundError && foundError.reason !== "TAG_NOT_FOUND") {
     return err(foundError);
@@ -131,6 +155,7 @@ async function addTag(tag: NewTag) {
         message: `No tag returned after saving`,
       });
     }
+    logger.addAttrs({ tagId: saved[0].id });
     return ok(saved[0]);
   } catch (error) {
     return err({
@@ -141,6 +166,12 @@ async function addTag(tag: NewTag) {
 }
 
 async function updateTag(userId: string, tagId: string, data: UpdateTag) {
+  getLogger().addAttrs({
+    tagAction: "updateTag",
+    tagId,
+    tagUpdateFields: Object.keys(data),
+  });
+
   const [foundError] = await getTag(userId, tagId);
   if (foundError) {
     return err(foundError);
@@ -174,6 +205,8 @@ async function updateTag(userId: string, tagId: string, data: UpdateTag) {
 }
 
 async function deleteTag(userId: string, tagId: string) {
+  getLogger().addAttrs({ tagAction: "deleteTag", tagId });
+
   const [foundError] = await getTag(userId, tagId);
   if (foundError) {
     return err(foundError);

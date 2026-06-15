@@ -1,6 +1,8 @@
 import { productService } from "@/features/products/products.service";
 import { transactionService } from "@/features/transactions/transactions.service";
-import { err, ok } from "@/utils/result";
+import { getLogger } from "@/features/logger/logger.context";
+import { err } from "@/features/logger/logger.result";
+import { ok } from "@/utils/result";
 import { createHash, randomBytes } from "node:crypto";
 import {
   IntegrationRequestLogPage,
@@ -121,7 +123,13 @@ async function verifyBearerToken(authorizationHeader: string | null) {
 }
 
 async function resolveBearerTokenContext(authorizationHeader: string | null) {
+  const logger = getLogger();
   const rawToken = parseBearerToken(authorizationHeader);
+
+  logger.addAttrs({
+    integrationAction: "resolveBearerTokenContext",
+    integrationHasBearerToken: Boolean(rawToken),
+  });
   if (!rawToken) {
     return err({
       reason: "INTEGRATION_NO_TOKEN" as const,
@@ -156,6 +164,7 @@ async function resolveBearerTokenContext(authorizationHeader: string | null) {
       tokenId: token.id,
     });
   }
+  logger.addAttrs({ integrationTokenId: token.id });
 
   try {
     await integrationRepo.touchTokenLastUsed(token.id);
@@ -170,6 +179,9 @@ async function resolveBearerTokenContext(authorizationHeader: string | null) {
 }
 
 async function createToken(userId: string, name: string) {
+  const logger = getLogger();
+  logger.addAttrs({ integrationAction: "createToken" });
+
   const tokenName = name.trim();
 
   let activeTokenCount: number;
@@ -189,6 +201,7 @@ async function createToken(userId: string, name: string) {
         "You have reached the maximum number of active integration tokens",
     });
   }
+  logger.addAttrs({ integrationActiveTokenCount: activeTokenCount });
 
   const rawToken = createRawToken();
   const tokenHash = hashToken(rawToken);
@@ -215,6 +228,7 @@ async function createToken(userId: string, name: string) {
       message: "Failed to create integration token",
     });
   }
+  logger.addAttrs({ integrationTokenId: createdTokens[0].id });
 
   return ok({
     token: rawToken,
@@ -223,8 +237,12 @@ async function createToken(userId: string, name: string) {
 }
 
 async function listTokens(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ integrationAction: "listTokens" });
+
   try {
     const tokens = await integrationRepo.getTokensByUser(userId);
+    logger.addAttrs({ integrationTokenCount: tokens.length });
     return ok(tokens.map(toTokenMetadata));
   } catch {
     return err({
@@ -238,6 +256,14 @@ async function listRequestLogs(
   userId: string,
   input: ListIntegrationRequestLogsDTO,
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    integrationAction: "listRequestLogs",
+    integrationTokenId: input.tokenId,
+    integrationLimit: input.limit ?? 25,
+    integrationHasCursor: Boolean(input.cursor),
+  });
+
   const limit = input.limit ?? 25;
   const cursor = input.cursor ? new Date(input.cursor) : null;
 
@@ -261,6 +287,10 @@ async function listRequestLogs(
     const nextCursor = hasMore
       ? (pageLogs[pageLogs.length - 1]?.createdAt.toISOString() ?? null)
       : null;
+    logger.addAttrs({
+      integrationRequestLogCount: pageLogs.length,
+      integrationRequestLogsHasMore: hasMore,
+    });
 
     return ok<IntegrationRequestLogPage>({
       logs: pageLogs,
@@ -294,6 +324,16 @@ async function logIntegrationRequest(input: {
   duplicate?: boolean;
   durationMs?: number | null;
 }) {
+  getLogger().addAttrs({
+    integrationAction: "logIntegrationRequest",
+    integrationTokenId: input.tokenId,
+    integrationTransactionId: input.transactionId,
+    integrationProvider: input.provider,
+    integrationEventId: input.eventId,
+    integrationResponseStatus: input.responseStatus,
+    integrationDuplicate: input.duplicate ?? false,
+  });
+
   try {
     await integrationRepo.saveIntegrationRequestLog({
       userId: input.userId,
@@ -328,6 +368,9 @@ async function touchTokenLastUsed(tokenId: string) {
 }
 
 async function revokeToken(userId: string, tokenId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ integrationAction: "revokeToken", integrationTokenId: tokenId });
+
   let token: Awaited<ReturnType<typeof integrationRepo.getTokenById>>;
   try {
     token = await integrationRepo.getTokenById(tokenId);
@@ -353,6 +396,7 @@ async function revokeToken(userId: string, tokenId: string) {
   }
 
   if (token.revokedAt) {
+    logger.addAttrs({ integrationTokenAlreadyRevoked: true });
     return ok(toTokenMetadata(token));
   }
 
@@ -365,6 +409,7 @@ async function revokeToken(userId: string, tokenId: string) {
       });
     }
 
+    logger.addAttrs({ integrationTokenAlreadyRevoked: false });
     return ok(toTokenMetadata(revoked[0]));
   } catch {
     return err({
@@ -381,6 +426,15 @@ async function importIntegrationTransaction(
   },
   payload: ImportIntegrationTransactionDTO,
 ) {
+  const logger = getLogger();
+  logger.addAttrs({
+    integrationAction: "importIntegrationTransaction",
+    integrationTokenId: authContext.tokenId,
+    integrationProvider: payload.provider,
+    integrationEventId: payload.eventId,
+    integrationHasStore: Boolean(payload.store),
+  });
+
   const normalizedAmount = payload.amount.toFixed(2);
   const normalizedDate = new Date(payload.date);
   const normalizedStore = payload.store ?? null;
@@ -424,6 +478,11 @@ async function importIntegrationTransaction(
       });
     }
 
+    logger.addAttrs({
+      integrationDuplicate: true,
+      integrationTransactionId: existingEvent.transactionId,
+    });
+
     return ok({
       duplicate: true,
       transactionId: existingEvent.transactionId,
@@ -466,6 +525,7 @@ async function importIntegrationTransaction(
       message: formatIntegrationErrorMessage(transactionError),
     });
   }
+  logger.addAttrs({ integrationTransactionId: transaction.id });
 
   try {
     const savedEvents = await integrationRepo.saveIntegrationEvent({
@@ -492,6 +552,8 @@ async function importIntegrationTransaction(
       message: "Failed to persist integration event",
     });
   }
+
+  logger.addAttrs({ integrationDuplicate: false });
 
   return ok({
     duplicate: false,
