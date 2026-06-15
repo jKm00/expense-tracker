@@ -2,8 +2,9 @@ import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { auth } from "@/features/auth";
 import { redirect } from "@tanstack/react-router";
+import { env } from "@/config/env";
 
-const ADMINS = ["joakimedvardsen2000@gmail.com"];
+const getAdmins = () => env.ADMINS.split(",").map((e) => e.trim());
 
 export const getSession = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -39,7 +40,7 @@ export const adminAuthenticated = createMiddleware()
   .middleware([authenticated])
   .server(async ({ next, context }) => {
     const email = context.user.email;
-    if (!ADMINS.includes(email)) {
+    if (!getAdmins().includes(email)) {
       throw redirect({
         to: "/dashboard",
       });
