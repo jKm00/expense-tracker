@@ -124,13 +124,12 @@ async function verifyBearerToken(authorizationHeader: string | null) {
 
 async function resolveBearerTokenContext(authorizationHeader: string | null) {
   const logger = getLogger();
+  const rawToken = parseBearerToken(authorizationHeader);
+
   logger.addAttrs({
     integrationAction: "resolveBearerTokenContext",
-    integrationHasBearerToken: Boolean(parseBearerToken(authorizationHeader)),
-    integrationTokenPrefix: toRequestTokenPrefix(authorizationHeader),
+    integrationHasBearerToken: Boolean(rawToken),
   });
-
-  const rawToken = parseBearerToken(authorizationHeader);
   if (!rawToken) {
     return err({
       reason: "INTEGRATION_NO_TOKEN" as const,

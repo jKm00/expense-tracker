@@ -213,7 +213,6 @@ async function deleteTransaction(userId: string, transactionId: string) {
   if (foundError) {
     return err(foundError);
   }
-  getLogger().addAttrs({ transactionAction: "deleteTransaction", transactionId });
 
   try {
     const removed = await transactionRepo.remove(transactionId);
@@ -259,7 +258,6 @@ async function updateTransaction(
   if (foundError) {
     return err(foundError);
   }
-  logger.addAttrs({ transactionAction: "updateTransaction", transactionId });
 
   // Validate that all provided entry IDs belong to this transaction
   const existingEntryIds = new Set(
@@ -409,12 +407,6 @@ async function linkTagToEntry(
   if (transactionError) {
     return err(transactionError);
   }
-  getLogger().addAttrs({
-    transactionAction: "linkTagToEntry",
-    transactionId,
-    entryId,
-    tagId,
-  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {
@@ -472,12 +464,6 @@ async function unlinkTagFromEntry(
   if (transactionError) {
     return err(transactionError);
   }
-  getLogger().addAttrs({
-    transactionAction: "unlinkTagFromEntry",
-    transactionId,
-    entryId,
-    tagId,
-  });
 
   const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
   if (!entry) {

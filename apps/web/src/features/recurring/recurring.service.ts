@@ -137,7 +137,6 @@ async function updateRecurring(
   if (foundError) {
     return err(foundError);
   }
-  logger.addAttrs({ recurringAction: "updateRecurring", recurringId });
 
   let resolvedProductId: string | undefined;
   if (data.product) {
@@ -178,7 +177,6 @@ async function deleteRecurring(userId: string, recurringId: string) {
   if (foundError) {
     return err(foundError);
   }
-  getLogger().addAttrs({ recurringAction: "deleteRecurring", recurringId });
 
   try {
     const res = await recurringRepo.softDelete(recurringId);
