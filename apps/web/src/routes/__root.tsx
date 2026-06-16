@@ -12,7 +12,7 @@ import "../styles.css";
 
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/lib/theme";
+import { ThemeProvider, ThemeScript } from "@/features/themes";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -46,6 +46,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
     links: [
       {
+        rel: "icon",
+        href: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+      {
         rel: "manifest",
         href: "/manifest.json",
       },
@@ -63,6 +68,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <ThemeScript />
         <HeadContent />
       </head>
       <body suppressHydrationWarning>

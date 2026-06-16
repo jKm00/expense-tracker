@@ -1,15 +1,18 @@
-import { useTheme } from "@/lib/theme";
-import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
+import { useTheme } from "./theme-provider";
+
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { mode, setMode } = useTheme();
+  const isDark = mode === "dark";
 
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setMode(isDark ? "light" : "dark")}
       aria-label="Toggle theme"
       className="size-8"
     >
