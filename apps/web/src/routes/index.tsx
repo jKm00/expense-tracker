@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/features/auth/auth-client";
-import { getSession } from "@/features/auth/auth.utils";
+import { authClient } from "@/features/auth/client/auth-client";
+import { getSession } from "@/features/auth/server/auth.utils";
 
 const desktopShots = [
   {

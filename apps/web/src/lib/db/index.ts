@@ -6,6 +6,4 @@ function createDb(databaseUrl: string) {
   return drizzle(databaseUrl, { schema, relations });
 }
 
-export type Database = ReturnType<typeof createDb>;
-
 export const db = createDb(process.env.DATABASE_URL!);

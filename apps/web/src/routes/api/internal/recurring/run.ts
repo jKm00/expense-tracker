@@ -1,4 +1,4 @@
-import { recurringController } from "@/features/recurring/recurring.controller";
+import { recurringController } from "@/features/recurring/server/recurring.controller";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/api/internal/recurring/run")({

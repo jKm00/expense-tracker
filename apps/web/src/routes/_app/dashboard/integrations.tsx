@@ -36,13 +36,13 @@ import {
 import {
   createIntegrationTokenSchema,
   type CreateIntegrationTokenDTO,
-} from "@/features/integrations/integration.dtos";
-import { integrationMutations } from "@/features/integrations/integration.mutations";
-import { integrationQueries } from "@/features/integrations/integration.queries";
+} from "@/features/integrations/shared/integration.dtos";
+import { integrationMutations } from "@/features/integrations/client/integration.mutations";
+import { integrationQueries } from "@/features/integrations/client/integration.queries";
 import type {
   IntegrationRequestLogListItem,
   IntegrationTokenMetadata,
-} from "@/features/integrations/integration.models";
+} from "@/features/integrations/shared/integration.models";
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -62,6 +62,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 type HowItWorksTab = "overview" | "example" | "api";
 type TokenExampleTab = "curl" | "javascript" | "python";
@@ -1215,32 +1216,12 @@ function IntegrationLogsCard({
     }
   }, [logs, selectedLog]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage || isFetchingNextPage || expectedLogsError) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [
-    expectedLogsError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    logs.length,
-  ]);
+  useInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: Boolean(hasNextPage && !isFetchingNextPage && !expectedLogsError),
+    onIntersect: fetchNextPage,
+    refreshKey: logs.length,
+  });
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { ProductWithTag } from "@/features/products/products.models";
+import { ProductWithTag } from "@/features/products/shared/products.models";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";

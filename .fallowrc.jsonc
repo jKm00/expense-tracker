@@ -1,0 +1,99 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    "apps/web/src/start.ts",
+    "apps/web/src/server-plugins/env.ts"
+  ],
+  "ignorePatterns": [
+    "**/.output/**",
+    "**/.tanstack/**",
+    "**/node_modules/**",
+    "**/test-results/**",
+    "apps/web/src/components/ui/**",
+    "apps/web/src/routeTree.gen.ts"
+  ],
+  "ignoreDependencies": [
+    "@base-ui/react",
+    "cmdk",
+    "pg",
+    "radix-ui",
+    "react-day-picker"
+  ],
+  "rules": {
+    "unused-files": "error",
+    "unused-exports": "warn",
+    "unused-types": "warn",
+    "unused-dependencies": "warn",
+    "unlisted-dependencies": "error",
+    "unresolved-imports": "error",
+    "boundary-violation": "error",
+    "policy-violation": "error",
+    "circular-dependency": "warn",
+    "stale-suppressions": "warn"
+  },
+  "health": {
+    "maxCyclomatic": 999,
+    "maxCognitive": 999,
+    "maxCrap": 999
+  },
+  "audit": {
+    "gate": "new-only"
+  },
+  "boundaries": {
+    "zones": [
+      {
+        "name": "test",
+        "patterns": ["apps/web/src/**/*.test.ts", "apps/web/src/**/*.test.tsx"]
+      },
+      {
+        "name": "feature-server",
+        "patterns": ["apps/web/src/features/**/server/**"]
+      },
+      {
+        "name": "feature-client",
+        "patterns": ["apps/web/src/features/**/client/**"]
+      },
+      {
+        "name": "feature-shared",
+        "patterns": ["apps/web/src/features/**/shared/**"]
+      },
+      {
+        "name": "routes",
+        "patterns": ["apps/web/src/routes/**"]
+      },
+      {
+        "name": "components",
+        "patterns": ["apps/web/src/components/**"]
+      },
+      {
+        "name": "lib",
+        "patterns": ["apps/web/src/lib/**"]
+      },
+      {
+        "name": "hooks",
+        "patterns": ["apps/web/src/hooks/**"]
+      },
+      {
+        "name": "config",
+        "patterns": ["apps/web/src/config/**"]
+      },
+      {
+        "name": "utils",
+        "patterns": ["apps/web/src/utils/**"]
+      }
+    ],
+    "rules": [
+      { "from": "test", "allow": ["feature-server", "feature-client", "feature-shared", "routes", "components", "lib", "hooks", "config", "utils"] },
+      { "from": "feature-server", "allow": ["feature-shared", "feature-client", "config", "lib", "utils"] },
+      { "from": "feature-client", "allow": ["feature-shared", "feature-server", "components", "hooks", "lib", "utils"] },
+      { "from": "feature-shared", "allow": ["feature-server", "utils"] },
+      { "from": "routes", "allow": ["feature-server", "feature-client", "feature-shared", "components", "hooks", "lib", "utils"] },
+      { "from": "components", "allow": ["feature-client", "feature-shared", "hooks", "lib", "utils"] },
+      { "from": "hooks", "allow": ["lib", "utils"] },
+      { "from": "lib", "allow": ["feature-server", "feature-shared", "config", "utils"] },
+      { "from": "utils", "allow": [] },
+      { "from": "config", "allow": [] }
+    ]
+  },
+  "rulePacks": ["./fallow-rules/web-architecture.jsonc"]
+}

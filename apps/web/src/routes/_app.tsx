@@ -1,6 +1,6 @@
-import { AuthProvider } from "@/features/auth/auth.provider";
+import { AuthProvider } from "@/features/auth/client/auth.provider";
 import { OfflineBanner } from "@/components/custom/offline-banner";
-import { getSession } from "@/features/auth/auth.utils";
+import { getSession } from "@/features/auth/server/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
 import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
 import {
@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
+import { FeatureFlagsProvider } from "@/features/feature-flags/client/feature-flags.provider";
 
 const appSearchSchema = z.object({
   month: z.number().optional(),

@@ -17,7 +17,7 @@ import {
   PageHeaderTitle,
 } from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
 import {
   Card,
   CardContent,
@@ -28,9 +28,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { DeleteTagDialog } from "@/features/tags/components/delete-tag.dialog";
-import { EditTagDialog } from "@/features/tags/components/edit-tag.dialog";
-import { tagsQueries } from "@/features/tags/tags.queries";
+import { DeleteTagDialog } from "@/features/tags/client/delete-tag.dialog";
+import { EditTagDialog } from "@/features/tags/client/edit-tag.dialog";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {

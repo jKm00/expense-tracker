@@ -7,8 +7,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 import z from "zod";
 import { MonthSelect } from "@/components/custom/month-select";
-import { getDashboardDataOptions } from "@/features/analytics-v2/analytics-v2.queries";
-import { AnalyticsV2Dashboard } from "@/features/analytics-v2/components/analytics-v2-dashboard";
+import { getDashboardDataOptions } from "@/features/analytics-v2/client/analytics-v2.queries";
+import { AnalyticsV2Dashboard } from "@/features/analytics-v2/client/components/analytics-v2-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 

@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,6 +36,11 @@ jobs:
 
       - name: Test
         run: pnpm test:web
+
+      - name: Fallow analysis
+        uses: fallow-rs/fallow@v2
+        with:
+          format: sarif
 
   build-job:
     name: Build job

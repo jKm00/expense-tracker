@@ -1,0 +1,138 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/rule-pack-schema.json",
+  "version": 1,
+  "name": "web-architecture",
+  "description": "Feature server/client architecture rules for the web app.",
+  "rules": [
+    {
+      "id": "services-only-from-server-or-api",
+      "kind": "banned-import",
+      "specifiers": [
+        "@/features/analytics-v2/server/analytics-v2.service",
+        "@/features/auth/server/auth.service",
+        "@/features/feature-flags/server/feature-flags.service",
+        "@/features/integrations/server/integration.service",
+        "@/features/products/server/products.service",
+        "@/features/recurring/server/recurring.service",
+        "@/features/shopping/server/shopping.service",
+        "@/features/tags/server/tags.service",
+        "@/features/transactions/server/transactions.service",
+        "./analytics-v2.service",
+        "./auth.service",
+        "./feature-flags.service",
+        "./integration.service",
+        "./products.service",
+        "./recurring.service",
+        "./shopping.service",
+        "./tags.service",
+        "./transactions.service",
+        "../analytics-v2/server/analytics-v2.service",
+        "../auth/server/auth.service",
+        "../feature-flags/server/feature-flags.service",
+        "../integrations/server/integration.service",
+        "../products/server/products.service",
+        "../recurring/server/recurring.service",
+        "../shopping/server/shopping.service",
+        "../tags/server/tags.service",
+        "../transactions/server/transactions.service"
+      ],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": [
+        "apps/web/src/features/**/server/*.service.ts",
+        "apps/web/src/features/**/server/*.controller.ts",
+        "apps/web/src/features/**/*.test.ts",
+        "apps/web/src/features/**/*.test.tsx",
+        "apps/web/src/routes/api/**"
+      ],
+      "message": "Services may only be imported by server services, controllers, or server API route handlers.",
+      "severity": "error"
+    },
+    {
+      "id": "env-server-only",
+      "kind": "banned-import",
+      "specifiers": ["@/config/env"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": [
+        "apps/web/src/features/**/server/**",
+        "apps/web/src/routes/api/**",
+        "apps/web/src/lib/db/**",
+        "apps/web/src/**/*.test.ts",
+        "apps/web/src/**/*.test.tsx"
+      ],
+      "message": "env.ts reads process.env and must stay in server-only code.",
+      "severity": "error"
+    },
+    {
+      "id": "analytics-v2-repo-only-analytics-v2-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/analytics-v2/server/analytics-v2.repo", "./analytics-v2.repo", "../analytics-v2/server/analytics-v2.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/analytics-v2/server/analytics-v2.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "analytics-v2 repo may only be imported by analytics-v2 service.",
+      "severity": "error"
+    },
+    {
+      "id": "auth-repo-only-auth-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/auth/server/auth.repo", "./auth.repo", "../auth/server/auth.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/auth/server/auth.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "auth repo may only be imported by auth service.",
+      "severity": "error"
+    },
+    {
+      "id": "integration-repo-only-integration-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/integrations/server/integration.repo", "./integration.repo", "../integrations/server/integration.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/integrations/server/integration.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "integration repo may only be imported by integration service.",
+      "severity": "error"
+    },
+    {
+      "id": "products-repo-only-products-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/products/server/products.repo", "./products.repo", "../products/server/products.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/products/server/products.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "products repo may only be imported by products service.",
+      "severity": "error"
+    },
+    {
+      "id": "recurring-repo-only-recurring-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/recurring/server/recurring.repo", "./recurring.repo", "../recurring/server/recurring.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/recurring/server/recurring.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "recurring repo may only be imported by recurring service.",
+      "severity": "error"
+    },
+    {
+      "id": "shopping-repo-only-shopping-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/shopping/server/shopping.repo", "./shopping.repo", "../shopping/server/shopping.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/shopping/server/shopping.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "shopping repo may only be imported by shopping service.",
+      "severity": "error"
+    },
+    {
+      "id": "tags-repo-only-tags-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/tags/server/tags.repo", "./tags.repo", "../tags/server/tags.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/tags/server/tags.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "tags repo may only be imported by tags service.",
+      "severity": "error"
+    },
+    {
+      "id": "transactions-repo-only-transactions-service",
+      "kind": "banned-import",
+      "specifiers": ["@/features/transactions/server/transactions.repo", "./transactions.repo", "../transactions/server/transactions.repo"],
+      "files": ["apps/web/src/**/*.{ts,tsx}"],
+      "exclude": ["apps/web/src/features/transactions/server/transactions.service.ts", "apps/web/src/features/**/*.test.ts", "apps/web/src/features/**/*.test.tsx"],
+      "message": "transactions repo may only be imported by transactions service.",
+      "severity": "error"
+    }
+  ]
+}

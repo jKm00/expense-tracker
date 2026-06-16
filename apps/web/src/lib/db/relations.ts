@@ -3,28 +3,28 @@ import {
   session,
   user,
   verification,
-} from "@/features/auth/auth.schema";
+} from "@/features/auth/server/auth.schema";
 import {
   integrationEvents,
   integrationRequestLogs,
   integrationTokens,
-} from "@/features/integrations/integration.schema";
+} from "@/features/integrations/server/integration.schema";
 import {
   productAliases,
   products,
   productTags,
-} from "@/features/products/products.schema";
+} from "@/features/products/server/products.schema";
 import {
   shoppingListItems,
   shoppingLists,
-} from "@/features/shopping/shopping.schema";
-import { recurring } from "@/features/recurring/recurring.schema";
-import { tags } from "@/features/tags/tags.schema";
+} from "@/features/shopping/server/shopping.schema";
+import { recurring } from "@/features/recurring/server/recurring.schema";
+import { tags } from "@/features/tags/server/tags.schema";
 import {
   entries,
   entryTags,
   transactions,
-} from "@/features/transactions/transactions.schema";
+} from "@/features/transactions/server/transactions.schema";
 import { defineRelations } from "drizzle-orm";
 
 export const relations = defineRelations(

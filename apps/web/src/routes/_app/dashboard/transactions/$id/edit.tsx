@@ -1,8 +1,4 @@
-import {
-  ExpectedError,
-  ExpectedErrorMessage,
-  ExpectedErrorTitle,
-} from "@/components/custom/errors/expected-error";
+import { ExpectedErrorBlock } from "@/components/custom/errors/expected-error-block";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
@@ -10,10 +6,10 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { productQueries } from "@/features/products/products.queries";
-import { tagsQueries } from "@/features/tags/tags.queries";
-import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
-import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { productQueries } from "@/features/products/client/products.queries";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
+import { EditTransactionForm } from "@/features/transactions/client/components/edit-transaction.form";
+import { transactionQueries } from "@/features/transactions/client/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -72,86 +68,77 @@ function EditTransactionFormWrapper() {
   }
 
   if (expectedProductError) {
-    let title: string;
-    let message: string;
-
     const reason = expectedProductError.reason;
     switch (reason) {
       case "UNEXPECTED_DB_ERROR":
-        title = "Database error";
-        message =
-          "Something went wrong trying to fetch your products from the database. Please try again";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Database error"
+            message="Something went wrong trying to fetch your products from the database. Please try again"
+          />
+        );
       default:
-        title = "Unexpected error";
-        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unexpected error"
+            message={`Something unexpected happened: ${reason satisfies never}. Please try again!`}
+          />
+        );
     }
-
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
   }
 
   if (expectedTransactionError) {
-    let title: string;
-    let message: string;
-
     const reason = expectedTransactionError.reason;
     switch (reason) {
       case "TRANSACTION_NOT_FOUND":
-        title = "Transaction not found";
-        message = "The transaction you are trying to edit does not exist.";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Transaction not found"
+            message="The transaction you are trying to edit does not exist."
+          />
+        );
       case "TRANSACTION_UNAUTHORIZED":
-        title = "Unauthorized";
-        message = "You do not have permission to edit this transaction.";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unauthorized"
+            message="You do not have permission to edit this transaction."
+          />
+        );
       case "UNEXPECTED_DB_ERROR":
-        title = "Database error";
-        message =
-          "Something went wrong trying to fetch the transaction from the database. Please try again";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Database error"
+            message="Something went wrong trying to fetch the transaction from the database. Please try again"
+          />
+        );
       default:
-        title = "Unexpected error";
-        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unexpected error"
+            message={`Something unexpected happened: ${reason satisfies never}. Please try again!`}
+          />
+        );
     }
-
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
   }
 
   if (expectedTagsError) {
-    let title: string;
-    let message: string;
-
     const reason = expectedTagsError.reason;
     switch (reason) {
       case "UNEXPECTED_DB_ERROR":
-        title = "Database error";
-        message =
-          "Something went wrong trying to fetch your tags from the database. Please try again";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Database error"
+            message="Something went wrong trying to fetch your tags from the database. Please try again"
+          />
+        );
       default:
-        title = "Unexpected error";
-        message = `Something unexpected happened: ${reason satisfies never}. Please try again!`;
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unexpected error"
+            message={`Something unexpected happened: ${reason satisfies never}. Please try again!`}
+          />
+        );
     }
-
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
   }
 
   return (

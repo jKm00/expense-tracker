@@ -14,9 +14,9 @@ import {
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { SkeletonCard } from "@/components/custom/skeletons/skeleton-card";
 import { Button } from "@/components/ui/button";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
-import { TransactionList } from "@/features/transactions/components/transaction-list";
-import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
+import { TransactionList } from "@/features/transactions/client/components/transaction-list";
+import { transactionQueries } from "@/features/transactions/client/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Layers, Plus, TrendingUp } from "lucide-react";

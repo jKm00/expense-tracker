@@ -10,8 +10,8 @@ import {
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
-import { EditRecurringForm } from "@/features/recurring/components/edit-recurring.form";
-import { recurringQueries } from "@/features/recurring/recurring.queries";
+import { EditRecurringForm } from "@/features/recurring/client/components/edit-recurring.form";
+import { recurringQueries } from "@/features/recurring/client/recurring.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";

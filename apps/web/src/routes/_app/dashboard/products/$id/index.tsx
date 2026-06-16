@@ -1,8 +1,4 @@
-import {
-  ExpectedError,
-  ExpectedErrorMessage,
-  ExpectedErrorTitle,
-} from "@/components/custom/errors/expected-error";
+import { ExpectedErrorBlock } from "@/components/custom/errors/expected-error-block";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
@@ -23,12 +19,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
-import { LinkTagForm } from "@/features/products/components/link-tag.form";
-import { DeleteProductDialog } from "@/features/products/components/delete-product.dialog";
-import { ProductWithTag } from "@/features/products/products.models";
-import { productQueries } from "@/features/products/products.queries";
-import { tagsQueries } from "@/features/tags/tags.queries";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
+import { LinkTagForm } from "@/features/products/client/components/link-tag.form";
+import { DeleteProductDialog } from "@/features/products/client/components/delete-product.dialog";
+import { ProductWithTag } from "@/features/products/shared/products.models";
+import { productQueries } from "@/features/products/client/products.queries";
+import { tagsQueries } from "@/features/tags/client/tags.queries";
 import { formatAmount } from "@/utils/format";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -128,12 +124,7 @@ function ProductDetails() {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   const netValue = Number(stats.totalIncome) - Number(stats.totalSpent);
@@ -240,12 +231,7 @@ function LinkTagContent({ product }: { product: ProductWithTag }) {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   return <LinkTagForm product={product} tags={tags} />;

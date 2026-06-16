@@ -22,9 +22,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
-import { DeleteRecurringDialog } from "@/features/recurring/components/delete-recurring.dialog";
-import { recurringQueries } from "@/features/recurring/recurring.queries";
+import { KpiCard } from "@/features/analytics/client/components/kpi-card";
+import { DeleteRecurringDialog } from "@/features/recurring/client/components/delete-recurring.dialog";
+import { recurringQueries } from "@/features/recurring/client/recurring.queries";
 import { formatAmount } from "@/utils/format";
 import { toCapitalized } from "@/utils/typography";
 import { useSuspenseQuery } from "@tanstack/react-query";

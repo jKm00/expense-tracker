@@ -1,6 +1,14 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getLogger, runWithLogContext } from "./logger.context";
 import { RequestLogContext } from "./logger.types";
+import { setResultErrorHook } from "@/utils/result";
+
+setResultErrorHook((error) => {
+  getLogger().addAttrs({
+    appError: true,
+    errorReason: error.reason,
+  });
+});
 
 export const loggingMiddleware = createMiddleware().server(
   async ({ request, pathname, next }) => {

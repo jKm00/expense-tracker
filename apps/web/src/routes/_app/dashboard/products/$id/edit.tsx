@@ -10,8 +10,8 @@ import {
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
-import { EditProductForm } from "@/features/products/components/edit-product.form";
-import { productQueries } from "@/features/products/products.queries";
+import { EditProductForm } from "@/features/products/client/components/edit-product.form";
+import { productQueries } from "@/features/products/client/products.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
