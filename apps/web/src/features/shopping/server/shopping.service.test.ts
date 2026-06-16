@@ -69,6 +69,31 @@ function makeItem(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
+const baseCompleteShoppingEntry = {
+  shoppingItemId: "item-1",
+  product: { id: "product-1", name: "Milk" },
+  quantity: "1",
+  price: "10",
+  total: "10",
+  lastEditedField: "price" as const,
+  type: "expense" as const,
+  tagIds: [],
+};
+
+function makeCompleteShoppingData(
+  overrides: Partial<Parameters<typeof shoppingService.completeShopping>[1]> = {},
+) {
+  return {
+    store: "Shop",
+    description: "Groceries",
+    date: new Date("2024-01-15"),
+    keepUncheckedItems: true,
+    shoppingItemIds: ["item-1"],
+    entries: [baseCompleteShoppingEntry],
+    ...overrides,
+  };
+}
+
 describe("shoppingService", () => {
   describe("addShoppingItem", () => {
     it("returns the existing list item when the product is already on the list", async () => {
@@ -101,25 +126,10 @@ describe("shoppingService", () => {
       mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
       mockShoppingRepo.removeShoppingListItemsByIds.mockResolvedValue([] as any);
 
-      const [error, data] = await shoppingService.completeShopping("user-1", {
-        store: "Shop",
-        description: "Groceries",
-        date: new Date("2024-01-15"),
-        keepUncheckedItems: true,
+      const [error, data] = await shoppingService.completeShopping("user-1", makeCompleteShoppingData({
         shoppingItemIds: ["checked-1"],
-        entries: [
-          {
-            shoppingItemId: "checked-1",
-            product: { id: "product-1", name: "Milk" },
-            quantity: "1",
-            price: "10",
-            total: "10",
-            lastEditedField: "price",
-            type: "expense",
-            tagIds: [],
-          },
-        ],
-      });
+        entries: [{ ...baseCompleteShoppingEntry, shoppingItemId: "checked-1" }],
+      }));
 
       expect(error).toBeNull();
       expect(data).toEqual(transaction);
@@ -140,26 +150,9 @@ describe("shoppingService", () => {
       mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
       mockShoppingRepo.removeShoppingListItemsByIds.mockResolvedValue([] as any);
 
-      const [error, data] = await shoppingService.completeShopping("user-1", {
-        store: "Shop",
-        description: "Groceries",
-        date: new Date("2024-01-15"),
+      const [error, data] = await shoppingService.completeShopping("user-1", makeCompleteShoppingData({
         transactionId: "tx-linked",
-        keepUncheckedItems: true,
-        shoppingItemIds: ["item-1"],
-        entries: [
-          {
-            shoppingItemId: "item-1",
-            product: { id: "product-1", name: "Milk" },
-            quantity: "1",
-            price: "10",
-            total: "10",
-            lastEditedField: "price",
-            type: "expense",
-            tagIds: [],
-          },
-        ],
-      });
+      }));
 
       expect(error).toBeNull();
       expect(data).toEqual(transaction);
@@ -194,25 +187,11 @@ describe("shoppingService", () => {
       mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
       mockShoppingRepo.clearShoppingList.mockResolvedValue([] as any);
 
-      const [error] = await shoppingService.completeShopping("user-1", {
+      const [error] = await shoppingService.completeShopping("user-1", makeCompleteShoppingData({
         store: undefined,
         description: undefined,
-        date: new Date("2024-01-15"),
         keepUncheckedItems: false,
-        shoppingItemIds: ["item-1"],
-        entries: [
-          {
-            shoppingItemId: "item-1",
-            product: { id: "product-1", name: "Milk" },
-            quantity: "1",
-            price: "10",
-            total: "10",
-            lastEditedField: "price",
-            type: "expense",
-            tagIds: [],
-          },
-        ],
-      });
+      }));
 
       expect(error).toBeNull();
       expect(mockShoppingRepo.clearShoppingList).toHaveBeenCalledWith("list-1");

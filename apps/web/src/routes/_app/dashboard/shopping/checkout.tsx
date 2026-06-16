@@ -1,3 +1,4 @@
+import { ExpectedErrorBlock } from "@/components/custom/errors/expected-error-block";
 import {
   ExpectedError,
   ExpectedErrorMessage,
@@ -10,21 +11,17 @@ import {
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
-import { productQueries } from "@/features/products/client/products.queries";
+import {
+  prefetchShoppingPageData,
+  useShoppingPageData,
+} from "@/features/shopping/client/shopping-page-data";
 import { ShoppingCheckoutForm } from "@/features/shopping/client/components/shopping-checkout.form";
-import { shoppingQueries } from "@/features/shopping/client/shopping.queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/shopping/checkout")({
   loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.prefetchQuery(
-        shoppingQueries.getShoppingListOptions(),
-      ),
-      context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
-    ]);
+    await prefetchShoppingPageData(context.queryClient);
   },
   component: RouteComponent,
 });
@@ -49,65 +46,51 @@ function RouteComponent() {
 }
 
 function CheckoutContent() {
-  const {
-    data: [shoppingError, shoppingList],
-    error: unexpectedShoppingError,
-  } = useSuspenseQuery(shoppingQueries.getShoppingListOptions());
-  const {
-    data: [productsError, products],
-    error: unexpectedProductsError,
-  } = useSuspenseQuery(productQueries.getProductsOptions());
+  const { shoppingError, shoppingList, productsError, products, unexpectedError } =
+    useShoppingPageData();
 
-  if (unexpectedShoppingError || unexpectedProductsError) {
+  if (unexpectedError) {
     return <UnexpectedError />;
   }
 
   if (shoppingError) {
-    let title: string;
-    let message: string;
-
-    switch (shoppingError.reason) {
+    const reason = shoppingError.reason;
+    switch (reason) {
       case "SHOPPING_DB_ERROR":
-        title = "Database error";
-        message =
-          "Something went wrong trying to load your shopping list. Please try again!";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Database error"
+            message="Something went wrong trying to load your shopping list. Please try again!"
+          />
+        );
       default:
-        title = "Unexpected error";
-        message = `Something unexpected happened: ${shoppingError.reason satisfies never}. Please try again!`;
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unexpected error"
+            message={`Something unexpected happened: ${reason satisfies never}. Please try again!`}
+          />
+        );
     }
-
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
   }
 
   if (productsError) {
-    let title: string;
-    let message: string;
-
-    switch (productsError.reason) {
+    const reason = productsError.reason;
+    switch (reason) {
       case "UNEXPECTED_DB_ERROR":
-        title = "Database error";
-        message =
-          "Something went wrong trying to load products for checkout. Please try again!";
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Database error"
+            message="Something went wrong trying to load products for checkout. Please try again!"
+          />
+        );
       default:
-        title = "Unexpected error";
-        message = `Something unexpected happened: ${productsError.reason satisfies never}. Please try again!`;
-        break;
+        return (
+          <ExpectedErrorBlock
+            title="Unexpected error"
+            message={`Something unexpected happened: ${reason satisfies never}. Please try again!`}
+          />
+        );
     }
-
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
   }
 
   const checkedCount = shoppingList.items.filter((item) => item.checked).length;

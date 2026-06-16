@@ -31,10 +31,11 @@ import {
   Trash,
   TrendingUp,
 } from "lucide-react";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { DeleteTagDialog } from "@/features/tags/client/delete-tag.dialog";
 import { EditTagDialog } from "@/features/tags/client/edit-tag.dialog";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/dashboard/tags/")({
@@ -132,32 +133,12 @@ function TagContent() {
     [tagPages],
   );
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage || isFetchingNextPage || listExpectedError) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    listExpectedError,
-    visibleTags.length,
-  ]);
+  useInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: Boolean(hasNextPage && !isFetchingNextPage && !listExpectedError),
+    onIntersect: fetchNextPage,
+    refreshKey: visibleTags.length,
+  });
 
   if (unexpectedError || listUnexpectedError) {
     return <UnexpectedError />;

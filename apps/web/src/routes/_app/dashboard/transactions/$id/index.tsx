@@ -1,8 +1,4 @@
-import {
-  ExpectedError,
-  ExpectedErrorMessage,
-  ExpectedErrorTitle,
-} from "@/components/custom/errors/expected-error";
+import { ExpectedErrorBlock } from "@/components/custom/errors/expected-error-block";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
@@ -132,12 +128,7 @@ function TransactionDetails() {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   if (expectedTagsError) {
@@ -157,12 +148,7 @@ function TransactionDetails() {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   return (

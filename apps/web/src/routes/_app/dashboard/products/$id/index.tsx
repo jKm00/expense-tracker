@@ -1,8 +1,4 @@
-import {
-  ExpectedError,
-  ExpectedErrorMessage,
-  ExpectedErrorTitle,
-} from "@/components/custom/errors/expected-error";
+import { ExpectedErrorBlock } from "@/components/custom/errors/expected-error-block";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
@@ -128,12 +124,7 @@ function ProductDetails() {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   const netValue = Number(stats.totalIncome) - Number(stats.totalSpent);
@@ -240,12 +231,7 @@ function LinkTagContent({ product }: { product: ProductWithTag }) {
         break;
     }
 
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>{title}</ExpectedErrorTitle>
-        <ExpectedErrorMessage>{message}</ExpectedErrorMessage>
-      </ExpectedError>
-    );
+    return <ExpectedErrorBlock title={title} message={message} />;
   }
 
   return <LinkTagForm product={product} tags={tags} />;

@@ -1,16 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
-import { LoaderButton } from "@/components/custom/loader.button";
+import { DeleteConfirmDialog } from "@/components/custom/delete-confirm-dialog";
 import { toast } from "sonner";
 import { transactionMutations } from "../transactions.mutations";
 import { useState } from "react";
@@ -71,34 +59,20 @@ export function DeleteTransactionDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive">{children}</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
-            <AlertTriangle className="size-5 text-destructive" />
-          </div>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone and will permanently delete the
-            transaction!
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <LoaderButton
-            variant="destructive"
-            size="sm"
-            isLoading={mutation.isPending}
-            disabled={mutation.isPending}
-            onClick={handleDelete}
-          >
-            Delete
-          </LoaderButton>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DeleteConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Are you absolutely sure?"
+      description={
+        <>
+          This action cannot be undone and will permanently delete the
+          transaction!
+        </>
+      }
+      isLoading={mutation.isPending}
+      onDelete={handleDelete}
+    >
+      {children}
+    </DeleteConfirmDialog>
   );
 }

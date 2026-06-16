@@ -1,16 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
-import { LoaderButton } from "@/components/custom/loader.button";
+import { DeleteConfirmDialog } from "@/components/custom/delete-confirm-dialog";
 import { toast } from "sonner";
 import { recurringMutations } from "../recurring.mutations";
 import { useState } from "react";
@@ -62,34 +50,20 @@ export function DeleteRecurringDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive">{children}</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
-            <AlertTriangle className="size-5 text-destructive" />
-          </div>
-          <AlertDialogTitle>Delete recurring transaction?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This recurring transaction will be archived. It will no longer appear
-            in your recurring list.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <LoaderButton
-            variant="destructive"
-            size="sm"
-            isLoading={mutation.isPending}
-            disabled={mutation.isPending}
-            onClick={handleDelete}
-          >
-            Delete
-          </LoaderButton>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DeleteConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Delete recurring transaction?"
+      description={
+        <>
+          This recurring transaction will be archived. It will no longer appear
+          in your recurring list.
+        </>
+      }
+      isLoading={mutation.isPending}
+      onDelete={handleDelete}
+    >
+      {children}
+    </DeleteConfirmDialog>
   );
 }

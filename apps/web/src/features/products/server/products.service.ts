@@ -301,11 +301,114 @@ async function addProductAlias(userId: string, productId: string, name: string) 
     return err(productError);
   }
 
+  const [aliasError, aliasInput] = await validateAliasName({
+    productId,
+    productName: product.name,
+    name,
+  });
+  if (aliasError) {
+    return err(aliasError);
+  }
+
+  try {
+    const res = await productRepo.saveAlias({
+      productId,
+      name: aliasInput.trimmedName,
+      normalizedName: aliasInput.normalizedName,
+    });
+
+    return handleAliasWriteResult(res, {
+      emptyReason: "PRODUCT_ALIAS_NOT_RETURNED",
+      emptyMessage: "No alias returned after saving",
+    });
+  } catch (error) {
+    return handleAliasWriteError(error, `Failed to create alias for product ${productId}`);
+  }
+}
+
+async function updateProductAlias(userId: string, aliasId: string, name: string) {
+  getLogger().addAttrs({ productAction: "updateProductAlias", aliasId });
+
+  const [ownerError, aliasWithOwner] = await getOwnedAlias(userId, aliasId);
+  if (ownerError) {
+    return err(ownerError);
+  }
+
+  const [aliasError, aliasInput] = await validateAliasName({
+    productId: aliasWithOwner.product.id,
+    productName: aliasWithOwner.product.name,
+    name,
+    currentAliasId: aliasId,
+  });
+
+  if (aliasError) {
+    return err(aliasError);
+  }
+
+  try {
+    const res = await productRepo.updateAlias(aliasId, {
+      name: aliasInput.trimmedName,
+      normalizedName: aliasInput.normalizedName,
+    });
+
+    return handleAliasWriteResult(res, {
+      emptyReason: "PRODUCT_ALIAS_NOT_FOUND",
+      emptyMessage: "Alias no longer exists",
+    });
+  } catch (error) {
+    return handleAliasWriteError(error, `Failed to update alias ${aliasId}`);
+  }
+}
+
+function handleAliasWriteResult<T>(
+  rows: T[],
+  {
+    emptyReason,
+    emptyMessage,
+  }: {
+    emptyReason: "PRODUCT_ALIAS_NOT_RETURNED" | "PRODUCT_ALIAS_NOT_FOUND";
+    emptyMessage: string;
+  },
+) {
+  if (rows.length === 0) {
+    return err({
+      reason: emptyReason,
+      message: emptyMessage,
+    });
+  }
+
+  return ok(rows[0]);
+}
+
+function handleAliasWriteError(error: unknown, message: string) {
+  if (isUniqueConstraintError(error)) {
+    return err({
+      reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
+      message: "This alias already exists for this product",
+    });
+  }
+
+  return err({
+    reason: "PRODUCT_DB_ERROR" as const,
+    message,
+  });
+}
+
+async function validateAliasName({
+  productId,
+  productName,
+  name,
+  currentAliasId,
+}: {
+  productId: string;
+  productName: string;
+  name: string;
+  currentAliasId?: string;
+}) {
   const trimmedName = trimName(name);
   const normalizedName = normalizeName(trimmedName);
-  const normalizedCanonicalName = normalizeName(product.name);
 
-  if (normalizedName === normalizedCanonicalName) {
+  if (normalizedName === normalizeName(productName)) {
     return err({
       reason: "PRODUCT_ALIAS_EQUALS_CANONICAL" as const,
       message: "Alias cannot be the same as product name",
@@ -316,46 +419,17 @@ async function addProductAlias(userId: string, productId: string, name: string) 
     productId,
     normalizedName,
   );
-  if (existingAlias) {
+  if (existingAlias && existingAlias.id !== currentAliasId) {
     return err({
       reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
       message: "This alias already exists for this product",
     });
   }
 
-  try {
-    const res = await productRepo.saveAlias({
-      productId,
-      name: trimmedName,
-      normalizedName,
-    });
-
-    if (res.length === 0) {
-      return err({
-        reason: "PRODUCT_ALIAS_NOT_RETURNED" as const,
-        message: "No alias returned after saving",
-      });
-    }
-
-    return ok(res[0]);
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      return err({
-        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
-        message: "This alias already exists for this product",
-      });
-    }
-
-    return err({
-      reason: "PRODUCT_DB_ERROR" as const,
-      message: `Failed to create alias for product ${productId}`,
-    });
-  }
+  return ok({ trimmedName, normalizedName });
 }
 
-async function updateProductAlias(userId: string, aliasId: string, name: string) {
-  getLogger().addAttrs({ productAction: "updateProductAlias", aliasId });
-
+async function getOwnedAlias(userId: string, aliasId: string) {
   let aliasWithOwner: Awaited<ReturnType<typeof getAliasWithOwner>>;
   try {
     aliasWithOwner = await getAliasWithOwner(aliasId);
@@ -380,83 +454,15 @@ async function updateProductAlias(userId: string, aliasId: string, name: string)
     });
   }
 
-  const trimmedName = trimName(name);
-  const normalizedName = normalizeName(trimmedName);
-  const normalizedCanonicalName = normalizeName(aliasWithOwner.product.name);
-
-  if (normalizedName === normalizedCanonicalName) {
-    return err({
-      reason: "PRODUCT_ALIAS_EQUALS_CANONICAL" as const,
-      message: "Alias cannot be the same as product name",
-    });
-  }
-
-  const existingAlias = await productRepo.getAliasByNormalizedName(
-    aliasWithOwner.product.id,
-    normalizedName,
-  );
-
-  if (existingAlias && existingAlias.id !== aliasId) {
-    return err({
-      reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
-      message: "This alias already exists for this product",
-    });
-  }
-
-  try {
-    const res = await productRepo.updateAlias(aliasId, {
-      name: trimmedName,
-      normalizedName,
-    });
-
-    if (res.length === 0) {
-      return err({
-        reason: "PRODUCT_ALIAS_NOT_FOUND" as const,
-        message: "Alias no longer exists",
-      });
-    }
-
-    return ok(res[0]);
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      return err({
-        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
-        message: "This alias already exists for this product",
-      });
-    }
-
-    return err({
-      reason: "PRODUCT_DB_ERROR" as const,
-      message: `Failed to update alias ${aliasId}`,
-    });
-  }
+  return ok(aliasWithOwner);
 }
 
 async function deleteProductAlias(userId: string, aliasId: string) {
   getLogger().addAttrs({ productAction: "deleteProductAlias", aliasId });
 
-  let aliasWithOwner: Awaited<ReturnType<typeof getAliasWithOwner>>;
-  try {
-    aliasWithOwner = await getAliasWithOwner(aliasId);
-  } catch (error) {
-    return err({
-      reason: "PRODUCT_DB_ERROR" as const,
-      message: `Failed to load alias ${aliasId}`,
-    });
-  }
-
-  if (!aliasWithOwner) {
-    return err({
-      reason: "PRODUCT_ALIAS_NOT_FOUND" as const,
-      message: "Alias no longer exists",
-    });
-  }
-
-  if (aliasWithOwner.product.userId !== userId) {
-    return err({
-      reason: "PRODUCT_UNAUTHORIZED" as const,
-      message: "You do not have permission to modify this alias",
-    });
+  const [ownerError] = await getOwnedAlias(userId, aliasId);
+  if (ownerError) {
+    return err(ownerError);
   }
 
   try {

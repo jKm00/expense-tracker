@@ -12,14 +12,7 @@ async function getTransactions(userId: string, year?: number, month?: number) {
   logger.addAttrs({ transactionAction: "getTransactions", year, month });
 
   try {
-    let start: Date;
-    if (year === undefined || month === undefined) {
-      start = dayjs().startOf("month").toDate();
-    } else {
-      start = new Date(year, month, 1);
-    }
-
-    const end = dayjs(start).add(1, "month").toDate();
+    const { start, end } = getTransactionMonthRange(year, month);
     const transactions = await transactionRepo.getAll(userId, start, end);
     logger.addAttrs({ transactionCount: transactions.length });
     return ok(transactions);
@@ -43,14 +36,7 @@ async function getTransactionKpis(
   });
 
   try {
-    let start: Date;
-    if (input.year === undefined || input.month === undefined) {
-      start = dayjs().startOf("month").toDate();
-    } else {
-      start = new Date(input.year, input.month, 1);
-    }
-
-    const end = dayjs(start).add(1, "month").toDate();
+    const { start, end } = getTransactionMonthRange(input.year, input.month);
     const { transactionCount, totalEntries } = await transactionRepo.getKpis(
       userId,
       start,
@@ -170,20 +156,14 @@ async function saveEntry(
   transactionId: string,
   entry: NewEntryDTO,
 ) {
-  const [productError, product] = await resolveProduct(userId, entry.product);
-  if (productError) {
-    return err(productError);
-  }
-
-  const tagIds = normalizeTagIds(entry.tagIds);
-  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
-  if (tagValidationError) {
-    return err(tagValidationError);
+  const [inputError, input] = await prepareEntryPersistence(userId, entry);
+  if (inputError) {
+    return err(inputError);
   }
 
   const savedEntries = await transactionRepo.saveEntry({
     transactionId,
-    productId: product.id,
+    productId: input.product.id,
     price: entry.price,
     quantity: Number(entry.quantity),
     type: entry.type,
@@ -197,7 +177,7 @@ async function saveEntry(
   }
 
   const savedEntry = savedEntries[0];
-  const [syncError] = await replaceEntryTags(savedEntry.id, tagIds);
+  const [syncError] = await replaceEntryTags(savedEntry.id, input.tagIds);
   if (syncError) {
     return err(syncError);
   }
@@ -353,19 +333,13 @@ async function updateEntry(
   entryId: string,
   entry: NewEntryDTO,
 ) {
-  const [productError, product] = await resolveProduct(userId, entry.product);
-  if (productError) {
-    return err(productError);
-  }
-
-  const tagIds = normalizeTagIds(entry.tagIds);
-  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
-  if (tagValidationError) {
-    return err(tagValidationError);
+  const [inputError, input] = await prepareEntryPersistence(userId, entry);
+  if (inputError) {
+    return err(inputError);
   }
 
   const updatedEntries = await transactionRepo.updateEntry(entryId, {
-    productId: product.id,
+    productId: input.product.id,
     price: entry.price,
     quantity: Number(entry.quantity),
     type: entry.type,
@@ -378,12 +352,27 @@ async function updateEntry(
     });
   }
 
-  const [syncError] = await replaceEntryTags(entryId, tagIds);
+  const [syncError] = await replaceEntryTags(entryId, input.tagIds);
   if (syncError) {
     return err(syncError);
   }
 
   return ok(updatedEntries[0]);
+}
+
+async function prepareEntryPersistence(userId: string, entry: NewEntryDTO) {
+  const [productError, product] = await resolveProduct(userId, entry.product);
+  if (productError) {
+    return err(productError);
+  }
+
+  const tagIds = normalizeTagIds(entry.tagIds);
+  const [tagValidationError] = await assertTagOwnership(userId, tagIds);
+  if (tagValidationError) {
+    return err(tagValidationError);
+  }
+
+  return ok({ product, tagIds });
 }
 
 async function linkTagToEntry(
@@ -407,12 +396,9 @@ async function linkTagToEntry(
     return err(transactionError);
   }
 
-  const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
-  if (!entry) {
-    return err({
-      reason: "INVALID_ENTRY_IDS",
-      message: `Entry ${entryId} does not belong to transaction ${transactionId}`,
-    });
+  const [entryError, entry] = getTransactionEntry(transaction, transactionId, entryId);
+  if (entryError) {
+    return err(entryError);
   }
 
   const [tagError] = await tagsService.getTag(userId, tagId);
@@ -464,12 +450,9 @@ async function unlinkTagFromEntry(
     return err(transactionError);
   }
 
-  const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
-  if (!entry) {
-    return err({
-      reason: "INVALID_ENTRY_IDS",
-      message: `Entry ${entryId} does not belong to transaction ${transactionId}`,
-    });
+  const [entryError] = getTransactionEntry(transaction, transactionId, entryId);
+  if (entryError) {
+    return err(entryError);
   }
 
   try {
@@ -506,6 +489,22 @@ async function assertTagOwnership(userId: string, tagIds: string[]) {
   return ok(true);
 }
 
+function getTransactionEntry(
+  transaction: Awaited<ReturnType<typeof getTransaction>>[1],
+  transactionId: string,
+  entryId: string,
+) {
+  const entry = transaction.entries.find((txEntry) => txEntry.id === entryId);
+  if (!entry) {
+    return err({
+      reason: "INVALID_ENTRY_IDS",
+      message: `Entry ${entryId} does not belong to transaction ${transactionId}`,
+    });
+  }
+
+  return ok(entry);
+}
+
 async function replaceEntryTags(entryId: string, tagIds: string[]) {
   try {
     await transactionRepo.removeAllEntryTagLinks(entryId);
@@ -525,6 +524,18 @@ async function replaceEntryTags(entryId: string, tagIds: string[]) {
 
 function normalizeTagIds(tagIds?: string[]) {
   return Array.from(new Set(tagIds ?? []));
+}
+
+function getTransactionMonthRange(year?: number, month?: number) {
+  const start =
+    year === undefined || month === undefined
+      ? dayjs().startOf("month").toDate()
+      : new Date(year, month, 1);
+
+  return {
+    start,
+    end: dayjs(start).add(1, "month").toDate(),
+  };
 }
 
 function calculateTotalPrice(entries: NewEntryDTO[]): number {

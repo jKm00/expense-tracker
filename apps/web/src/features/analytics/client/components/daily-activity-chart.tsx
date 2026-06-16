@@ -1,5 +1,5 @@
 import { DailyExpensesDataPoint } from "@/features/analytics/shared/analytics.models";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid } from "recharts";
 import {
   Card,
   CardContent,
@@ -10,21 +10,14 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
-  EmptyState,
-  EmptyStateAction,
-  EmptyStateMessage,
-} from "@/components/custom/empty-state";
-import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
-import { ChartArea, Plus } from "lucide-react";
-import dayjs from "dayjs";
+  AnalyticsChartAxes,
+  AnalyticsChartEmptyState,
+  AnalyticsChartOverlays,
+  AnalyticsPeriodFooter,
+} from "./analytics-chart-shared";
 
 type DailyActivityChartProps = {
   chartData: DailyExpensesDataPoint[];
@@ -62,19 +55,7 @@ export function DailyActivityChart({
       </CardHeader>
       <CardContent>
         {isEmpty ? (
-          <EmptyState icon={ChartArea}>
-            <EmptyStateMessage>
-              No daily activity yet. Add a transaction to see your spending pattern.
-            </EmptyStateMessage>
-            <EmptyStateAction>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/dashboard/transactions/new">
-                  <Plus className="size-4" />
-                  Create transaction
-                </Link>
-              </Button>
-            </EmptyStateAction>
-          </EmptyState>
+          <AnalyticsChartEmptyState message="No daily activity yet. Add a transaction to see your spending pattern." />
         ) : (
           <ChartContainer config={chartConfig}>
             <BarChart
@@ -86,20 +67,8 @@ export function DailyActivityChart({
               }}
             >
               <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="day"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickCount={3}
-              />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <AnalyticsChartAxes yTickLine={false} />
+              <AnalyticsChartOverlays />
               <Bar
                 dataKey="value"
                 fill="var(--color-value)"
@@ -116,13 +85,13 @@ export function DailyActivityChart({
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none text-muted-foreground">
-            Daily spending for{" "}
-            {dayjs(new Date(year, month)).format("MMMM YYYY")} vs{" "}
-            {dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}
-          </div>
-        </div>
+        <AnalyticsPeriodFooter
+          label="Daily spending"
+          year={year}
+          month={month}
+          compareYear={compareYear}
+          compareMonth={compareMonth}
+        />
       </CardFooter>
     </Card>
   );

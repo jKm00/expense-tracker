@@ -62,6 +62,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 type HowItWorksTab = "overview" | "example" | "api";
 type TokenExampleTab = "curl" | "javascript" | "python";
@@ -1215,32 +1216,12 @@ function IntegrationLogsCard({
     }
   }, [logs, selectedLog]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage || isFetchingNextPage || expectedLogsError) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [
-    expectedLogsError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    logs.length,
-  ]);
+  useInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: Boolean(hasNextPage && !isFetchingNextPage && !expectedLogsError),
+    onIntersect: fetchNextPage,
+    refreshKey: logs.length,
+  });
 
   return (
     <>

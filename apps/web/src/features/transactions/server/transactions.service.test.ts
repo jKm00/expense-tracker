@@ -61,6 +61,12 @@ function makeFullTransaction(overrides: Record<string, unknown> = {}) {
   });
 }
 
+function makeTransactionWithEntry(entry = makeEntry({ id: "entry-1" })) {
+  return makeTransaction({
+    entries: [{ ...entry, products: makeProduct() }],
+  });
+}
+
 describe("transactionService", () => {
   describe("getTransactions", () => {
     it("returns ok with transactions array on success", async () => {
@@ -385,9 +391,7 @@ describe("transactionService", () => {
 
     function setupSuccessfulUpdate() {
       const entry = makeEntry({ id: "entry-1" });
-      const tx = makeTransaction({
-        entries: [{ ...entry, products: makeProduct() }],
-      });
+      const tx = makeTransactionWithEntry(entry);
       const product = makeProduct();
 
       // First call: getTransaction for ownership check
@@ -434,9 +438,7 @@ describe("transactionService", () => {
 
     it("returns err with INVALID_ENTRY_IDS when entry ID doesn't belong to transaction", async () => {
       const entry = makeEntry({ id: "entry-1" });
-      const tx = makeTransaction({
-        entries: [{ ...entry, products: makeProduct() }],
-      });
+      const tx = makeTransactionWithEntry(entry);
       mockTransactionRepo.getOne.mockResolvedValue(tx as any);
 
       const [error] = await transactionService.updateTransaction("user-1", "tx-1", {
@@ -488,9 +490,7 @@ describe("transactionService", () => {
 
     it("calls saveEntry for new entries without id", async () => {
       const entry = makeEntry({ id: "entry-1" });
-      const tx = makeTransaction({
-        entries: [{ ...entry, products: makeProduct() }],
-      });
+      const tx = makeTransactionWithEntry(entry);
       const product = makeProduct();
 
       mockTransactionRepo.getOne

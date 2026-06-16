@@ -252,24 +252,7 @@ function RouteComponent() {
             !showMobilePeriodFilters && "hidden",
           )}
         >
-          <div className="grid items-end gap-2">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Month
-              </p>
-              <MonthSelect
-                from="/_app/dashboard/analytics"
-                to="/dashboard/analytics"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Compare
-              </p>
-              <CompareSelect className="h-8 w-full" comparison={comparison} />
-            </div>
-          </div>
+          <PeriodFilterControls comparison={comparison} />
         </div>
 
         <div
@@ -278,24 +261,10 @@ function RouteComponent() {
             !isDesktopPeriodFiltersOpen && "md:hidden",
           )}
         >
-          <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-[auto_220px]">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Month
-              </p>
-              <MonthSelect
-                from="/_app/dashboard/analytics"
-                to="/dashboard/analytics"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Compare
-              </p>
-              <CompareSelect className="h-8 w-full" comparison={comparison} />
-            </div>
-          </div>
+          <PeriodFilterControls
+            className="md:grid-cols-2 xl:grid-cols-[auto_220px]"
+            comparison={comparison}
+          />
         </div>
       </div>
 
@@ -308,6 +277,35 @@ function RouteComponent() {
           comparison={comparison}
         />
       </Suspense>
+    </div>
+  );
+}
+
+function PeriodFilterControls({
+  className,
+  comparison,
+}: {
+  className?: string;
+  comparison?: "year" | "month";
+}) {
+  return (
+    <div className={cn("grid items-end gap-2", className)}>
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Month
+        </p>
+        <MonthSelect
+          from="/_app/dashboard/analytics"
+          to="/dashboard/analytics"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Compare
+        </p>
+        <CompareSelect className="h-8 w-full" comparison={comparison} />
+      </div>
     </div>
   );
 }

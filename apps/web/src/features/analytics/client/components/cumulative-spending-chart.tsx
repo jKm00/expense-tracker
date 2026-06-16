@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { DailyExpensesDataPoint } from "@/features/analytics/shared/analytics.models";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid } from "recharts";
 import {
   Card,
   CardContent,
@@ -11,21 +11,14 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
-  EmptyState,
-  EmptyStateAction,
-  EmptyStateMessage,
-} from "@/components/custom/empty-state";
-import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
-import { ChartArea, Plus } from "lucide-react";
-import dayjs from "dayjs";
+  AnalyticsChartAxes,
+  AnalyticsChartEmptyState,
+  AnalyticsChartOverlays,
+  AnalyticsPeriodFooter,
+} from "./analytics-chart-shared";
 
 type CumulativeSpendingChartProps = {
   dailyData: DailyExpensesDataPoint[];
@@ -77,20 +70,7 @@ export function CumulativeSpendingChart({
       </CardHeader>
       <CardContent>
         {isEmpty ? (
-          <EmptyState icon={ChartArea}>
-            <EmptyStateMessage>
-              No cumulative spending data yet. Add a transaction to start tracking
-              the curve.
-            </EmptyStateMessage>
-            <EmptyStateAction>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/dashboard/transactions/new">
-                  <Plus className="size-4" />
-                  Create transaction
-                </Link>
-              </Button>
-            </EmptyStateAction>
-          </EmptyState>
+          <AnalyticsChartEmptyState message="No cumulative spending data yet. Add a transaction to start tracking the curve." />
         ) : (
           <ChartContainer config={chartConfig}>
             <AreaChart
@@ -102,20 +82,8 @@ export function CumulativeSpendingChart({
               }}
             >
               <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="day"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                tickLine={true}
-                axisLine={false}
-                tickMargin={8}
-                tickCount={3}
-              />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <AnalyticsChartAxes yTickLine={true} />
+              <AnalyticsChartOverlays />
               <defs>
                 <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
                   <stop
@@ -170,13 +138,13 @@ export function CumulativeSpendingChart({
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none text-muted-foreground">
-            Cumulative spending for{" "}
-            {dayjs(new Date(year, month)).format("MMMM YYYY")} vs{" "}
-            {dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}
-          </div>
-        </div>
+        <AnalyticsPeriodFooter
+          label="Cumulative spending"
+          year={year}
+          month={month}
+          compareYear={compareYear}
+          compareMonth={compareMonth}
+        />
       </CardFooter>
     </Card>
   );
