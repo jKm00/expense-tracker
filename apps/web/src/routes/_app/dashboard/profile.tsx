@@ -1,6 +1,6 @@
 import { useAuth } from "@/features/auth/auth.provider";
 import { authClient } from "@/features/auth/auth-client";
-import { ThemeToggle } from "@/components/custom/theme-toggle";
+import { ThemePicker } from "@/features/themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -83,20 +83,18 @@ function RouteComponent() {
           <CardDescription>Customize your experience</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="size-8 rounded-lg bg-muted grid place-items-center">
-                <Palette className="size-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Theme</p>
-                <p className="text-xs text-muted-foreground">
-                  Dark or light mode
-                </p>
-              </div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="size-8 rounded-lg bg-muted grid place-items-center">
+              <Palette className="size-4 text-muted-foreground" />
             </div>
-            <ThemeToggle />
+            <div>
+              <p className="text-sm font-medium">Theme</p>
+              <p className="text-xs text-muted-foreground">
+                Choose a palette and light or dark mode
+              </p>
+            </div>
           </div>
+          <ThemePicker />
         </CardContent>
       </Card>
 
