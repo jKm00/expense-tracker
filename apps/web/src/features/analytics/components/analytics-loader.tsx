@@ -1,6 +1,4 @@
-import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Tag } from "@/features/tags/tags.models";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
@@ -9,23 +7,12 @@ import {
   ExpectedErrorMessage,
   ExpectedErrorTitle,
 } from "@/components/custom/errors/expected-error";
-import {
-  getComparisonDate,
-  filterTransactionsByTags,
-} from "@/features/analytics/analytics.utils";
+import { getComparisonDate } from "@/features/analytics/analytics.utils";
 import { Route } from "@/routes/_app/dashboard/analytics";
 import { AnalyticsDashboard } from "./analytics-dashboard";
 import dayjs from "dayjs";
 
-type AnalyticsLoaderProps = {
-  includeTags: Tag[];
-  excludeTags: Tag[];
-};
-
-export function AnalyticsLoader({
-  includeTags,
-  excludeTags,
-}: AnalyticsLoaderProps) {
+export function AnalyticsLoader() {
   const { month, year, comparison } = Route.useSearch();
   const {
     data: [expectedTransactionError, transactions],
@@ -51,22 +38,6 @@ export function AnalyticsLoader({
 
   const selectedMonth = month || dayjs().month();
   const selectedYear = year || dayjs().year();
-
-  const filteredTransactions = useMemo(
-    () =>
-      filterTransactionsByTags(transactions ?? [], includeTags, excludeTags),
-    [transactions, includeTags, excludeTags],
-  );
-
-  const filteredComparisonTransactions = useMemo(
-    () =>
-      filterTransactionsByTags(
-        comparisonTransactions ?? [],
-        includeTags,
-        excludeTags,
-      ),
-    [comparisonTransactions, includeTags, excludeTags],
-  );
 
   if (unexpectedTransactionError) {
     return <UnexpectedError />;
@@ -98,8 +69,8 @@ export function AnalyticsLoader({
 
   return (
     <AnalyticsDashboard
-      transactions={filteredTransactions}
-      comparisonTransactions={filteredComparisonTransactions}
+      transactions={transactions ?? []}
+      comparisonTransactions={comparisonTransactions ?? []}
       recurrings={recurrings ?? []}
       month={selectedMonth}
       year={selectedYear}

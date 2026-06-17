@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   const location = useLocation();
-  const isWideScreen = location.pathname.startsWith("/dashboard/v2/analytics");
+  const isWideScreen =
+    location.pathname.startsWith("/dashboard/analytics") ||
+    location.pathname.startsWith("/dashboard/v2/analytics");
 
   return (
     <AuthProvider>

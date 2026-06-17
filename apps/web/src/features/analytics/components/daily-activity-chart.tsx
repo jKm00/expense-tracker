@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ChartArea, Plus } from "lucide-react";
 import dayjs from "dayjs";
+import { formatAmountNoDecimals } from "@/utils/format";
 
 type DailyActivityChartProps = {
   chartData: DailyExpensesDataPoint[];
@@ -34,6 +35,10 @@ type DailyActivityChartProps = {
   compareMonth: number;
   compareYear: number;
 };
+
+function formatMoney(value: number) {
+  return `${formatAmountNoDecimals(value)} NOK`;
+}
 
 export function DailyActivityChart({
   chartData,
@@ -76,7 +81,7 @@ export function DailyActivityChart({
             </EmptyStateAction>
           </EmptyState>
         ) : (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer config={chartConfig} className="h-[320px] w-full aspect-auto">
             <BarChart
               accessibilityLayer
               data={chartData}
@@ -97,8 +102,16 @@ export function DailyActivityChart({
                 axisLine={false}
                 tickMargin={8}
                 tickCount={3}
+                tickFormatter={(value) => formatMoney(Number(value))}
               />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatMoney(Number(value))}
+                  />
+                }
+              />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey="value"
