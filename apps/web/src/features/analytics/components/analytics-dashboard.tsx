@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
@@ -48,6 +48,8 @@ export function AnalyticsDashboard({
 }: AnalyticsDashboardProps) {
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const [isMobileFocusOpen, setIsMobileFocusOpen] = useState(false);
+  const tagSectionRef = useRef<HTMLDivElement>(null);
+  const productSectionRef = useRef<HTMLDivElement>(null);
 
   const metrics = useMemo(
     () => calculateAnalyticsMetrics(transactions, month, year),
@@ -108,12 +110,30 @@ export function AnalyticsDashboard({
   );
 
   function selectFocusTarget(target: FocusTarget) {
-    setFocusTarget(target);
-    if (
+    const isDesktop =
       typeof window !== "undefined" &&
-      !window.matchMedia("(min-width: 1280px)").matches
-    ) {
+      window.matchMedia("(min-width: 1280px)").matches;
+    const anchorElement =
+      target.type === "tag" ? tagSectionRef.current : productSectionRef.current;
+    const anchorTop = isDesktop
+      ? anchorElement?.getBoundingClientRect().top
+      : undefined;
+
+    setFocusTarget(target);
+    if (!isDesktop) {
       setIsMobileFocusOpen(true);
+      return;
+    }
+
+    if (anchorElement && anchorTop !== undefined) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollBy({
+            top: anchorElement.getBoundingClientRect().top - anchorTop,
+            behavior: "auto",
+          });
+        });
+      });
     }
   }
 
@@ -169,17 +189,21 @@ export function AnalyticsDashboard({
             />
           </div>
 
-          <TagSpendingList
-            tags={tagInsights}
-            selectedTarget={focusTarget}
-            onSelect={selectFocusTarget}
-          />
+          <div ref={tagSectionRef}>
+            <TagSpendingList
+              tags={tagInsights}
+              selectedTarget={focusTarget}
+              onSelect={selectFocusTarget}
+            />
+          </div>
 
-          <ProductTreemap
-            products={productInsights}
-            selectedTarget={focusTarget}
-            onSelect={selectFocusTarget}
-          />
+          <div ref={productSectionRef}>
+            <ProductTreemap
+              products={productInsights}
+              selectedTarget={focusTarget}
+              onSelect={selectFocusTarget}
+            />
+          </div>
 
           <RecurringSavingsList recurrings={recurrings} />
         </div>
