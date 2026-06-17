@@ -1,6 +1,10 @@
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import * as TanstackQuery from "@/lib/tanstack-query/root-provider";
+import {
+  RootNotFoundPage,
+  RootUnexpectedErrorPage,
+} from "@/components/custom/errors/root-error-pages";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
@@ -16,6 +20,8 @@ export const getRouter = () => {
     },
 
     defaultPreload: "intent",
+    defaultNotFoundComponent: RootNotFoundPage,
+    defaultErrorComponent: RootUnexpectedErrorPage,
   });
 
   setupRouterSsrQueryIntegration({

@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ChartArea, Plus } from "lucide-react";
 import dayjs from "dayjs";
+import { formatAmountNoDecimals } from "@/utils/format";
 
 type CumulativeSpendingChartProps = {
   dailyData: DailyExpensesDataPoint[];
@@ -35,6 +36,10 @@ type CumulativeSpendingChartProps = {
   compareMonth: number;
   compareYear: number;
 };
+
+function formatMoney(value: number) {
+  return `${formatAmountNoDecimals(value)} NOK`;
+}
 
 export function CumulativeSpendingChart({
   dailyData,
@@ -92,7 +97,7 @@ export function CumulativeSpendingChart({
             </EmptyStateAction>
           </EmptyState>
         ) : (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer config={chartConfig} className="h-[320px] w-full aspect-auto">
             <AreaChart
               accessibilityLayer
               data={chartData}
@@ -113,8 +118,12 @@ export function CumulativeSpendingChart({
                 axisLine={false}
                 tickMargin={8}
                 tickCount={3}
+                tickFormatter={(value) => formatMoney(Number(value))}
               />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent />}
+              />
               <ChartLegend content={<ChartLegendContent />} />
               <defs>
                 <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">

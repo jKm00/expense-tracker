@@ -26,7 +26,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("ANALYTICS_V2")).toBe(false);
+      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
     });
 
     it("returns false for literal 'false'", async () => {
