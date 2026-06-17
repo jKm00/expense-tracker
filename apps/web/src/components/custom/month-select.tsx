@@ -15,7 +15,7 @@ export function MonthSelect({
   from,
   to,
 }: {
-  from: "/_app/dashboard/transactions/" | "/_app/dashboard/analytics" | "/_app/dashboard/v2/analytics";
+  from: "/_app/dashboard/transactions/" | "/_app/dashboard/analytics";
   to: string;
 }) {
   const { month, year } = useSearch({
