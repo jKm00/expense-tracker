@@ -106,11 +106,7 @@ export function DailyActivityChart({
               />
               <ChartTooltip
                 cursor={false}
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatMoney(Number(value))}
-                  />
-                }
+                content={<ChartTooltipContent />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
