@@ -13,6 +13,10 @@ import "../styles.css";
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, ThemeScript } from "@/features/themes";
+import {
+  RootNotFoundPage,
+  RootUnexpectedErrorPage,
+} from "@/components/custom/errors/root-error-pages";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -62,6 +66,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   }),
 
   shellComponent: RootDocument,
+  notFoundComponent: RootNotFoundPage,
+  errorComponent: RootUnexpectedErrorPage,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
