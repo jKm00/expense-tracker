@@ -28,6 +28,12 @@ vi.mock("../tags/tags.service", () => ({
   },
 }));
 
+vi.mock("../analytics/analytics.service", () => ({
+  analyticsService: {
+    removeExcludedProduct: vi.fn(),
+  },
+}));
+
 import { productService } from "./products.service";
 import { productRepo } from "./products.repo";
 import { tagsService } from "../tags/tags.service";
