@@ -203,7 +203,10 @@ export function buildDailyExpensesData(
     const day = dayjs(transaction.date).date();
     const expenseSum = transaction.entries
       .filter((e) => e.type === "expense")
-      .reduce((acc, curr) => acc + Number(curr.price), 0);
+      .reduce(
+        (acc, curr) => acc + Math.abs(Number(curr.price)) * curr.quantity,
+        0,
+      );
 
     dailyExpenses.set(day, (dailyExpenses.get(day) || 0) + expenseSum);
   });
@@ -212,7 +215,10 @@ export function buildDailyExpensesData(
     const day = dayjs(transaction.date).date();
     const expenseSum = transaction.entries
       .filter((e) => e.type === "expense")
-      .reduce((acc, curr) => acc + Number(curr.price), 0);
+      .reduce(
+        (acc, curr) => acc + Math.abs(Number(curr.price)) * curr.quantity,
+        0,
+      );
 
     comparisonDailyExpenses.set(
       day,

@@ -1,5 +1,5 @@
 import { DailyExpensesDataPoint } from "@/features/analytics/analytics.models";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -34,6 +34,13 @@ type DailyActivityChartProps = {
   year: number;
   compareMonth: number;
   compareYear: number;
+  selectedBar: DailyActivityBarSelection | null;
+  onBarSelect: (selection: DailyActivityBarSelection) => void;
+};
+
+export type DailyActivityBarSelection = {
+  day: number;
+  series: "current" | "comparison";
 };
 
 function formatMoney(value: number) {
@@ -47,6 +54,8 @@ export function DailyActivityChart({
   year,
   compareMonth,
   compareYear,
+  selectedBar,
+  onBarSelect,
 }: DailyActivityChartProps) {
   const chartConfig = {
     value: {
@@ -58,6 +67,37 @@ export function DailyActivityChart({
       color: "var(--chart-4)",
     },
   } satisfies ChartConfig;
+
+  function handleBarClick(
+    point: DailyExpensesDataPoint,
+    series: DailyActivityBarSelection["series"],
+  ) {
+    const value = series === "current" ? point.value : point.comparison;
+    if (value <= 0) return;
+
+    onBarSelect({ day: point.day, series });
+  }
+
+  function getBarStyle(
+    point: DailyExpensesDataPoint,
+    series: DailyActivityBarSelection["series"],
+  ) {
+    const hasSelection = selectedBar !== null;
+    const isSelected =
+      selectedBar?.day === point.day && selectedBar.series === series;
+    const value = series === "current" ? point.value : point.comparison;
+
+    return {
+      fill:
+        hasSelection && !isSelected
+          ? "var(--muted-foreground)"
+          : series === "current"
+            ? "var(--color-value)"
+            : "var(--color-comparison)",
+      opacity: hasSelection && !isSelected ? 0.22 : series === "current" ? 0.86 : 0.5,
+      cursor: value > 0 ? "pointer" : "default",
+    };
+  }
 
   return (
     <Card>
@@ -111,15 +151,38 @@ export function DailyActivityChart({
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey="value"
-                fill="var(--color-value)"
                 radius={[4, 4, 0, 0]}
-              />
+              >
+                {chartData.map((point) => {
+                  const style = getBarStyle(point, "current");
+                  return (
+                    <Cell
+                      key={`current-${point.day}`}
+                      fill={style.fill}
+                      opacity={style.opacity}
+                      style={{ cursor: style.cursor }}
+                      onClick={() => handleBarClick(point, "current")}
+                    />
+                  );
+                })}
+              </Bar>
               <Bar
                 dataKey="comparison"
-                fill="var(--color-comparison)"
                 radius={[4, 4, 0, 0]}
-                opacity={0.5}
-              />
+              >
+                {chartData.map((point) => {
+                  const style = getBarStyle(point, "comparison");
+                  return (
+                    <Cell
+                      key={`comparison-${point.day}`}
+                      fill={style.fill}
+                      opacity={style.opacity}
+                      style={{ cursor: style.cursor }}
+                      onClick={() => handleBarClick(point, "comparison")}
+                    />
+                  );
+                })}
+              </Bar>
             </BarChart>
           </ChartContainer>
         )}
