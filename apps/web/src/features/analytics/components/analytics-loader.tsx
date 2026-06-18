@@ -1,6 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
+import { analyticsQueries } from "@/features/analytics/analytics.queries";
+import { productQueries } from "@/features/products/products.queries";
+import { tagsQueries } from "@/features/tags/tags.queries";
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   ExpectedError,
@@ -35,6 +38,11 @@ export function AnalyticsLoader() {
   } = useSuspenseQuery(
     recurringQueries.getRecurringsOptions(),
   );
+  const { data: preferencesResult } = useQuery(
+    analyticsQueries.getPreferencesOptions(),
+  );
+  const { data: productsResult } = useQuery(productQueries.getProductsOptions());
+  const { data: tagsResult } = useQuery(tagsQueries.getTagsOptions());
 
   const selectedMonth = month || dayjs().month();
   const selectedYear = year || dayjs().year();
@@ -72,6 +80,9 @@ export function AnalyticsLoader() {
       transactions={transactions ?? []}
       comparisonTransactions={comparisonTransactions ?? []}
       recurrings={recurrings ?? []}
+      analyticsPreferences={preferencesResult?.[1] ?? null}
+      products={productsResult?.[1] ?? []}
+      tags={tagsResult?.[1] ?? []}
       month={selectedMonth}
       year={selectedYear}
       compareMonth={compareMonth}
