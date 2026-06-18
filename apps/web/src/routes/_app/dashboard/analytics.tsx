@@ -9,6 +9,9 @@ import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { recurringQueries } from "@/features/recurring/recurring.queries";
+import { analyticsQueries } from "@/features/analytics/analytics.queries";
+import { productQueries } from "@/features/products/products.queries";
+import { tagsQueries } from "@/features/tags/tags.queries";
 import { getComparisonDate } from "@/features/analytics/analytics.utils";
 import { MonthSelect } from "@/components/custom/month-select";
 import { CalendarRange } from "lucide-react";
@@ -46,6 +49,9 @@ export const Route = createFileRoute("/_app/dashboard/analytics")({
     context.queryClient.prefetchQuery(
       recurringQueries.getRecurringsOptions(),
     );
+    context.queryClient.prefetchQuery(analyticsQueries.getPreferencesOptions());
+    context.queryClient.prefetchQuery(productQueries.getProductsOptions());
+    context.queryClient.prefetchQuery(tagsQueries.getTagsOptions());
   },
   component: RouteComponent,
   validateSearch: zodValidator(anaylyticsSchema),

@@ -30,6 +30,10 @@ It's important to follow this structure to make sure each thing handles one resp
 - All services should be unit tested as this is where the business logic is.
 - When testing, mock the DB so they can be ran without connecting to a real DB
 
+## Database
+
+When implementing things that affects the database table, NEVER write manual migrations. Just update the `schema.ts` files. A human will run the scripts to generate the migration based on the schema changes and apply them to the database after the implementation is done.
+
 ## General concepts
 
 - Re-use logic if its already implemented (might be implemented in another feature)

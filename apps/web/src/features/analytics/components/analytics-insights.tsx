@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Treemap } from "recharts";
-import { BarChart3, Package, Tags, X } from "lucide-react";
+import { BarChart3, Package, Settings2, Tags, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -17,6 +18,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { formatAmountNoDecimals } from "@/utils/format";
@@ -29,7 +39,7 @@ type FocusTarget =
   | { type: "tag"; id: string; name: string }
   | { type: "product"; id: string; name: string };
 
-type ExpenseEntry = {
+export type ExpenseEntry = {
   id: string;
   transactionId: string;
   date: Date | string;
@@ -48,14 +58,21 @@ type RankedItem = {
   quantity: number;
 };
 
-type TagInsight = RankedItem & {
+export type TagInsight = RankedItem & {
   share: number;
   fill: string;
 };
 
-type ProductInsight = RankedItem & {
+export type ProductInsight = RankedItem & {
   share: number;
   fill: string;
+};
+
+export type ChartExclusionOption = {
+  id: string;
+  name: string;
+  total?: number;
+  count?: number;
 };
 
 const chartConfig = {
@@ -101,14 +118,18 @@ export function buildExpenseEntries(transactions: FullTransaction[]) {
   );
 }
 
-export function buildTagInsights(entries: ExpenseEntry[]): TagInsight[] {
+export function buildTagInsights(
+  entries: ExpenseEntry[],
+  excludedTagIds: string[] = [],
+): TagInsight[] {
   const totals = new Map<string, RankedItem>();
-  const totalExpenses = entries.reduce((sum, entry) => sum + entry.amount, 0);
+  const excluded = new Set(excludedTagIds);
 
   for (const entry of entries) {
-    const tags = entry.tags.length
+    const tags = (entry.tags.length
       ? entry.tags
-      : [{ id: "untagged", name: "Untagged" }];
+      : [{ id: "untagged", name: "Untagged" }]
+    ).filter((tag) => !excluded.has(tag.id));
 
     for (const tag of tags) {
       const current = totals.get(tag.id) ?? {
@@ -125,10 +146,15 @@ export function buildTagInsights(entries: ExpenseEntry[]): TagInsight[] {
     }
   }
 
+  const visibleTotal = Array.from(totals.values()).reduce(
+    (sum, item) => sum + item.total,
+    0,
+  );
+
   return Array.from(totals.values())
     .map((item, index) => ({
       ...item,
-      share: totalExpenses === 0 ? 0 : (item.total / totalExpenses) * 100,
+      share: visibleTotal === 0 ? 0 : (item.total / visibleTotal) * 100,
       fill: treemapColors[index % treemapColors.length],
     }))
     .sort((a, b) => b.total - a.total)
@@ -138,11 +164,16 @@ export function buildTagInsights(entries: ExpenseEntry[]): TagInsight[] {
     }));
 }
 
-export function buildProductInsights(entries: ExpenseEntry[]): ProductInsight[] {
+export function buildProductInsights(
+  entries: ExpenseEntry[],
+  excludedProductIds: string[] = [],
+): ProductInsight[] {
   const totals = new Map<string, RankedItem>();
-  const totalExpenses = entries.reduce((sum, entry) => sum + entry.amount, 0);
+  const excluded = new Set(excludedProductIds);
 
   for (const entry of entries) {
+    if (excluded.has(entry.productId)) continue;
+
     const current = totals.get(entry.productId) ?? {
       id: entry.productId,
       name: entry.productName,
@@ -156,10 +187,15 @@ export function buildProductInsights(entries: ExpenseEntry[]): ProductInsight[] 
     totals.set(entry.productId, current);
   }
 
+  const visibleTotal = Array.from(totals.values()).reduce(
+    (sum, item) => sum + item.total,
+    0,
+  );
+
   return Array.from(totals.values())
     .map((item, index) => ({
       ...item,
-      share: totalExpenses === 0 ? 0 : (item.total / totalExpenses) * 100,
+      share: visibleTotal === 0 ? 0 : (item.total / visibleTotal) * 100,
       fill: treemapColors[index % treemapColors.length],
     }))
     .sort((a, b) => b.total - a.total)
@@ -171,13 +207,27 @@ export function buildProductInsights(entries: ExpenseEntry[]): ProductInsight[] 
 
 export function TagSpendingList({
   tags,
+  allHidden,
+  hiddenCount,
+  configOptions,
+  excludedIds,
+  isSavingExclusions,
+  onSaveExclusions,
   selectedTarget,
   onSelect,
 }: {
   tags: TagInsight[];
+  allHidden: boolean;
+  hiddenCount: number;
+  configOptions: ChartExclusionOption[];
+  excludedIds: string[];
+  isSavingExclusions: boolean;
+  onSaveExclusions: (ids: string[]) => Promise<boolean>;
   selectedTarget: FocusTarget | null;
   onSelect: (target: FocusTarget) => void;
 }) {
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
   return (
     <Card className="min-h-[360px]">
       <CardHeader>
@@ -191,11 +241,29 @@ export function TagSpendingList({
               Area shows relative tag spend. Click a block to inspect overlaps.
             </CardDescription>
           </div>
-          <Badge variant="secondary">Top {Math.min(tags.length, 24)}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">
+              Top {Math.min(tags.length, 24)}
+              {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
+            </Badge>
+            <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
+              <Settings2 className="size-3.5" />
+              Configure
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {tags.length === 0 ? (
+        {allHidden ? (
+          <InsightEmptyState
+            message="All tag spend is hidden by your chart configuration."
+            action={
+              <Button size="sm" variant="outline" onClick={() => setIsConfigOpen(true)}>
+                Configure tags
+              </Button>
+            }
+          />
+        ) : tags.length === 0 ? (
           <InsightEmptyState message="No tagged expense data for this period yet." />
         ) : (
           <SpendingTreemap
@@ -206,19 +274,45 @@ export function TagSpendingList({
           />
         )}
       </CardContent>
+      <ChartExclusionsDialog
+        title="Configure tag chart"
+        description="Hide tags that are not useful in the Expenses by Tag chart."
+        searchPlaceholder="Search tags..."
+        emptyMessage="No tags match your search."
+        open={isConfigOpen}
+        onOpenChange={setIsConfigOpen}
+        options={configOptions}
+        excludedIds={excludedIds}
+        isSaving={isSavingExclusions}
+        onSave={onSaveExclusions}
+      />
     </Card>
   );
 }
 
 export function ProductTreemap({
   products,
+  allHidden,
+  hiddenCount,
+  configOptions,
+  excludedIds,
+  isSavingExclusions,
+  onSaveExclusions,
   selectedTarget,
   onSelect,
 }: {
   products: ProductInsight[];
+  allHidden: boolean;
+  hiddenCount: number;
+  configOptions: ChartExclusionOption[];
+  excludedIds: string[];
+  isSavingExclusions: boolean;
+  onSaveExclusions: (ids: string[]) => Promise<boolean>;
   selectedTarget: FocusTarget | null;
   onSelect: (target: FocusTarget) => void;
 }) {
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
   return (
     <Card className="min-h-[360px]">
       <CardHeader>
@@ -232,11 +326,29 @@ export function ProductTreemap({
               Area shows relative product spend. Click a block for details.
             </CardDescription>
           </div>
-          <Badge variant="secondary">Top {Math.min(products.length, 24)}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">
+              Top {Math.min(products.length, 24)}
+              {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
+            </Badge>
+            <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
+              <Settings2 className="size-3.5" />
+              Configure
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {products.length === 0 ? (
+        {allHidden ? (
+          <InsightEmptyState
+            message="All product spend is hidden by your chart configuration."
+            action={
+              <Button size="sm" variant="outline" onClick={() => setIsConfigOpen(true)}>
+                Configure products
+              </Button>
+            }
+          />
+        ) : products.length === 0 ? (
           <InsightEmptyState message="No product expense data for this period yet." />
         ) : (
           <SpendingTreemap
@@ -247,7 +359,160 @@ export function ProductTreemap({
           />
         )}
       </CardContent>
+      <ChartExclusionsDialog
+        title="Configure product chart"
+        description="Hide products that are not useful in the Expenses by Product chart."
+        searchPlaceholder="Search products..."
+        emptyMessage="No products match your search."
+        open={isConfigOpen}
+        onOpenChange={setIsConfigOpen}
+        options={configOptions}
+        excludedIds={excludedIds}
+        isSaving={isSavingExclusions}
+        onSave={onSaveExclusions}
+      />
     </Card>
+  );
+}
+
+function ChartExclusionsDialog({
+  title,
+  description,
+  searchPlaceholder,
+  emptyMessage,
+  open,
+  onOpenChange,
+  options,
+  excludedIds,
+  isSaving,
+  onSave,
+}: {
+  title: string;
+  description: string;
+  searchPlaceholder: string;
+  emptyMessage: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  options: ChartExclusionOption[];
+  excludedIds: string[];
+  isSaving: boolean;
+  onSave: (ids: string[]) => Promise<boolean>;
+}) {
+  const [search, setSearch] = useState("");
+  const [draftIds, setDraftIds] = useState<string[]>(excludedIds);
+
+  useEffect(() => {
+    if (open) {
+      setDraftIds(excludedIds);
+      setSearch("");
+    }
+  }, [excludedIds, open]);
+
+  const draftSet = new Set(draftIds);
+  const visibleOptions = options
+    .filter((option) =>
+      option.name.toLowerCase().includes(search.trim().toLowerCase()),
+    )
+    .sort((a, b) => {
+      const aExcluded = draftSet.has(a.id);
+      const bExcluded = draftSet.has(b.id);
+      if (aExcluded !== bExcluded) return aExcluded ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  function toggleOption(id: string) {
+    setDraftIds((current) =>
+      current.includes(id)
+        ? current.filter((currentId) => currentId !== id)
+        : [...current, id],
+    );
+  }
+
+  async function save() {
+    const saved = await onSave(draftIds);
+    if (saved) {
+      onOpenChange(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={searchPlaceholder}
+          />
+          <div className="max-h-[360px] overflow-y-auto rounded-lg border">
+            {visibleOptions.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </div>
+            ) : (
+              visibleOptions.map((option, index) => {
+                const checked = draftSet.has(option.id);
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => toggleOption(option.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50",
+                      index !== visibleOptions.length - 1 && "border-b",
+                    )}
+                  >
+                    <Checkbox checked={checked} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{option.name}</p>
+                      {option.total !== undefined && option.count !== undefined ? (
+                        <p className="text-xs text-muted-foreground">
+                          {formatMoney(option.total)} · {option.count} entries this period
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          No spend in this period
+                        </p>
+                      )}
+                    </div>
+                    {checked ? <Badge variant="secondary">Hidden</Badge> : null}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setDraftIds([])}
+            disabled={draftIds.length === 0 || isSaving}
+          >
+            Clear exclusions
+          </Button>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={save} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -689,12 +954,19 @@ function MetricPill({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InsightEmptyState({ message }: { message: string }) {
+function InsightEmptyState({
+  message,
+  action,
+}: {
+  message: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="grid min-h-[220px] place-items-center rounded-lg border border-dashed bg-muted/20 p-6 text-center">
       <div>
         <BarChart3 className="mx-auto size-7 text-muted-foreground" />
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+        {action ? <div className="mt-4">{action}</div> : null}
       </div>
     </div>
   );

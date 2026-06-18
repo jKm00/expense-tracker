@@ -19,12 +19,17 @@ import {
   buildExpenseEntries,
   buildProductInsights,
   buildTagInsights,
+  type ChartExclusionOption,
   FocusPanel,
   MobileFocusSheet,
   ProductTreemap,
   RecurringSavingsList,
   TagSpendingList,
 } from "./analytics-insights";
+import { analyticsMutations } from "@/features/analytics/analytics.mutations";
+import { AnalyticsPreferences } from "@/features/analytics/analytics.models";
+import { ProductWithTag } from "@/features/products/products.models";
+import { Tag } from "@/features/tags/tags.models";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +54,7 @@ import {
 import { formatAmountNoDecimals } from "@/utils/format";
 import dayjs from "dayjs";
 import { ChevronRight, Receipt, X } from "lucide-react";
+import { toast } from "sonner";
 
 type FocusTarget =
   | { type: "tag"; id: string; name: string }
@@ -64,6 +70,9 @@ type AnalyticsDashboardProps = {
   transactions: FullTransaction[];
   comparisonTransactions: FullTransaction[];
   recurrings: RecurringWithProduct[];
+  analyticsPreferences: AnalyticsPreferences | null;
+  products: ProductWithTag[];
+  tags: Tag[];
   month: number;
   year: number;
   compareMonth: number;
@@ -74,6 +83,9 @@ export function AnalyticsDashboard({
   transactions,
   comparisonTransactions,
   recurrings,
+  analyticsPreferences,
+  products,
+  tags,
   month,
   year,
   compareMonth,
@@ -88,6 +100,9 @@ export function AnalyticsDashboard({
   const tagSectionRef = useRef<HTMLDivElement>(null);
   const productSectionRef = useRef<HTMLDivElement>(null);
   const hasActiveDrilldown = focusTarget !== null || dayFocusTarget !== null;
+  const updateExclusionsMutation = analyticsMutations.updateExclusions();
+  const excludedTagIds = analyticsPreferences?.excludedTagIds ?? [];
+  const excludedProductIds = analyticsPreferences?.excludedProductIds ?? [];
 
   const metrics = useMemo(
     () => calculateAnalyticsMetrics(transactions, month, year),
@@ -139,13 +154,50 @@ export function AnalyticsDashboard({
     [transactions],
   );
   const tagInsights = useMemo(
+    () => buildTagInsights(expenseEntries, excludedTagIds),
+    [excludedTagIds, expenseEntries],
+  );
+  const unfilteredTagInsights = useMemo(
     () => buildTagInsights(expenseEntries),
     [expenseEntries],
   );
   const productInsights = useMemo(
+    () => buildProductInsights(expenseEntries, excludedProductIds),
+    [excludedProductIds, expenseEntries],
+  );
+  const unfilteredProductInsights = useMemo(
     () => buildProductInsights(expenseEntries),
     [expenseEntries],
   );
+  const tagConfigOptions = useMemo(
+    () => buildChartExclusionOptions(
+      tags,
+      unfilteredTagInsights,
+      unfilteredTagInsights.some((tag) => tag.id === "untagged")
+        ? [{ id: "untagged", name: "Untagged" }]
+        : [],
+    ),
+    [tags, unfilteredTagInsights],
+  );
+  const productConfigOptions = useMemo(
+    () => buildChartExclusionOptions(
+      products,
+      unfilteredProductInsights,
+      unfilteredProductInsights
+        .filter((product) => product.id === "unknown")
+        .map((product) => ({ id: product.id, name: product.name })),
+    ),
+    [products, unfilteredProductInsights],
+  );
+  const hiddenTagCount = unfilteredTagInsights.filter((tag) =>
+    excludedTagIds.includes(tag.id),
+  ).length;
+  const hiddenProductCount = unfilteredProductInsights.filter((product) =>
+    excludedProductIds.includes(product.id),
+  ).length;
+  const allTagsHidden = unfilteredTagInsights.length > 0 && tagInsights.length === 0;
+  const allProductsHidden =
+    unfilteredProductInsights.length > 0 && productInsights.length === 0;
 
   const dayTransactions = useMemo(() => {
     if (!dayFocusTarget) return [];
@@ -248,6 +300,37 @@ export function AnalyticsDashboard({
     setIsMobileFocusOpen(true);
   }
 
+  async function saveTagExclusions(ids: string[]) {
+    const result = await updateExclusionsMutation.mutateAsync({ type: "tag", ids });
+    const [error] = result;
+    if (error) {
+      toast.error("Could not save tag chart configuration. Please try again.");
+      return false;
+    }
+
+    if (focusTarget?.type === "tag" && ids.includes(focusTarget.id)) {
+      closeFocusTarget();
+    }
+    return true;
+  }
+
+  async function saveProductExclusions(ids: string[]) {
+    const result = await updateExclusionsMutation.mutateAsync({
+      type: "product",
+      ids,
+    });
+    const [error] = result;
+    if (error) {
+      toast.error("Could not save product chart configuration. Please try again.");
+      return false;
+    }
+
+    if (focusTarget?.type === "product" && ids.includes(focusTarget.id)) {
+      closeFocusTarget();
+    }
+    return true;
+  }
+
   return (
     <div className="@container">
       <div
@@ -291,6 +374,12 @@ export function AnalyticsDashboard({
           <div ref={tagSectionRef}>
             <TagSpendingList
               tags={tagInsights}
+              allHidden={allTagsHidden}
+              hiddenCount={hiddenTagCount}
+              configOptions={tagConfigOptions}
+              excludedIds={excludedTagIds}
+              isSavingExclusions={updateExclusionsMutation.isPending}
+              onSaveExclusions={saveTagExclusions}
               selectedTarget={focusTarget}
               onSelect={selectFocusTarget}
             />
@@ -299,6 +388,12 @@ export function AnalyticsDashboard({
           <div ref={productSectionRef}>
             <ProductTreemap
               products={productInsights}
+              allHidden={allProductsHidden}
+              hiddenCount={hiddenProductCount}
+              configOptions={productConfigOptions}
+              excludedIds={excludedProductIds}
+              isSavingExclusions={updateExclusionsMutation.isPending}
+              onSaveExclusions={saveProductExclusions}
               selectedTarget={focusTarget}
               onSelect={selectFocusTarget}
             />
@@ -473,4 +568,47 @@ function calculateExpenseSubtotal(transaction: FullTransaction) {
 
 function formatMoney(value: number) {
   return `${formatAmountNoDecimals(value)} NOK`;
+}
+
+function buildChartExclusionOptions(
+  catalogItems: Array<{ id: string; name: string }>,
+  insights: Array<{ id: string; name: string; total: number; count: number }>,
+  syntheticItems: Array<{ id: string; name: string }> = [],
+): ChartExclusionOption[] {
+  const context = new Map(
+    insights.map((item) => [
+      item.id,
+      {
+        total: item.total,
+        count: item.count,
+      },
+    ]),
+  );
+  const options = new Map<string, ChartExclusionOption>();
+
+  for (const item of [...catalogItems, ...syntheticItems]) {
+    options.set(item.id, {
+      id: item.id,
+      name: item.name,
+      ...context.get(item.id),
+    });
+  }
+
+  for (const item of insights) {
+    if (!options.has(item.id)) {
+      options.set(item.id, {
+        id: item.id,
+        name: item.name,
+        total: item.total,
+        count: item.count,
+      });
+    }
+  }
+
+  return Array.from(options.values()).sort((a, b) => {
+    const aHasSpend = a.total !== undefined;
+    const bHasSpend = b.total !== undefined;
+    if (aHasSpend !== bHasSpend) return aHasSpend ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
 }

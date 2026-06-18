@@ -31,3 +31,8 @@ export type DailyExpensesDataPoint = {
   value: number;
   comparison: number;
 };
+
+export type AnalyticsPreferences = {
+  excludedTagIds: string[];
+  excludedProductIds: string[];
+};
