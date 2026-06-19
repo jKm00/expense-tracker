@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_app/dashboard/products/new")({
 
 function RouteComponent() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
         <PageHeaderTitle>New Product</PageHeaderTitle>

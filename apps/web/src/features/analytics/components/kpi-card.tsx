@@ -27,7 +27,7 @@ export function KpiCard({
   color?: KpiCardColor;
 }) {
   return (
-    <Card size="sm">
+    <Card size="sm" className="@container">
       <CardContent className="flex flex-col gap-0.5 py-1">
         <div className="flex items-center gap-2">
           {Icon && (
@@ -39,10 +39,10 @@ export function KpiCard({
             {title}
           </p>
         </div>
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <p
             className={cn(
-              "mt-1 text-xl font-semibold tracking-tight truncate",
+              "mt-1 min-w-0 max-w-full break-words text-lg leading-tight font-semibold tracking-tight @sm:text-xl",
               valueColorMap[color],
             )}
           >

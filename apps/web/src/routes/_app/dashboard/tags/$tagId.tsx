@@ -61,7 +61,7 @@ function RouteComponent() {
 
 function TagDetailsSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <SkeletonForm fields={6} />
     </div>
   );
@@ -114,7 +114,7 @@ function TagDetailsContent() {
   }
 
   return (
-    <div className="space-y-6 @container">
+    <div className="mx-auto max-w-4xl space-y-6 @container">
       <PageHeader>
         <PageHeaderBackButton />
         <PageHeaderTitle>Tag Details</PageHeaderTitle>

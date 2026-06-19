@@ -235,7 +235,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderTitle>
           <span className="inline-flex items-center gap-2">Integrations</span>
