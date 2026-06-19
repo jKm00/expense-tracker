@@ -338,7 +338,7 @@ export function AnalyticsDashboard({
           "grid items-start gap-4",
           hasActiveDrilldown
             ? "@5xl/analytics:grid-cols-[minmax(0,1fr)_360px] @7xl/analytics:grid-cols-[minmax(0,1fr)_400px]"
-            : "@7xl/analytics:grid-cols-[minmax(0,1fr)_400px]",
+            : "@min-[96rem]/analytics:grid-cols-[minmax(0,1fr)_400px]",
         )}
       >
         <div className="min-w-0 space-y-4 @container/main">
@@ -408,7 +408,7 @@ export function AnalyticsDashboard({
             "hidden h-[calc(100svh-3rem)] overflow-y-auto",
             hasActiveDrilldown
               ? "@5xl/analytics:sticky @5xl/analytics:top-6 @5xl/analytics:block"
-              : "@7xl/analytics:sticky @7xl/analytics:top-6 @7xl/analytics:block",
+              : "@min-[96rem]/analytics:sticky @min-[96rem]/analytics:top-6 @min-[96rem]/analytics:block",
           )}
         >
           {dayFocusTarget ? (
@@ -447,20 +447,29 @@ export function AnalyticsDashboard({
 
 function DrilldownEmptyState() {
   return (
-    <Card className="h-fit overflow-hidden">
+    <Card className="h-full overflow-hidden bg-gradient-to-b from-card via-card to-muted/35">
       <CardHeader>
-        <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
+        <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">
           <MousePointerClick className="size-5 text-primary" />
         </div>
         <CardTitle>Drilldown details</CardTitle>
         <CardDescription>
-          Select a daily bar, tag block, or product block to keep the details pinned here.
+          Keep context open while exploring the analytics dashboard.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          See exact transactions, spend share, related tags, and recent entries without
-          losing your place in the dashboard.
+      <CardContent className="flex flex-1 flex-col justify-between gap-5">
+        <div className="space-y-3 rounded-2xl border border-dashed bg-background/70 p-4 text-sm text-muted-foreground">
+          <p>
+            Select a daily bar, tag block, or product block to pin a focused breakdown
+            in this sidebar.
+          </p>
+          <p>
+            You will see transactions, spend share, related tags, and recent entries
+            without losing your place.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-primary/10 p-4 text-sm text-primary">
+          Tip: click colored chart areas or bars to compare periods and categories.
         </div>
       </CardContent>
     </Card>

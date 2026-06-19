@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -148,7 +146,6 @@ export function DailyActivityChart({
                 cursor={false}
                 content={<ChartTooltipContent />}
               />
-              <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey="value"
                 radius={[4, 4, 0, 0]}

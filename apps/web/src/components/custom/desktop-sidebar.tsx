@@ -85,10 +85,25 @@ export function DesktopSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200",
+        "sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 relative",
         collapsed ? "w-16" : "w-60",
       )}
     >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-xs"
+        className="absolute -right-3 top-6 z-10 rounded-full border-sidebar-border bg-sidebar text-muted-foreground shadow-sm hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        onClick={() => setCollapsed((value) => !value)}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {collapsed ? (
+          <PanelLeftOpen className="size-3.5" />
+        ) : (
+          <PanelLeftClose className="size-3.5" />
+        )}
+      </Button>
+
       {/* Brand */}
       <div
         className={cn(
@@ -116,27 +131,6 @@ export function DesktopSidebar() {
             </span>
           </Link>
         )}
-      </div>
-
-      <div className={cn("px-3 pb-3", collapsed && "px-2")}>
-        <Button
-          type="button"
-          variant="ghost"
-          size={collapsed ? "icon-sm" : "sm"}
-          className={cn(
-            "text-muted-foreground",
-            collapsed ? "w-full" : "w-full justify-start",
-          )}
-          onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="size-4" />
-          ) : (
-            <PanelLeftClose className="size-4" />
-          )}
-          {!collapsed && <span>Collapse</span>}
-        </Button>
       </div>
 
       {/* Navigation */}
