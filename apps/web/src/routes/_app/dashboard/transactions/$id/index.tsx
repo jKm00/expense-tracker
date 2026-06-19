@@ -65,7 +65,7 @@ function RouteComponent() {
   const { id } = Route.useParams();
 
   return (
-    <div className="space-y-6 @container">
+    <div className="mx-auto max-w-4xl space-y-6 @container">
       <PageHeader>
         <PageHeaderBackButton />
         <PageHeaderTitle>Transaction Details</PageHeaderTitle>

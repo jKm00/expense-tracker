@@ -229,10 +229,10 @@ export function TagSpendingList({
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   return (
-    <Card className="min-h-[360px]">
+    <Card className="@container min-h-[360px]">
       <CardHeader>
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
               <Tags className="size-4 text-primary" />
               Expenses by Tag
@@ -241,7 +241,7 @@ export function TagSpendingList({
               Area shows relative tag spend. Click a block to inspect overlaps.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 @xl:shrink-0 @xl:justify-end">
             <Badge variant="secondary">
               Top {Math.min(tags.length, 24)}
               {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
@@ -314,10 +314,10 @@ export function ProductTreemap({
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   return (
-    <Card className="min-h-[360px]">
+    <Card className="@container min-h-[360px]">
       <CardHeader>
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
               <Package className="size-4 text-primary" />
               Expenses by Product
@@ -326,7 +326,7 @@ export function ProductTreemap({
               Area shows relative product spend. Click a block for details.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 @xl:shrink-0 @xl:justify-end">
             <Badge variant="secondary">
               Top {Math.min(products.length, 24)}
               {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}

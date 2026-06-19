@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_app/dashboard/shopping/")({
 
 function RouteComponent() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderTitle>
           <span className="inline-flex items-center gap-2">Shopping</span>

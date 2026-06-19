@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/sheet";
 import { formatAmountNoDecimals } from "@/utils/format";
 import dayjs from "dayjs";
-import { ChevronRight, Receipt, X } from "lucide-react";
+import { ChevronRight, MousePointerClick, Receipt, X } from "lucide-react";
 import { toast } from "sonner";
 
 type FocusTarget =
@@ -332,12 +332,13 @@ export function AnalyticsDashboard({
   }
 
   return (
-    <div className="@container">
+    <div className="@container/analytics">
       <div
         className={cn(
           "grid items-start gap-4",
-          hasActiveDrilldown &&
-            "xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_400px]",
+          hasActiveDrilldown
+            ? "@5xl/analytics:grid-cols-[minmax(0,1fr)_360px] @7xl/analytics:grid-cols-[minmax(0,1fr)_400px]"
+            : "@min-[96rem]/analytics:grid-cols-[minmax(0,1fr)_400px]",
         )}
       >
         <div className="min-w-0 space-y-4 @container/main">
@@ -402,23 +403,30 @@ export function AnalyticsDashboard({
           <RecurringSavingsList recurrings={recurrings} />
         </div>
 
-        {hasActiveDrilldown && (
-          <aside className="hidden h-[calc(100svh-3rem)] overflow-y-auto xl:sticky xl:top-6 xl:block">
-            {dayFocusTarget ? (
-              <DayTransactionsPanel
-                target={dayFocusTarget}
-                transactions={dayTransactions}
-                onClose={closeFocusTarget}
-              />
-            ) : (
-              <FocusPanel
-                target={focusTarget}
-                entries={expenseEntries}
-                onClose={closeFocusTarget}
-              />
-            )}
-          </aside>
-        )}
+        <aside
+          className={cn(
+            "hidden h-[calc(100svh-3rem)] overflow-y-auto",
+            hasActiveDrilldown
+              ? "@5xl/analytics:sticky @5xl/analytics:top-6 @5xl/analytics:block"
+              : "@min-[96rem]/analytics:sticky @min-[96rem]/analytics:top-6 @min-[96rem]/analytics:block",
+          )}
+        >
+          {dayFocusTarget ? (
+            <DayTransactionsPanel
+              target={dayFocusTarget}
+              transactions={dayTransactions}
+              onClose={closeFocusTarget}
+            />
+          ) : focusTarget ? (
+            <FocusPanel
+              target={focusTarget}
+              entries={expenseEntries}
+              onClose={closeFocusTarget}
+            />
+          ) : (
+            <DrilldownEmptyState />
+          )}
+        </aside>
       </div>
 
       <MobileFocusSheet
@@ -434,6 +442,29 @@ export function AnalyticsDashboard({
         onOpenChange={handleMobileFocusOpenChange}
       />
     </div>
+  );
+}
+
+function DrilldownEmptyState() {
+  return (
+    <Card className="h-full overflow-hidden bg-card">
+      <CardContent className="flex min-h-full flex-1 items-center justify-center p-6 text-center">
+        <div className="max-w-[280px] space-y-4">
+          <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">
+            <MousePointerClick className="size-6 text-primary" />
+          </div>
+          <div className="space-y-1.5">
+            <CardTitle>Nothing selected</CardTitle>
+            <CardDescription>
+              Click a daily bar, tag block, or product block to pin its details here.
+            </CardDescription>
+          </div>
+          <div className="rounded-xl border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            Details stay visible while you continue scanning the dashboard.
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

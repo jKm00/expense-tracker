@@ -7,9 +7,7 @@ import {
   createFileRoute,
   Outlet,
   redirect,
-  useLocation,
 } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
@@ -37,9 +35,6 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const location = useLocation();
-  const isWideScreen = location.pathname.startsWith("/dashboard/analytics");
-
   return (
     <AuthProvider>
       <FeatureFlagsProvider featureFlags={{}}>
@@ -49,12 +44,7 @@ function AppLayout() {
           <div className="hidden md:flex">
             <DesktopSidebar />
             <main className="flex-1 min-w-0">
-              <div
-                className={cn(
-                  "mx-auto px-6 py-8",
-                  isWideScreen ? "w-full max-w-full" : "max-w-4xl",
-                )}
-              >
+              <div className="px-6 py-8">
                 <Outlet />
               </div>
             </main>

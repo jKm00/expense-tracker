@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -124,7 +122,6 @@ export function CumulativeSpendingChart({
                 cursor={false}
                 content={<ChartTooltipContent />}
               />
-              <ChartLegend content={<ChartLegendContent />} />
               <defs>
                 <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
                   <stop
@@ -179,14 +176,30 @@ export function CumulativeSpendingChart({
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none text-muted-foreground">
-            Cumulative spending for{" "}
-            {dayjs(new Date(year, month)).format("MMMM YYYY")} vs{" "}
-            {dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}
-          </div>
+        <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <PeriodLabel
+            color="var(--chart-1)"
+            label={`Current: ${dayjs(new Date(year, month)).format("MMMM YYYY")}`}
+          />
+          <PeriodLabel
+            color="var(--chart-3)"
+            label={`Previous: ${dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}`}
+          />
         </div>
       </CardFooter>
     </Card>
+  );
+}
+
+function PeriodLabel({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2 leading-none">
+      <span
+        className="size-2.5 rounded-full"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+      <span>{label}</span>
+    </div>
   );
 }
