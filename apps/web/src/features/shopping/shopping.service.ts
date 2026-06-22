@@ -229,13 +229,15 @@ async function completeShopping(userId: string, data: CompleteShoppingDTO) {
 
   const checkoutEntries = data.entries.map(({ shoppingItemId, ...entry }) => entry);
 
+  const linkedTransactionMetadata = {
+    ...(data.store?.trim() ? { store: data.store } : {}),
+    ...(data.description?.trim() ? { description: data.description } : {}),
+    source: "shopping" as const,
+  };
+
   const [transactionError, transaction] = data.transactionId
     ? await transactionService.updateTransaction(userId, data.transactionId, {
-        transaction: {
-          store: data.store,
-          description: data.description,
-          source: "shopping",
-        },
+        transaction: linkedTransactionMetadata,
         entries: checkoutEntries,
       })
     : await transactionService.saveTransaction({

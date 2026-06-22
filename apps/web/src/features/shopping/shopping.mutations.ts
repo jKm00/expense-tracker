@@ -210,7 +210,7 @@ function completeShopping() {
     },
     // Do not run optimistic updates for completeShopping; it causes a UI flash
     onSuccess: (result, _variables, _context) => {
-      const [error] = result;
+      const [error, transaction] = result;
       if (error) {
         toast.error(
           error.message ??
@@ -218,6 +218,8 @@ function completeShopping() {
         );
         return;
       }
+
+      qc.setQueryData([TRANSACTION_QUERY_KEY, transaction.id], result);
 
       // Invalidate transactions and products. Skip invalidating shopping list
       // to avoid it refetching and showing empty state before navigation.
