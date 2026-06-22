@@ -228,6 +228,52 @@ describe("shoppingService", () => {
       );
     });
 
+    it("overwrites linked transaction metadata when checkout fields are provided", async () => {
+      const list = makeList({ items: [makeItem()] });
+      const transaction = makeTransaction({ id: "tx-linked", source: "shopping" });
+
+      mockTransactionService.updateTransaction.mockResolvedValue([
+        null,
+        transaction,
+      ] as any);
+      mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
+      mockShoppingRepo.removeShoppingListItemsByIds.mockResolvedValue([] as any);
+
+      const [error] = await shoppingService.completeShopping("user-1", {
+        store: "New Store",
+        description: "New checkout description",
+        date: new Date("2024-01-15"),
+        transactionId: "tx-linked",
+        keepUncheckedItems: true,
+        shoppingItemIds: ["item-1"],
+        entries: [
+          {
+            shoppingItemId: "item-1",
+            product: { id: "product-1", name: "Milk" },
+            quantity: "1",
+            price: "10",
+            total: "10",
+            lastEditedField: "price",
+            type: "expense",
+            tagIds: [],
+          },
+        ],
+      });
+
+      expect(error).toBeNull();
+      expect(mockTransactionService.updateTransaction).toHaveBeenCalledWith(
+        "user-1",
+        "tx-linked",
+        expect.objectContaining({
+          transaction: {
+            store: "New Store",
+            description: "New checkout description",
+            source: "shopping",
+          },
+        }),
+      );
+    });
+
     it("clears all list items when unchecked items should be removed", async () => {
       const list = makeList({ items: [makeItem()] });
       const transaction = makeTransaction({ source: "shopping" });
