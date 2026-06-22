@@ -5,6 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { shoppingMutations } from "./shopping.mutations";
 import { SHOPPING_QUERY_KEY } from "./shopping.queries";
+import { TRANSACTION_QUERY_KEY } from "../transactions/transactions.queries";
 
 vi.mock("@/lib/offline-guard", () => ({
   assertOnline: vi.fn(),
@@ -94,7 +95,7 @@ describe("shoppingMutations", () => {
       wrapper: makeWrapper(queryClient),
     });
 
-    result.current.mutate({ product: { id: null, name: "Eggs" } });
+    await result.current.mutateAsync({ product: { id: null, name: "Eggs" } });
 
     await waitFor(() => {
       const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
@@ -108,5 +109,45 @@ describe("shoppingMutations", () => {
     ]);
     expect(cached?.[1].items).toHaveLength(1);
     expect(cached?.[1].items[0].product.name).toBe("Milk");
+  });
+
+  it("seeds the transaction detail cache after completing shopping", async () => {
+    const transaction = {
+      id: "tx-linked",
+      store: "Updated Shop",
+      description: "Updated groceries",
+    };
+    mockShoppingController.completeShopping.mockResolvedValue([
+      null,
+      transaction,
+    ] as any);
+
+    const queryClient = new QueryClient();
+    const { result } = renderHook(() => shoppingMutations.completeShopping(), {
+      wrapper: makeWrapper(queryClient),
+    });
+
+    await result.current.mutateAsync({
+      store: "Updated Shop",
+      description: "Updated groceries",
+      date: new Date("2024-01-15"),
+      transactionId: "tx-linked",
+      keepUncheckedItems: true,
+      shoppingItemIds: ["item-1"],
+      entries: [
+        {
+          shoppingItemId: "item-1",
+          product: { id: "product-1", name: "Milk" },
+          quantity: "1",
+          price: "10",
+          type: "expense",
+          tagIds: [],
+        },
+      ],
+    });
+
+    expect(
+      queryClient.getQueryData([TRANSACTION_QUERY_KEY, "tx-linked"]),
+    ).toEqual([null, transaction]);
   });
 });
