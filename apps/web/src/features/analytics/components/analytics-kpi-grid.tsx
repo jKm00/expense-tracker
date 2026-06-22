@@ -35,6 +35,7 @@ type KpiDefinition = {
   title: string;
   subtitle: string;
   value: string;
+  comparisonValue: string;
   icon: ComponentType<{ className?: string }>;
   delta?: ReturnType<typeof calculateComparisonDelta>;
   color?: "default" | "income" | "expense";
@@ -71,6 +72,7 @@ export function AnalyticsKpiGrid({
         title: "Net Balance",
         subtitle: "Income minus expenses",
         value: formatMoney(metrics.netBalance, { sign: true }),
+        comparisonValue: formatMoney(comparisonMetrics.netBalance, { sign: true }),
         icon: Scale,
         delta: calculateComparisonDelta(
           metrics.netBalance,
@@ -85,6 +87,7 @@ export function AnalyticsKpiGrid({
         title: "Total Income",
         subtitle: "All money earned",
         value: formatMoney(metrics.totalIncome),
+        comparisonValue: formatMoney(comparisonMetrics.totalIncome),
         icon: TrendingUp,
         delta: calculateComparisonDelta(
           metrics.totalIncome,
@@ -98,6 +101,7 @@ export function AnalyticsKpiGrid({
         title: "Total Expenses",
         subtitle: "All money spent",
         value: formatMoney(metrics.totalExpenses),
+        comparisonValue: formatMoney(comparisonMetrics.totalExpenses),
         icon: TrendingDown,
         delta: calculateComparisonDelta(
           metrics.totalExpenses,
@@ -112,6 +116,7 @@ export function AnalyticsKpiGrid({
         title: "Savings Rate",
         subtitle: "Of income saved",
         value: `${metrics.savingsRate.toFixed(1)}%`,
+        comparisonValue: `${comparisonMetrics.savingsRate.toFixed(1)}%`,
         icon: Percent,
         delta: calculateComparisonDelta(
           metrics.savingsRate,
@@ -124,6 +129,7 @@ export function AnalyticsKpiGrid({
         title: "Daily Spending",
         subtitle: "Average per calendar day",
         value: formatMoney(metrics.dailySpending),
+        comparisonValue: formatMoney(comparisonMetrics.dailySpending),
         icon: Calendar,
         delta: calculateComparisonDelta(
           metrics.dailySpending,
@@ -137,6 +143,7 @@ export function AnalyticsKpiGrid({
         title: "Largest Expense",
         subtitle: "Single biggest item",
         value: formatMoney(metrics.largest),
+        comparisonValue: formatMoney(comparisonMetrics.largest),
         icon: TrendingUp,
         delta: calculateComparisonDelta(
           metrics.largest,
@@ -149,6 +156,7 @@ export function AnalyticsKpiGrid({
         title: "Fixed Income",
         subtitle: "Recurring earnings",
         value: formatMoney(fixedVariableMetrics.fixedIncome),
+        comparisonValue: formatMoney(comparisonFixedVariableMetrics.fixedIncome),
         icon: Anchor,
         delta: calculateComparisonDelta(
           fixedVariableMetrics.fixedIncome,
@@ -162,6 +170,7 @@ export function AnalyticsKpiGrid({
         title: "Variable Income",
         subtitle: "Irregular earnings",
         value: formatMoney(fixedVariableMetrics.variableIncome),
+        comparisonValue: formatMoney(comparisonFixedVariableMetrics.variableIncome),
         icon: Sparkles,
         delta: calculateComparisonDelta(
           fixedVariableMetrics.variableIncome,
@@ -175,6 +184,7 @@ export function AnalyticsKpiGrid({
         title: "Fixed Expenses",
         subtitle: "Recurring costs",
         value: formatMoney(fixedVariableMetrics.fixedExpenses),
+        comparisonValue: formatMoney(comparisonFixedVariableMetrics.fixedExpenses),
         icon: Anchor,
         delta: calculateComparisonDelta(
           fixedVariableMetrics.fixedExpenses,
@@ -188,6 +198,7 @@ export function AnalyticsKpiGrid({
         title: "Variable Expenses",
         subtitle: "Irregular costs",
         value: formatMoney(fixedVariableMetrics.variableExpenses),
+        comparisonValue: formatMoney(comparisonFixedVariableMetrics.variableExpenses),
         icon: Sparkles,
         delta: calculateComparisonDelta(
           fixedVariableMetrics.variableExpenses,
@@ -201,6 +212,7 @@ export function AnalyticsKpiGrid({
         title: "Active Days",
         subtitle: "Days with transactions",
         value: `${metrics.activeDays}`,
+        comparisonValue: `${comparisonMetrics.activeDays}`,
         icon: Activity,
         delta: calculateComparisonDelta(
           metrics.activeDays,
@@ -213,6 +225,7 @@ export function AnalyticsKpiGrid({
         title: "Avg Transaction",
         subtitle: "Mean transaction size",
         value: formatMoney(avgTransaction),
+        comparisonValue: formatMoney(comparisonAvgTransaction),
         icon: DollarSign,
         delta: calculateComparisonDelta(
           avgTransaction,
@@ -225,6 +238,7 @@ export function AnalyticsKpiGrid({
         title: "Total Count",
         subtitle: "Number of transactions",
         value: `${metrics.transactionCount}`,
+        comparisonValue: `${comparisonMetrics.transactionCount}`,
         icon: Receipt,
         delta: calculateComparisonDelta(
           metrics.transactionCount,
@@ -237,6 +251,7 @@ export function AnalyticsKpiGrid({
         title: "Items per Tx",
         subtitle: "Avg entries per transaction",
         value: metrics.itemsPerTransaction.toFixed(1),
+        comparisonValue: comparisonMetrics.itemsPerTransaction.toFixed(1),
         icon: Layers,
         delta: calculateComparisonDelta(
           metrics.itemsPerTransaction,
@@ -249,6 +264,7 @@ export function AnalyticsKpiGrid({
         title: "Avg Item Value",
         subtitle: "Mean item price",
         value: formatMoney(metrics.avgItemValue),
+        comparisonValue: formatMoney(comparisonMetrics.avgItemValue),
         icon: ShoppingBag,
         delta: calculateComparisonDelta(
           metrics.avgItemValue,
@@ -261,6 +277,7 @@ export function AnalyticsKpiGrid({
         title: "Total Items",
         subtitle: "All line items",
         value: `${metrics.totalItems}`,
+        comparisonValue: `${comparisonMetrics.totalItems}`,
         icon: Layers,
         delta: calculateComparisonDelta(
           metrics.totalItems,
@@ -317,6 +334,7 @@ export function AnalyticsKpiGrid({
                   title={kpi.title}
                   subtitle={kpi.subtitle}
                   value={kpi.value}
+                  comparisonValue={kpi.comparisonValue}
                   icon={kpi.icon}
                   delta={kpi.delta}
                   color={kpi.color}

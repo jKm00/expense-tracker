@@ -14,6 +14,7 @@ const valueColorMap: Record<KpiCardColor, string> = {
 export function KpiCard({
   title,
   value,
+  comparisonValue,
   subtitle,
   icon: Icon,
   delta,
@@ -21,14 +22,17 @@ export function KpiCard({
 }: {
   title: string;
   value: string;
+  comparisonValue?: string;
   subtitle?: string;
   icon?: LucideIcon;
   delta?: ComparisonDelta;
   color?: KpiCardColor;
 }) {
+  const showDelta = delta && delta.direction !== "neutral";
+
   return (
     <Card size="sm" className="@container">
-      <CardContent className="flex flex-col gap-0.5 py-1">
+      <CardContent className="flex flex-col gap-1 py-1">
         <div className="flex items-center gap-2">
           {Icon && (
             <div className={"size-6 rounded-md grid place-items-center"}>
@@ -48,7 +52,7 @@ export function KpiCard({
           >
             {value}
           </p>
-          {delta && delta.direction !== "neutral" && (
+          {!comparisonValue && showDelta && (
             <div
               className={cn(
                 "flex items-center gap-0.5 text-xs font-medium",
@@ -64,6 +68,32 @@ export function KpiCard({
             </div>
           )}
         </div>
+        {comparisonValue && delta && (
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1">
+            <p className="min-w-0 truncate text-[11px] text-muted-foreground">
+              vs {comparisonValue}
+            </p>
+            {showDelta ? (
+              <div
+                className={cn(
+                  "flex shrink-0 items-center gap-0.5 text-xs font-medium",
+                  delta.favorable ? "text-income" : "text-expense",
+                )}
+              >
+                {delta.direction === "up" ? (
+                  <TrendingUp className="size-3" />
+                ) : (
+                  <TrendingDown className="size-3" />
+                )}
+                <span>{Math.abs(delta.percentage).toFixed(1)}%</span>
+              </div>
+            ) : (
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                0.0%
+              </span>
+            )}
+          </div>
+        )}
         {subtitle && (
           <p className="text-[11px] text-muted-foreground">{subtitle}</p>
         )}
