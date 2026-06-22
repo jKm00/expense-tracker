@@ -14,7 +14,6 @@ import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { getComparisonDate } from "@/features/analytics/analytics.utils";
 import { MonthSelect } from "@/components/custom/month-select";
-import { CalendarRange } from "lucide-react";
 import { AnalyticsContentSkeleton } from "@/features/analytics/components/analytics-skeletons";
 import { AnalyticsLoader } from "@/features/analytics/components/analytics-loader";
 import { CompareSelect } from "@/features/analytics/components/compare.select";
@@ -68,18 +67,12 @@ function RouteComponent() {
           </PageHeaderDescription>
         </PageHeader>
 
-        <div className="rounded-xl border bg-card p-3 shadow-sm lg:min-w-[360px]">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            <CalendarRange className="size-3.5" />
-            Period
-          </div>
-          <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_180px]">
-            <MonthSelect
-              from="/_app/dashboard/analytics"
-              to="/dashboard/analytics"
-            />
-            <CompareSelect className="h-8 w-full" />
-          </div>
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+          <MonthSelect
+            from="/_app/dashboard/analytics"
+            to="/dashboard/analytics"
+          />
+          <CompareSelect className="h-8 w-[180px]" />
         </div>
       </div>
 
