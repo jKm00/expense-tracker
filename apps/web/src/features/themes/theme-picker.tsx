@@ -57,10 +57,12 @@ export function ThemePicker() {
               <div className="mb-3 grid grid-cols-2 gap-1.5">
                 <ThemePreview
                   swatches={item.lightSwatches}
+                  radius={item.radius}
                   active={mode === "light"}
                 />
                 <ThemePreview
                   swatches={item.darkSwatches}
+                  radius={item.radius}
                   active={mode === "dark"}
                 />
               </div>
@@ -95,32 +97,36 @@ export function ThemePicker() {
 
 function ThemePreview({
   swatches,
+  radius,
   active,
 }: {
   swatches: readonly string[];
+  radius: string;
   active: boolean;
 }) {
   const [background, primary, accent, card] = swatches;
+  const midRadius = `max(0px, calc(${radius} - 2px))`;
+  const smallRadius = `max(0px, calc(${radius} - 4px))`;
 
   return (
     <div
       className={cn(
-        "relative h-20 overflow-hidden rounded-xl border transition-all",
+        "relative h-20 overflow-hidden border transition-all",
         active ? "border-primary/70" : "border-border/70 opacity-75"
       )}
-      style={{ backgroundColor: background }}
+      style={{ backgroundColor: background, borderRadius: radius }}
     >
       <div
         className="absolute inset-x-0 top-0 h-5"
         style={{ backgroundColor: primary }}
       />
       <div
-        className="absolute left-2 top-7 h-10 w-5 rounded-md"
-        style={{ backgroundColor: accent }}
+        className="absolute left-2 top-7 h-10 w-5"
+        style={{ backgroundColor: accent, borderRadius: smallRadius }}
       />
       <div
-        className="absolute right-2 top-7 h-10 w-[calc(100%-40px)] rounded-lg shadow-sm"
-        style={{ backgroundColor: card }}
+        className="absolute right-2 top-7 h-10 w-[calc(100%-40px)] shadow-sm"
+        style={{ backgroundColor: card, borderRadius: midRadius }}
       />
       <div
         className="absolute right-4 top-10 h-1.5 w-8 rounded-full"
