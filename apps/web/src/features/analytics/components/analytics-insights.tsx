@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Treemap } from "recharts";
+import { Cell, Pie, PieChart, Treemap } from "recharts";
 import { BarChart3, Package, Settings2, Tags, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -792,10 +792,11 @@ function FocusPanelContent({
           </div>
         )}
 
-        <FocusRankedSection
-          title={target.type === "tag" ? "Top products" : "Related tags"}
-          items={analysis.related.slice(0, 6)}
-        />
+        {target.type === "tag" ? (
+          <FocusProductsPieSection items={analysis.related.slice(0, 6)} />
+        ) : (
+          <RelatedTagBadges items={analysis.related.slice(0, 10)} />
+        )}
 
         <div className="space-y-2">
           <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -911,33 +912,101 @@ function rankItems(
   return Array.from(totals.values()).sort((a, b) => b.total - a.total);
 }
 
-function FocusRankedSection({ title, items }: { title: string; items: RankedItem[] }) {
-  const max = items[0]?.total ?? 0;
+function FocusProductsPieSection({ items }: { items: RankedItem[] }) {
+  const total = items.reduce((sum, item) => sum + item.total, 0);
 
   return (
     <div className="space-y-2">
       <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {title}
+        Top products
       </h4>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">No related data for this period.</p>
       ) : (
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.id} className="space-y-1.5">
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="truncate">{item.name}</span>
-                <span className="font-mono font-medium tabular-nums">
+        <>
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto h-[260px] w-full aspect-auto"
+          >
+            <PieChart>
+              <Pie
+                data={items}
+                dataKey="total"
+                nameKey="name"
+                innerRadius="52%"
+                outerRadius="88%"
+                paddingAngle={2}
+                stroke="var(--background)"
+                strokeWidth={2}
+                isAnimationActive={false}
+              >
+                {items.map((item, index) => (
+                  <Cell key={item.id} fill={treemapColors[index % treemapColors.length]} />
+                ))}
+              </Pie>
+              <ChartTooltip
+                cursor={false}
+                content={({ active, payload }) => {
+                  const item = payload?.[0]?.payload as RankedItem | undefined;
+                  if (!active || !item) return null;
+
+                  return (
+                    <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="mt-1 text-muted-foreground">
+                        {formatMoney(item.total)} · {total === 0
+                          ? "0.0"
+                          : ((item.total / total) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  );
+                }}
+              />
+            </PieChart>
+          </ChartContainer>
+          <div className="mt-3 space-y-2">
+            {items.map((item, index) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: treemapColors[index % treemapColors.length] }}
+                  />
+                  <span className="truncate">{item.name}</span>
+                </div>
+                <span className="shrink-0 font-mono font-medium tabular-nums">
                   {formatMoney(item.total)}
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary/65"
-                  style={{ width: `${max === 0 ? 0 : (item.total / max) * 100}%` }}
-                />
-              </div>
-            </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function RelatedTagBadges({ items }: { items: RankedItem[] }) {
+  return (
+    <div className="space-y-2">
+      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Related tags
+      </h4>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No related data for this period.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {items.map((item) => (
+            <Badge
+              key={item.id}
+              variant="secondary"
+              className="gap-1.5 rounded-full px-2.5 py-1"
+            >
+              <span className="max-w-32 truncate">{item.name}</span>
+              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                {formatMoney(item.total)}
+              </span>
+            </Badge>
           ))}
         </div>
       )}
