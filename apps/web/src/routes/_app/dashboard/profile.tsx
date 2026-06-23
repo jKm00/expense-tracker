@@ -14,6 +14,7 @@ import {
   PageHeader,
   PageHeaderTitle,
   PageHeaderDescription,
+  PageHeaderActions,
 } from "@/components/custom/page-header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LogOutIcon, Palette } from "lucide-react";
@@ -52,6 +53,12 @@ function RouteComponent() {
         <PageHeaderDescription>
           Manage your account settings
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button variant="outline" onClick={handleSignOut} size="sm">
+            <LogOutIcon className="size-4" />
+            <span className="sr-only sm:not-sr-only">Sign Out</span>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
 
       {/* User Info */}
@@ -95,25 +102,6 @@ function RouteComponent() {
             </div>
           </div>
           <ThemePicker />
-        </CardContent>
-      </Card>
-
-      {/* Account Actions */}
-      <Card className="border-destructive/20">
-        <CardHeader>
-          <CardTitle className="text-destructive">Danger zone</CardTitle>
-          <CardDescription>Irreversible account actions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            onClick={handleSignOut}
-            className="w-full"
-            size="sm"
-          >
-            <LogOutIcon className="size-4 mr-2" />
-            Sign Out
-          </Button>
         </CardContent>
       </Card>
     </div>
