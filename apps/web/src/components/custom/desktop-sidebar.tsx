@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
+  FileImage,
   ShoppingBag,
   PackageIcon,
   RepeatIcon,
@@ -39,6 +40,11 @@ const navSections = [
         label: "Shopping",
         href: "/dashboard/shopping",
         icon: ShoppingBag,
+      },
+      {
+        label: "Scan Receipt",
+        href: "/dashboard/transactions/scan",
+        icon: FileImage,
       },
     ],
   },
@@ -78,6 +84,12 @@ export function DesktopSidebar() {
         location.pathname === "/dashboard" ||
         location.pathname === "/dashboard/"
       );
+    }
+    if (
+      href === "/dashboard/transactions" &&
+      location.pathname === "/dashboard/transactions/scan"
+    ) {
+      return false;
     }
     return location.pathname.startsWith(href);
   }

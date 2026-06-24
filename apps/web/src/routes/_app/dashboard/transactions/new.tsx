@@ -6,15 +6,18 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
+  PageHeaderActions,
   PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
+import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { NewTransactionForm } from "@/features/transactions/components/new-transaction.form";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { FileImage } from "lucide-react";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/new")({
@@ -36,6 +39,14 @@ function RouteComponent() {
         <PageHeaderDescription>
           Document a new transaction
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/dashboard/transactions/scan">
+              <FileImage className="size-4" />
+              <span className="hidden sm:inline">Scan receipt</span>
+            </Link>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <NewProductForm />

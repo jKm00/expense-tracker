@@ -12,6 +12,7 @@ import {
   UpdateProduct,
 } from "./products.models";
 import { productRepo } from "./products.repo";
+import { receiptScanningRepo } from "../receipt-scanning/receipt-scanning.repo";
 
 function normalizeName(value: string) {
   return value
@@ -544,6 +545,7 @@ async function deleteProduct(userId: string, productId: string) {
         message: "Failed to delete product. No product returned",
       });
     }
+    await receiptScanningRepo.deleteMappingsForProduct(productId);
     await analyticsService.removeExcludedProduct(userId, productId);
     return ok(res[0]);
   } catch (error) {
