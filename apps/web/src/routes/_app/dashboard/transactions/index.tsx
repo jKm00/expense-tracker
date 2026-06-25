@@ -19,7 +19,7 @@ import { TransactionList } from "@/features/transactions/components/transaction-
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Layers, Plus, TrendingUp } from "lucide-react";
+import { ArrowLeftRight, FileImage, Layers, Plus, TrendingUp } from "lucide-react";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/")({
@@ -48,6 +48,12 @@ function RouteComponent() {
           </PageHeaderDescription>
           <PageHeaderActions>
             <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/transactions/scan" aria-label="Scan receipt">
+                <FileImage className="size-4" />
+                <span className="max-md:sr-only">Scan receipt</span>
+              </Link>
+            </Button>
+            <Button asChild size="sm">
               <Link to="/dashboard/transactions/new">
                 <Plus className="size-4" />
                 <span className="max-md:sr-only">New transaction</span>

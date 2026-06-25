@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   CompleteReceiptCheckoutScanDTO,
+  CompleteReceiptTransactionReplacementScanDTO,
   CompleteReceiptTransactionScanDTO,
   ExtractReceiptDTO,
 } from "./receipt-scanning.dtos";
@@ -38,7 +39,7 @@ function completeTransactionScan() {
         return;
       }
 
-      qc.setQueryData([TRANSACTION_QUERY_KEY, transaction.id], result);
+      qc.removeQueries({ queryKey: [TRANSACTION_QUERY_KEY, transaction.id], exact: true });
       qc.invalidateQueries({ queryKey: [TRANSACTION_QUERY_KEY] });
       qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
     },
@@ -63,7 +64,7 @@ function completeCheckoutScan() {
         return;
       }
 
-      qc.setQueryData([TRANSACTION_QUERY_KEY, transaction.id], result);
+      qc.removeQueries({ queryKey: [TRANSACTION_QUERY_KEY, transaction.id], exact: true });
       qc.invalidateQueries({ queryKey: [TRANSACTION_QUERY_KEY] });
       qc.invalidateQueries({ queryKey: [SHOPPING_QUERY_KEY] });
       qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
@@ -74,8 +75,34 @@ function completeCheckoutScan() {
   });
 }
 
+function completeTransactionReplacementScan() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CompleteReceiptTransactionReplacementScanDTO) => {
+      assertOnline();
+      return await receiptScanningController.completeTransactionReplacementScan({ data });
+    },
+    onSuccess: (result) => {
+      const [error, transaction] = result;
+      if (error) {
+        toast.error(error.message ?? "Failed to replace transaction with scanned receipt. Please try again!");
+        return;
+      }
+
+      qc.removeQueries({ queryKey: [TRANSACTION_QUERY_KEY, transaction.id], exact: true });
+      qc.invalidateQueries({ queryKey: [TRANSACTION_QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
+    },
+    onError: () => {
+      toast.error("Something unexpected happened when replacing the transaction. Please try again!");
+    },
+  });
+}
+
 export const receiptScanningMutations = {
   extractReceipt,
   completeTransactionScan,
   completeCheckoutScan,
+  completeTransactionReplacementScan,
 };

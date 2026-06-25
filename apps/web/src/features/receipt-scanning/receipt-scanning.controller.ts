@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authenticated } from "../auth/auth.utils";
 import {
   completeReceiptCheckoutScanSchema,
+  completeReceiptTransactionReplacementScanSchema,
   completeReceiptTransactionScanSchema,
   extractReceiptSchema,
 } from "./receipt-scanning.dtos";
@@ -34,8 +35,17 @@ const completeCheckoutScan = createServerFn({ method: "POST" })
     return await receiptScanningService.completeCheckoutScan(userId, data);
   });
 
+const completeTransactionReplacementScan = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .inputValidator(completeReceiptTransactionReplacementScanSchema)
+  .handler(async ({ context, data }) => {
+    const userId = context.user.id;
+    return await receiptScanningService.completeTransactionReplacementScan(userId, data);
+  });
+
 export const receiptScanningController = {
   extractReceipt,
   completeTransactionScan,
   completeCheckoutScan,
+  completeTransactionReplacementScan,
 };

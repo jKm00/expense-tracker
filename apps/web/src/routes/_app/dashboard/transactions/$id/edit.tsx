@@ -9,14 +9,30 @@ import {
   PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
+  PageHeaderActions,
 } from "@/components/custom/page-header";
+import { LoaderButton } from "@/components/custom/loader.button";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { productQueries } from "@/features/products/products.queries";
+import { setPendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
+import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
+import { fileToDataUrl, validateReceiptFile } from "@/features/receipt-scanning/receipt-scanning.utils";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { FileImage, Loader2, Upload } from "lucide-react";
+import { Suspense, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
   loader: async ({ context, params }) => {
@@ -34,6 +50,8 @@ export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
 });
 
 function RouteComponent() {
+  const { id } = Route.useParams();
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
@@ -42,11 +60,127 @@ function RouteComponent() {
         <PageHeaderDescription>
           Modify transaction details
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <ScanReceiptAction transactionId={id} />
+        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <EditTransactionFormWrapper />
       </Suspense>
     </div>
+  );
+}
+
+function ScanReceiptAction({ transactionId }: { transactionId: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const online = useOnlineStatus();
+  const extractMutation = receiptScanningMutations.extractReceipt();
+  const [open, setOpen] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const {
+    data: [expectedTransactionError, transaction],
+    error: unexpectedTransactionError,
+  } = useSuspenseQuery(transactionQueries.getTransactionOptions(transactionId));
+
+  if (unexpectedTransactionError || expectedTransactionError) {
+    return null;
+  }
+
+  const canScan =
+    transaction.source !== "recurring" &&
+    transaction.entries.every((entry) => entry.type === "expense");
+
+  if (!canScan) {
+    return null;
+  }
+
+  async function handleFile(file: File) {
+    setFileError(null);
+
+    if (!online) {
+      setFileError("Receipt scanning requires an internet connection.");
+      return;
+    }
+
+    const validationError = validateReceiptFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      return;
+    }
+
+    try {
+      const imageDataUrl = await fileToDataUrl(file);
+      extractMutation.mutate(
+        { imageDataUrl, mode: "transaction", checkedProductIds: [] },
+        {
+          onSuccess: (result) => {
+            const [error, data] = result;
+            if (error) {
+              setFileError(error.message);
+              return;
+            }
+
+            setPendingTransactionScan(transactionId, data);
+            setOpen(false);
+            navigate({
+              to: "/dashboard/transactions/$id/scan",
+              params: { id: transactionId },
+            });
+          },
+        },
+      );
+    } catch {
+      setFileError("Could not read the receipt file. Please try again.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" aria-label="Scan receipt">
+          <FileImage className="size-4" />
+          <span className="max-md:sr-only">Scan receipt</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Scan Receipt</DialogTitle>
+          <DialogDescription>
+            Upload an image or PDF receipt. After analysis, you will review the extracted entries before replacing this transaction.
+          </DialogDescription>
+        </DialogHeader>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,application/pdf"
+          capture="environment"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void handleFile(file);
+            event.currentTarget.value = "";
+          }}
+        />
+        <LoaderButton
+          type="button"
+          isLoading={extractMutation.isPending}
+          loadingText={
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="size-3.5 animate-spin" />
+              Analyzing receipt...
+            </span>
+          }
+          disabled={!online || extractMutation.isPending}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="size-3.5" />
+          Upload receipt image or PDF
+        </LoaderButton>
+        {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
+        {fileError && <p className="text-sm text-destructive">{fileError}</p>}
+      </DialogContent>
+    </Dialog>
   );
 }
 

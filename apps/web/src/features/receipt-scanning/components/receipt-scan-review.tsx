@@ -8,53 +8,35 @@ import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductWithTag } from "@/features/products/products.models";
 import { ReceiptScanLine, ReceiptScanMatchResult } from "../receipt-scanning.models";
 import { receiptScanningMutations } from "../receipt-scanning.mutations";
-import { CompleteReceiptCheckoutScanDTO, CompleteReceiptTransactionScanDTO } from "../receipt-scanning.dtos";
+import {
+  CompleteReceiptCheckoutScanDTO,
+  CompleteReceiptTransactionReplacementScanDTO,
+  CompleteReceiptTransactionScanDTO,
+} from "../receipt-scanning.dtos";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { formatAmount } from "@/utils/format";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { AlertTriangle, FileImage, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-const MAX_RECEIPT_FILE_SIZE = 10 * 1024 * 1024;
-const SCAN_LOADING_STEPS = [
-  "Uploading receipt...",
-  "Reading text...",
-  "Extracting data...",
-  "Matching products...",
-] as const;
+import { fileToDataUrl, validateReceiptFile } from "../receipt-scanning.utils";
 
 type EditableScanLine = Omit<ReceiptScanLine, "product"> & {
   product: { id: string | null; name: string } | null;
 };
 
-type CheckoutTransactionOption = {
+type ReceiptScanTargetTransaction = {
   id: string;
   store: string | null;
   description: string | null;
   date: Date;
   totalPrice: string;
-  needsReview: boolean;
 };
 
 function parsePositiveNumber(value?: string) {
   if (!value) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error("INVALID_FILE_RESULT"));
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("FILE_READ_FAILED"));
-    reader.readAsDataURL(file);
-  });
 }
 
 function toDateInputValue(date: Date) {
@@ -101,30 +83,34 @@ export function ReceiptScanReview({
   mode,
   products,
   fallbackHref,
-  transactions = [],
+  initialScanResult,
+  targetTransaction,
   onComplete,
 }: {
   mode: "transaction" | "shopping-checkout";
   products: ProductWithTag[];
   fallbackHref: string;
-  transactions?: CheckoutTransactionOption[];
+  initialScanResult?: ReceiptScanMatchResult | null;
+  targetTransaction?: ReceiptScanTargetTransaction;
   onComplete: (transactionId: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialScanAppliedRef = useRef(false);
   const online = useOnlineStatus();
   const extractMutation = receiptScanningMutations.extractReceipt();
   const transactionMutation = receiptScanningMutations.completeTransactionScan();
+  const transactionReplacementMutation =
+    receiptScanningMutations.completeTransactionReplacementScan();
   const checkoutMutation = receiptScanningMutations.completeCheckoutScan();
+  const isReplacingTransaction = mode === "transaction" && Boolean(targetTransaction);
 
   const [scanResult, setScanResult] = useState<ReceiptScanMatchResult | null>(null);
   const [lines, setLines] = useState<EditableScanLine[]>([]);
-  const [store, setStore] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [selectedTransactionId, setSelectedTransactionId] = useState("");
+  const [store, setStore] = useState(targetTransaction?.store ?? "");
+  const [description, setDescription] = useState(targetTransaction?.description ?? "");
+  const [date, setDate] = useState(targetTransaction ? new Date(targetTransaction.date) : new Date());
   const [fileError, setFileError] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [scanLoadingStep, setScanLoadingStep] = useState(0);
 
   const receiptTotal = scanResult?.receipt.total ? Number(scanResult.receipt.total) : null;
   const reviewedTotal = useMemo(
@@ -133,47 +119,40 @@ export function ReceiptScanReview({
   );
   const totalMismatch =
     receiptTotal !== null && Math.abs(receiptTotal - reviewedTotal) >= 0.01;
+  const originalTotalMismatch =
+    targetTransaction && Math.abs(Math.abs(Number(targetTransaction.totalPrice)) - reviewedTotal) >= 0.01;
   const hasInvalidLines = lines.some(
     (line) => !line.product || !parsePositiveNumber(line.quantity) || !parsePositiveNumber(line.price),
   );
-  const isCompleting = transactionMutation.isPending || checkoutMutation.isPending;
+  const isCompleting =
+    transactionMutation.isPending ||
+    transactionReplacementMutation.isPending ||
+    checkoutMutation.isPending;
 
   useEffect(() => {
-    if (!extractMutation.isPending) {
-      setScanLoadingStep(0);
+    if (!initialScanResult || initialScanAppliedRef.current) {
       return;
     }
 
-    const interval = window.setInterval(() => {
-      setScanLoadingStep((step) =>
-        Math.min(step + 1, SCAN_LOADING_STEPS.length - 1),
-      );
-    }, 1400);
+    initialScanAppliedRef.current = true;
+    applyScanResult(initialScanResult);
+  }, [initialScanResult]);
 
-    return () => window.clearInterval(interval);
-  }, [extractMutation.isPending]);
-
-  async function handleFile(file: File) {
-    setFileError(null);
-
-    if (!online) {
-      setFileError("Receipt scanning requires an internet connection.");
-      return;
+  function applyScanResult(data: ReceiptScanMatchResult) {
+    setScanResult(data);
+    setLines(toEditableLines(data));
+    if (targetTransaction) {
+      setStore(targetTransaction.store ?? data.receipt.store ?? "");
+      setDescription(targetTransaction.description ?? "");
+      setDate(new Date(targetTransaction.date));
+    } else {
+      setStore(data.receipt.store ?? "");
+      setDate(data.parsedDate ? new Date(data.parsedDate) : new Date());
     }
+    setSubmitAttempted(false);
+  }
 
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-    const isImage = file.type.startsWith("image/");
-    if (!isImage && !isPdf) {
-      setFileError("Choose an image or PDF receipt file.");
-      return;
-    }
-
-    if (file.size > MAX_RECEIPT_FILE_SIZE) {
-      setFileError("Receipt file is too large. Choose an image or PDF under 10 MB.");
-      return;
-    }
-
-    const imageDataUrl = await fileToDataUrl(file);
+  function extractReceipt(imageDataUrl: string) {
     extractMutation.mutate(
       { imageDataUrl, mode, checkedProductIds: [] },
       {
@@ -184,14 +163,28 @@ export function ReceiptScanReview({
             return;
           }
 
-          setScanResult(data);
-          setLines(toEditableLines(data));
-          setStore(data.receipt.store ?? "");
-          setDate(data.parsedDate ? new Date(data.parsedDate) : new Date());
-          setSubmitAttempted(false);
+          applyScanResult(data);
         },
       },
     );
+  }
+
+  async function handleFile(file: File) {
+    setFileError(null);
+
+    if (!online) {
+      setFileError("Receipt scanning requires an internet connection.");
+      return;
+    }
+
+    const validationError = validateReceiptFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      return;
+    }
+
+    const imageDataUrl = await fileToDataUrl(file);
+    extractReceipt(imageDataUrl);
   }
 
   function updateLine(index: number, updater: (line: EditableScanLine) => EditableScanLine) {
@@ -250,6 +243,21 @@ export function ReceiptScanReview({
     }));
 
     if (mode === "transaction") {
+      if (targetTransaction) {
+        const payload: CompleteReceiptTransactionReplacementScanDTO = {
+          transactionId: targetTransaction.id,
+          store: targetTransaction.store ? undefined : store || undefined,
+          entries,
+        };
+        transactionReplacementMutation.mutate(payload, {
+          onSuccess: (result) => {
+            const [error, transaction] = result;
+            if (!error) onComplete(transaction.id);
+          },
+        });
+        return;
+      }
+
       const payload: CompleteReceiptTransactionScanDTO = {
         store,
         description,
@@ -269,7 +277,6 @@ export function ReceiptScanReview({
       store,
       description,
       date,
-      transactionId: selectedTransactionId || undefined,
       keepUncheckedItems: true,
       entries,
     };
@@ -310,7 +317,7 @@ export function ReceiptScanReview({
               loadingText={
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="size-3.5 animate-spin" />
-                  {SCAN_LOADING_STEPS[scanLoadingStep]}
+                  Analyzing receipt...
                 </span>
               }
               disabled={!online || extractMutation.isPending}
@@ -327,6 +334,9 @@ export function ReceiptScanReview({
                   setScanResult(null);
                   setLines([]);
                   setFileError(null);
+                  setStore(targetTransaction?.store ?? "");
+                  setDescription(targetTransaction?.description ?? "");
+                  setDate(targetTransaction ? new Date(targetTransaction.date) : new Date());
                 }}
               >
                 <RotateCcw className="size-3.5" />
@@ -334,7 +344,7 @@ export function ReceiptScanReview({
               </Button>
             )}
             <Button type="button" variant="ghost" asChild>
-              <a href={fallbackHref}>Use manual form</a>
+              <Link to={fallbackHref}>Use manual form</Link>
             </Button>
           </div>
           {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
@@ -356,46 +366,65 @@ export function ReceiptScanReview({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-2">
-              <FormField>
-                <FormFieldLabel>Store</FormFieldLabel>
-                <Input value={store} onChange={(event) => setStore(event.target.value)} placeholder="Store" />
-              </FormField>
-              <FormField>
-                <FormFieldLabel>Date</FormFieldLabel>
-                <Input
-                  type="date"
-                  value={toDateInputValue(date)}
-                  onChange={(event) => setDate(fromDateInputValue(event.target.value))}
-                />
-              </FormField>
-            </div>
-            <FormField>
-              <FormFieldLabel>Description</FormFieldLabel>
-              <Textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Optional note"
-                className="resize-none"
-              />
-            </FormField>
-
-            {mode === "shopping-checkout" && transactions.length > 0 && (
-              <FormField>
-                <FormFieldLabel>Link existing transaction</FormFieldLabel>
-                <select
-                  value={selectedTransactionId}
-                  onChange={(event) => setSelectedTransactionId(event.target.value)}
-                  className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
-                >
-                  <option value="">Create a new transaction</option>
-                  {transactions.map((transaction) => (
-                    <option key={transaction.id} value={transaction.id}>
-                      {format(new Date(transaction.date), "HH:mm")} {transaction.store || transaction.description || "Transaction"} ({formatAmount(transaction.totalPrice)})
-                    </option>
-                  ))}
-                </select>
-              </FormField>
+            {isReplacingTransaction && targetTransaction ? (
+              <>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <FormField>
+                    <FormFieldLabel>Store</FormFieldLabel>
+                    {targetTransaction.store ? (
+                      <Input value={targetTransaction.store} readOnly />
+                    ) : (
+                      <Input
+                        value={store}
+                        onChange={(event) => setStore(event.target.value)}
+                        placeholder="Store from receipt"
+                      />
+                    )}
+                  </FormField>
+                  <FormField>
+                    <FormFieldLabel>Date</FormFieldLabel>
+                    <Input
+                      value={format(new Date(targetTransaction.date), "dd MMM yyyy HH:mm")}
+                      readOnly
+                    />
+                  </FormField>
+                </div>
+                <FormField>
+                  <FormFieldLabel>Description</FormFieldLabel>
+                  <Textarea
+                    value={targetTransaction.description ?? ""}
+                    readOnly
+                    placeholder="No description"
+                    className="resize-none"
+                  />
+                </FormField>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <FormField>
+                    <FormFieldLabel>Store</FormFieldLabel>
+                    <Input value={store} onChange={(event) => setStore(event.target.value)} placeholder="Store" />
+                  </FormField>
+                  <FormField>
+                    <FormFieldLabel>Date</FormFieldLabel>
+                    <Input
+                      type="date"
+                      value={toDateInputValue(date)}
+                      onChange={(event) => setDate(fromDateInputValue(event.target.value))}
+                    />
+                  </FormField>
+                </div>
+                <FormField>
+                  <FormFieldLabel>Description</FormFieldLabel>
+                  <Textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Optional note"
+                    className="resize-none"
+                  />
+                </FormField>
+              </>
             )}
 
             {totalMismatch && (
@@ -403,6 +432,15 @@ export function ReceiptScanReview({
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <span>
                   Reviewed total {formatAmount(reviewedTotal)} differs from receipt total {formatAmount(receiptTotal)}. You can still complete the scan.
+                </span>
+              </div>
+            )}
+
+            {originalTotalMismatch && targetTransaction && (
+              <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  Reviewed total {formatAmount(reviewedTotal)} differs from the original transaction total {formatAmount(Math.abs(Number(targetTransaction.totalPrice)))}. Completing the scan will update the transaction total.
                 </span>
               </div>
             )}

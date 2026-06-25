@@ -10,6 +10,7 @@ import { shoppingListItems, shoppingLists } from "../shopping/shopping.schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   CompleteReceiptCheckoutScanDTO,
+  CompleteReceiptTransactionReplacementScanDTO,
   CompleteReceiptTransactionScanDTO,
 } from "./receipt-scanning.dtos";
 import { matchReceiptToProducts } from "./receipt-matching";
@@ -311,6 +312,68 @@ async function completeTransactionScan(
   }
 }
 
+async function completeTransactionReplacementScan(
+  userId: string,
+  data: CompleteReceiptTransactionReplacementScanDTO,
+) {
+  try {
+    const transaction = await db.transaction(async (tx) => {
+      const existingTransaction = await getOwnedTransaction(
+        tx as DbClient,
+        userId,
+        data.transactionId,
+      );
+      if (!existingTransaction) {
+        throw new Error("SCAN_TRANSACTION_NOT_FOUND");
+      }
+      if (existingTransaction.source === "recurring") {
+        throw new Error("SCAN_TRANSACTION_RECURRING_NOT_ALLOWED");
+      }
+
+      const incomeEntries = await tx
+        .select({ id: entries.id })
+        .from(entries)
+        .where(
+          and(
+            eq(entries.transactionId, data.transactionId),
+            eq(entries.type, "income"),
+          ),
+        )
+        .limit(1);
+      if (incomeEntries.length > 0) {
+        throw new Error("SCAN_TRANSACTION_INCOME_NOT_ALLOWED");
+      }
+
+      const totalPrice = calculateTotalPrice(data.entries);
+      const [updated] = await tx
+        .update(transactions)
+        .set({
+          store: existingTransaction.store ?? data.store ?? null,
+          needsReview: false,
+          totalPrice: String(totalPrice),
+          updatedAt: new Date(),
+        })
+        .where(eq(transactions.id, data.transactionId))
+        .returning();
+
+      if (!updated) {
+        throw new Error("SCAN_TRANSACTION_UPDATE_FAILED");
+      }
+
+      await tx.delete(entries).where(eq(entries.transactionId, data.transactionId));
+      await saveEntriesAndMappings(tx as DbClient, userId, updated.id, data.entries);
+      return updated;
+    });
+
+    return ok(transaction);
+  } catch (error) {
+    return err({
+      reason: "SCAN_COMPLETE_FAILED" as const,
+      message: "Failed to replace transaction with scanned receipt. Please try again.",
+    });
+  }
+}
+
 async function getOwnedShoppingList(client: DbClient, userId: string) {
   const [list] = await client
     .select()
@@ -342,57 +405,21 @@ async function completeCheckoutScan(
   try {
     const transaction = await db.transaction(async (tx) => {
       const totalPrice = calculateTotalPrice(data.entries);
-      let savedTransaction: typeof transactions.$inferSelect;
-
-      if (data.transactionId) {
-        const existingTransaction = await getOwnedTransaction(
-          tx as DbClient,
+      const [savedTransaction] = await tx
+        .insert(transactions)
+        .values({
           userId,
-          data.transactionId,
-        );
-        if (!existingTransaction) {
-          throw new Error("SCAN_TRANSACTION_NOT_FOUND");
-        }
+          store: data.store,
+          description: data.description,
+          date: data.date,
+          source: "shopping",
+          needsReview: false,
+          totalPrice: String(totalPrice),
+        })
+        .returning();
 
-        const [updated] = await tx
-          .update(transactions)
-          .set({
-            store: data.store,
-            description: data.description,
-            date: data.date,
-            source: "shopping",
-            needsReview: false,
-            totalPrice: String(totalPrice),
-            updatedAt: new Date(),
-          })
-          .where(eq(transactions.id, data.transactionId))
-          .returning();
-
-        if (!updated) {
-          throw new Error("SCAN_TRANSACTION_UPDATE_FAILED");
-        }
-
-        await tx.delete(entries).where(eq(entries.transactionId, data.transactionId));
-        savedTransaction = updated;
-      } else {
-        const [created] = await tx
-          .insert(transactions)
-          .values({
-            userId,
-            store: data.store,
-            description: data.description,
-            date: data.date,
-            source: "shopping",
-            needsReview: false,
-            totalPrice: String(totalPrice),
-          })
-          .returning();
-
-        if (!created) {
-          throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
-        }
-
-        savedTransaction = created;
+      if (!savedTransaction) {
+        throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
       }
 
       await saveEntriesAndMappings(tx as DbClient, userId, savedTransaction.id, data.entries);
@@ -435,6 +462,7 @@ async function deleteMappingsForProduct(productId: string) {
 export const receiptScanningService = {
   extractReceipt,
   completeTransactionScan,
+  completeTransactionReplacementScan,
   completeCheckoutScan,
   deleteMappingsForProduct,
 };

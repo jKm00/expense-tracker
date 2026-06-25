@@ -12,20 +12,18 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
-import { shoppingQueries } from "@/features/shopping/shopping.queries";
+import { takePendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/shopping/checkout/scan")({
-  loader: async ({ context }) => {
-    const now = new Date();
+export const Route = createFileRoute("/_app/dashboard/transactions/$id/scan")({
+  loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productQueries.getProductsOptions()),
-      context.queryClient.ensureQueryData(shoppingQueries.getShoppingListOptions()),
       context.queryClient.ensureQueryData(
-        transactionQueries.getTransactionsOptions(now.getFullYear(), now.getMonth()),
+        transactionQueries.getTransactionOptions(params.id),
       ),
     ]);
   },
@@ -37,58 +35,63 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle>Scan Checkout Receipt</PageHeaderTitle>
+        <PageHeaderTitle>Scan Receipt</PageHeaderTitle>
         <PageHeaderDescription>
-          Scan a receipt to fill checkout entries, then review before completion.
+          Replace this transaction's entries with reviewed receipt lines.
         </PageHeaderDescription>
       </PageHeader>
       <Suspense>
-        <ScanCheckoutContent />
+        <ScanExistingTransactionContent />
       </Suspense>
     </div>
   );
 }
 
-function ScanCheckoutContent() {
+function ScanExistingTransactionContent() {
+  const { id } = Route.useParams();
   const navigate = useNavigate();
-  const now = new Date();
+  const [initialScanResult] = useState(() => takePendingTransactionScan(id));
   const {
     data: [productsError, products],
     error: unexpectedProductsError,
   } = useSuspenseQuery(productQueries.getProductsOptions());
   const {
-    data: [shoppingError, shoppingList],
-    error: unexpectedShoppingError,
-  } = useSuspenseQuery(shoppingQueries.getShoppingListOptions());
-  const {
-    data: [transactionsError, transactions],
-    error: unexpectedTransactionsError,
-  } = useSuspenseQuery(
-    transactionQueries.getTransactionsOptions(now.getFullYear(), now.getMonth()),
-  );
+    data: [transactionError, transaction],
+    error: unexpectedTransactionError,
+  } = useSuspenseQuery(transactionQueries.getTransactionOptions(id));
 
-  if (unexpectedProductsError || unexpectedShoppingError || unexpectedTransactionsError) {
+  if (unexpectedProductsError || unexpectedTransactionError) {
     return <UnexpectedError />;
   }
 
-  if (productsError || shoppingError || transactionsError) {
+  if (productsError || transactionError) {
     return (
       <ExpectedError>
-        <ExpectedErrorTitle>Checkout scan unavailable</ExpectedErrorTitle>
+        <ExpectedErrorTitle>Scan unavailable</ExpectedErrorTitle>
         <ExpectedErrorMessage>
-          Could not load the data needed for checkout scanning. Please try again.
+          Could not load the data needed to scan this transaction. Please try again.
         </ExpectedErrorMessage>
       </ExpectedError>
     );
   }
 
-  const checkedCount = shoppingList.items.filter((item) => item.checked).length;
-  if (checkedCount === 0) {
+  if (transaction.source === "recurring") {
     return (
       <ExpectedError>
-        <ExpectedErrorTitle>No checked shopping items</ExpectedErrorTitle>
+        <ExpectedErrorTitle>Recurring transaction</ExpectedErrorTitle>
         <ExpectedErrorMessage>
-          Check at least one shopping item before using receipt checkout scanning.
+          Receipt scanning is not available for recurring transactions.
+        </ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
+  if (transaction.entries.some((entry) => entry.type === "income")) {
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>Income transaction</ExpectedErrorTitle>
+        <ExpectedErrorMessage>
+          Receipt scanning can only replace transactions that contain expense entries.
         </ExpectedErrorMessage>
       </ExpectedError>
     );
@@ -96,10 +99,11 @@ function ScanCheckoutContent() {
 
   return (
     <ReceiptScanReview
-      mode="shopping-checkout"
+      mode="transaction"
       products={products}
-      fallbackHref="/dashboard/shopping/checkout"
-      transactions={transactions}
+      fallbackHref={`/dashboard/transactions/${id}/edit`}
+      initialScanResult={initialScanResult}
+      targetTransaction={transaction}
       onComplete={(transactionId) => {
         navigate({
           to: "/dashboard/transactions/$id",
