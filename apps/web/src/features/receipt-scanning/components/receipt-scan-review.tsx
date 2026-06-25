@@ -95,6 +95,7 @@ export function ReceiptScanReview({
   onComplete: (transactionId: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
   const initialScanAppliedRef = useRef(false);
   const online = useOnlineStatus();
   const extractMutation = receiptScanningMutations.extractReceipt();
@@ -229,6 +230,7 @@ export function ReceiptScanReview({
   function submit() {
     setSubmitAttempted(true);
     if (lines.length === 0 || hasInvalidLines) {
+      scrollToFirstInvalidLine();
       return;
     }
 
@@ -286,6 +288,35 @@ export function ReceiptScanReview({
         if (!error) onComplete(transaction.id);
       },
     });
+  }
+
+  function scrollToFirstInvalidLine() {
+    const firstInvalidIndex = lines.findIndex(
+      (line) =>
+        !line.product ||
+        !parsePositiveNumber(line.quantity) ||
+        !parsePositiveNumber(line.price),
+    );
+    if (firstInvalidIndex === -1) {
+      return;
+    }
+
+    const line = lines[firstInvalidIndex];
+    const row = lineRefs.current[firstInvalidIndex];
+    if (!row) {
+      return;
+    }
+
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    window.setTimeout(() => {
+      const invalidSelector = !line.product
+        ? "[data-invalid-control='product'] button"
+        : !parsePositiveNumber(line.quantity)
+          ? "[data-invalid-control='quantity']"
+          : "[data-invalid-control='price']";
+      row.querySelector<HTMLElement>(invalidSelector)?.focus({ preventScroll: true });
+    }, 250);
   }
 
   return (
@@ -449,7 +480,13 @@ export function ReceiptScanReview({
               {lines.map((line, index) => {
                 const invalid = submitAttempted && (!line.product || !parsePositiveNumber(line.quantity) || !parsePositiveNumber(line.price));
                 return (
-                  <div key={line.id} className={`rounded-xl border p-3 ${invalid ? "border-destructive/60" : "border-border"}`}>
+                  <div
+                    key={line.id}
+                    ref={(element) => {
+                      lineRefs.current[index] = element;
+                    }}
+                    className={`rounded-xl border p-3 ${invalid ? "border-destructive/60" : "border-border"}`}
+                  >
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{line.receiptItemName}</p>
@@ -467,11 +504,13 @@ export function ReceiptScanReview({
                     <div className="grid gap-3 md:grid-cols-[1fr_90px_120px_120px]">
                       <FormField>
                         <FormFieldLabel>Product</FormFieldLabel>
-                        <ProductSelect
-                          products={products}
-                          defaultValue={line.product?.name}
-                          onValueChange={(product) => handleProductChange(index, product)}
-                        />
+                        <div data-invalid-control={!line.product ? "product" : undefined}>
+                          <ProductSelect
+                            products={products}
+                            defaultValue={line.product?.name}
+                            onValueChange={(product) => handleProductChange(index, product)}
+                          />
+                        </div>
                         {!line.product && line.suggestions.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {line.suggestions.map((suggestion) => (
@@ -498,6 +537,8 @@ export function ReceiptScanReview({
                         <Input
                           inputMode="numeric"
                           value={line.quantity}
+                          aria-invalid={submitAttempted && !parsePositiveNumber(line.quantity)}
+                          data-invalid-control={!parsePositiveNumber(line.quantity) ? "quantity" : undefined}
                           onChange={(event) => handleQuantityChange(index, event.target.value)}
                         />
                       </FormField>
@@ -506,6 +547,8 @@ export function ReceiptScanReview({
                         <Input
                           inputMode="decimal"
                           value={line.price}
+                          aria-invalid={submitAttempted && !parsePositiveNumber(line.price)}
+                          data-invalid-control={!parsePositiveNumber(line.price) ? "price" : undefined}
                           onChange={(event) => handlePriceChange(index, event.target.value)}
                         />
                       </FormField>
