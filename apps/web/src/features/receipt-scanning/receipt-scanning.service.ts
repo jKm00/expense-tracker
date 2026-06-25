@@ -19,7 +19,7 @@ import { receiptScanningRepo } from "./receipt-scanning.repo";
 import { extractReceiptWithOpenAI } from "./receipt-openai.adapter";
 import { receiptItemMappings } from "./receipt-scanning.schema";
 
-const MAX_SCANS_PER_HOUR = 20;
+const RECEIPT_SCAN_DAILY_LIMIT = 5;
 
 type DbClient = typeof db;
 
@@ -52,10 +52,28 @@ function parseExtractedDate(value?: string) {
   return parsed;
 }
 
+function getStartOfToday() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+async function getScanUsage(userId: string) {
+  const used = await receiptScanningRepo.countRecentExtractionAttempts(userId, getStartOfToday());
+  return ok({
+    used,
+    limit: RECEIPT_SCAN_DAILY_LIMIT,
+    remaining: Math.max(0, RECEIPT_SCAN_DAILY_LIMIT - used),
+  });
+}
+
 async function assertRateLimit(userId: string) {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const attempts = await receiptScanningRepo.countRecentAttempts(userId, oneHourAgo);
-  return attempts < MAX_SCANS_PER_HOUR;
+  const [error, usage] = await getScanUsage(userId);
+  if (error) {
+    return false;
+  }
+
+  return usage.remaining > 0;
 }
 
 async function extractReceipt(userId: string, input: { imageDataUrl: string; mode: "transaction" | "shopping-checkout" }) {
@@ -72,7 +90,7 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
 
     return err({
       reason: "SCAN_RATE_LIMITED" as const,
-      message: "You have scanned too many receipts recently. Please try again later.",
+      message: "Receipt scanning is limited to 5 extraction attempts per day. Try again tomorrow.",
     });
   }
 
@@ -460,6 +478,7 @@ async function deleteMappingsForProduct(productId: string) {
 }
 
 export const receiptScanningService = {
+  getScanUsage,
   extractReceipt,
   completeTransactionScan,
   completeTransactionReplacementScan,

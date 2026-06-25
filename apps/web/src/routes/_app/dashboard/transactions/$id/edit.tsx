@@ -12,6 +12,7 @@ import {
   PageHeaderActions,
 } from "@/components/custom/page-header";
 import { LoaderButton } from "@/components/custom/loader.button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,12 +25,13 @@ import {
 import { productQueries } from "@/features/products/products.queries";
 import { setPendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
 import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
+import { receiptScanningQueries } from "@/features/receipt-scanning/receipt-scanning.queries";
 import { fileToDataUrl, validateReceiptFile } from "@/features/receipt-scanning/receipt-scanning.utils";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FileImage, Loader2, Upload } from "lucide-react";
 import { Suspense, useRef, useState } from "react";
@@ -76,6 +78,7 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
   const navigate = useNavigate();
   const online = useOnlineStatus();
   const extractMutation = receiptScanningMutations.extractReceipt();
+  const { data: scanUsageResult } = useQuery(receiptScanningQueries.getScanUsageOptions());
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const {
@@ -90,6 +93,8 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
   const canScan =
     transaction.source !== "recurring" &&
     transaction.entries.every((entry) => entry.type === "expense");
+  const scanUsage = scanUsageResult?.[1] ?? null;
+  const isScanLimitReached = scanUsage?.remaining === 0;
 
   if (!canScan) {
     return null;
@@ -145,11 +150,17 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Scan Receipt</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Scan Receipt
+            <Badge variant="secondary">Beta</Badge>
+          </DialogTitle>
           <DialogDescription>
             Upload an image or PDF receipt. After analysis, you will review the extracted entries before replacing this transaction.
           </DialogDescription>
         </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          You have {scanUsage ? `${scanUsage.remaining}/${scanUsage.limit}` : "5"} extraction attempts remaining today. Uploading a receipt for analysis uses one attempt; reviewing or saving does not.
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -171,13 +182,14 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
               Analyzing receipt...
             </span>
           }
-          disabled={!online || extractMutation.isPending}
+          disabled={!online || extractMutation.isPending || isScanLimitReached}
           onClick={() => inputRef.current?.click()}
         >
           <Upload className="size-3.5" />
           Upload receipt image or PDF
         </LoaderButton>
         {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
+        {isScanLimitReached && <p className="text-sm text-destructive">You have reached the 5 receipt extraction attempts limit for today.</p>}
         {fileError && <p className="text-sm text-destructive">{fileError}</p>}
       </DialogContent>
     </Dialog>

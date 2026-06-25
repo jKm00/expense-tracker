@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { products } from "@/features/products/products.schema";
-import { and, count, eq, gte, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, gte, inArray, isNull, ne } from "drizzle-orm";
 import {
   receiptItemMappings,
   receiptScanAttempts,
@@ -96,7 +96,7 @@ async function deleteMappingsForProduct(productId: string, client: DbClient = db
     .returning();
 }
 
-async function countRecentAttempts(
+async function countRecentExtractionAttempts(
   userId: string,
   since: Date,
   client: DbClient = db,
@@ -108,6 +108,7 @@ async function countRecentAttempts(
       and(
         eq(receiptScanAttempts.userId, userId),
         gte(receiptScanAttempts.createdAt, since),
+        ne(receiptScanAttempts.status, "rate_limited"),
       ),
     );
 
@@ -125,6 +126,6 @@ export const receiptScanningRepo = {
   getMappingsByNames,
   upsertMapping,
   deleteMappingsForProduct,
-  countRecentAttempts,
+  countRecentExtractionAttempts,
   saveAttempt,
 };

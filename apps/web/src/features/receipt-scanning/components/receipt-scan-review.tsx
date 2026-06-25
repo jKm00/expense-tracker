@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { FormField, FormFieldLabel } from "@/components/custom/form";
 import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductWithTag } from "@/features/products/products.models";
 import { ReceiptScanLine, ReceiptScanMatchResult } from "../receipt-scanning.models";
 import { receiptScanningMutations } from "../receipt-scanning.mutations";
+import { receiptScanningQueries } from "../receipt-scanning.queries";
 import {
   CompleteReceiptCheckoutScanDTO,
   CompleteReceiptTransactionReplacementScanDTO,
@@ -16,6 +18,7 @@ import {
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { formatAmount } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { AlertTriangle, FileImage, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -99,11 +102,14 @@ export function ReceiptScanReview({
   const initialScanAppliedRef = useRef(false);
   const online = useOnlineStatus();
   const extractMutation = receiptScanningMutations.extractReceipt();
+  const { data: scanUsageResult } = useQuery(receiptScanningQueries.getScanUsageOptions());
   const transactionMutation = receiptScanningMutations.completeTransactionScan();
   const transactionReplacementMutation =
     receiptScanningMutations.completeTransactionReplacementScan();
   const checkoutMutation = receiptScanningMutations.completeCheckoutScan();
   const isReplacingTransaction = mode === "transaction" && Boolean(targetTransaction);
+  const scanUsage = scanUsageResult?.[1] ?? null;
+  const isScanLimitReached = scanUsage?.remaining === 0;
 
   const [scanResult, setScanResult] = useState<ReceiptScanMatchResult | null>(null);
   const [lines, setLines] = useState<EditableScanLine[]>([]);
@@ -326,9 +332,13 @@ export function ReceiptScanReview({
           <CardTitle className="flex items-center gap-2 text-base">
             <FileImage className="size-4" />
             Receipt image
+            <Badge variant="secondary">Beta</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Receipt scanning is in beta. You have {scanUsage ? `${scanUsage.remaining}/${scanUsage.limit}` : "5"} extraction attempts remaining today. Uploading a receipt for analysis uses one attempt; reviewing or saving does not.
+          </p>
           <input
             ref={inputRef}
             type="file"
@@ -351,7 +361,7 @@ export function ReceiptScanReview({
                   Analyzing receipt...
                 </span>
               }
-              disabled={!online || extractMutation.isPending}
+              disabled={!online || extractMutation.isPending || isScanLimitReached}
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="size-3.5" />
@@ -379,6 +389,7 @@ export function ReceiptScanReview({
             </Button>
           </div>
           {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
+          {isScanLimitReached && <p className="text-sm text-destructive">You have reached the 5 receipt extraction attempts limit for today.</p>}
           {fileError && <p className="text-sm text-destructive">{fileError}</p>}
           {scanResult?.receipt.warnings.length ? (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">

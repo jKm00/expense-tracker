@@ -68,7 +68,7 @@ Use AI for receipt extraction in v1. Do not use AI for final product identity de
 | Duplicate receipt detection | No detection v1 | Do not warn/block same store/date/total duplicates initially. |
 | Offline behavior | Disable scan offline | Scanning requires network and OpenAI. |
 | Upload controls | Enforce limits | Validate type/size and downscale/compress large images before AI. |
-| Rate limiting | Add basic limits | Protect OpenAI cost and abuse with per-user scan limits. |
+| Rate limiting | 5 extraction attempts per day | Protect OpenAI cost and abuse with per-user scan limits. Completion/save actions do not count. |
 | Scan attempt logs | Minimal logs | Store status/timing/provider/item count/error category, but no receipt content. |
 | Deleted products | Delete mappings on soft-delete | Also filter out soft-deleted products during matching. |
 | General scan source | `scan` | General receipt scan creates source `scan` transactions. |
@@ -357,7 +357,7 @@ Validation:
 - File type allow-list: JPEG, PNG, HEIC/HEIF if supported by provider/browser path, and PDF.
 - File size max.
 - Optional image normalization/compression before provider call.
-- Per-user rate limit check before OpenAI call.
+- Per-user rate limit check before OpenAI call: 5 extraction attempts per day. Reviewing and saving scan results do not count.
 
 Output:
 
@@ -451,9 +451,9 @@ Completion behavior:
   - [ ] Delete mappings by product ID for soft-delete cleanup.
   - [ ] Filter out soft-deleted products during mapping lookup.
 - [ ] Implement scan attempt repository:
-  - [ ] Count recent attempts for rate limiting.
+  - [ ] Count today's extraction attempts for rate limiting.
   - [ ] Save minimal attempt metadata.
-- [ ] Implement basic per-user rate-limit service.
+- [ ] Implement basic per-user rate-limit service: 5 extraction attempts per day.
 - [ ] Implement OpenAI receipt extraction adapter.
 - [ ] Validate adapter output with Zod.
 - [ ] Convert extraction output into normalized review models.

@@ -19,6 +19,12 @@ const extractReceipt = createServerFn({ method: "POST" })
     });
   });
 
+const getScanUsage = createServerFn({ method: "GET" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    return await receiptScanningService.getScanUsage(context.user.id);
+  });
+
 const completeTransactionScan = createServerFn({ method: "POST" })
   .middleware([authenticated])
   .inputValidator(completeReceiptTransactionScanSchema)
@@ -44,6 +50,7 @@ const completeTransactionReplacementScan = createServerFn({ method: "POST" })
   });
 
 export const receiptScanningController = {
+  getScanUsage,
   extractReceipt,
   completeTransactionScan,
   completeCheckoutScan,

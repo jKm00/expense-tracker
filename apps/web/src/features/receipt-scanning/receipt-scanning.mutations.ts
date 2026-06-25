@@ -11,8 +11,11 @@ import { receiptScanningController } from "./receipt-scanning.controller";
 import { TRANSACTION_QUERY_KEY } from "../transactions/transactions.queries";
 import { SHOPPING_QUERY_KEY } from "../shopping/shopping.queries";
 import { PRODUCT_QUERY_KEY } from "../products/products.queries";
+import { RECEIPT_SCANNING_QUERY_KEY } from "./receipt-scanning.queries";
 
 function extractReceipt() {
+  const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: ExtractReceiptDTO) => {
       assertOnline();
@@ -20,6 +23,9 @@ function extractReceipt() {
     },
     onError: () => {
       toast.error("Something unexpected happened while scanning the receipt. Please try again!");
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: [RECEIPT_SCANNING_QUERY_KEY, "usage"] });
     },
   });
 }
