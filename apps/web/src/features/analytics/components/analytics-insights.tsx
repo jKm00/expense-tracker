@@ -1,6 +1,6 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Pie, PieChart, Treemap } from "recharts";
-import { BarChart3, Package, Settings2, Tags, X } from "lucide-react";
+import { ArrowLeft, BarChart3, Package, Search, Settings2, Tags, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,6 +38,17 @@ import dayjs from "dayjs";
 type FocusTarget =
   | { type: "tag"; id: string; name: string }
   | { type: "product"; id: string; name: string };
+
+export type AnalyticsSearchOption = FocusTarget & {
+  total: number;
+  count: number;
+  aliases?: Array<{ name: string; normalizedName: string | null }>;
+};
+
+type MatchedSearchOption = AnalyticsSearchOption & {
+  matchRank: number;
+  matchedAlias?: string;
+};
 
 export type ExpenseEntry = {
   id: string;
@@ -205,26 +216,325 @@ export function buildProductInsights(
     }));
 }
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getSearchMatch(option: AnalyticsSearchOption, query: string) {
+  const normalizedQuery = normalizeSearch(query);
+
+  if (!normalizedQuery) {
+    return { rank: 999, matchedAlias: undefined };
+  }
+
+  const normalizedName = normalizeSearch(option.name);
+  const aliases = option.aliases ?? [];
+
+  if (normalizedName === normalizedQuery) {
+    return { rank: 1, matchedAlias: undefined };
+  }
+
+  const exactAlias = aliases.find(
+    (alias) => (alias.normalizedName || normalizeSearch(alias.name)) === normalizedQuery,
+  );
+  if (exactAlias) {
+    return { rank: 2, matchedAlias: exactAlias.name };
+  }
+
+  if (normalizedName.startsWith(normalizedQuery)) {
+    return { rank: 3, matchedAlias: undefined };
+  }
+
+  const prefixAlias = aliases.find((alias) =>
+    (alias.normalizedName || normalizeSearch(alias.name)).startsWith(normalizedQuery),
+  );
+  if (prefixAlias) {
+    return { rank: 4, matchedAlias: prefixAlias.name };
+  }
+
+  if (normalizedName.includes(normalizedQuery)) {
+    return { rank: 5, matchedAlias: undefined };
+  }
+
+  const containsAlias = aliases.find((alias) =>
+    (alias.normalizedName || normalizeSearch(alias.name)).includes(normalizedQuery),
+  );
+  if (containsAlias) {
+    return { rank: 6, matchedAlias: containsAlias.name };
+  }
+
+  return { rank: Number.POSITIVE_INFINITY, matchedAlias: undefined };
+}
+
+function getSearchResults(options: AnalyticsSearchOption[], query: string) {
+  const normalizedQuery = normalizeSearch(query);
+
+  return options
+    .map((option) => {
+      const match = getSearchMatch(option, query);
+      return {
+        ...option,
+        matchRank: normalizedQuery ? match.rank : 999,
+        matchedAlias: match.matchedAlias,
+      };
+    })
+    .filter(
+      (option) =>
+        !normalizedQuery || option.matchRank < Number.POSITIVE_INFINITY,
+    )
+    .sort((a, b) => {
+      const aHasSpend = a.count > 0;
+      const bHasSpend = b.count > 0;
+      if (aHasSpend !== bHasSpend) return aHasSpend ? -1 : 1;
+
+      const rankDiff = a.matchRank - b.matchRank;
+      if (rankDiff !== 0) return rankDiff;
+
+      if (aHasSpend && bHasSpend) {
+        const totalDiff = b.total - a.total;
+        if (totalDiff !== 0) return totalDiff;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+}
+
+function AnalyticsFocusSearch({
+  type,
+  options,
+  selectedTarget,
+  isLoading,
+  onSelect,
+  onClearSelection,
+  onMobileOpen,
+}: {
+  type: FocusTarget["type"];
+  options: AnalyticsSearchOption[];
+  selectedTarget: FocusTarget | null;
+  isLoading: boolean;
+  onSelect: (target: FocusTarget) => void;
+  onClearSelection: () => void;
+  onMobileOpen: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const activeTarget = selectedTarget?.type === type ? selectedTarget : null;
+  const results = useMemo(
+    () => getSearchResults(options, query),
+    [options, query],
+  );
+  const label = type === "tag" ? "tag" : "product";
+  const placeholder = isLoading ? `Loading ${label}s...` : `Find ${label}...`;
+  const inputValue = isOpen ? query : (activeTarget?.name ?? "");
+  const canClear = Boolean(query || activeTarget);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query, results.length]);
+
+  function selectOption(option: AnalyticsSearchOption) {
+    onSelect({ type: option.type, id: option.id, name: option.name });
+    setQuery("");
+    setIsOpen(false);
+    inputRef.current?.blur();
+  }
+
+  function clear() {
+    if (query) {
+      setQuery("");
+      setIsOpen(true);
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (activeTarget) {
+      onClearSelection();
+    }
+  }
+
+  return (
+    <>
+      <div
+        className="relative hidden w-[240px] xl:block"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            setIsOpen(false);
+            setQuery("");
+          }
+        }}
+      >
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          ref={inputRef}
+          value={inputValue}
+          disabled={isLoading}
+          placeholder={placeholder}
+          onFocus={() => {
+            setQuery("");
+            setIsOpen(true);
+          }}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setIsOpen(true);
+              setActiveIndex((current) =>
+                results.length === 0 ? 0 : (current + 1) % results.length,
+              );
+            }
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setIsOpen(true);
+              setActiveIndex((current) =>
+                results.length === 0
+                  ? 0
+                  : (current - 1 + results.length) % results.length,
+              );
+            }
+            if (event.key === "Enter" && isOpen && results[activeIndex]) {
+              event.preventDefault();
+              selectOption(results[activeIndex]);
+            }
+            if (event.key === "Escape") {
+              setIsOpen(false);
+              setQuery("");
+              inputRef.current?.blur();
+            }
+          }}
+          className="h-8 pr-8 pl-8 text-xs"
+          aria-label={`Find ${label}`}
+          aria-expanded={isOpen}
+          aria-controls={`${type}-analytics-search-results`}
+        />
+        {canClear && !isLoading ? (
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={clear}
+            className="absolute right-1.5 top-1/2 z-10 grid size-5 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-3.5" />
+            <span className="sr-only">Clear {label} focus</span>
+          </button>
+        ) : null}
+        {isOpen && !isLoading ? (
+          <div
+            id={`${type}-analytics-search-results`}
+            role="listbox"
+            className="absolute left-0 top-[calc(100%+0.375rem)] z-50 max-h-72 w-full overflow-y-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+          >
+            <SearchResultList
+              results={results}
+              activeIndex={activeIndex}
+              emptyMessage={`No ${label}s match your search.`}
+              onActiveIndexChange={setActiveIndex}
+              onSelect={selectOption}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="xl:hidden"
+        disabled={isLoading}
+        onClick={onMobileOpen}
+      >
+        <Search className="size-3.5" />
+        {isLoading ? `Loading ${label}s...` : `Find ${label}`}
+      </Button>
+    </>
+  );
+}
+
+function SearchResultList({
+  results,
+  activeIndex,
+  emptyMessage,
+  onActiveIndexChange,
+  onSelect,
+}: {
+  results: MatchedSearchOption[];
+  activeIndex: number;
+  emptyMessage: string;
+  onActiveIndexChange: (index: number) => void;
+  onSelect: (option: AnalyticsSearchOption) => void;
+}) {
+  if (results.length === 0) {
+    return (
+      <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+        {emptyMessage}
+      </div>
+    );
+  }
+
+  return results.map((option, index) => (
+    <button
+      key={`${option.type}-${option.id}`}
+      type="button"
+      role="option"
+      aria-selected={index === activeIndex}
+      onMouseEnter={() => onActiveIndexChange(index)}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => onSelect(option)}
+      className={cn(
+        "flex w-full flex-col rounded-md px-2 py-1.5 text-left text-sm outline-none transition-colors",
+        index === activeIndex && "bg-muted text-foreground",
+      )}
+    >
+      <span className="truncate">{option.name}</span>
+      {option.matchedAlias ? (
+        <span className="truncate text-xs text-muted-foreground">
+          alias: {option.matchedAlias}
+        </span>
+      ) : null}
+    </button>
+  ));
+}
+
 export function TagSpendingList({
   tags,
   allHidden,
   hiddenCount,
   configOptions,
+  searchOptions,
   excludedIds,
+  isSearchLoading,
   isSavingExclusions,
   onSaveExclusions,
   selectedTarget,
   onSelect,
+  onSearchSelect,
+  onSearchClear,
+  onMobileSearchOpen,
 }: {
   tags: TagInsight[];
   allHidden: boolean;
   hiddenCount: number;
   configOptions: ChartExclusionOption[];
+  searchOptions: AnalyticsSearchOption[];
   excludedIds: string[];
+  isSearchLoading: boolean;
   isSavingExclusions: boolean;
   onSaveExclusions: (ids: string[]) => Promise<boolean>;
   selectedTarget: FocusTarget | null;
   onSelect: (target: FocusTarget) => void;
+  onSearchSelect: (target: FocusTarget) => void;
+  onSearchClear: () => void;
+  onMobileSearchOpen: () => void;
 }) {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
@@ -242,6 +552,15 @@ export function TagSpendingList({
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2 @xl:shrink-0 @xl:justify-end">
+            <AnalyticsFocusSearch
+              type="tag"
+              options={searchOptions}
+              selectedTarget={selectedTarget}
+              isLoading={isSearchLoading}
+              onSelect={onSearchSelect}
+              onClearSelection={onSearchClear}
+              onMobileOpen={onMobileSearchOpen}
+            />
             <Badge variant="secondary">
               Top {Math.min(tags.length, 24)}
               {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
@@ -295,21 +614,31 @@ export function ProductTreemap({
   allHidden,
   hiddenCount,
   configOptions,
+  searchOptions,
   excludedIds,
+  isSearchLoading,
   isSavingExclusions,
   onSaveExclusions,
   selectedTarget,
   onSelect,
+  onSearchSelect,
+  onSearchClear,
+  onMobileSearchOpen,
 }: {
   products: ProductInsight[];
   allHidden: boolean;
   hiddenCount: number;
   configOptions: ChartExclusionOption[];
+  searchOptions: AnalyticsSearchOption[];
   excludedIds: string[];
+  isSearchLoading: boolean;
   isSavingExclusions: boolean;
   onSaveExclusions: (ids: string[]) => Promise<boolean>;
   selectedTarget: FocusTarget | null;
   onSelect: (target: FocusTarget) => void;
+  onSearchSelect: (target: FocusTarget) => void;
+  onSearchClear: () => void;
+  onMobileSearchOpen: () => void;
 }) {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
@@ -327,6 +656,15 @@ export function ProductTreemap({
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2 @xl:shrink-0 @xl:justify-end">
+            <AnalyticsFocusSearch
+              type="product"
+              options={searchOptions}
+              selectedTarget={selectedTarget}
+              isLoading={isSearchLoading}
+              onSelect={onSearchSelect}
+              onClearSelection={onSearchClear}
+              onMobileOpen={onMobileSearchOpen}
+            />
             <Badge variant="secondary">
               Top {Math.min(products.length, 24)}
               {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
@@ -527,6 +865,12 @@ function SpendingTreemap({
   selectedTarget: FocusTarget | null;
   onSelect: (target: FocusTarget) => void;
 }) {
+  const visibleSelectedTarget =
+    selectedTarget?.type === targetType &&
+    items.some((item) => item.id === selectedTarget.id)
+      ? selectedTarget
+      : null;
+
   return (
     <ChartContainer config={chartConfig} className="h-[320px] w-full aspect-auto">
       <Treemap
@@ -538,7 +882,7 @@ function SpendingTreemap({
         content={
           <TreemapNode
             targetType={targetType}
-            selectedTarget={selectedTarget}
+            selectedTarget={visibleSelectedTarget}
             onSelect={onSelect}
           />
         }
@@ -684,28 +1028,154 @@ export function FocusPanel({
 export function MobileFocusSheet({
   target,
   entries,
+  searchType,
+  searchOptions,
+  isSearchLoading,
   open,
+  onSearchSelect,
+  onReturnToSearch,
   onOpenChange,
 }: {
   target: FocusTarget | null;
   entries: ExpenseEntry[];
+  searchType: FocusTarget["type"] | null;
+  searchOptions: AnalyticsSearchOption[];
+  isSearchLoading: boolean;
   open: boolean;
+  onSearchSelect: (target: FocusTarget) => void;
+  onReturnToSearch: () => void;
   onOpenChange: (open: boolean) => void;
 }) {
+  const label = searchType === "tag" ? "tag" : "product";
+  const isSearchMode = Boolean(searchType && !target);
+
   return (
-    <Sheet open={open && !!target} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[88svh] overflow-y-auto rounded-t-2xl px-0 pb-4">
+    <Sheet open={open && (!!target || !!searchType)} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="max-h-[88svh] overflow-y-auto rounded-t-2xl px-0 pb-4 outline-none">
         <SheetHeader className="pr-12 text-left">
-          <SheetTitle>Focus details</SheetTitle>
+          <div className="flex items-center gap-2">
+            {target && searchType ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+                onClick={onReturnToSearch}
+              >
+                <ArrowLeft className="size-3.5" />
+                Change {label}
+              </Button>
+            ) : null}
+            <SheetTitle>{isSearchMode ? `Find ${label}` : "Focus details"}</SheetTitle>
+          </div>
           <SheetDescription>
-            Drill into the selected {target?.type ?? "item"} for this period.
+            {isSearchMode
+              ? `Search ${label}s and open the same period details as the chart.`
+              : `Drill into the selected ${target?.type ?? "item"} for this period.`}
           </SheetDescription>
         </SheetHeader>
         <div className="px-4">
-          <FocusPanel target={target} entries={entries} />
+          {isSearchMode && searchType ? (
+            <MobileFocusSearchContent
+              type={searchType}
+              options={searchOptions}
+              isLoading={isSearchLoading}
+              onSelect={onSearchSelect}
+            />
+          ) : (
+            <FocusPanel target={target} entries={entries} />
+          )}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function MobileFocusSearchContent({
+  type,
+  options,
+  isLoading,
+  onSelect,
+}: {
+  type: FocusTarget["type"];
+  options: AnalyticsSearchOption[];
+  isLoading: boolean;
+  onSelect: (target: FocusTarget) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const results = useMemo(
+    () => getSearchResults(options, query),
+    [options, query],
+  );
+  const label = type === "tag" ? "tag" : "product";
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query, results.length]);
+
+  function selectOption(option: AnalyticsSearchOption) {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    onSelect({ type: option.type, id: option.id, name: option.name });
+    setQuery("");
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          disabled={isLoading}
+          autoFocus
+          placeholder={isLoading ? `Loading ${label}s...` : `Search ${label}s...`}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setActiveIndex((current) =>
+                results.length === 0 ? 0 : (current + 1) % results.length,
+              );
+            }
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setActiveIndex((current) =>
+                results.length === 0
+                  ? 0
+                  : (current - 1 + results.length) % results.length,
+              );
+            }
+            if (event.key === "Enter" && results[activeIndex]) {
+              event.preventDefault();
+              selectOption(results[activeIndex]);
+            }
+          }}
+          className="h-10 pr-9 pl-9"
+        />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Clear search</span>
+          </button>
+        ) : null}
+      </div>
+      <div className="max-h-[56svh] overflow-y-auto rounded-lg border bg-background p-1">
+        <SearchResultList
+          results={results}
+          activeIndex={activeIndex}
+          emptyMessage={`No ${label}s match your search.`}
+          onActiveIndexChange={setActiveIndex}
+          onSelect={selectOption}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -724,6 +1194,8 @@ function FocusPanelContent({
   onClearExcludedTags: () => void;
   onClose?: () => void;
 }) {
+  const hasData = analysis.count > 0;
+
   return (
     <Card className="h-fit">
       <CardHeader>
@@ -735,7 +1207,9 @@ function FocusPanelContent({
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{analysis.share.toFixed(1)}%</Badge>
+            {hasData ? (
+              <Badge variant="secondary">{analysis.share.toFixed(1)}%</Badge>
+            ) : null}
             {onClose && (
               <Button variant="ghost" size="icon-sm" onClick={onClose}>
                 <X className="size-4" />
@@ -745,6 +1219,21 @@ function FocusPanelContent({
           </div>
         </div>
       </CardHeader>
+      {!hasData ? (
+        <CardContent>
+          <div className="grid min-h-[220px] place-items-center rounded-lg border border-dashed bg-muted/20 p-6 text-center">
+            <div className="max-w-[260px]">
+              <BarChart3 className="mx-auto size-7 text-muted-foreground" />
+              <h4 className="mt-3 text-sm font-medium">
+                No expense data for the selected period
+              </h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try another month to see when this {target.type} was used.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      ) : (
       <CardContent className="space-y-5">
         <div className="grid grid-cols-2 gap-2">
           <MetricPill label="Spend" value={formatMoney(analysis.total)} />
@@ -821,6 +1310,7 @@ function FocusPanelContent({
           </div>
         </div>
       </CardContent>
+      )}
     </Card>
   );
 }
@@ -832,7 +1322,9 @@ function buildTagFocus(
 ) {
   const totalExpenses = entries.reduce((sum, entry) => sum + entry.amount, 0);
   const baseEntries = entries.filter((entry) =>
-    entry.tags.some((tag) => tag.id === target.id),
+    target.id === "untagged"
+      ? entry.tags.length === 0
+      : entry.tags.some((tag) => tag.id === target.id),
   );
   const filteredEntries = baseEntries.filter(
     (entry) => !entry.tags.some((tag) => excludedTagIds.includes(tag.id)),

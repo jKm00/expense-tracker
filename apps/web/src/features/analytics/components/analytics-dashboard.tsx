@@ -19,6 +19,7 @@ import {
   buildExpenseEntries,
   buildProductInsights,
   buildTagInsights,
+  type AnalyticsSearchOption,
   type ChartExclusionOption,
   FocusPanel,
   MobileFocusSheet,
@@ -73,6 +74,8 @@ type AnalyticsDashboardProps = {
   analyticsPreferences: AnalyticsPreferences | null;
   products: ProductWithTag[];
   tags: Tag[];
+  isProductsLoading: boolean;
+  isTagsLoading: boolean;
   month: number;
   year: number;
   compareMonth: number;
@@ -86,6 +89,8 @@ export function AnalyticsDashboard({
   analyticsPreferences,
   products,
   tags,
+  isProductsLoading,
+  isTagsLoading,
   month,
   year,
   compareMonth,
@@ -96,6 +101,9 @@ export function AnalyticsDashboard({
     null,
   );
   const [isMobileFocusOpen, setIsMobileFocusOpen] = useState(false);
+  const [mobileSearchType, setMobileSearchType] = useState<FocusTarget["type"] | null>(
+    null,
+  );
   const dailySectionRef = useRef<HTMLDivElement>(null);
   const tagSectionRef = useRef<HTMLDivElement>(null);
   const productSectionRef = useRef<HTMLDivElement>(null);
@@ -179,6 +187,10 @@ export function AnalyticsDashboard({
     ),
     [tags, unfilteredTagInsights],
   );
+  const tagSearchOptions = useMemo(
+    () => buildTagSearchOptions(tags, unfilteredTagInsights),
+    [tags, unfilteredTagInsights],
+  );
   const productConfigOptions = useMemo(
     () => buildChartExclusionOptions(
       products,
@@ -187,6 +199,10 @@ export function AnalyticsDashboard({
         .filter((product) => product.id === "unknown")
         .map((product) => ({ id: product.id, name: product.name })),
     ),
+    [products, unfilteredProductInsights],
+  );
+  const productSearchOptions = useMemo(
+    () => buildProductSearchOptions(products, unfilteredProductInsights),
     [products, unfilteredProductInsights],
   );
   const hiddenTagCount = unfilteredTagInsights.filter((tag) =>
@@ -236,7 +252,10 @@ export function AnalyticsDashboard({
     };
   }
 
-  function selectFocusTarget(target: FocusTarget) {
+  function selectFocusTarget(
+    target: FocusTarget,
+    options: { source?: "chart" | "search" } = {},
+  ) {
     const isDesktop =
       typeof window !== "undefined" &&
       window.matchMedia("(min-width: 1280px)").matches;
@@ -246,6 +265,9 @@ export function AnalyticsDashboard({
 
     setDayFocusTarget(null);
     setFocusTarget(target);
+    setMobileSearchType(
+      options.source === "search" && !isDesktop ? target.type : null,
+    );
     if (!isDesktop) {
       setIsMobileFocusOpen(true);
       return;
@@ -268,6 +290,7 @@ export function AnalyticsDashboard({
 
     setFocusTarget(null);
     setDayFocusTarget(target);
+    setMobileSearchType(null);
     if (!isDesktop) {
       setIsMobileFocusOpen(true);
       return;
@@ -287,8 +310,28 @@ export function AnalyticsDashboard({
 
     setFocusTarget(null);
     setDayFocusTarget(null);
+    setMobileSearchType(null);
     setIsMobileFocusOpen(false);
     restoreAnchor();
+  }
+
+  function openMobileSearch(type: FocusTarget["type"]) {
+    setDayFocusTarget(null);
+    setFocusTarget(null);
+    setMobileSearchType(type);
+    setIsMobileFocusOpen(true);
+  }
+
+  function returnToMobileSearch() {
+    setFocusTarget(null);
+    setDayFocusTarget(null);
+    setIsMobileFocusOpen(true);
+  }
+
+  function clearSearchFocus(type: FocusTarget["type"]) {
+    if (focusTarget?.type === type) {
+      closeFocusTarget();
+    }
   }
 
   function handleMobileFocusOpenChange(open: boolean) {
@@ -378,11 +421,18 @@ export function AnalyticsDashboard({
               allHidden={allTagsHidden}
               hiddenCount={hiddenTagCount}
               configOptions={tagConfigOptions}
+              searchOptions={tagSearchOptions}
               excludedIds={excludedTagIds}
+              isSearchLoading={isTagsLoading}
               isSavingExclusions={updateExclusionsMutation.isPending}
               onSaveExclusions={saveTagExclusions}
               selectedTarget={focusTarget}
               onSelect={selectFocusTarget}
+              onSearchSelect={(target) =>
+                selectFocusTarget(target, { source: "search" })
+              }
+              onSearchClear={() => clearSearchFocus("tag")}
+              onMobileSearchOpen={() => openMobileSearch("tag")}
             />
           </div>
 
@@ -392,11 +442,18 @@ export function AnalyticsDashboard({
               allHidden={allProductsHidden}
               hiddenCount={hiddenProductCount}
               configOptions={productConfigOptions}
+              searchOptions={productSearchOptions}
               excludedIds={excludedProductIds}
+              isSearchLoading={isProductsLoading}
               isSavingExclusions={updateExclusionsMutation.isPending}
               onSaveExclusions={saveProductExclusions}
               selectedTarget={focusTarget}
               onSelect={selectFocusTarget}
+              onSearchSelect={(target) =>
+                selectFocusTarget(target, { source: "search" })
+              }
+              onSearchClear={() => clearSearchFocus("product")}
+              onMobileSearchOpen={() => openMobileSearch("product")}
             />
           </div>
 
@@ -432,7 +489,22 @@ export function AnalyticsDashboard({
       <MobileFocusSheet
         target={focusTarget}
         entries={expenseEntries}
-        open={isMobileFocusOpen && dayFocusTarget === null}
+        searchType={mobileSearchType}
+        searchOptions={
+          mobileSearchType === "tag" ? tagSearchOptions : productSearchOptions
+        }
+        isSearchLoading={
+          mobileSearchType === "tag" ? isTagsLoading : isProductsLoading
+        }
+        open={
+          isMobileFocusOpen &&
+          dayFocusTarget === null &&
+          (focusTarget !== null || mobileSearchType !== null)
+        }
+        onSearchSelect={(target) =>
+          selectFocusTarget(target, { source: "search" })
+        }
+        onReturnToSearch={returnToMobileSearch}
         onOpenChange={handleMobileFocusOpenChange}
       />
       <MobileDayTransactionsSheet
@@ -642,4 +714,73 @@ function buildChartExclusionOptions(
     if (aHasSpend !== bHasSpend) return aHasSpend ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
+}
+
+function buildTagSearchOptions(
+  catalogItems: Array<{ id: string; name: string }>,
+  insights: Array<{ id: string; name: string; total: number; count: number }>,
+): AnalyticsSearchOption[] {
+  const context = new Map(insights.map((item) => [item.id, item]));
+  const options = new Map<string, AnalyticsSearchOption>();
+
+  for (const item of catalogItems) {
+    const insight = context.get(item.id);
+    options.set(item.id, {
+      type: "tag",
+      id: item.id,
+      name: item.name,
+      total: insight?.total ?? 0,
+      count: insight?.count ?? 0,
+    });
+  }
+
+  const untagged = context.get("untagged");
+  if (untagged) {
+    options.set("untagged", {
+      type: "tag",
+      id: untagged.id,
+      name: untagged.name,
+      total: untagged.total,
+      count: untagged.count,
+    });
+  }
+
+  return Array.from(options.values());
+}
+
+function buildProductSearchOptions(
+  catalogItems: ProductWithTag[],
+  insights: Array<{ id: string; name: string; total: number; count: number }>,
+): AnalyticsSearchOption[] {
+  const context = new Map(insights.map((item) => [item.id, item]));
+  const options = new Map<string, AnalyticsSearchOption>();
+
+  for (const item of catalogItems) {
+    const insight = context.get(item.id);
+    options.set(item.id, {
+      type: "product",
+      id: item.id,
+      name: item.name,
+      total: insight?.total ?? 0,
+      count: insight?.count ?? 0,
+      aliases: item.aliases.map((alias) => ({
+        name: alias.name,
+        normalizedName: alias.normalizedName,
+      })),
+    });
+  }
+
+  const unknown = context.get("unknown");
+  if (unknown) {
+    options.set("unknown", {
+      type: "product",
+      id: unknown.id,
+      name: unknown.name,
+      total: unknown.total,
+      count: unknown.count,
+      aliases: [],
+    });
+  }
+
+  return Array.from(options.values());
 }

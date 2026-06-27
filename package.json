@@ -10,6 +10,7 @@
     "db:migrate": "pnpm --filter @expense-tracker/web db:migrate",
     "db:push": "pnpm --filter @expense-tracker/web db:push",
     "db:studio": "pnpm --filter @expense-tracker/web db:studio",
+    "db:list-users": "pnpm --filter @expense-tracker/web db:list-users",
     "db:seed": "pnpm --filter @expense-tracker/web db:seed",
     "db:reset": "pnpm --filter @expense-tracker/web db:reset",
     "test:web": "pnpm --filter @expense-tracker/web test",

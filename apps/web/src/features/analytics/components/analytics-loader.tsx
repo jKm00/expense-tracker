@@ -41,8 +41,8 @@ export function AnalyticsLoader() {
   const { data: preferencesResult } = useQuery(
     analyticsQueries.getPreferencesOptions(),
   );
-  const { data: productsResult } = useQuery(productQueries.getProductsOptions());
-  const { data: tagsResult } = useQuery(tagsQueries.getTagsOptions());
+  const productsQuery = useQuery(productQueries.getProductsOptions());
+  const tagsQuery = useQuery(tagsQueries.getTagsOptions());
 
   const selectedMonth = month || dayjs().month();
   const selectedYear = year || dayjs().year();
@@ -81,8 +81,10 @@ export function AnalyticsLoader() {
       comparisonTransactions={comparisonTransactions ?? []}
       recurrings={recurrings ?? []}
       analyticsPreferences={preferencesResult?.[1] ?? null}
-      products={productsResult?.[1] ?? []}
-      tags={tagsResult?.[1] ?? []}
+      products={productsQuery.data?.[1] ?? []}
+      tags={tagsQuery.data?.[1] ?? []}
+      isProductsLoading={productsQuery.isPending}
+      isTagsLoading={tagsQuery.isPending}
       month={selectedMonth}
       year={selectedYear}
       compareMonth={compareMonth}
