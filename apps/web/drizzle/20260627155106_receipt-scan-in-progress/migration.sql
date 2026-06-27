@@ -1,0 +1,1 @@
+ALTER TYPE "receipt_scan_attempt_status" ADD VALUE 'in_progress' BEFORE 'success';

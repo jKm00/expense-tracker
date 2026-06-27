@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const receiptScanAttemptStatus = pgEnum("receipt_scan_attempt_status", [
+  "in_progress",
   "success",
   "failed",
   "rate_limited",

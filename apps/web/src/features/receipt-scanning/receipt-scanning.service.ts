@@ -16,6 +16,7 @@ import { extractReceiptWithOpenAI } from "./receipt-openai.adapter";
 import { receiptMappingsService } from "./receipt-mappings.service";
 
 const RECEIPT_SCAN_DAILY_LIMIT = 5;
+const IN_PROGRESS_ATTEMPT_TTL_MS = 15 * 60 * 1000;
 
 function categorizeError(error: unknown) {
   if (error instanceof Error) {
@@ -46,24 +47,42 @@ function getStartOfToday() {
   return start;
 }
 
+function getInProgressCutoff() {
+  return new Date(Date.now() - IN_PROGRESS_ATTEMPT_TTL_MS);
+}
+
+function getDailyLockKey(startOfDay: Date) {
+  return startOfDay.toISOString().slice(0, 10);
+}
+
+function isCountedAttempt(attempt: {
+  status: "in_progress" | "success" | "failed" | "rate_limited" | "rejected";
+  createdAt: Date;
+}) {
+  if (attempt.status === "success") {
+    return true;
+  }
+
+  if (attempt.status === "in_progress") {
+    return attempt.createdAt >= getInProgressCutoff();
+  }
+
+  return false;
+}
+
+function countDailyAttempts(attempts: Array<Parameters<typeof isCountedAttempt>[0]>) {
+  return attempts.filter(isCountedAttempt).length;
+}
+
 async function getScanUsage(userId: string) {
   const attempts = await receiptScanningRepo.getExtractionAttemptsSince(userId, getStartOfToday());
-  const used = attempts.filter((attempt) => attempt.status !== "rate_limited").length;
+  const used = countDailyAttempts(attempts);
 
   return ok({
     used,
     limit: RECEIPT_SCAN_DAILY_LIMIT,
     remaining: Math.max(0, RECEIPT_SCAN_DAILY_LIMIT - used),
   });
-}
-
-async function assertRateLimit(userId: string) {
-  const [error, usage] = await getScanUsage(userId);
-  if (error) {
-    return false;
-  }
-
-  return usage.remaining > 0;
 }
 
 async function getShoppingListOrThrow(userId: string) {
@@ -75,18 +94,84 @@ async function getShoppingListOrThrow(userId: string) {
   return shoppingList;
 }
 
+async function reserveExtractionAttempt(userId: string) {
+  const startOfDay = getStartOfToday();
+  const dayKey = getDailyLockKey(startOfDay);
+
+  return await receiptScanningRepo.withTransaction(async (tx) => {
+    await receiptScanningRepo.lockDailyAttempts(userId, dayKey, tx);
+
+    const attempts = await receiptScanningRepo.getExtractionAttemptsSince(
+      userId,
+      startOfDay,
+      tx,
+    );
+    const used = countDailyAttempts(attempts);
+    if (used >= RECEIPT_SCAN_DAILY_LIMIT) {
+      try {
+        await receiptScanningRepo.saveAttempt(
+          {
+            userId,
+            provider: "openai",
+            status: "rate_limited",
+            durationMs: 0,
+            errorCategory: "rate_limit",
+          },
+          tx,
+        );
+      } catch {
+        // The quota decision is already made; denied-attempt logging is best-effort.
+      }
+
+      return null;
+    }
+
+    const [attempt] = await receiptScanningRepo.saveAttempt(
+      {
+        userId,
+        provider: "openai",
+        status: "in_progress",
+      },
+      tx,
+    );
+
+    if (!attempt) {
+      throw new Error("SCAN_ATTEMPT_CREATE_FAILED");
+    }
+
+    return attempt;
+  });
+}
+
+async function updateExtractionAttempt(
+  attemptId: string,
+  data: {
+    status: "success" | "failed";
+    itemCount?: number;
+    durationMs: number;
+    errorCategory?: string;
+  },
+) {
+  try {
+    await receiptScanningRepo.updateAttempt(attemptId, data);
+  } catch {
+    // Final status updates are best-effort; do not override the scan outcome.
+  }
+}
+
 async function extractReceipt(userId: string, input: { imageDataUrl: string; mode: "transaction" | "shopping-checkout" }) {
   const startedAt = Date.now();
-  const allowed = await assertRateLimit(userId);
-  if (!allowed) {
-    await receiptScanningRepo.saveAttempt({
-      userId,
-      provider: "openai",
-      status: "rate_limited",
-      durationMs: Date.now() - startedAt,
-      errorCategory: "rate_limit",
+  let attempt: Awaited<ReturnType<typeof reserveExtractionAttempt>>;
+  try {
+    attempt = await reserveExtractionAttempt(userId);
+  } catch {
+    return err({
+      reason: "SCAN_EXTRACTION_FAILED" as const,
+      message: "Failed to extract receipt details. Please try again or use manual entry.",
     });
+  }
 
+  if (!attempt) {
     return err({
       reason: "SCAN_RATE_LIMITED" as const,
       message: "Receipt scanning is limited to 5 extraction attempts per day. Try again tomorrow.",
@@ -115,15 +200,7 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
         ? await getShoppingListOrThrow(userId)
         : null;
 
-    await receiptScanningRepo.saveAttempt({
-      userId,
-      provider: "openai",
-      status: "success",
-      itemCount: receipt.items.length,
-      durationMs: Date.now() - startedAt,
-    });
-
-    return ok({
+    const result = {
       ...matchReceiptToProducts({
         receipt,
         products,
@@ -131,11 +208,17 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
         shoppingItems: shoppingList?.items,
       }),
       parsedDate: parseExtractedDate(receipt.date),
+    };
+
+    await updateExtractionAttempt(attempt.id, {
+      status: "success",
+      itemCount: receipt.items.length,
+      durationMs: Date.now() - startedAt,
     });
+
+    return ok(result);
   } catch (error) {
-    await receiptScanningRepo.saveAttempt({
-      userId,
-      provider: "openai",
+    await updateExtractionAttempt(attempt.id, {
       status: "failed",
       durationMs: Date.now() - startedAt,
       errorCategory: categorizeError(error),

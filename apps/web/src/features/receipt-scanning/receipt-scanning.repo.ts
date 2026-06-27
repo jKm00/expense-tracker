@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import {
   receiptItemMappings,
   receiptScanAttempts,
@@ -7,6 +7,20 @@ import {
 import { NewReceiptItemMapping, NewReceiptScanAttempt } from "./receipt-scanning.models";
 
 type DbClient = typeof db;
+
+async function withTransaction<T>(callback: (client: DbClient) => Promise<T>) {
+  return await db.transaction(async (tx) => callback(tx as DbClient));
+}
+
+async function lockDailyAttempts(
+  userId: string,
+  dayKey: string,
+  client: DbClient = db,
+) {
+  await client.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${userId}), hashtext(${dayKey}))`,
+  );
+}
 
 async function getMappingsByNames(
   userId: string,
@@ -97,7 +111,21 @@ async function saveAttempt(
   return await client.insert(receiptScanAttempts).values(attempt).returning();
 }
 
+async function updateAttempt(
+  attemptId: string,
+  data: Partial<NewReceiptScanAttempt>,
+  client: DbClient = db,
+) {
+  return await client
+    .update(receiptScanAttempts)
+    .set(data)
+    .where(eq(receiptScanAttempts.id, attemptId))
+    .returning();
+}
+
 export const receiptScanningRepo = {
+  withTransaction,
+  lockDailyAttempts,
   getMappingsByNames,
   getMappingByNormalizedName,
   saveMapping,
@@ -105,4 +133,5 @@ export const receiptScanningRepo = {
   deleteMappingsForProduct,
   getExtractionAttemptsSince,
   saveAttempt,
+  updateAttempt,
 };

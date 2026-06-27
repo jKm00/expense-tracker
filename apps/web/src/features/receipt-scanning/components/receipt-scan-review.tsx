@@ -337,7 +337,7 @@ export function ReceiptScanReview({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Receipt scanning is in beta. You have {scanUsage ? `${scanUsage.remaining}/${scanUsage.limit}` : "5"} extraction attempts remaining today. Uploading a receipt for analysis uses one attempt; reviewing or saving does not.
+            Receipt scanning is in beta. You have {scanUsage ? `${scanUsage.remaining}/${scanUsage.limit}` : "5"} extraction attempts remaining today. Successful scans and scans currently being analyzed count toward today&apos;s limit; failed extractions do not.
           </p>
           <input
             ref={inputRef}
