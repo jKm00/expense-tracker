@@ -2,7 +2,8 @@ import { AuthProvider } from "@/features/auth/auth.provider";
 import { OfflineBanner } from "@/components/custom/offline-banner";
 import { getSession } from "@/features/auth/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
-import { DesktopSidebar } from "@/components/custom/desktop-sidebar";
+import { DesktopSidebar } from "@/features/sidebar/desktop-sidebar";
+import { getSidebarCollapsedPreference } from "@/features/sidebar/sidebar-preferences.queries";
 import {
   createFileRoute,
   Outlet,
@@ -28,13 +29,18 @@ export const Route = createFileRoute("/_app")({
       });
     }
 
-    return { user: session.user };
+    return {
+      user: session.user,
+      sidebarCollapsed: await getSidebarCollapsedPreference(),
+    };
   },
   validateSearch: zodValidator(appSearchSchema),
   component: AppLayout,
 });
 
 function AppLayout() {
+  const { sidebarCollapsed } = Route.useRouteContext();
+
   return (
     <AuthProvider>
       <FeatureFlagsProvider featureFlags={{}}>
@@ -42,7 +48,7 @@ function AppLayout() {
         <div className="min-h-screen bg-background">
           {/* Desktop: sidebar + content */}
           <div className="hidden md:flex">
-            <DesktopSidebar />
+            <DesktopSidebar defaultCollapsed={sidebarCollapsed} />
             <main className="flex-1 min-w-0">
               <div className="px-6 py-8">
                 <Outlet />
