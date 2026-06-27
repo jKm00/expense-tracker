@@ -17,7 +17,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/shopping/checkout_/scan")({
+export const Route = createFileRoute("/_app/dashboard/shopping/checkout/scan")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productQueries.getProductsOptions()),

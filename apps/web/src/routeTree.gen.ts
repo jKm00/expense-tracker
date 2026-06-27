@@ -29,15 +29,15 @@ import { Route as ApiInternalRecurringRunRouteImport } from './routes/api/intern
 import { Route as AppDashboardTransactionsScanRouteImport } from './routes/_app/dashboard/transactions/scan'
 import { Route as AppDashboardTransactionsNewRouteImport } from './routes/_app/dashboard/transactions/new'
 import { Route as AppDashboardTagsTagIdRouteImport } from './routes/_app/dashboard/tags/$tagId'
-import { Route as AppDashboardShoppingCheckoutRouteImport } from './routes/_app/dashboard/shopping/checkout'
 import { Route as AppDashboardRecurringNewRouteImport } from './routes/_app/dashboard/recurring/new'
 import { Route as AppDashboardProductsNewRouteImport } from './routes/_app/dashboard/products/new'
 import { Route as AppDashboardTransactionsIdIndexRouteImport } from './routes/_app/dashboard/transactions/$id/index'
+import { Route as AppDashboardShoppingCheckoutIndexRouteImport } from './routes/_app/dashboard/shopping/checkout/index'
 import { Route as AppDashboardRecurringIdIndexRouteImport } from './routes/_app/dashboard/recurring/$id/index'
 import { Route as AppDashboardProductsIdIndexRouteImport } from './routes/_app/dashboard/products/$id/index'
 import { Route as AppDashboardTransactionsIdScanRouteImport } from './routes/_app/dashboard/transactions/$id/scan'
 import { Route as AppDashboardTransactionsIdEditRouteImport } from './routes/_app/dashboard/transactions/$id/edit'
-import { Route as AppDashboardShoppingCheckoutScanRouteImport } from './routes/_app/dashboard/shopping/checkout_.scan'
+import { Route as AppDashboardShoppingCheckoutScanRouteImport } from './routes/_app/dashboard/shopping/checkout/scan'
 import { Route as AppDashboardRecurringIdEditRouteImport } from './routes/_app/dashboard/recurring/$id/edit'
 import { Route as AppDashboardProductsIdEditRouteImport } from './routes/_app/dashboard/products/$id/edit'
 
@@ -147,12 +147,6 @@ const AppDashboardTagsTagIdRoute = AppDashboardTagsTagIdRouteImport.update({
   path: '/dashboard/tags/$tagId',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDashboardShoppingCheckoutRoute =
-  AppDashboardShoppingCheckoutRouteImport.update({
-    id: '/dashboard/shopping/checkout',
-    path: '/dashboard/shopping/checkout',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppDashboardRecurringNewRoute =
   AppDashboardRecurringNewRouteImport.update({
     id: '/dashboard/recurring/new',
@@ -168,6 +162,12 @@ const AppDashboardTransactionsIdIndexRoute =
   AppDashboardTransactionsIdIndexRouteImport.update({
     id: '/dashboard/transactions/$id/',
     path: '/dashboard/transactions/$id/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppDashboardShoppingCheckoutIndexRoute =
+  AppDashboardShoppingCheckoutIndexRouteImport.update({
+    id: '/dashboard/shopping/checkout/',
+    path: '/dashboard/shopping/checkout/',
     getParentRoute: () => AppRoute,
   } as any)
 const AppDashboardRecurringIdIndexRoute =
@@ -196,7 +196,7 @@ const AppDashboardTransactionsIdEditRoute =
   } as any)
 const AppDashboardShoppingCheckoutScanRoute =
   AppDashboardShoppingCheckoutScanRouteImport.update({
-    id: '/dashboard/shopping/checkout_/scan',
+    id: '/dashboard/shopping/checkout/scan',
     path: '/dashboard/shopping/checkout/scan',
     getParentRoute: () => AppRoute,
   } as any)
@@ -225,7 +225,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
-  '/dashboard/shopping/checkout': typeof AppDashboardShoppingCheckoutRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/dashboard/transactions/scan': typeof AppDashboardTransactionsScanRoute
@@ -242,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/transactions/$id/scan': typeof AppDashboardTransactionsIdScanRoute
   '/dashboard/products/$id/': typeof AppDashboardProductsIdIndexRoute
   '/dashboard/recurring/$id/': typeof AppDashboardRecurringIdIndexRoute
+  '/dashboard/shopping/checkout/': typeof AppDashboardShoppingCheckoutIndexRoute
   '/dashboard/transactions/$id/': typeof AppDashboardTransactionsIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -256,7 +256,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardIndexRoute
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
-  '/dashboard/shopping/checkout': typeof AppDashboardShoppingCheckoutRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/dashboard/transactions/scan': typeof AppDashboardTransactionsScanRoute
@@ -273,6 +272,7 @@ export interface FileRoutesByTo {
   '/dashboard/transactions/$id/scan': typeof AppDashboardTransactionsIdScanRoute
   '/dashboard/products/$id': typeof AppDashboardProductsIdIndexRoute
   '/dashboard/recurring/$id': typeof AppDashboardRecurringIdIndexRoute
+  '/dashboard/shopping/checkout': typeof AppDashboardShoppingCheckoutIndexRoute
   '/dashboard/transactions/$id': typeof AppDashboardTransactionsIdIndexRoute
 }
 export interface FileRoutesById {
@@ -290,7 +290,6 @@ export interface FileRoutesById {
   '/_app/dashboard/': typeof AppDashboardIndexRoute
   '/_app/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
-  '/_app/dashboard/shopping/checkout': typeof AppDashboardShoppingCheckoutRoute
   '/_app/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/_app/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/_app/dashboard/transactions/scan': typeof AppDashboardTransactionsScanRoute
@@ -302,11 +301,12 @@ export interface FileRoutesById {
   '/_app/dashboard/transactions/': typeof AppDashboardTransactionsIndexRoute
   '/_app/dashboard/products/$id/edit': typeof AppDashboardProductsIdEditRoute
   '/_app/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
-  '/_app/dashboard/shopping/checkout_/scan': typeof AppDashboardShoppingCheckoutScanRoute
+  '/_app/dashboard/shopping/checkout/scan': typeof AppDashboardShoppingCheckoutScanRoute
   '/_app/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
   '/_app/dashboard/transactions/$id/scan': typeof AppDashboardTransactionsIdScanRoute
   '/_app/dashboard/products/$id/': typeof AppDashboardProductsIdIndexRoute
   '/_app/dashboard/recurring/$id/': typeof AppDashboardRecurringIdIndexRoute
+  '/_app/dashboard/shopping/checkout/': typeof AppDashboardShoppingCheckoutIndexRoute
   '/_app/dashboard/transactions/$id/': typeof AppDashboardTransactionsIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -323,7 +323,6 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
-    | '/dashboard/shopping/checkout'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
     | '/dashboard/transactions/scan'
@@ -340,6 +339,7 @@ export interface FileRouteTypes {
     | '/dashboard/transactions/$id/scan'
     | '/dashboard/products/$id/'
     | '/dashboard/recurring/$id/'
+    | '/dashboard/shopping/checkout/'
     | '/dashboard/transactions/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -354,7 +354,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
-    | '/dashboard/shopping/checkout'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
     | '/dashboard/transactions/scan'
@@ -371,6 +370,7 @@ export interface FileRouteTypes {
     | '/dashboard/transactions/$id/scan'
     | '/dashboard/products/$id'
     | '/dashboard/recurring/$id'
+    | '/dashboard/shopping/checkout'
     | '/dashboard/transactions/$id'
   id:
     | '__root__'
@@ -387,7 +387,6 @@ export interface FileRouteTypes {
     | '/_app/dashboard/'
     | '/_app/dashboard/products/new'
     | '/_app/dashboard/recurring/new'
-    | '/_app/dashboard/shopping/checkout'
     | '/_app/dashboard/tags/$tagId'
     | '/_app/dashboard/transactions/new'
     | '/_app/dashboard/transactions/scan'
@@ -399,11 +398,12 @@ export interface FileRouteTypes {
     | '/_app/dashboard/transactions/'
     | '/_app/dashboard/products/$id/edit'
     | '/_app/dashboard/recurring/$id/edit'
-    | '/_app/dashboard/shopping/checkout_/scan'
+    | '/_app/dashboard/shopping/checkout/scan'
     | '/_app/dashboard/transactions/$id/edit'
     | '/_app/dashboard/transactions/$id/scan'
     | '/_app/dashboard/products/$id/'
     | '/_app/dashboard/recurring/$id/'
+    | '/_app/dashboard/shopping/checkout/'
     | '/_app/dashboard/transactions/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -558,13 +558,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardTagsTagIdRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard/shopping/checkout': {
-      id: '/_app/dashboard/shopping/checkout'
-      path: '/dashboard/shopping/checkout'
-      fullPath: '/dashboard/shopping/checkout'
-      preLoaderRoute: typeof AppDashboardShoppingCheckoutRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/dashboard/recurring/new': {
       id: '/_app/dashboard/recurring/new'
       path: '/dashboard/recurring/new'
@@ -584,6 +577,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/transactions/$id'
       fullPath: '/dashboard/transactions/$id/'
       preLoaderRoute: typeof AppDashboardTransactionsIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard/shopping/checkout/': {
+      id: '/_app/dashboard/shopping/checkout/'
+      path: '/dashboard/shopping/checkout'
+      fullPath: '/dashboard/shopping/checkout/'
+      preLoaderRoute: typeof AppDashboardShoppingCheckoutIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard/recurring/$id/': {
@@ -614,8 +614,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardTransactionsIdEditRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard/shopping/checkout_/scan': {
-      id: '/_app/dashboard/shopping/checkout_/scan'
+    '/_app/dashboard/shopping/checkout/scan': {
+      id: '/_app/dashboard/shopping/checkout/scan'
       path: '/dashboard/shopping/checkout/scan'
       fullPath: '/dashboard/shopping/checkout/scan'
       preLoaderRoute: typeof AppDashboardShoppingCheckoutScanRouteImport
@@ -646,7 +646,6 @@ interface AppRouteChildren {
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppDashboardProductsNewRoute: typeof AppDashboardProductsNewRoute
   AppDashboardRecurringNewRoute: typeof AppDashboardRecurringNewRoute
-  AppDashboardShoppingCheckoutRoute: typeof AppDashboardShoppingCheckoutRoute
   AppDashboardTagsTagIdRoute: typeof AppDashboardTagsTagIdRoute
   AppDashboardTransactionsNewRoute: typeof AppDashboardTransactionsNewRoute
   AppDashboardTransactionsScanRoute: typeof AppDashboardTransactionsScanRoute
@@ -662,6 +661,7 @@ interface AppRouteChildren {
   AppDashboardTransactionsIdScanRoute: typeof AppDashboardTransactionsIdScanRoute
   AppDashboardProductsIdIndexRoute: typeof AppDashboardProductsIdIndexRoute
   AppDashboardRecurringIdIndexRoute: typeof AppDashboardRecurringIdIndexRoute
+  AppDashboardShoppingCheckoutIndexRoute: typeof AppDashboardShoppingCheckoutIndexRoute
   AppDashboardTransactionsIdIndexRoute: typeof AppDashboardTransactionsIdIndexRoute
 }
 
@@ -673,7 +673,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppDashboardProductsNewRoute: AppDashboardProductsNewRoute,
   AppDashboardRecurringNewRoute: AppDashboardRecurringNewRoute,
-  AppDashboardShoppingCheckoutRoute: AppDashboardShoppingCheckoutRoute,
   AppDashboardTagsTagIdRoute: AppDashboardTagsTagIdRoute,
   AppDashboardTransactionsNewRoute: AppDashboardTransactionsNewRoute,
   AppDashboardTransactionsScanRoute: AppDashboardTransactionsScanRoute,
@@ -689,6 +688,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardTransactionsIdScanRoute: AppDashboardTransactionsIdScanRoute,
   AppDashboardProductsIdIndexRoute: AppDashboardProductsIdIndexRoute,
   AppDashboardRecurringIdIndexRoute: AppDashboardRecurringIdIndexRoute,
+  AppDashboardShoppingCheckoutIndexRoute:
+    AppDashboardShoppingCheckoutIndexRoute,
   AppDashboardTransactionsIdIndexRoute: AppDashboardTransactionsIdIndexRoute,
 }
 

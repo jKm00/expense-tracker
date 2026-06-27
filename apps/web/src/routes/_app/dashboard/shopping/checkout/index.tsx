@@ -20,7 +20,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileImage } from "lucide-react";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/shopping/checkout")({
+export const Route = createFileRoute("/_app/dashboard/shopping/checkout/")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
