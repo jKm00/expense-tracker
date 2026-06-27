@@ -39,7 +39,6 @@ import { Route as AppDashboardTransactionsIdScanRouteImport } from './routes/_ap
 import { Route as AppDashboardTransactionsIdEditRouteImport } from './routes/_app/dashboard/transactions/$id/edit'
 import { Route as AppDashboardShoppingCheckoutScanRouteImport } from './routes/_app/dashboard/shopping/checkout/scan'
 import { Route as AppDashboardRecurringIdEditRouteImport } from './routes/_app/dashboard/recurring/$id/edit'
-import { Route as AppDashboardProductsIdEditRouteImport } from './routes/_app/dashboard/products/$id/edit'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -206,12 +205,6 @@ const AppDashboardRecurringIdEditRoute =
     path: '/dashboard/recurring/$id/edit',
     getParentRoute: () => AppRoute,
   } as any)
-const AppDashboardProductsIdEditRoute =
-  AppDashboardProductsIdEditRouteImport.update({
-    id: '/dashboard/products/$id/edit',
-    path: '/dashboard/products/$id/edit',
-    getParentRoute: () => AppRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -234,7 +227,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/shopping/': typeof AppDashboardShoppingIndexRoute
   '/dashboard/tags/': typeof AppDashboardTagsIndexRoute
   '/dashboard/transactions/': typeof AppDashboardTransactionsIndexRoute
-  '/dashboard/products/$id/edit': typeof AppDashboardProductsIdEditRoute
   '/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
   '/dashboard/shopping/checkout/scan': typeof AppDashboardShoppingCheckoutScanRoute
   '/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
@@ -265,7 +257,6 @@ export interface FileRoutesByTo {
   '/dashboard/shopping': typeof AppDashboardShoppingIndexRoute
   '/dashboard/tags': typeof AppDashboardTagsIndexRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsIndexRoute
-  '/dashboard/products/$id/edit': typeof AppDashboardProductsIdEditRoute
   '/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
   '/dashboard/shopping/checkout/scan': typeof AppDashboardShoppingCheckoutScanRoute
   '/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
@@ -299,7 +290,6 @@ export interface FileRoutesById {
   '/_app/dashboard/shopping/': typeof AppDashboardShoppingIndexRoute
   '/_app/dashboard/tags/': typeof AppDashboardTagsIndexRoute
   '/_app/dashboard/transactions/': typeof AppDashboardTransactionsIndexRoute
-  '/_app/dashboard/products/$id/edit': typeof AppDashboardProductsIdEditRoute
   '/_app/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
   '/_app/dashboard/shopping/checkout/scan': typeof AppDashboardShoppingCheckoutScanRoute
   '/_app/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
@@ -332,7 +322,6 @@ export interface FileRouteTypes {
     | '/dashboard/shopping/'
     | '/dashboard/tags/'
     | '/dashboard/transactions/'
-    | '/dashboard/products/$id/edit'
     | '/dashboard/recurring/$id/edit'
     | '/dashboard/shopping/checkout/scan'
     | '/dashboard/transactions/$id/edit'
@@ -363,7 +352,6 @@ export interface FileRouteTypes {
     | '/dashboard/shopping'
     | '/dashboard/tags'
     | '/dashboard/transactions'
-    | '/dashboard/products/$id/edit'
     | '/dashboard/recurring/$id/edit'
     | '/dashboard/shopping/checkout/scan'
     | '/dashboard/transactions/$id/edit'
@@ -396,7 +384,6 @@ export interface FileRouteTypes {
     | '/_app/dashboard/shopping/'
     | '/_app/dashboard/tags/'
     | '/_app/dashboard/transactions/'
-    | '/_app/dashboard/products/$id/edit'
     | '/_app/dashboard/recurring/$id/edit'
     | '/_app/dashboard/shopping/checkout/scan'
     | '/_app/dashboard/transactions/$id/edit'
@@ -628,13 +615,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRecurringIdEditRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard/products/$id/edit': {
-      id: '/_app/dashboard/products/$id/edit'
-      path: '/dashboard/products/$id/edit'
-      fullPath: '/dashboard/products/$id/edit'
-      preLoaderRoute: typeof AppDashboardProductsIdEditRouteImport
-      parentRoute: typeof AppRoute
-    }
   }
 }
 
@@ -654,7 +634,6 @@ interface AppRouteChildren {
   AppDashboardShoppingIndexRoute: typeof AppDashboardShoppingIndexRoute
   AppDashboardTagsIndexRoute: typeof AppDashboardTagsIndexRoute
   AppDashboardTransactionsIndexRoute: typeof AppDashboardTransactionsIndexRoute
-  AppDashboardProductsIdEditRoute: typeof AppDashboardProductsIdEditRoute
   AppDashboardRecurringIdEditRoute: typeof AppDashboardRecurringIdEditRoute
   AppDashboardShoppingCheckoutScanRoute: typeof AppDashboardShoppingCheckoutScanRoute
   AppDashboardTransactionsIdEditRoute: typeof AppDashboardTransactionsIdEditRoute
@@ -681,7 +660,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardShoppingIndexRoute: AppDashboardShoppingIndexRoute,
   AppDashboardTagsIndexRoute: AppDashboardTagsIndexRoute,
   AppDashboardTransactionsIndexRoute: AppDashboardTransactionsIndexRoute,
-  AppDashboardProductsIdEditRoute: AppDashboardProductsIdEditRoute,
   AppDashboardRecurringIdEditRoute: AppDashboardRecurringIdEditRoute,
   AppDashboardShoppingCheckoutScanRoute: AppDashboardShoppingCheckoutScanRoute,
   AppDashboardTransactionsIdEditRoute: AppDashboardTransactionsIdEditRoute,
