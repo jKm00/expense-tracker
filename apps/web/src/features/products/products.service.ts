@@ -4,6 +4,7 @@ import { getLogger } from "../logger/logger.context";
 import { ListProductsDTO } from "./products.dtos";
 import { tagsService } from "../tags/tags.service";
 import { analyticsService } from "../analytics/analytics.service";
+import { receiptMappingsService } from "../receipt-scanning/receipt-mappings.service";
 import {
   NewProduct,
   Product,
@@ -544,6 +545,7 @@ async function deleteProduct(userId: string, productId: string) {
         message: "Failed to delete product. No product returned",
       });
     }
+    await receiptMappingsService.deleteMappingsForProduct(productId);
     await analyticsService.removeExcludedProduct(userId, productId);
     return ok(res[0]);
   } catch (error) {

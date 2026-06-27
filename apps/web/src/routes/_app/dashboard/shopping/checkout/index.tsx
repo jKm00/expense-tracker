@@ -6,18 +6,21 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
+  PageHeaderActions,
   PageHeaderBackButton,
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
+import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/products.queries";
 import { ShoppingCheckoutForm } from "@/features/shopping/components/shopping-checkout.form";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { FileImage } from "lucide-react";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/_app/dashboard/shopping/checkout")({
+export const Route = createFileRoute("/_app/dashboard/shopping/checkout/")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
@@ -40,6 +43,14 @@ function RouteComponent() {
         <PageHeaderDescription>
           Turn checked shopping items into a transaction
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/dashboard/shopping/checkout/scan">
+              <FileImage className="size-4" />
+              <span className="hidden sm:inline">Scan receipt</span>
+            </Link>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <CheckoutContent />

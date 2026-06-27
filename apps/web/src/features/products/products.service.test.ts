@@ -34,6 +34,12 @@ vi.mock("../analytics/analytics.service", () => ({
   },
 }));
 
+vi.mock("../receipt-scanning/receipt-mappings.service", () => ({
+  receiptMappingsService: {
+    deleteMappingsForProduct: vi.fn(),
+  },
+}));
+
 import { productService } from "./products.service";
 import { productRepo } from "./products.repo";
 import { tagsService } from "../tags/tags.service";

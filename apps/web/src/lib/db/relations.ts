@@ -15,6 +15,10 @@ import {
   productTags,
 } from "@/features/products/products.schema";
 import {
+  receiptItemMappings,
+  receiptScanAttempts,
+} from "@/features/receipt-scanning/receipt-scanning.schema";
+import {
   shoppingListItems,
   shoppingLists,
 } from "@/features/shopping/shopping.schema";
@@ -46,6 +50,9 @@ export const relations = defineRelations(
     integrationTokens,
     integrationEvents,
     integrationRequestLogs,
+    // Receipt scanning
+    receiptItemMappings,
+    receiptScanAttempts,
     // Transactions
     transactions,
     entries,
@@ -62,6 +69,8 @@ export const relations = defineRelations(
       integrationTokens: r.many.integrationTokens(),
       integrationEvents: r.many.integrationEvents(),
       integrationRequestLogs: r.many.integrationRequestLogs(),
+      receiptItemMappings: r.many.receiptItemMappings(),
+      receiptScanAttempts: r.many.receiptScanAttempts(),
     },
     session: {
       user: r.one.user({
@@ -99,6 +108,10 @@ export const relations = defineRelations(
       shoppingListItems: r.many.shoppingListItems({
         from: r.products.id,
         to: r.shoppingListItems.productId,
+      }),
+      receiptItemMappings: r.many.receiptItemMappings({
+        from: r.products.id,
+        to: r.receiptItemMappings.productId,
       }),
     },
     shoppingLists: {
@@ -215,6 +228,22 @@ export const relations = defineRelations(
       tags: r.many.tags({
         from: r.entries.id.through(r.entryTags.entryId),
         to: r.tags.id.through(r.entryTags.tagId),
+      }),
+    },
+    receiptItemMappings: {
+      user: r.one.user({
+        from: r.receiptItemMappings.userId,
+        to: r.user.id,
+      }),
+      product: r.one.products({
+        from: r.receiptItemMappings.productId,
+        to: r.products.id,
+      }),
+    },
+    receiptScanAttempts: {
+      user: r.one.user({
+        from: r.receiptScanAttempts.userId,
+        to: r.user.id,
       }),
     },
   }),
