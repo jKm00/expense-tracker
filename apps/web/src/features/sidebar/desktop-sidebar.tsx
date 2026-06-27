@@ -19,6 +19,7 @@ import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { writeSidebarCollapsedCookie } from "./sidebar-preferences";
 
 const navSections = [
   {
@@ -67,10 +68,14 @@ const navSections = [
   },
 ] as const;
 
-export function DesktopSidebar() {
+export function DesktopSidebar({
+  defaultCollapsed = false,
+}: {
+  defaultCollapsed?: boolean;
+}) {
   const location = useLocation();
   const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
@@ -80,6 +85,14 @@ export function DesktopSidebar() {
       );
     }
     return location.pathname.startsWith(href);
+  }
+
+  function toggleCollapsed() {
+    setCollapsed((value) => {
+      const nextValue = !value;
+      writeSidebarCollapsedCookie(nextValue);
+      return nextValue;
+    });
   }
 
   return (
@@ -121,7 +134,7 @@ export function DesktopSidebar() {
           variant="ghost"
           size="icon-sm"
           className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          onClick={() => setCollapsed((value) => !value)}
+          onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
