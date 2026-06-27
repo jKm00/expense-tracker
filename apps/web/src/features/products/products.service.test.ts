@@ -34,8 +34,8 @@ vi.mock("../analytics/analytics.service", () => ({
   },
 }));
 
-vi.mock("../receipt-scanning/receipt-scanning.repo", () => ({
-  receiptScanningRepo: {
+vi.mock("../receipt-scanning/receipt-mappings.service", () => ({
+  receiptMappingsService: {
     deleteMappingsForProduct: vi.fn(),
   },
 }));

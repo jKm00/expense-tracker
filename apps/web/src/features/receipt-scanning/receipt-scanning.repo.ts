@@ -1,11 +1,10 @@
 import { db } from "@/lib/db";
-import { products } from "@/features/products/products.schema";
-import { and, count, eq, gte, inArray, isNull, ne } from "drizzle-orm";
+import { and, eq, gte, inArray } from "drizzle-orm";
 import {
   receiptItemMappings,
   receiptScanAttempts,
 } from "./receipt-scanning.schema";
-import { NewReceiptScanAttempt } from "./receipt-scanning.models";
+import { NewReceiptItemMapping, NewReceiptScanAttempt } from "./receipt-scanning.models";
 
 type DbClient = typeof db;
 
@@ -19,35 +18,20 @@ async function getMappingsByNames(
     return [];
   }
 
-  const rows = await client
-    .select({ mapping: receiptItemMappings, product: products })
+  return await client
+    .select()
     .from(receiptItemMappings)
-    .innerJoin(products, eq(receiptItemMappings.productId, products.id))
     .where(
       and(
         eq(receiptItemMappings.userId, userId),
         inArray(receiptItemMappings.normalizedItemName, uniqueNames),
-        isNull(products.deletedAt),
       ),
     );
-
-  return rows.map(({ mapping, product }) => ({
-    ...mapping,
-    product: {
-      ...product,
-      tags: [],
-      aliases: [],
-    },
-  }));
 }
 
-async function upsertMapping(
-  input: {
-    userId: string;
-    productId: string;
-    itemName: string;
-    normalizedItemName: string;
-  },
+async function getMappingByNormalizedName(
+  userId: string,
+  normalizedItemName: string,
   client: DbClient = db,
 ) {
   const [existing] = await client
@@ -55,37 +39,31 @@ async function upsertMapping(
     .from(receiptItemMappings)
     .where(
       and(
-        eq(receiptItemMappings.userId, input.userId),
-        eq(receiptItemMappings.normalizedItemName, input.normalizedItemName),
+        eq(receiptItemMappings.userId, userId),
+        eq(receiptItemMappings.normalizedItemName, normalizedItemName),
       ),
     )
     .limit(1);
 
-  const now = new Date();
-  if (existing) {
-    return await client
-      .update(receiptItemMappings)
-      .set({
-        productId: input.productId,
-        itemName: input.itemName,
-        confirmationCount: existing.confirmationCount + 1,
-        lastConfirmedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(receiptItemMappings.id, existing.id))
-      .returning();
-  }
+  return existing ?? null;
+}
 
+async function saveMapping(mapping: NewReceiptItemMapping, client: DbClient = db) {
   return await client
     .insert(receiptItemMappings)
-    .values({
-      userId: input.userId,
-      productId: input.productId,
-      itemName: input.itemName,
-      normalizedItemName: input.normalizedItemName,
-      confirmationCount: 1,
-      lastConfirmedAt: now,
-    })
+    .values(mapping)
+    .returning();
+}
+
+async function updateMapping(
+  mappingId: string,
+  data: Partial<NewReceiptItemMapping>,
+  client: DbClient = db,
+) {
+  return await client
+    .update(receiptItemMappings)
+    .set(data)
+    .where(eq(receiptItemMappings.id, mappingId))
     .returning();
 }
 
@@ -96,23 +74,20 @@ async function deleteMappingsForProduct(productId: string, client: DbClient = db
     .returning();
 }
 
-async function countRecentExtractionAttempts(
+async function getExtractionAttemptsSince(
   userId: string,
   since: Date,
   client: DbClient = db,
 ) {
-  const [{ total }] = await client
-    .select({ total: count(receiptScanAttempts.id) })
+  return await client
+    .select()
     .from(receiptScanAttempts)
     .where(
       and(
         eq(receiptScanAttempts.userId, userId),
         gte(receiptScanAttempts.createdAt, since),
-        ne(receiptScanAttempts.status, "rate_limited"),
       ),
     );
-
-  return Number(total ?? 0);
 }
 
 async function saveAttempt(
@@ -124,8 +99,10 @@ async function saveAttempt(
 
 export const receiptScanningRepo = {
   getMappingsByNames,
-  upsertMapping,
+  getMappingByNormalizedName,
+  saveMapping,
+  updateMapping,
   deleteMappingsForProduct,
-  countRecentExtractionAttempts,
+  getExtractionAttemptsSince,
   saveAttempt,
 };

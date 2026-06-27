@@ -1,33 +1,21 @@
-import { db } from "@/lib/db";
 import { ok } from "@/utils/result";
 import { err } from "../logger/logger.result";
-import { productRepo } from "../products/products.repo";
-import { products } from "../products/products.schema";
-import { shoppingRepo } from "../shopping/shopping.repo";
-import { entries, entryTags, transactions } from "../transactions/transactions.schema";
-import { tags } from "../tags/tags.schema";
-import { shoppingListItems, shoppingLists } from "../shopping/shopping.schema";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { productService } from "../products/products.service";
+import { shoppingService } from "../shopping/shopping.service";
+import { transactionService } from "../transactions/transactions.service";
 import {
   CompleteReceiptCheckoutScanDTO,
   CompleteReceiptTransactionReplacementScanDTO,
   CompleteReceiptTransactionScanDTO,
+  ReceiptScanSubmitEntryDTO,
 } from "./receipt-scanning.dtos";
 import { matchReceiptToProducts } from "./receipt-matching";
 import { normalizeReceiptName } from "./receipt-normalization";
 import { receiptScanningRepo } from "./receipt-scanning.repo";
 import { extractReceiptWithOpenAI } from "./receipt-openai.adapter";
-import { receiptItemMappings } from "./receipt-scanning.schema";
+import { receiptMappingsService } from "./receipt-mappings.service";
 
 const RECEIPT_SCAN_DAILY_LIMIT = 5;
-
-type DbClient = typeof db;
-
-function calculateTotalPrice(entriesInput: Array<{ price: string; quantity: string }>) {
-  return entriesInput.reduce((sum, entry) => {
-    return sum - Number(entry.price) * Number(entry.quantity);
-  }, 0);
-}
 
 function categorizeError(error: unknown) {
   if (error instanceof Error) {
@@ -59,7 +47,9 @@ function getStartOfToday() {
 }
 
 async function getScanUsage(userId: string) {
-  const used = await receiptScanningRepo.countRecentExtractionAttempts(userId, getStartOfToday());
+  const attempts = await receiptScanningRepo.getExtractionAttemptsSince(userId, getStartOfToday());
+  const used = attempts.filter((attempt) => attempt.status !== "rate_limited").length;
+
   return ok({
     used,
     limit: RECEIPT_SCAN_DAILY_LIMIT,
@@ -74,6 +64,15 @@ async function assertRateLimit(userId: string) {
   }
 
   return usage.remaining > 0;
+}
+
+async function getShoppingListOrThrow(userId: string) {
+  const [shoppingError, shoppingList] = await shoppingService.getShoppingList(userId);
+  if (shoppingError || !shoppingList) {
+    throw new Error("SCAN_SHOPPING_LIST_LOAD_FAILED");
+  }
+
+  return shoppingList;
 }
 
 async function extractReceipt(userId: string, input: { imageDataUrl: string; mode: "transaction" | "shopping-checkout" }) {
@@ -96,15 +95,24 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
 
   try {
     const receipt = await extractReceiptWithOpenAI(input.imageDataUrl);
-    const products = await productRepo.getAll(userId);
+    const [productsError, products] = await productService.getProducts(userId);
+    if (productsError) {
+      throw new Error("SCAN_PRODUCTS_LOAD_FAILED");
+    }
+
     const normalizedNames = receipt.items.map((item) => normalizeReceiptName(item.name));
     const mappings = await receiptScanningRepo.getMappingsByNames(
       userId,
       normalizedNames,
     );
+    const productsById = new Map(products.map((product) => [product.id, product]));
+    const mappingsWithProducts = mappings.map((mapping) => ({
+      ...mapping,
+      product: productsById.get(mapping.productId) ?? null,
+    }));
     const shoppingList =
       input.mode === "shopping-checkout"
-        ? await shoppingRepo.getOrCreateShoppingList(userId)
+        ? await getShoppingListOrThrow(userId)
         : null;
 
     await receiptScanningRepo.saveAttempt({
@@ -119,7 +127,7 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
       ...matchReceiptToProducts({
         receipt,
         products,
-        mappings,
+        mappings: mappingsWithProducts,
         shoppingItems: shoppingList?.items,
       }),
       parsedDate: parseExtractedDate(receipt.date),
@@ -140,155 +148,58 @@ async function extractReceipt(userId: string, input: { imageDataUrl: string; mod
   }
 }
 
-async function getOwnedProduct(
-  client: DbClient,
-  userId: string,
-  productId: string,
-) {
-  const [product] = await client
-    .select()
-    .from(products)
-    .where(
-      and(
-        eq(products.id, productId),
-        eq(products.userId, userId),
-        isNull(products.deletedAt),
-      ),
-    )
-    .limit(1);
-
-  return product ?? null;
-}
-
 async function resolveProduct(
-  client: DbClient,
   userId: string,
   product: { id: string | null; name: string },
 ) {
   if (product.id) {
-    const existing = await getOwnedProduct(client, userId, product.id);
-    if (!existing) {
+    const [productError, existing] = await productService.getProduct(userId, product.id);
+    if (productError || !existing) {
       throw new Error("SCAN_PRODUCT_NOT_FOUND");
     }
     return existing;
   }
 
-  const [created] = await client
-    .insert(products)
-    .values({ userId, name: product.name.trim() })
-    .returning();
-
-  if (!created) {
+  const [productError, created] = await productService.addProduct({
+    userId,
+    name: product.name.trim(),
+  });
+  if (productError || !created) {
     throw new Error("SCAN_PRODUCT_CREATE_FAILED");
   }
 
   return created;
 }
 
-async function assertTagsOwned(
-  client: DbClient,
+async function resolveEntries(
   userId: string,
-  tagIds: string[],
+  scanEntries: Array<ReceiptScanSubmitEntryDTO>,
 ) {
-  const uniqueTagIds = Array.from(new Set(tagIds));
-  if (uniqueTagIds.length === 0) {
-    return;
-  }
+  const resolved = [];
 
-  const ownedTags = await client
-    .select({ id: tags.id })
-    .from(tags)
-    .where(and(eq(tags.userId, userId), inArray(tags.id, uniqueTagIds)));
-
-  if (ownedTags.length !== uniqueTagIds.length) {
-    throw new Error("SCAN_TAG_UNAUTHORIZED");
-  }
-}
-
-async function upsertMappingInTransaction(
-  client: DbClient,
-  input: {
-    userId: string;
-    productId: string;
-    itemName: string;
-  },
-) {
-  const normalizedItemName = normalizeReceiptName(input.itemName);
-  if (!normalizedItemName) {
-    return;
-  }
-
-  const [existing] = await client
-    .select()
-    .from(receiptItemMappings)
-    .where(
-      and(
-        eq(receiptItemMappings.userId, input.userId),
-        eq(receiptItemMappings.normalizedItemName, normalizedItemName),
-      ),
-    )
-    .limit(1);
-
-  const now = new Date();
-  if (existing) {
-    await client
-      .update(receiptItemMappings)
-      .set({
-        productId: input.productId,
-        itemName: input.itemName,
-        normalizedItemName,
-        confirmationCount: existing.confirmationCount + 1,
-        lastConfirmedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(receiptItemMappings.id, existing.id));
-    return;
-  }
-
-  await client.insert(receiptItemMappings).values({
-    userId: input.userId,
-    productId: input.productId,
-    itemName: input.itemName,
-    normalizedItemName,
-    confirmationCount: 1,
-    lastConfirmedAt: now,
-  });
-}
-
-async function saveEntriesAndMappings(
-  client: DbClient,
-  userId: string,
-  transactionId: string,
-  scanEntries: CompleteReceiptTransactionScanDTO["entries"],
-) {
   for (const scanEntry of scanEntries) {
-    const product = await resolveProduct(client, userId, scanEntry.product);
-    const tagIds = Array.from(new Set(scanEntry.tagIds ?? []));
-    await assertTagsOwned(client, userId, tagIds);
+    const product = await resolveProduct(userId, scanEntry.product);
+    resolved.push({
+      ...scanEntry,
+      product: {
+        id: product.id,
+        name: product.name,
+      },
+    });
+  }
 
-    const [entry] = await client
-      .insert(entries)
-      .values({
-        transactionId,
-        productId: product.id,
-        price: scanEntry.price,
-        quantity: Number(scanEntry.quantity),
-        type: "expense",
-      })
-      .returning();
+  return resolved;
+}
 
-    if (!entry) {
-      throw new Error("SCAN_ENTRY_CREATE_FAILED");
-    }
-
-    for (const tagId of tagIds) {
-      await client.insert(entryTags).values({ entryId: entry.id, tagId });
-    }
-
-    await upsertMappingInTransaction(client, {
+async function saveMappings(
+  userId: string,
+  entries: Awaited<ReturnType<typeof resolveEntries>>,
+) {
+  for (const entry of entries) {
+    await receiptMappingsService.upsertMapping({
       userId,
-      productId: product.id,
-      itemName: scanEntry.receiptItemName,
+      productId: entry.product.id,
+      itemName: entry.receiptItemName,
     });
   }
 }
@@ -298,28 +209,24 @@ async function completeTransactionScan(
   data: CompleteReceiptTransactionScanDTO,
 ) {
   try {
-    const transaction = await db.transaction(async (tx) => {
-      const totalPrice = calculateTotalPrice(data.entries);
-      const [savedTransaction] = await tx
-        .insert(transactions)
-        .values({
-          userId,
-          store: data.store,
-          description: data.description,
-          date: data.date,
-          source: "scan",
-          needsReview: false,
-          totalPrice: String(totalPrice),
-        })
-        .returning();
-
-      if (!savedTransaction) {
-        throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
-      }
-
-      await saveEntriesAndMappings(tx as DbClient, userId, savedTransaction.id, data.entries);
-      return savedTransaction;
+    const entries = await resolveEntries(userId, data.entries);
+    const [transactionError, transaction] = await transactionService.saveTransaction({
+      transaction: {
+        userId,
+        store: data.store,
+        description: data.description,
+        date: data.date,
+        source: "scan",
+        needsReview: false,
+      },
+      entries,
     });
+
+    if (transactionError || !transaction) {
+      throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
+    }
+
+    await saveMappings(userId, entries);
 
     return ok(transaction);
   } catch (error) {
@@ -335,53 +242,38 @@ async function completeTransactionReplacementScan(
   data: CompleteReceiptTransactionReplacementScanDTO,
 ) {
   try {
-    const transaction = await db.transaction(async (tx) => {
-      const existingTransaction = await getOwnedTransaction(
-        tx as DbClient,
-        userId,
-        data.transactionId,
-      );
-      if (!existingTransaction) {
-        throw new Error("SCAN_TRANSACTION_NOT_FOUND");
-      }
-      if (existingTransaction.source === "recurring") {
-        throw new Error("SCAN_TRANSACTION_RECURRING_NOT_ALLOWED");
-      }
+    const [existingError, existingTransaction] = await transactionService.getTransaction(
+      userId,
+      data.transactionId,
+    );
+    if (existingError || !existingTransaction) {
+      throw new Error("SCAN_TRANSACTION_NOT_FOUND");
+    }
+    if (existingTransaction.source === "recurring") {
+      throw new Error("SCAN_TRANSACTION_RECURRING_NOT_ALLOWED");
+    }
+    if (existingTransaction.entries.some((entry) => entry.type === "income")) {
+      throw new Error("SCAN_TRANSACTION_INCOME_NOT_ALLOWED");
+    }
 
-      const incomeEntries = await tx
-        .select({ id: entries.id })
-        .from(entries)
-        .where(
-          and(
-            eq(entries.transactionId, data.transactionId),
-            eq(entries.type, "income"),
-          ),
-        )
-        .limit(1);
-      if (incomeEntries.length > 0) {
-        throw new Error("SCAN_TRANSACTION_INCOME_NOT_ALLOWED");
-      }
-
-      const totalPrice = calculateTotalPrice(data.entries);
-      const [updated] = await tx
-        .update(transactions)
-        .set({
+    const entries = await resolveEntries(userId, data.entries);
+    const [transactionError, transaction] = await transactionService.updateTransaction(
+      userId,
+      data.transactionId,
+      {
+        transaction: {
           store: existingTransaction.store ?? data.store ?? null,
           needsReview: false,
-          totalPrice: String(totalPrice),
-          updatedAt: new Date(),
-        })
-        .where(eq(transactions.id, data.transactionId))
-        .returning();
+        },
+        entries,
+      },
+    );
 
-      if (!updated) {
-        throw new Error("SCAN_TRANSACTION_UPDATE_FAILED");
-      }
+    if (transactionError || !transaction) {
+      throw new Error("SCAN_TRANSACTION_UPDATE_FAILED");
+    }
 
-      await tx.delete(entries).where(eq(entries.transactionId, data.transactionId));
-      await saveEntriesAndMappings(tx as DbClient, userId, updated.id, data.entries);
-      return updated;
-    });
+    await saveMappings(userId, entries);
 
     return ok(transaction);
   } catch (error) {
@@ -392,77 +284,39 @@ async function completeTransactionReplacementScan(
   }
 }
 
-async function getOwnedShoppingList(client: DbClient, userId: string) {
-  const [list] = await client
-    .select()
-    .from(shoppingLists)
-    .where(eq(shoppingLists.userId, userId))
-    .limit(1);
-
-  return list ?? null;
-}
-
-async function getOwnedTransaction(
-  client: DbClient,
-  userId: string,
-  transactionId: string,
-) {
-  const [transaction] = await client
-    .select()
-    .from(transactions)
-    .where(and(eq(transactions.id, transactionId), eq(transactions.userId, userId)))
-    .limit(1);
-
-  return transaction ?? null;
-}
-
 async function completeCheckoutScan(
   userId: string,
   data: CompleteReceiptCheckoutScanDTO,
 ) {
   try {
-    const transaction = await db.transaction(async (tx) => {
-      const totalPrice = calculateTotalPrice(data.entries);
-      const [savedTransaction] = await tx
-        .insert(transactions)
-        .values({
-          userId,
-          store: data.store,
-          description: data.description,
-          date: data.date,
-          source: "shopping",
-          needsReview: false,
-          totalPrice: String(totalPrice),
-        })
-        .returning();
-
-      if (!savedTransaction) {
-        throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
-      }
-
-      await saveEntriesAndMappings(tx as DbClient, userId, savedTransaction.id, data.entries);
-
-      const shoppingItemIds = Array.from(
-        new Set(data.entries.flatMap((entry) => entry.shoppingItemId ? [entry.shoppingItemId] : [])),
-      );
-      const list = await getOwnedShoppingList(tx as DbClient, userId);
-      if (list && shoppingItemIds.length > 0) {
-        await tx
-          .delete(shoppingListItems)
-          .where(
-            and(
-              eq(shoppingListItems.shoppingListId, list.id),
-              inArray(shoppingListItems.id, shoppingItemIds),
-            ),
-          );
-        await tx
-          .update(shoppingLists)
-          .set({ updatedAt: new Date() })
-          .where(eq(shoppingLists.id, list.id));
-      }
-
-      return savedTransaction;
+    const entries = await resolveEntries(userId, data.entries);
+    const [transactionError, transaction] = await transactionService.saveTransaction({
+      transaction: {
+        userId,
+        store: data.store,
+        description: data.description,
+        date: data.date,
+        source: "shopping",
+        needsReview: false,
+      },
+      entries,
     });
+
+    if (transactionError || !transaction) {
+      throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
+    }
+
+    await saveMappings(userId, entries);
+
+    const shoppingItemIds = Array.from(
+      new Set(data.entries.flatMap((entry) => entry.shoppingItemId ? [entry.shoppingItemId] : [])),
+    );
+    for (const shoppingItemId of shoppingItemIds) {
+      const [removeError] = await shoppingService.removeShoppingItem(userId, shoppingItemId);
+      if (removeError) {
+        throw new Error("SCAN_SHOPPING_ITEM_CLEANUP_FAILED");
+      }
+    }
 
     return ok(transaction);
   } catch (error) {
@@ -473,15 +327,10 @@ async function completeCheckoutScan(
   }
 }
 
-async function deleteMappingsForProduct(productId: string) {
-  return await receiptScanningRepo.deleteMappingsForProduct(productId);
-}
-
 export const receiptScanningService = {
   getScanUsage,
   extractReceipt,
   completeTransactionScan,
   completeTransactionReplacementScan,
   completeCheckoutScan,
-  deleteMappingsForProduct,
 };
