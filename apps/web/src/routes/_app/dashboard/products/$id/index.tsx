@@ -15,7 +15,8 @@ import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { LinkTagForm } from "@/features/products/components/link-tag.form";
 import { DeleteProductDialog } from "@/features/products/components/delete-product.dialog";
-import { ProductDetailsForm } from "@/features/products/components/product-details.form";
+import { ProductAliasManager } from "@/features/products/components/product-alias-manager";
+import { ProductForm } from "@/features/products/components/product.form";
 import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
@@ -155,7 +156,9 @@ function ProductDetails() {
         />
       </div>
 
-      <ProductDetailsForm product={product} />
+      <ProductForm product={product} />
+
+      <ProductAliasManager product={product} />
 
       <Suspense>
         <LinkTagContent product={product} />
