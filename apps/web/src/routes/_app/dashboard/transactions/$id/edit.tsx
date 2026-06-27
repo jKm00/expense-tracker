@@ -95,6 +95,8 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
     transaction.entries.every((entry) => entry.type === "expense");
   const scanUsage = scanUsageResult?.[1] ?? null;
   const isScanLimitReached = scanUsage?.remaining === 0;
+  const remainingScans = scanUsage?.remaining ?? 5;
+  const scanLimit = scanUsage?.limit ?? 5;
 
   if (!canScan) {
     return null;
@@ -158,9 +160,18 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
             Upload an image or PDF receipt. After analysis, you will review the extracted entries before replacing this transaction.
           </DialogDescription>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          You have {scanUsage ? `${scanUsage.remaining}/${scanUsage.limit}` : "5"} extraction attempts remaining today. Successful scans and scans currently being analyzed count toward today&apos;s limit; failed extractions do not.
-        </p>
+        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isScanLimitReached ? "border-destructive/30 bg-destructive/5" : "bg-muted/30"}`}>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Remaining scans today</p>
+            <p className="text-sm text-muted-foreground">
+              Successful scans and scans currently being analyzed count. Failed extractions do not.
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <span className={`text-lg font-medium tabular-nums ${isScanLimitReached ? "text-destructive" : "text-foreground"}`}>{remainingScans}</span>
+            <span className="text-sm text-muted-foreground">/{scanLimit}</span>
+          </div>
+        </div>
         <input
           ref={inputRef}
           type="file"
