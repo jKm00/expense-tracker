@@ -26,14 +26,6 @@ function toSelectableProduct(name: string): SelectableProduct {
   };
 }
 
-function resolveSelectedProduct(products: Product[], value?: string) {
-  if (!value) {
-    return null;
-  }
-
-  return products.find((product) => product.name === value) ?? toSelectableProduct(value);
-}
-
 function normalizeSearch(value: string) {
   return value
     .normalize("NFKD")
@@ -42,6 +34,51 @@ function normalizeSearch(value: string) {
     .replace(/[^\p{L}\p{N}\s-]+/gu, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function sortByOldest(products: Product[]) {
+  return [...products].sort((a, b) => {
+    const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
+    if (createdDiff !== 0) {
+      return createdDiff;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function hasExactProductMatch(product: Product, normalizedInput: string) {
+  if (!normalizedInput) {
+    return false;
+  }
+
+  if (normalizeSearch(product.name) === normalizedInput) {
+    return true;
+  }
+
+  return product.aliases.some(
+    (alias) => (alias.normalizedName || normalizeSearch(alias.name)) === normalizedInput,
+  );
+}
+
+function findExactProductMatch(products: Product[], value: string) {
+  const normalizedValue = normalizeSearch(value);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return (
+    sortByOldest(products).find((product) =>
+      hasExactProductMatch(product, normalizedValue),
+    ) ?? null
+  );
+}
+
+function resolveSelectedProduct(products: Product[], value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  return findExactProductMatch(products, value) ?? toSelectableProduct(value.trim());
 }
 
 function getMatchRank(product: Product, normalizedInput: string) {
@@ -131,6 +168,14 @@ export function ProductSelect({
       });
   }, [products, inputValue]);
 
+  const exactInputMatch = useMemo(
+    () => findExactProductMatch(products, inputValue),
+    [products, inputValue],
+  );
+  const normalizedInput = normalizeSearch(inputValue);
+  const createName = inputValue.trim();
+  const canCreate = normalizedInput.length > 0 && !exactInputMatch;
+
   function handleSelect(product: Product) {
     setValue(product);
     setOpen(false);
@@ -139,6 +184,11 @@ export function ProductSelect({
     if (onValueChange) {
       onValueChange(product);
     }
+  }
+
+  function handleCreate() {
+    const existing = findExactProductMatch(products, inputValue);
+    handleSelect(existing ?? toSelectableProduct(createName));
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -174,14 +224,14 @@ export function ProductSelect({
             className="h-8 text-xs"
           />
         </div>
-        {inputValue.length > 0 && (
+        {canCreate && (
           <Button
-            onClick={() => handleSelect(toSelectableProduct(inputValue))}
+            onClick={handleCreate}
             variant="ghost"
             size="sm"
             className="mx-2 justify-start text-xs text-muted-foreground"
           >
-            Create '{inputValue}'
+            Create '{createName}'
           </Button>
         )}
         <div className="grid max-h-60 overflow-y-auto p-1">
@@ -201,7 +251,7 @@ export function ProductSelect({
                   </span>
                 ) : null}
               </span>
-              {value && value.name === product.name && (
+              {value && (value.id ? value.id === product.id : value.name === product.name) && (
                 <Check className="size-3.5 text-primary" />
               )}
             </Button>

@@ -12,27 +12,18 @@ import {
   PageHeaderTitle,
 } from "@/components/custom/page-header";
 import { SkeletonForm } from "@/components/custom/skeletons/skeleton-form";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { KpiCard } from "@/features/analytics/components/kpi-card";
 import { LinkTagForm } from "@/features/products/components/link-tag.form";
 import { DeleteProductDialog } from "@/features/products/components/delete-product.dialog";
+import { ProductAliasManager } from "@/features/products/components/product-alias-manager";
+import { ProductForm } from "@/features/products/components/product.form";
 import { ProductWithTag } from "@/features/products/products.models";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { formatAmount } from "@/utils/format";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, ShoppingCart, SquarePen, Trash } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Calendar, ShoppingCart, Trash } from "lucide-react";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/_app/dashboard/products/$id/")({
@@ -62,12 +53,6 @@ function RouteComponent() {
           View details about this product
         </PageHeaderDescription>
         <PageHeaderActions>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/products/$id/edit" params={{ id }}>
-              <SquarePen className="size-4" />
-              <span className="@max-lg:sr-only">Edit</span>
-            </Link>
-          </Button>
           <DeleteProductDialog productId={id}>
             <Trash className="size-4" />
             <span className="@max-lg:sr-only">Delete</span>
@@ -171,40 +156,9 @@ function ProductDetails() {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>
-            General information about the product
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              Product name
-            </Label>
-            <Input
-              defaultValue={product.name}
-              readOnly
-              className="bg-muted/30"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Aliases</Label>
-            {product.aliases.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No aliases</p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {product.aliases.map((alias) => (
-                  <Badge key={alias.id} variant="secondary">
-                    {alias.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <ProductForm product={product} />
+
+      <ProductAliasManager product={product} />
 
       <Suspense>
         <LinkTagContent product={product} />

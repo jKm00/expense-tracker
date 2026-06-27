@@ -49,6 +49,7 @@ const mockTagsService = vi.mocked(tagsService);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockProductRepo.getAll.mockResolvedValue([] as any);
 });
 
 function makeAlias(overrides: Partial<Record<string, unknown>> = {}) {
@@ -276,6 +277,75 @@ describe("productService", () => {
       expect(data).toEqual(product);
     });
 
+    it("reuses an existing active product with the same normalized name", async () => {
+      const existing = makeProduct({
+        id: "product-existing",
+        name: "MÍLK!",
+        aliases: [],
+        createdAt: new Date("2024-01-01"),
+      });
+      mockProductRepo.getAll.mockResolvedValue([existing] as any);
+
+      const [error, data] = await productService.addProduct({
+        userId: "user-1",
+        name: " milk ",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual(existing);
+      expect(mockProductRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("reuses the oldest existing active product matching an alias", async () => {
+      const newer = makeProduct({
+        id: "product-newer",
+        name: "Newer product",
+        aliases: [makeAlias({ id: "alias-newer", productId: "product-newer", normalizedName: "milk" })],
+        createdAt: new Date("2024-02-01"),
+      });
+      const oldest = makeProduct({
+        id: "product-oldest",
+        name: "Oldest product",
+        aliases: [makeAlias({ id: "alias-oldest", productId: "product-oldest", normalizedName: "milk" })],
+        createdAt: new Date("2024-01-01"),
+      });
+      mockProductRepo.getAll.mockResolvedValue([newer, oldest] as any);
+
+      const [error, data] = await productService.addProduct({
+        userId: "user-1",
+        name: "Milk",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toEqual(oldest);
+      expect(mockProductRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("links missing tags when reusing an existing product", async () => {
+      const existing = makeProduct({
+        id: "product-existing",
+        aliases: [],
+        tags: [makeTag({ id: "tag-existing" })],
+      });
+      mockProductRepo.getAll.mockResolvedValue([existing] as any);
+      mockProductRepo.getOne.mockResolvedValue(existing as any);
+      mockTagsService.getTag.mockResolvedValue([null, makeTag({ id: "tag-new" })] as any);
+      mockProductRepo.saveTagLink.mockResolvedValue([{}] as any);
+
+      const [error, data] = await productService.addProduct(
+        {
+          userId: "user-1",
+          name: "Milk",
+        },
+        ["tag-existing", "tag-new", "tag-new"],
+      );
+
+      expect(error).toBeNull();
+      expect(data).toEqual(existing);
+      expect(mockProductRepo.saveTagLink).toHaveBeenCalledTimes(1);
+      expect(mockProductRepo.saveTagLink).toHaveBeenCalledWith("product-existing", "tag-new");
+    });
+
     it("returns err with PRODUCT_NOT_RETURNED when repo save returns empty array", async () => {
       mockProductRepo.save.mockResolvedValue([]);
 
@@ -304,6 +374,24 @@ describe("productService", () => {
       expect(data).toEqual(updated);
     });
 
+    it("blocks rename when the new name matches another active product alias", async () => {
+      const product = makeProduct({ id: "product-1", aliases: [] });
+      const conflict = makeProduct({
+        id: "product-2",
+        name: "Other product",
+        aliases: [makeAlias({ id: "alias-2", productId: "product-2", normalizedName: "whole milk" })],
+      });
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getAll.mockResolvedValue([product, conflict] as any);
+
+      const [error] = await productService.updateProduct("user-1", "product-1", {
+        name: "Whole Milk",
+      });
+
+      expect(error?.reason).toBe("PRODUCT_NAME_ALREADY_EXISTS");
+      expect(mockProductRepo.update).not.toHaveBeenCalled();
+    });
+
     it("removes matching alias when canonical rename collides", async () => {
       const product = makeProduct({ aliases: [] });
       const updated = makeProduct({ name: "Whole Milk", aliases: [] });
@@ -315,6 +403,7 @@ describe("productService", () => {
       });
 
       mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getAll.mockResolvedValue([product] as any);
       mockProductRepo.update.mockResolvedValue([updated] as any);
       mockProductRepo.getAliasByNormalizedName.mockResolvedValue(alias as any);
       mockProductRepo.removeAlias.mockResolvedValue([alias] as any);
@@ -345,6 +434,24 @@ describe("productService", () => {
 
       expect(error).toBeNull();
       expect(data).toEqual(alias);
+    });
+
+    it("blocks alias creation when it matches another active product name", async () => {
+      const product = makeProduct({ id: "product-1", name: "Milk", aliases: [] });
+      const conflict = makeProduct({ id: "product-2", name: "Skim Milk", aliases: [] });
+
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
+      mockProductRepo.getAll.mockResolvedValue([product, conflict] as any);
+
+      const [error] = await productService.addProductAlias(
+        "user-1",
+        "product-1",
+        "skim milk",
+      );
+
+      expect(error?.reason).toBe("PRODUCT_ALIAS_ALREADY_EXISTS");
+      expect(mockProductRepo.saveAlias).not.toHaveBeenCalled();
     });
 
     it("returns PRODUCT_ALIAS_EQUALS_CANONICAL when alias matches canonical", async () => {
@@ -406,6 +513,30 @@ describe("productService", () => {
 
       expect(error).toBeNull();
       expect(data).toEqual(updatedAlias);
+    });
+
+    it("blocks alias update when it matches another active product alias", async () => {
+      const alias = makeAlias({ id: "alias-1", name: "Whole Milk", normalizedName: "whole milk" });
+      const product = makeProduct({ id: "product-1", aliases: [alias] });
+      const conflict = makeProduct({
+        id: "product-2",
+        name: "Other product",
+        aliases: [makeAlias({ id: "alias-2", productId: "product-2", normalizedName: "skim milk" })],
+      });
+
+      mockProductRepo.getAlias.mockResolvedValue(alias as any);
+      mockProductRepo.getOne.mockResolvedValue(product as any);
+      mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
+      mockProductRepo.getAll.mockResolvedValue([product, conflict] as any);
+
+      const [error] = await productService.updateProductAlias(
+        "user-1",
+        "alias-1",
+        "Skim Milk",
+      );
+
+      expect(error?.reason).toBe("PRODUCT_ALIAS_ALREADY_EXISTS");
+      expect(mockProductRepo.updateAlias).not.toHaveBeenCalled();
     });
   });
 

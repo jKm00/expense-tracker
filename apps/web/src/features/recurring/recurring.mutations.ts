@@ -8,6 +8,7 @@ import {
 import { recurringController } from "./recurring.controller";
 import { RECURRING_QUERY_KEY } from "./recurring.queries";
 import { toast } from "sonner";
+import { PRODUCT_QUERY_KEY } from "../products/products.queries";
 
 function createRecurring() {
   const qc = useQueryClient();
@@ -19,6 +20,7 @@ function createRecurring() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [RECURRING_QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
     },
     onError: () => {
       toast.error("Failed to create recurring transaction. Please try again!");
@@ -36,6 +38,7 @@ function updateRecurring() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [RECURRING_QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
     },
     onError: () => {
       toast.error("Failed to update recurring transaction. Please try again!");

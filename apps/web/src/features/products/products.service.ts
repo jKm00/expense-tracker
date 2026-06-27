@@ -10,9 +10,12 @@ import {
   Product,
   ProductKpis,
   ProductPage,
+  ProductWithTag,
   UpdateProduct,
 } from "./products.models";
 import { productRepo } from "./products.repo";
+
+type ActiveProduct = ProductWithTag;
 
 function normalizeName(value: string) {
   return value
@@ -26,6 +29,78 @@ function normalizeName(value: string) {
 
 function trimName(value: string) {
   return value.trim();
+}
+
+function sortByOldest(products: ActiveProduct[]) {
+  return [...products].sort((a, b) => {
+    const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
+    if (createdDiff !== 0) {
+      return createdDiff;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function productMatchesNormalizedName(
+  product: ActiveProduct,
+  normalizedName: string,
+  options: { ignoreAliasId?: string } = {},
+) {
+  if (normalizeName(product.name) === normalizedName) {
+    return true;
+  }
+
+  return product.aliases.some((alias) => {
+    if (alias.id === options.ignoreAliasId) {
+      return false;
+    }
+    return (alias.normalizedName || normalizeName(alias.name)) === normalizedName;
+  });
+}
+
+async function findActiveProductByNormalizedNameOrAlias(
+  userId: string,
+  normalizedName: string,
+  options: { ignoreProductId?: string; ignoreAliasId?: string } = {},
+) {
+  const allProducts = await productRepo.getAll(userId);
+  const matches = allProducts.filter((product) => {
+    if (product.id === options.ignoreProductId) {
+      return false;
+    }
+    return productMatchesNormalizedName(product, normalizedName, {
+      ignoreAliasId: options.ignoreAliasId,
+    });
+  });
+
+  return sortByOldest(matches)[0] ?? null;
+}
+
+async function linkMissingTags(
+  userId: string,
+  product: Product | ActiveProduct,
+  tagIds?: string[],
+) {
+  const uniqueTagIds = Array.from(new Set(tagIds ?? []));
+  if (uniqueTagIds.length === 0) {
+    return ok(true);
+  }
+
+  const existingTagIds = new Set(
+    "tags" in product ? product.tags.map((tag) => tag.id) : [],
+  );
+  for (const tagId of uniqueTagIds) {
+    if (existingTagIds.has(tagId)) {
+      continue;
+    }
+
+    const [linkError] = await linkTagToProduct(userId, product.id, tagId);
+    if (linkError) {
+      return err(linkError);
+    }
+  }
+
+  return ok(true);
 }
 
 async function getOwnedProduct(userId: string, productId: string) {
@@ -217,6 +292,27 @@ async function addProduct(product: NewProduct, tagIds?: string[]) {
   });
 
   const trimmedProductName = trimName(product.name);
+  const normalizedProductName = normalizeName(trimmedProductName);
+
+  try {
+    const existing = await findActiveProductByNormalizedNameOrAlias(
+      product.userId,
+      normalizedProductName,
+    );
+    if (existing) {
+      logger.addAttrs({ productId: existing.id, productReused: true });
+      const [tagError] = await linkMissingTags(product.userId, existing, tagIds);
+      if (tagError) {
+        return err(tagError);
+      }
+      return ok(existing);
+    }
+  } catch (error) {
+    return err({
+      reason: "UNEXPECTED_DB_ERROR" as const,
+      message: `Failed to check for existing product (${product.name})`,
+    });
+  }
 
   let saved: Product;
   try {
@@ -236,10 +332,9 @@ async function addProduct(product: NewProduct, tagIds?: string[]) {
     });
   }
 
-  if (tagIds) {
-    await Promise.all(
-      tagIds.map((tagId) => linkTagToProduct(product.userId, saved.id, tagId)),
-    );
+  const [tagError] = await linkMissingTags(product.userId, saved, tagIds);
+  if (tagError) {
+    return err(tagError);
   }
 
   return ok(saved);
@@ -262,6 +357,26 @@ async function updateProduct(userId: string, productId: string, data: UpdateProd
   if (data.name !== undefined) {
     const trimmedName = trimName(data.name);
     normalizedNewName = normalizeName(trimmedName);
+
+    try {
+      const conflict = await findActiveProductByNormalizedNameOrAlias(
+        userId,
+        normalizedNewName,
+        { ignoreProductId: productId },
+      );
+      if (conflict) {
+        return err({
+          reason: "PRODUCT_NAME_ALREADY_EXISTS" as const,
+          message: "A product with this name already exists",
+        });
+      }
+    } catch (error) {
+      return err({
+        reason: "PRODUCT_DB_ERROR" as const,
+        message: `Failed to check product name uniqueness for user ${userId}`,
+      });
+    }
+
     data = { ...data, name: trimmedName };
   }
 
@@ -323,6 +438,24 @@ async function addProductAlias(userId: string, productId: string, name: string) 
     return err({
       reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
       message: "This alias already exists for this product",
+    });
+  }
+
+  try {
+    const conflict = await findActiveProductByNormalizedNameOrAlias(
+      userId,
+      normalizedName,
+    );
+    if (conflict) {
+      return err({
+        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
+        message: "This alias already exists for a product",
+      });
+    }
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DB_ERROR" as const,
+      message: `Failed to check alias uniqueness for user ${userId}`,
     });
   }
 
@@ -403,6 +536,25 @@ async function updateProductAlias(userId: string, aliasId: string, name: string)
     return err({
       reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
       message: "This alias already exists for this product",
+    });
+  }
+
+  try {
+    const conflict = await findActiveProductByNormalizedNameOrAlias(
+      userId,
+      normalizedName,
+      { ignoreAliasId: aliasId },
+    );
+    if (conflict) {
+      return err({
+        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
+        message: "This alias already exists for a product",
+      });
+    }
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DB_ERROR" as const,
+      message: `Failed to check alias uniqueness for user ${userId}`,
     });
   }
 

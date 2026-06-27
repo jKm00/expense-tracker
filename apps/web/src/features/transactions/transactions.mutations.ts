@@ -9,6 +9,7 @@ import { assertOnline } from "@/lib/offline-guard";
 import { transactionController } from "./transactions.controller";
 import { TRANSACTION_QUERY_KEY } from "./transactions.queries";
 import { toast } from "sonner";
+import { PRODUCT_QUERY_KEY } from "../products/products.queries";
 
 function saveTransaction() {
   const qc = useQueryClient();
@@ -21,6 +22,9 @@ function saveTransaction() {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: [TRANSACTION_QUERY_KEY],
+      });
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
       });
     },
     onError: () => {
@@ -63,6 +67,9 @@ function updateTransaction() {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: [TRANSACTION_QUERY_KEY],
+      });
+      qc.invalidateQueries({
+        queryKey: [PRODUCT_QUERY_KEY],
       });
     },
     onError: () => {
