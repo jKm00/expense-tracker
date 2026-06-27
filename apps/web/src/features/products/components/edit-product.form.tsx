@@ -27,7 +27,7 @@ import { productSchema } from "../products.validators";
 function getAliasErrorMessage(reason: string): string {
   switch (reason) {
     case "PRODUCT_ALIAS_ALREADY_EXISTS":
-      return "This alias already exists for this product";
+      return "This alias already exists for a product";
     case "PRODUCT_ALIAS_EQUALS_CANONICAL":
       return "Alias cannot be the same as product name";
     case "PRODUCT_ALIAS_NOT_FOUND":
@@ -83,6 +83,9 @@ export function EditProductForm({ product }: { product: ProductWithDetails }) {
                 break;
               case "PRODUCT_UPDATE_FAILED":
                 message = "Failed to update product, please try again!";
+                break;
+              case "PRODUCT_NAME_ALREADY_EXISTS":
+                message = "A product with this name already exists";
                 break;
               case "PRODUCT_DB_ERROR":
               case "UNEXPECTED_DB_ERROR":
