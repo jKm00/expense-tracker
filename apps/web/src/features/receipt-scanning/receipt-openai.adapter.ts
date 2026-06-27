@@ -120,6 +120,7 @@ export async function extractReceiptWithOpenAI(
     },
     body: JSON.stringify({
       model: OPENAI_MODEL,
+      temperature: 0,
       text: { format: { type: "json_object" } },
       input: [
         {
