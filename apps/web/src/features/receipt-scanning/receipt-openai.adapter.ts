@@ -1,8 +1,8 @@
+import { env } from "@/config/env";
 import { extractedReceiptSchema } from "./receipt-scanning.dtos";
 import { ExtractedReceipt } from "./receipt-scanning.models";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
-const OPENAI_MODEL = process.env.OPENAI_RECEIPT_MODEL || "gpt-4o-mini";
 
 function buildPrompt() {
   return `Extract structured grocery receipt data from this receipt file.
@@ -107,7 +107,7 @@ function getFileInput(receiptDataUrl: string) {
 export async function extractReceiptWithOpenAI(
   receiptDataUrl: string,
 ): Promise<ExtractedReceipt> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY_MISSING");
   }
@@ -119,7 +119,7 @@ export async function extractReceiptWithOpenAI(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
+      model: env.OPENAI_RECEIPT_MODEL,
       temperature: 0,
       text: { format: { type: "json_object" } },
       input: [
