@@ -1,8 +1,0 @@
-[build]
-buildCommand = "pnpm build"
-watchPatterns = ["apps/web/src/**"]
-
-[deploy]
-startCommand = "pnpm start"
-preDeployCommand = ["pnpm db:migrate"]
-restartPolicyType = "ALWAYS"
