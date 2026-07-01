@@ -1,0 +1,8 @@
+[build]
+buildCommand = "pnpm --filter @expense-tracker/web build"
+watchPatterns = ["apps/web/src/**"]
+
+[deploy]
+startCommand = "pnpm --filter @expense-tracker/web start"
+preDeployCommand = ["pnpm --filter @expense-tracker/web db:migrate"]
+restartPolicyType = "ALWAYS"
