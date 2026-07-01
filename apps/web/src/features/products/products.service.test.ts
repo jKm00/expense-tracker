@@ -436,22 +436,29 @@ describe("productService", () => {
       expect(data).toEqual(alias);
     });
 
-    it("blocks alias creation when it matches another active product name", async () => {
+    it("allows alias creation when another product has the same alias", async () => {
       const product = makeProduct({ id: "product-1", name: "Milk", aliases: [] });
-      const conflict = makeProduct({ id: "product-2", name: "Skim Milk", aliases: [] });
+      const conflict = makeProduct({
+        id: "product-2",
+        name: "Grandiosa",
+        aliases: [makeAlias({ id: "alias-existing", productId: "product-2", normalizedName: "pizza" })],
+      });
+      const alias = makeAlias({ id: "alias-2", name: "Pizza", normalizedName: "pizza" });
 
       mockProductRepo.getOne.mockResolvedValue(product as any);
       mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
       mockProductRepo.getAll.mockResolvedValue([product, conflict] as any);
+      mockProductRepo.saveAlias.mockResolvedValue([alias] as any);
 
-      const [error] = await productService.addProductAlias(
+      const [error, data] = await productService.addProductAlias(
         "user-1",
         "product-1",
-        "skim milk",
+        "pizza",
       );
 
-      expect(error?.reason).toBe("PRODUCT_ALIAS_ALREADY_EXISTS");
-      expect(mockProductRepo.saveAlias).not.toHaveBeenCalled();
+      expect(error).toBeNull();
+      expect(data).toEqual(alias);
+      expect(mockProductRepo.getAll).not.toHaveBeenCalled();
     });
 
     it("returns PRODUCT_ALIAS_EQUALS_CANONICAL when alias matches canonical", async () => {
@@ -515,28 +522,31 @@ describe("productService", () => {
       expect(data).toEqual(updatedAlias);
     });
 
-    it("blocks alias update when it matches another active product alias", async () => {
+    it("allows alias update when another product has the same alias", async () => {
       const alias = makeAlias({ id: "alias-1", name: "Whole Milk", normalizedName: "whole milk" });
       const product = makeProduct({ id: "product-1", aliases: [alias] });
       const conflict = makeProduct({
         id: "product-2",
-        name: "Other product",
-        aliases: [makeAlias({ id: "alias-2", productId: "product-2", normalizedName: "skim milk" })],
+        name: "Grandiosa",
+        aliases: [makeAlias({ id: "alias-2", productId: "product-2", normalizedName: "pizza" })],
       });
+      const updatedAlias = makeAlias({ id: "alias-1", name: "Pizza", normalizedName: "pizza" });
 
       mockProductRepo.getAlias.mockResolvedValue(alias as any);
       mockProductRepo.getOne.mockResolvedValue(product as any);
       mockProductRepo.getAliasByNormalizedName.mockResolvedValue(undefined);
       mockProductRepo.getAll.mockResolvedValue([product, conflict] as any);
+      mockProductRepo.updateAlias.mockResolvedValue([updatedAlias] as any);
 
-      const [error] = await productService.updateProductAlias(
+      const [error, data] = await productService.updateProductAlias(
         "user-1",
         "alias-1",
-        "Skim Milk",
+        "Pizza",
       );
 
-      expect(error?.reason).toBe("PRODUCT_ALIAS_ALREADY_EXISTS");
-      expect(mockProductRepo.updateAlias).not.toHaveBeenCalled();
+      expect(error).toBeNull();
+      expect(data).toEqual(updatedAlias);
+      expect(mockProductRepo.getAll).not.toHaveBeenCalled();
     });
   });
 
