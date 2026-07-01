@@ -442,24 +442,6 @@ async function addProductAlias(userId: string, productId: string, name: string) 
   }
 
   try {
-    const conflict = await findActiveProductByNormalizedNameOrAlias(
-      userId,
-      normalizedName,
-    );
-    if (conflict) {
-      return err({
-        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
-        message: "This alias already exists for a product",
-      });
-    }
-  } catch (error) {
-    return err({
-      reason: "PRODUCT_DB_ERROR" as const,
-      message: `Failed to check alias uniqueness for user ${userId}`,
-    });
-  }
-
-  try {
     const res = await productRepo.saveAlias({
       productId,
       name: trimmedName,
@@ -536,25 +518,6 @@ async function updateProductAlias(userId: string, aliasId: string, name: string)
     return err({
       reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
       message: "This alias already exists for this product",
-    });
-  }
-
-  try {
-    const conflict = await findActiveProductByNormalizedNameOrAlias(
-      userId,
-      normalizedName,
-      { ignoreAliasId: aliasId },
-    );
-    if (conflict) {
-      return err({
-        reason: "PRODUCT_ALIAS_ALREADY_EXISTS" as const,
-        message: "This alias already exists for a product",
-      });
-    }
-  } catch (error) {
-    return err({
-      reason: "PRODUCT_DB_ERROR" as const,
-      message: `Failed to check alias uniqueness for user ${userId}`,
     });
   }
 
