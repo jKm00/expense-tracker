@@ -10,7 +10,6 @@ export function FeatureFlagsProvider({
   featureFlags: FeatureFlagsDTO;
   children: React.ReactNode;
 }) {
-  console.log(`Feature flags: `, featureFlags);
   return (
     <FeatureFlagsContext.Provider value={featureFlags}>
       {children}
