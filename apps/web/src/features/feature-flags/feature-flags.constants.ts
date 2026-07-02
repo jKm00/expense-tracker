@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 
 export const featureFlags = {
-  EXAMPLE: env.EXAMPLE,
+  example: env.EXAMPLE,
+  scoringSystem: env.SCORING_SYSTEM,
 };

@@ -4,14 +4,11 @@ import { getSession } from "@/features/auth/auth.utils";
 import { MobileNav } from "@/components/custom/mobile-nav";
 import { DesktopSidebar } from "@/features/sidebar/desktop-sidebar";
 import { getSidebarCollapsedPreference } from "@/features/sidebar/sidebar-preferences.queries";
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
+import { featureFlagService } from "@/features/feature-flags/feature-flags.service";
 
 const appSearchSchema = z.object({
   month: z.number().optional(),
@@ -32,6 +29,13 @@ export const Route = createFileRoute("/_app")({
     return {
       user: session.user,
       sidebarCollapsed: await getSidebarCollapsedPreference(),
+      // TODO: Add a get all feature flags function
+      featureFlags: {
+        example: featureFlagService.isEnabled("example"),
+        scoringSystem: featureFlagService.isEnabled("scoringSystem", {
+          userIdentifier: session.user.email,
+        }),
+      },
     };
   },
   validateSearch: zodValidator(appSearchSchema),
@@ -39,11 +43,11 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { sidebarCollapsed } = Route.useRouteContext();
+  const { sidebarCollapsed, featureFlags } = Route.useRouteContext();
 
   return (
     <AuthProvider>
-      <FeatureFlagsProvider featureFlags={{}}>
+      <FeatureFlagsProvider featureFlags={featureFlags}>
         <OfflineBanner />
         <div className="min-h-screen bg-background">
           {/* Desktop: sidebar + content */}

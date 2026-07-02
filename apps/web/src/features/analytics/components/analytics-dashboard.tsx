@@ -9,7 +9,9 @@ import {
   calculateVariableTotals,
   buildDailyExpensesData,
 } from "@/features/analytics/analytics.calculations";
+import { calculateMonthScore } from "@/features/analytics/analytics.score";
 import { AnalyticsKpiGrid } from "./analytics-kpi-grid";
+import { MonthScoreHero } from "./month-score-hero";
 import {
   DailyActivityChart,
   type DailyActivityBarSelection,
@@ -29,6 +31,7 @@ import {
 } from "./analytics-insights";
 import { analyticsMutations } from "@/features/analytics/analytics.mutations";
 import { AnalyticsPreferences } from "@/features/analytics/analytics.models";
+import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 import { ProductWithTag } from "@/features/products/products.models";
 import { Tag } from "@/features/tags/tags.models";
 import { cn } from "@/lib/utils";
@@ -109,6 +112,7 @@ export function AnalyticsDashboard({
   const productSectionRef = useRef<HTMLDivElement>(null);
   const hasActiveDrilldown = focusTarget !== null || dayFocusTarget !== null;
   const updateExclusionsMutation = analyticsMutations.updateExclusions();
+  const { scoringSystem } = useFeatureFlags();
   const excludedTagIds = analyticsPreferences?.excludedTagIds ?? [];
   const excludedProductIds = analyticsPreferences?.excludedProductIds ?? [];
 
@@ -124,6 +128,29 @@ export function AnalyticsDashboard({
         compareYear,
       ),
     [comparisonTransactions, compareMonth, compareYear],
+  );
+  const monthScore = useMemo(
+    () => {
+      if (!scoringSystem) return null;
+
+      return calculateMonthScore({
+        metrics,
+        comparisonMetrics,
+        month,
+        year,
+        compareMonth,
+        compareYear,
+      });
+    },
+    [
+      compareMonth,
+      compareYear,
+      comparisonMetrics,
+      metrics,
+      month,
+      scoringSystem,
+      year,
+    ],
   );
   const dailyChartData = useMemo(
     () =>
@@ -385,6 +412,16 @@ export function AnalyticsDashboard({
         )}
       >
         <div className="min-w-0 space-y-4 @container/main">
+          {monthScore && (
+            <MonthScoreHero
+              score={monthScore}
+              month={month}
+              year={year}
+              compareMonth={compareMonth}
+              compareYear={compareYear}
+            />
+          )}
+
           <AnalyticsKpiGrid
             metrics={metrics}
             comparisonMetrics={comparisonMetrics}
