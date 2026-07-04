@@ -18,7 +18,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: undefined },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
+      expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false when env var is empty string", async () => {
@@ -26,7 +26,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
+      expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false for literal 'false'", async () => {
@@ -34,7 +34,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "false" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
+      expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false for literal '0'", async () => {
@@ -42,7 +42,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "0" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
+      expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns true for literal 'true'", async () => {
@@ -50,7 +50,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "true" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
+      expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("returns true for literal '1'", async () => {
@@ -58,7 +58,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "1" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
+      expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("is case-insensitive for true/false/0/1", async () => {
@@ -66,7 +66,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "TRUE" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(true);
+      expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("returns false when no context is provided for allow-list", async () => {
@@ -74,7 +74,7 @@ describe("featureFlagService", () => {
         env: { EXAMPLE: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
-      expect(featureFlagService.isEnabled("EXAMPLE")).toBe(false);
+      expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns true for single user in allow-list", async () => {
@@ -83,7 +83,7 @@ describe("featureFlagService", () => {
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("EXAMPLE", {
+        featureFlagService.isEnabled("example", {
           userIdentifier: "test@user.com",
         }),
       ).toBe(true);
@@ -95,7 +95,7 @@ describe("featureFlagService", () => {
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("EXAMPLE", {
+        featureFlagService.isEnabled("example", {
           userIdentifier: "test@user.com",
         }),
       ).toBe(true);
@@ -107,7 +107,7 @@ describe("featureFlagService", () => {
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("EXAMPLE", {
+        featureFlagService.isEnabled("example", {
           userIdentifier: "another@user.com",
         }),
       ).toBe(false);
@@ -119,7 +119,7 @@ describe("featureFlagService", () => {
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("EXAMPLE", {
+        featureFlagService.isEnabled("example", {
           userIdentifier: "alice@x.com",
         }),
       ).toBe(true);
@@ -131,7 +131,7 @@ describe("featureFlagService", () => {
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
-        featureFlagService.isEnabled("EXAMPLE", {
+        featureFlagService.isEnabled("example", {
           userIdentifier: "alice@x.com",
         }),
       ).toBe(false);
