@@ -68,7 +68,7 @@ const SCORE_METRICS: ScoreMetricDefinition[] = [
   {
     key: "savingsRate",
     label: "Savings rate",
-    weight: 35,
+    weight: 30,
     favorableDirection: "up",
     valueType: "percent",
     currentValue: ({ metrics }) => metrics.savingsRate,
@@ -77,7 +77,7 @@ const SCORE_METRICS: ScoreMetricDefinition[] = [
   {
     key: "netBalance",
     label: "Net balance",
-    weight: 45,
+    weight: 35,
     favorableDirection: "up",
     valueType: "money",
     currentValue: ({ metrics }) => metrics.netBalance,
@@ -96,7 +96,7 @@ const SCORE_METRICS: ScoreMetricDefinition[] = [
   {
     key: "activeDayRate",
     label: "Active days",
-    weight: 6,
+    weight: 5,
     favorableDirection: "down",
     valueType: "rate",
     currentValue: ({ metrics, month, year }) =>
@@ -107,7 +107,7 @@ const SCORE_METRICS: ScoreMetricDefinition[] = [
   {
     key: "transactionRate",
     label: "Transactions",
-    weight: 6,
+    weight: 5,
     favorableDirection: "down",
     valueType: "rate",
     currentValue: ({ metrics, month, year }) =>
@@ -118,7 +118,7 @@ const SCORE_METRICS: ScoreMetricDefinition[] = [
   {
     key: "itemsPerTransaction",
     label: "Items per transaction",
-    weight: 6,
+    weight: 5,
     favorableDirection: "up",
     valueType: "number",
     currentValue: ({ metrics }) => metrics.itemsPerTransaction,
@@ -196,17 +196,17 @@ function calculateSingleMonthScore(input: CalculateSingleMonthScoreInput): Singl
 
 function scoreSavingsRate(metrics: AnalyticsMetrics) {
   if (metrics.totalIncome <= 0) {
-    return metrics.totalExpenses > 0 ? -35 : 0;
+    return metrics.totalExpenses > 0 ? -30 : 0;
   }
 
-  return 35 * dampen(metrics.savingsRate / 20);
+  return 30 * dampen(metrics.savingsRate / 20);
 }
 
 function scoreNetBalance(metrics: AnalyticsMetrics) {
   const cashflowScale = Math.max(metrics.totalIncome, metrics.totalExpenses, 1);
   const balanceScale = cashflowScale * 0.05;
 
-  return 45 * dampen(metrics.netBalance / balanceScale);
+  return 35 * dampen(metrics.netBalance / balanceScale);
 }
 
 function scoreDailySpending(metrics: AnalyticsMetrics, scoringDays: number) {
@@ -221,15 +221,15 @@ function scoreDailySpending(metrics: AnalyticsMetrics, scoringDays: number) {
 }
 
 function scoreActiveDayRate(activeDayRate: number) {
-  return 6 * dampen((0.4 - activeDayRate) / 0.2);
+  return 5 * dampen((0.4 - activeDayRate) / 0.2);
 }
 
 function scoreTransactionRate(transactionRate: number) {
-  return 6 * dampen((0.75 - transactionRate) / 0.5);
+  return 5 * dampen((0.75 - transactionRate) / 0.5);
 }
 
 function scoreItemsPerTransaction(itemsPerTransaction: number) {
-  return 6 * dampen((itemsPerTransaction - 2) / 1.5);
+  return 5 * dampen((itemsPerTransaction - 2) / 1.5);
 }
 
 function getScoringDays(month: number, year: number) {
@@ -242,5 +242,5 @@ function getScoringDays(month: number, year: number) {
 }
 
 function dampen(value: number) {
-  return Math.asinh(value);
+  return Math.tanh(value);
 }
