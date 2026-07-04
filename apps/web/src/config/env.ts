@@ -8,4 +8,5 @@ export const env = {
   OPENAI_RECEIPT_MODEL: process.env.OPENAI_RECEIPT_MODEL || "gpt-4o-mini",
   // Feature Flags
   EXAMPLE: process.env.EXAMPLE || "false",
+  SCORING_SYSTEM: process.env.SCORING_SYSTEM || "false",
 } as const;
