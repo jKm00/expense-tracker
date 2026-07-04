@@ -8,7 +8,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
-import { featureFlagService } from "@/features/feature-flags/feature-flags.service";
+import { featureFlagController } from "@/features/feature-flags/feature-flags.controller";
 
 const appSearchSchema = z.object({
   month: z.number().optional(),
@@ -29,13 +29,7 @@ export const Route = createFileRoute("/_app")({
     return {
       user: session.user,
       sidebarCollapsed: await getSidebarCollapsedPreference(),
-      // TODO: Add a get all feature flags function
-      featureFlags: {
-        example: featureFlagService.isEnabled("example"),
-        scoringSystem: featureFlagService.isEnabled("scoringSystem", {
-          userIdentifier: session.user.email,
-        }),
-      },
+      featureFlags: await featureFlagController.getFeatureFlags(),
     };
   },
   validateSearch: zodValidator(appSearchSchema),

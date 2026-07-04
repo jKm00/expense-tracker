@@ -125,6 +125,18 @@ describe("featureFlagService", () => {
       ).toBe(true);
     });
 
+    it("matches allow-listed user identifiers case-insensitively", async () => {
+      vi.doMock("@/config/env", () => ({
+        env: { EXAMPLE: "Alice@X.com" },
+      }));
+      const { featureFlagService } = await import("./feature-flags.service.ts");
+      expect(
+        featureFlagService.isEnabled("example", {
+          userIdentifier: "alice@x.com",
+        }),
+      ).toBe(true);
+    });
+
     it("rejects unknown literal", async () => {
       vi.doMock("@/config/env", () => ({
         env: { EXAMPLE: "enabled" },
@@ -135,6 +147,25 @@ describe("featureFlagService", () => {
           userIdentifier: "alice@x.com",
         }),
       ).toBe(false);
+    });
+  });
+
+  describe("getAll", () => {
+    it("returns every configured feature flag for the current user", async () => {
+      vi.doMock("@/config/env", () => ({
+        env: {
+          EXAMPLE: "true",
+          SCORING_SYSTEM: "allowed@user.com",
+        },
+      }));
+      const { featureFlagService } = await import("./feature-flags.service.ts");
+
+      expect(
+        featureFlagService.getAll({ userIdentifier: "allowed@user.com" }),
+      ).toEqual({
+        example: true,
+        scoringSystem: true,
+      });
     });
   });
 });

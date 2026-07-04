@@ -1,6 +1,18 @@
 import { getLogger } from "../logger/logger.context";
 import { featureFlags } from "./feature-flags.constants";
-import { FeatureFlagContext } from "./feature-flags.types";
+import { FeatureFlagContext, FeatureFlagsDTO } from "./feature-flags.types";
+
+function getAll(ctx?: FeatureFlagContext): FeatureFlagsDTO {
+  const result = {} as FeatureFlagsDTO;
+
+  (Object.keys(featureFlags) as Array<keyof typeof featureFlags>).forEach(
+    (key) => {
+      result[key] = isEnabled(key, ctx);
+    },
+  );
+
+  return result;
+}
 
 function isEnabled(name: keyof typeof featureFlags, ctx?: FeatureFlagContext) {
   const logger = getLogger();
@@ -56,7 +68,7 @@ function isEnabled(name: keyof typeof featureFlags, ctx?: FeatureFlagContext) {
     });
     return false;
   }
-  if (array.includes(ctx.userIdentifier)) {
+  if (array.includes(ctx.userIdentifier.toLowerCase())) {
     logger.addAttrs({
       featureFlagEnabled: true,
       featureFlagReason: "User match",
@@ -72,4 +84,5 @@ function isEnabled(name: keyof typeof featureFlags, ctx?: FeatureFlagContext) {
 
 export const featureFlagService = {
   isEnabled,
+  getAll,
 };
