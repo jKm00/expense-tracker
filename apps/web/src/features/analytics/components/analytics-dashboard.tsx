@@ -129,29 +129,6 @@ export function AnalyticsDashboard({
       ),
     [comparisonTransactions, compareMonth, compareYear],
   );
-  const monthScore = useMemo(
-    () => {
-      if (!scoringSystem) return null;
-
-      return calculateMonthScore({
-        metrics,
-        comparisonMetrics,
-        month,
-        year,
-        compareMonth,
-        compareYear,
-      });
-    },
-    [
-      compareMonth,
-      compareYear,
-      comparisonMetrics,
-      metrics,
-      month,
-      scoringSystem,
-      year,
-    ],
-  );
   const dailyChartData = useMemo(
     () =>
       buildDailyExpensesData(transactions, comparisonTransactions, month, year),
@@ -183,6 +160,34 @@ export function AnalyticsDashboard({
     );
     return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
   }, [comparisonTransactions]);
+
+  const monthScore = useMemo(
+    () => {
+      if (!scoringSystem) return null;
+
+      return calculateMonthScore({
+        metrics,
+        comparisonMetrics,
+        fixedVariableMetrics,
+        comparisonFixedVariableMetrics,
+        month,
+        year,
+        compareMonth,
+        compareYear,
+      });
+    },
+    [
+      compareMonth,
+      compareYear,
+      comparisonFixedVariableMetrics,
+      comparisonMetrics,
+      fixedVariableMetrics,
+      metrics,
+      month,
+      scoringSystem,
+      year,
+    ],
+  );
 
   const expenseEntries = useMemo(
     () => buildExpenseEntries(transactions),

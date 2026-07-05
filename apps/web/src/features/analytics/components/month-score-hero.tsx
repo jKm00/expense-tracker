@@ -40,8 +40,8 @@ export function MonthScoreHero({
                 Not enough data yet
               </h2>
               <p className="max-w-xl text-xs text-muted-foreground">
-                {score.reason} The score compares {monthLabel} with{" "}
-                {compareMonthLabel} and is calculated on demand.
+                {score.reason} The score uses normalized monthly KPIs and is
+                calculated on demand.
               </p>
             </div>
             <p className="text-2xl font-semibold tracking-tight text-muted-foreground">
@@ -55,8 +55,8 @@ export function MonthScoreHero({
 
   const isAhead = score.delta > 0;
   const isBehind = score.delta < 0;
-  const isHealthy = score.currentScore > 0;
-  const isUnhealthy = score.currentScore < 0;
+  const isHealthy = score.currentScore >= 70;
+  const isUnhealthy = score.currentScore < 50;
   const DeltaIcon = isAhead ? ArrowUpRight : isBehind ? ArrowDownRight : Minus;
   const deltaAccentClass = isAhead
     ? "text-income"
@@ -100,9 +100,11 @@ export function MonthScoreHero({
               </div>
               <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
                 <p className="text-4xl leading-none font-semibold tracking-[-0.07em]">
-                  {formatScoreValue(score.currentScore)}
+                  {score.currentScore}
                 </p>
-                <p className="pb-0.5 text-xs font-medium text-muted-foreground">pts</p>
+                <p className="pb-0.5 text-xs font-medium text-muted-foreground">
+                  /100
+                </p>
                 <div
                   className={cn(
                     "mb-0.5 inline-flex items-center gap-1 text-xs font-medium",
@@ -110,7 +112,7 @@ export function MonthScoreHero({
                   )}
                 >
                   <DeltaIcon className="size-3.5" />
-                  <span>{formatScoreDelta(score.delta)} pts vs last period</span>
+                  <span>{formatScoreDelta(score.delta)} pts vs {compareMonthLabel}</span>
                 </div>
               </div>
             </div>
@@ -134,34 +136,31 @@ function DriverNote({
   driver: MonthScoreMetricContribution;
 }) {
   const isPositiveNote = type === "positive";
-  const hasExpectedContribution = isPositiveNote
-    ? driver.contributionPoints > 0
-    : driver.contributionPoints < 0;
 
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-2">
         <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-          {isPositiveNote ? "Best lift" : "Biggest drag"}
+          {isPositiveNote ? "Best area" : "Needs attention"}
         </p>
         <span className="h-px min-w-3 flex-1 bg-border/80" />
         <span
           className={cn(
             "text-xs font-medium tabular-nums",
-            driver.contributionPoints > 0
+            driver.normalizedScore >= 70
               ? "text-income"
-              : driver.contributionPoints < 0
+              : driver.normalizedScore < 50
                 ? "text-expense"
                 : "text-muted-foreground",
           )}
         >
-          {formatScoreDelta(Math.round(driver.contributionPoints))} pts
+          {Math.round(driver.normalizedScore)}/100
         </span>
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <p className="text-sm font-medium">{driver.label}</p>
         <p className="min-w-0 text-xs leading-relaxed text-muted-foreground">
-          {formatDriverSentence(driver, type, hasExpectedContribution)}
+          {formatDriverSentence(driver, type)}
         </p>
       </div>
     </div>
@@ -171,21 +170,14 @@ function DriverNote({
 function formatDriverSentence(
   driver: MonthScoreMetricContribution,
   type: "positive" | "negative",
-  hasExpectedContribution: boolean,
 ) {
-  if (!hasExpectedContribution) {
-    return type === "positive"
-      ? `No clear positive lift; ${driver.label.toLowerCase()} was closest to helping.`
-      : `No clear negative drag; ${driver.label.toLowerCase()} was the smallest lift.`;
-  }
-
   const value = formatDriverValue(driver);
 
   if (type === "positive") {
-    return `${driver.label} is healthy at ${value}.`;
+    return `${driver.label} is strongest at ${value}.`;
   }
 
-  return `${driver.label} is dragging the score at ${value}.`;
+  return `${driver.label} needs attention at ${value}.`;
 }
 
 function formatDriverValue(driver: MonthScoreMetricContribution) {
@@ -194,7 +186,7 @@ function formatDriverValue(driver: MonthScoreMetricContribution) {
   }
 
   if (driver.valueType === "percent") {
-    return `${driver.currentValue.toFixed(1)}%`;
+    return `${(driver.currentValue * 100).toFixed(1)}%`;
   }
 
   if (driver.valueType === "rate") {
@@ -211,11 +203,6 @@ function formatDriverValue(driver: MonthScoreMetricContribution) {
 function formatScoreDelta(delta: number) {
   if (delta > 0) return `+${delta}`;
   return `${delta}`;
-}
-
-function formatScoreValue(score: number) {
-  if (score > 0) return `+${score}`;
-  return `${score}`;
 }
 
 function formatMonth(month: number, year: number) {
