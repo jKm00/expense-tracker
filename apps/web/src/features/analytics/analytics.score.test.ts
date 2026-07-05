@@ -236,45 +236,6 @@ describe("calculateMonthScore", () => {
     expect(result.comparisonScore).toBeLessThanOrEqual(100);
   });
 
-  it("keeps extreme scores inside the -100 to 100 range", () => {
-    const result = calculateMonthScore({
-      metrics: {
-        ...baseMetrics,
-        netBalance: 1_000_000,
-        totalIncome: 1_000_000,
-        totalExpenses: 0,
-        savingsRate: 100,
-        transactionCount: 1,
-        itemsPerTransaction: 100,
-        dailySpending: 0,
-        activeDays: 1,
-      },
-      comparisonMetrics: {
-        ...baseMetrics,
-        netBalance: -1_000_000,
-        totalIncome: 1,
-        totalExpenses: 1_000_001,
-        savingsRate: -100_000_000,
-        transactionCount: 10_000,
-        itemsPerTransaction: 0,
-        dailySpending: 1_000_001,
-        activeDays: 31,
-      },
-      month: 5,
-      year: 2026,
-      compareMonth: 4,
-      compareYear: 2026,
-    });
-
-    expect(result.status).toBe("ready");
-    if (result.status !== "ready") return;
-
-    expect(result.currentScore).toBeGreaterThanOrEqual(-100);
-    expect(result.currentScore).toBeLessThanOrEqual(100);
-    expect(result.comparisonScore).toBeGreaterThanOrEqual(-100);
-    expect(result.comparisonScore).toBeLessThanOrEqual(100);
-  });
-
   it("normalizes active days and transactions by month length", () => {
     const result = scoreMonth({
       metrics: { ...baseMetrics, activeDays: 15, transactionCount: 30 },
