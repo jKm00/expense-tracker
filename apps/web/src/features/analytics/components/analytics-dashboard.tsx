@@ -237,12 +237,8 @@ export function AnalyticsDashboard({
     () => buildProductSearchOptions(products, unfilteredProductInsights),
     [products, unfilteredProductInsights],
   );
-  const hiddenTagCount = unfilteredTagInsights.filter((tag) =>
-    excludedTagIds.includes(tag.id),
-  ).length;
-  const hiddenProductCount = unfilteredProductInsights.filter((product) =>
-    excludedProductIds.includes(product.id),
-  ).length;
+  const hiddenTagCount = excludedTagIds.length;
+  const hiddenProductCount = excludedProductIds.length;
   const allTagsHidden = unfilteredTagInsights.length > 0 && tagInsights.length === 0;
   const allProductsHidden =
     unfilteredProductInsights.length > 0 && productInsights.length === 0;
