@@ -1,85 +1,85 @@
 # Expense Tracker
 
-A financial tracking application for managing income and expenses with analytics to help make better financial decisions.
+A personal finance app for tracking transactions, recurring expenses, shopping items, tags, and analytics.
 
-Built as a PWA (Progressive Web App) first, but works seamlessly on desktop too.
+Live app: [ex.edvardsen.dev](https://ex.edvardsen.dev)
 
-## Live Apps
+## Apps
 
-- Version 1: [ex.edvardsen.dev](https://ex.edvardsen.dev)
-- Version 2 (Beta): [ex.v2.edvardsen.dev](https://ex.v2.edvardsen.dev)
+This is a pnpm monorepo with two apps:
+
+- `apps/web` - TanStack Start web app and API routes
+- `apps/job` - recurring transaction job that calls the web app
 
 ## Setup
 
-1. Configure env values for both `apps/job` and `apps/web`. Use `env.example` as reference
+1. Install dependencies:
 
-2. Start local DB:
+```bash
+pnpm install
+```
+
+2. Configure environment variables:
+
+- `apps/web/.env` from `apps/web/.env.example`
+- `apps/job/.env` from `apps/job/.env.example`
+
+3. Start Postgres:
 
 ```bash
 docker compose up -d
 ```
 
-3. Apply migrations:
+4. Apply migrations:
 
 ```bash
 pnpm db:migrate
 ```
 
-4. Start web app:
+5. Start the web app:
 
 ```bash
 pnpm dev
 ```
 
-### Job app
-
-The job is a task that runs once a day. It fetches recurring items for the day of the run and creates transactions for them by sending request to the web app.
-
-To run it locally:
-
-- Configure env values (Remeber to configure `RECURRING_JOB_TOKEN` in both `apps/job` and `apps/web`)
-- Make sure web app is running first
-- Run job once with:
+## Commands
 
 ```bash
-pnpm job
-```
-
-## Building
-
-```bash
-pnpm build
+pnpm build      # build the web app
+pnpm test:web   # run web tests
+pnpm test:job   # run job tests
+pnpm job        # run the recurring job once
 ```
 
 ## Database
 
-### Migration
-
-Migrations are generated based on [schema.ts](/apps/web/src/lib/db/schema.ts)
-
-1. Generate migration:
+The Drizzle schema is exported from `apps/web/src/lib/db/schema.ts`.
 
 ```bash
-pnpm db:migrate
+pnpm db:generate <name> # generate a migration
+pnpm db:migrate         # apply migrations
+pnpm db:studio          # open Drizzle Studio
+pnpm db:seed            # seed local data
+pnpm db:reset           # reset local data
 ```
 
-2. Apply migration:
+## Recurring Job
 
-```bash
-pnpm db:generate [name/short description of migration]
-```
+The job app triggers `apps/web` through `POST /api/internal/recurring/run` and creates due recurring transactions.
 
-## Codebase Overview
+Required env values:
 
-This project is built with:
+- `apps/web`: `RECURRING_JOB_TOKEN`
+- `apps/job`: `API_ENDPOINT`, `RECURRING_JOB_TOKEN`
 
-- **TanStack Router** - File-based routing in `src/routes/`
-- **TanStack Query** - Data fetching and state management
-- **Tailwind CSS** - Styling
-- **Vitest** - Testing
+Use the same `RECURRING_JOB_TOKEN` in both apps.
 
-Key directories:
+## Codebase
 
-- `src/routes/` - Application routes
-- `src/components/` - Reusable components
-- `src/lib/` - Utilities and shared logic
+- `apps/web/src/routes` - file-based routes and API endpoints
+- `apps/web/src/features` - feature modules
+- `apps/web/src/components` - reusable UI components
+- `apps/web/src/lib` - shared web utilities
+- `apps/job/src` - recurring job entry point
+
+Main stack: TanStack Start, TanStack Router, TanStack Query, Drizzle, PostgreSQL, Tailwind CSS, Vitest.
