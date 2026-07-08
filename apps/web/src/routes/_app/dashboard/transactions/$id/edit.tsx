@@ -176,7 +176,6 @@ function ScanReceiptAction({ transactionId }: { transactionId: string }) {
           ref={inputRef}
           type="file"
           accept="image/*,application/pdf"
-          capture="environment"
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0];
