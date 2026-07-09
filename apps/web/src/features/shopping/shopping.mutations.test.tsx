@@ -195,6 +195,34 @@ describe("shoppingMutations", () => {
     expect(cached?.[1].items[0].id).toBe("item-1");
   });
 
+  it("restores the shopping list when clearing completed items returns an application error", async () => {
+    mockShoppingController.clearCompletedShoppingItems.mockResolvedValue([
+      { reason: "SHOPPING_DB_ERROR", message: "boom" },
+      null,
+    ] as any);
+
+    const queryClient = new QueryClient();
+    queryClient.setQueryData([SHOPPING_QUERY_KEY], [null, makeList()]);
+
+    const { result } = renderHook(
+      () => shoppingMutations.clearCompletedShoppingItems(),
+      {
+        wrapper: makeWrapper(queryClient),
+      },
+    );
+
+    await result.current.mutateAsync();
+
+    const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
+      SHOPPING_QUERY_KEY,
+    ]);
+    expect(cached?.[1].items).toHaveLength(2);
+    expect(cached?.[1].items.map((item) => item.id)).toEqual([
+      "item-1",
+      "item-2",
+    ]);
+  });
+
   it("optimistically removes every item when clearing the full list", async () => {
     mockShoppingController.clearShoppingList.mockResolvedValue([null, []] as any);
 
@@ -212,5 +240,30 @@ describe("shoppingMutations", () => {
     ]);
     expect(mockShoppingController.clearShoppingList).toHaveBeenCalledWith();
     expect(cached?.[1].items).toHaveLength(0);
+  });
+
+  it("restores the shopping list when clearing the full list returns an application error", async () => {
+    mockShoppingController.clearShoppingList.mockResolvedValue([
+      { reason: "SHOPPING_DB_ERROR", message: "boom" },
+      null,
+    ] as any);
+
+    const queryClient = new QueryClient();
+    queryClient.setQueryData([SHOPPING_QUERY_KEY], [null, makeList()]);
+
+    const { result } = renderHook(() => shoppingMutations.clearShoppingList(), {
+      wrapper: makeWrapper(queryClient),
+    });
+
+    await result.current.mutateAsync();
+
+    const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
+      SHOPPING_QUERY_KEY,
+    ]);
+    expect(cached?.[1].items).toHaveLength(2);
+    expect(cached?.[1].items.map((item) => item.id)).toEqual([
+      "item-1",
+      "item-2",
+    ]);
   });
 });
