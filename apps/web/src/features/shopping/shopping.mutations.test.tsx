@@ -17,6 +17,8 @@ vi.mock("./shopping.controller", () => ({
     addShoppingItem: vi.fn(),
     toggleShoppingItem: vi.fn(),
     removeShoppingItem: vi.fn(),
+    clearCompletedShoppingItems: vi.fn(),
+    clearShoppingList: vi.fn(),
     completeShopping: vi.fn(),
   },
 }));
@@ -73,6 +75,22 @@ function makeList() {
           deletedAt: null,
         },
       },
+      {
+        id: "item-2",
+        shoppingListId: "list-1",
+        productId: "product-2",
+        checked: true,
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-01"),
+        product: {
+          id: "product-2",
+          userId: "user-1",
+          name: "Bread",
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-01-01"),
+          deletedAt: null,
+        },
+      },
     ],
   };
 }
@@ -101,13 +119,13 @@ describe("shoppingMutations", () => {
       const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
         SHOPPING_QUERY_KEY,
       ]);
-      expect(cached?.[1].items).toHaveLength(1);
+      expect(cached?.[1].items).toHaveLength(2);
     });
 
     const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
       SHOPPING_QUERY_KEY,
     ]);
-    expect(cached?.[1].items).toHaveLength(1);
+    expect(cached?.[1].items).toHaveLength(2);
     expect(cached?.[1].items[0].product.name).toBe("Milk");
   });
 
@@ -149,5 +167,54 @@ describe("shoppingMutations", () => {
     expect(
       queryClient.getQueryData([TRANSACTION_QUERY_KEY, "tx-linked"]),
     ).toEqual([null, transaction]);
+  });
+
+  it("optimistically removes checked items when clearing completed items", async () => {
+    mockShoppingController.clearCompletedShoppingItems.mockResolvedValue([
+      null,
+      [],
+    ] as any);
+
+    const queryClient = new QueryClient();
+    queryClient.setQueryData([SHOPPING_QUERY_KEY], [null, makeList()]);
+
+    const { result } = renderHook(
+      () => shoppingMutations.clearCompletedShoppingItems(),
+      {
+        wrapper: makeWrapper(queryClient),
+      },
+    );
+
+    await result.current.mutateAsync();
+
+    const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
+      SHOPPING_QUERY_KEY,
+    ]);
+    expect(mockShoppingController.clearCompletedShoppingItems).toHaveBeenCalledWith({
+      data: {},
+    });
+    expect(cached?.[1].items).toHaveLength(1);
+    expect(cached?.[1].items[0].id).toBe("item-1");
+  });
+
+  it("optimistically removes every item when clearing the full list", async () => {
+    mockShoppingController.clearShoppingList.mockResolvedValue([null, []] as any);
+
+    const queryClient = new QueryClient();
+    queryClient.setQueryData([SHOPPING_QUERY_KEY], [null, makeList()]);
+
+    const { result } = renderHook(() => shoppingMutations.clearShoppingList(), {
+      wrapper: makeWrapper(queryClient),
+    });
+
+    await result.current.mutateAsync();
+
+    const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
+      SHOPPING_QUERY_KEY,
+    ]);
+    expect(mockShoppingController.clearShoppingList).toHaveBeenCalledWith({
+      data: {},
+    });
+    expect(cached?.[1].items).toHaveLength(0);
   });
 });

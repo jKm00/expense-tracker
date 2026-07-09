@@ -306,4 +306,63 @@ describe("shoppingService", () => {
       expect(mockShoppingRepo.clearShoppingList).toHaveBeenCalledWith("list-1");
     });
   });
+
+  describe("clearCompletedShoppingItems", () => {
+    it("removes only checked list items", async () => {
+      const list = makeList({
+        items: [
+          makeItem({ id: "checked-1", checked: true }),
+          makeItem({ id: "unchecked-1", checked: false }),
+        ],
+      });
+
+      mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
+      mockShoppingRepo.removeShoppingListItemsByIds.mockResolvedValue([
+        makeItem({ id: "checked-1", checked: true }),
+      ] as any);
+
+      const [error] = await shoppingService.clearCompletedShoppingItems("user-1");
+
+      expect(error).toBeNull();
+      expect(mockShoppingRepo.removeShoppingListItemsByIds).toHaveBeenCalledWith(
+        "list-1",
+        ["checked-1"],
+      );
+      expect(mockShoppingRepo.clearShoppingList).not.toHaveBeenCalled();
+      expect(mockShoppingRepo.touchShoppingList).toHaveBeenCalledWith("list-1");
+    });
+
+    it("does not touch the list when no items are checked", async () => {
+      const list = makeList({ items: [makeItem({ checked: false })] });
+
+      mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
+
+      const [error] = await shoppingService.clearCompletedShoppingItems("user-1");
+
+      expect(error).toBeNull();
+      expect(mockShoppingRepo.removeShoppingListItemsByIds).not.toHaveBeenCalled();
+      expect(mockShoppingRepo.touchShoppingList).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("clearShoppingList", () => {
+    it("removes all list items", async () => {
+      const list = makeList({
+        items: [
+          makeItem({ id: "item-1", checked: true }),
+          makeItem({ id: "item-2", checked: false }),
+        ],
+      });
+
+      mockShoppingRepo.getOrCreateShoppingList.mockResolvedValue(list as any);
+      mockShoppingRepo.clearShoppingList.mockResolvedValue(list.items as any);
+
+      const [error] = await shoppingService.clearShoppingList("user-1");
+
+      expect(error).toBeNull();
+      expect(mockShoppingRepo.clearShoppingList).toHaveBeenCalledWith("list-1");
+      expect(mockShoppingRepo.removeShoppingListItemsByIds).not.toHaveBeenCalled();
+      expect(mockShoppingRepo.touchShoppingList).toHaveBeenCalledWith("list-1");
+    });
+  });
 });

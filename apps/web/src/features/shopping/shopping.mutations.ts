@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { shoppingController } from "./shopping.controller";
 import {
   AddShoppingItemDTO,
+  ClearCompletedShoppingItemsDTO,
+  ClearShoppingListDTO,
   CompleteShoppingDTO,
   RemoveShoppingItemDTO,
   ToggleShoppingItemDTO,
@@ -200,6 +202,78 @@ function removeShoppingItem() {
   });
 }
 
+function clearCompletedShoppingItems() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (_data?: ClearCompletedShoppingItemsDTO) => {
+      assertOnline();
+      return await shoppingController.clearCompletedShoppingItems({ data: {} });
+    },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: [SHOPPING_QUERY_KEY] });
+
+      const previousShoppingList = getShoppingListSnapshot(qc);
+      updateShoppingListCache(qc, (list) => ({
+        ...list,
+        items: list.items.filter((item) => !item.checked),
+      }));
+
+      return { previousShoppingList } satisfies ShoppingMutationContext;
+    },
+    onSuccess: (result, _variables, context) => {
+      const [error] = result;
+      if (error) {
+        restoreShoppingListSnapshot(qc, context?.previousShoppingList);
+        toast.error(error.message ?? "Something unexpected happened trying to clear completed items. Please try again!");
+        return;
+      }
+
+      qc.invalidateQueries({ queryKey: [SHOPPING_QUERY_KEY] });
+    },
+    onError: (_error, _variables, context) => {
+      restoreShoppingListSnapshot(qc, context?.previousShoppingList);
+      toast.error("Something unexpected happened trying to clear completed items. Please try again!");
+    },
+  });
+}
+
+function clearShoppingList() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (_data?: ClearShoppingListDTO) => {
+      assertOnline();
+      return await shoppingController.clearShoppingList({ data: {} });
+    },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: [SHOPPING_QUERY_KEY] });
+
+      const previousShoppingList = getShoppingListSnapshot(qc);
+      updateShoppingListCache(qc, (list) => ({
+        ...list,
+        items: [],
+      }));
+
+      return { previousShoppingList } satisfies ShoppingMutationContext;
+    },
+    onSuccess: (result, _variables, context) => {
+      const [error] = result;
+      if (error) {
+        restoreShoppingListSnapshot(qc, context?.previousShoppingList);
+        toast.error(error.message ?? "Something unexpected happened trying to clear the list. Please try again!");
+        return;
+      }
+
+      qc.invalidateQueries({ queryKey: [SHOPPING_QUERY_KEY] });
+    },
+    onError: (_error, _variables, context) => {
+      restoreShoppingListSnapshot(qc, context?.previousShoppingList);
+      toast.error("Something unexpected happened trying to clear the list. Please try again!");
+    },
+  });
+}
+
 function completeShopping() {
   const qc = useQueryClient();
 
@@ -237,5 +311,7 @@ export const shoppingMutations = {
   addShoppingItem,
   toggleShoppingItem,
   removeShoppingItem,
+  clearCompletedShoppingItems,
+  clearShoppingList,
   completeShopping,
 };
