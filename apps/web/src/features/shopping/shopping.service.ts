@@ -210,6 +210,83 @@ async function removeShoppingItem(userId: string, shoppingItemId: string) {
   }
 }
 
+async function clearCompletedShoppingItems(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ shoppingAction: "clearCompletedShoppingItems" });
+
+  try {
+    const list = await shoppingRepo.getOrCreateShoppingList(userId);
+    if (!list) {
+      return err({
+        reason: "SHOPPING_DB_ERROR" as const,
+        message: `Failed to load shopping list for user ${userId}`,
+      });
+    }
+
+    const checkedItemIds = list.items
+      .filter((item) => item.checked)
+      .map((item) => item.id);
+
+    if (checkedItemIds.length === 0) {
+      logger.addAttrs({ shoppingListId: list.id, shoppingItemCount: 0 });
+      return ok([]);
+    }
+
+    const removed = await shoppingRepo.removeShoppingListItemsByIds(
+      list.id,
+      checkedItemIds,
+    );
+
+    await shoppingRepo.touchShoppingList(list.id);
+    logger.addAttrs({
+      shoppingListId: list.id,
+      shoppingItemCount: removed.length,
+    });
+
+    return ok(removed);
+  } catch (error) {
+    return err({
+      reason: "SHOPPING_DB_ERROR" as const,
+      message: `Failed to clear completed shopping items for user ${userId}`,
+    });
+  }
+}
+
+async function clearShoppingList(userId: string) {
+  const logger = getLogger();
+  logger.addAttrs({ shoppingAction: "clearShoppingList" });
+
+  try {
+    const list = await shoppingRepo.getOrCreateShoppingList(userId);
+    if (!list) {
+      return err({
+        reason: "SHOPPING_DB_ERROR" as const,
+        message: `Failed to load shopping list for user ${userId}`,
+      });
+    }
+
+    if (list.items.length === 0) {
+      logger.addAttrs({ shoppingListId: list.id, shoppingItemCount: 0 });
+      return ok([]);
+    }
+
+    const removed = await shoppingRepo.clearShoppingList(list.id);
+
+    await shoppingRepo.touchShoppingList(list.id);
+    logger.addAttrs({
+      shoppingListId: list.id,
+      shoppingItemCount: removed.length,
+    });
+
+    return ok(removed);
+  } catch (error) {
+    return err({
+      reason: "SHOPPING_DB_ERROR" as const,
+      message: `Failed to clear shopping list for user ${userId}`,
+    });
+  }
+}
+
 async function completeShopping(userId: string, data: CompleteShoppingDTO) {
   const logger = getLogger();
   logger.addAttrs({
@@ -291,5 +368,7 @@ export const shoppingService = {
   addShoppingItem,
   toggleShoppingItem,
   removeShoppingItem,
+  clearCompletedShoppingItems,
+  clearShoppingList,
   completeShopping,
 };

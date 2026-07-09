@@ -58,11 +58,11 @@ export function DailyActivityChart({
   const chartConfig = {
     value: {
       label: "Current Period",
-      color: "var(--chart-2)",
+      color: "var(--chart-1)",
     },
     comparison: {
       label: "Previous Period",
-      color: "var(--chart-4)",
+      color: "var(--chart-3)",
     },
   } satisfies ChartConfig;
 
@@ -187,11 +187,11 @@ export function DailyActivityChart({
       <CardFooter>
         <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <PeriodLabel
-            color="var(--chart-2)"
+            color="var(--chart-1)"
             label={`Current: ${dayjs(new Date(year, month)).format("MMMM YYYY")}`}
           />
           <PeriodLabel
-            color="var(--chart-4)"
+            color="var(--chart-3)"
             label={`Previous: ${dayjs(new Date(compareYear, compareMonth)).format("MMMM YYYY")}`}
           />
         </div>

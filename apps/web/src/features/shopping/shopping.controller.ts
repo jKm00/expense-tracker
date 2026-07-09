@@ -43,6 +43,20 @@ const removeShoppingItem = createServerFn({ method: "POST" })
     return await shoppingService.removeShoppingItem(userId, data.shoppingItemId);
   });
 
+const clearCompletedShoppingItems = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    const userId = context.user.id;
+    return await shoppingService.clearCompletedShoppingItems(userId);
+  });
+
+const clearShoppingList = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .handler(async ({ context }) => {
+    const userId = context.user.id;
+    return await shoppingService.clearShoppingList(userId);
+  });
+
 const completeShopping = createServerFn({ method: "POST" })
   .middleware([authenticated])
   .inputValidator(completeShoppingSchema)
@@ -56,5 +70,7 @@ export const shoppingController = {
   addShoppingItem,
   toggleShoppingItem,
   removeShoppingItem,
+  clearCompletedShoppingItems,
+  clearShoppingList,
   completeShopping,
 };
