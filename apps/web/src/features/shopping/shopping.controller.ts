@@ -3,8 +3,6 @@ import { authenticated } from "../auth/auth.utils";
 import { shoppingService } from "./shopping.service";
 import {
   addShoppingItemSchema,
-  clearCompletedShoppingItemsSchema,
-  clearShoppingListSchema,
   completeShoppingSchema,
   removeShoppingItemSchema,
   toggleShoppingItemSchema,
@@ -47,7 +45,6 @@ const removeShoppingItem = createServerFn({ method: "POST" })
 
 const clearCompletedShoppingItems = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(clearCompletedShoppingItemsSchema)
   .handler(async ({ context }) => {
     const userId = context.user.id;
     return await shoppingService.clearCompletedShoppingItems(userId);
@@ -55,7 +52,6 @@ const clearCompletedShoppingItems = createServerFn({ method: "POST" })
 
 const clearShoppingList = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(clearShoppingListSchema)
   .handler(async ({ context }) => {
     const userId = context.user.id;
     return await shoppingService.clearShoppingList(userId);

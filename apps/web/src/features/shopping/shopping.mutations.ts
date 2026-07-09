@@ -4,8 +4,6 @@ import { toast } from "sonner";
 import { shoppingController } from "./shopping.controller";
 import {
   AddShoppingItemDTO,
-  ClearCompletedShoppingItemsDTO,
-  ClearShoppingListDTO,
   CompleteShoppingDTO,
   RemoveShoppingItemDTO,
   ToggleShoppingItemDTO,
@@ -206,9 +204,9 @@ function clearCompletedShoppingItems() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_data?: ClearCompletedShoppingItemsDTO) => {
+    mutationFn: async () => {
       assertOnline();
-      return await shoppingController.clearCompletedShoppingItems({ data: {} });
+      return await shoppingController.clearCompletedShoppingItems();
     },
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: [SHOPPING_QUERY_KEY] });
@@ -242,9 +240,9 @@ function clearShoppingList() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_data?: ClearShoppingListDTO) => {
+    mutationFn: async () => {
       assertOnline();
-      return await shoppingController.clearShoppingList({ data: {} });
+      return await shoppingController.clearShoppingList();
     },
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: [SHOPPING_QUERY_KEY] });

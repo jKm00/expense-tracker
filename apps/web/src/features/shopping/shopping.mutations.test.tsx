@@ -190,9 +190,7 @@ describe("shoppingMutations", () => {
     const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
       SHOPPING_QUERY_KEY,
     ]);
-    expect(mockShoppingController.clearCompletedShoppingItems).toHaveBeenCalledWith({
-      data: {},
-    });
+    expect(mockShoppingController.clearCompletedShoppingItems).toHaveBeenCalledWith();
     expect(cached?.[1].items).toHaveLength(1);
     expect(cached?.[1].items[0].id).toBe("item-1");
   });
@@ -212,9 +210,7 @@ describe("shoppingMutations", () => {
     const cached = queryClient.getQueryData<[unknown, ReturnType<typeof makeList>]>([
       SHOPPING_QUERY_KEY,
     ]);
-    expect(mockShoppingController.clearShoppingList).toHaveBeenCalledWith({
-      data: {},
-    });
+    expect(mockShoppingController.clearShoppingList).toHaveBeenCalledWith();
     expect(cached?.[1].items).toHaveLength(0);
   });
 });

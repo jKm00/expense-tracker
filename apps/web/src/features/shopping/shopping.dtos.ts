@@ -27,16 +27,6 @@ export const toggleShoppingItemSchema = z.object({
 
 export type ToggleShoppingItemDTO = z.infer<typeof toggleShoppingItemSchema>;
 
-export const clearCompletedShoppingItemsSchema = z.object({});
-
-export type ClearCompletedShoppingItemsDTO = z.infer<
-  typeof clearCompletedShoppingItemsSchema
->;
-
-export const clearShoppingListSchema = z.object({});
-
-export type ClearShoppingListDTO = z.infer<typeof clearShoppingListSchema>;
-
 export const shoppingCheckoutEntrySchema = saveEntrySchema.extend({
   shoppingItemId: z.string().optional(),
 });
