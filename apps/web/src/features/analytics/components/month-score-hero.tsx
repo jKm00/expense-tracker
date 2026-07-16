@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MonthScoreMetricContribution,
@@ -33,9 +34,17 @@ export function MonthScoreHero({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,--alpha(var(--muted)_/_55%),transparent_34%),radial-gradient(circle_at_85%_0%,--alpha(var(--primary)_/_8%),transparent_28%)]" />
           <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                Month score
-              </p>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="default"
+                  className="h-4 px-1.5 text-[10px] font-semibold tracking-wide uppercase shadow-sm"
+                >
+                  Beta
+                </Badge>
+                <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                  Month score
+                </p>
+              </div>
               <h2 className="font-heading text-base font-semibold tracking-tight">
                 Not enough data yet
               </h2>
@@ -90,6 +99,12 @@ export function MonthScoreHero({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <Badge
+                  variant="default"
+                  className="h-4 px-1.5 text-[10px] font-semibold tracking-wide uppercase shadow-sm"
+                >
+                  Beta
+                </Badge>
                 <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   Month score
                 </p>
