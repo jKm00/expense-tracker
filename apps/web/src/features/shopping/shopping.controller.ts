@@ -17,7 +17,7 @@ const getShoppingList = createServerFn({ method: "GET" })
 
 const addShoppingItem = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(addShoppingItemSchema)
+  .validator(addShoppingItemSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await shoppingService.addShoppingItem(userId, data);
@@ -25,7 +25,7 @@ const addShoppingItem = createServerFn({ method: "POST" })
 
 const toggleShoppingItem = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(toggleShoppingItemSchema)
+  .validator(toggleShoppingItemSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await shoppingService.toggleShoppingItem(
@@ -37,7 +37,7 @@ const toggleShoppingItem = createServerFn({ method: "POST" })
 
 const removeShoppingItem = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(removeShoppingItemSchema)
+  .validator(removeShoppingItemSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await shoppingService.removeShoppingItem(userId, data.shoppingItemId);
@@ -59,7 +59,7 @@ const clearShoppingList = createServerFn({ method: "POST" })
 
 const completeShopping = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(completeShoppingSchema)
+  .validator(completeShoppingSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await shoppingService.completeShopping(userId, data);

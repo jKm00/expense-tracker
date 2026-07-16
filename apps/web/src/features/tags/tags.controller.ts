@@ -18,7 +18,7 @@ const getTags = createServerFn({ method: "GET" })
 
 const getTag = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getTagSchema)
+  .validator(getTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const tagId = data.tagId;
@@ -27,7 +27,7 @@ const getTag = createServerFn({ method: "GET" })
 
 const listTags = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(listTagsSchema)
+  .validator(listTagsSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await tagsService.listTags(userId, data);
@@ -42,7 +42,7 @@ const getTagKpis = createServerFn({ method: "GET" })
 
 const addTag = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(addTagSchema)
+  .validator(addTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await tagsService.addTag({
@@ -53,7 +53,7 @@ const addTag = createServerFn({ method: "POST" })
 
 const updateTag = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateTagSchema)
+  .validator(updateTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { tagId, ...updateData } = data;
@@ -62,7 +62,7 @@ const updateTag = createServerFn({ method: "POST" })
 
 const deleteTag = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(deleteTagSchema)
+  .validator(deleteTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { tagId } = data;

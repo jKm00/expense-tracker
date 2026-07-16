@@ -11,7 +11,7 @@ const getPreferences = createServerFn({ method: "GET" })
 
 const updateExclusions = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateAnalyticsExclusionsSchema)
+  .validator(updateAnalyticsExclusionsSchema)
   .handler(async ({ context, data }) => {
     return await analyticsService.updateExclusions(
       context.user.id,
