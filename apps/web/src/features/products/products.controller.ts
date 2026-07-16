@@ -23,7 +23,7 @@ const getProducts = createServerFn({ method: "GET" })
 
 const getProduct = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getProductSchema)
+  .validator(getProductSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const productId = data.productId;
@@ -32,7 +32,7 @@ const getProduct = createServerFn({ method: "GET" })
 
 const listProducts = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(listProductsSchema)
+  .validator(listProductsSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await productService.listProducts(userId, data);
@@ -47,7 +47,7 @@ const getProductKpis = createServerFn({ method: "GET" })
 
 const getProductStats = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getProductStatsSchema)
+  .validator(getProductStatsSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const productId = data.productId;
@@ -56,7 +56,7 @@ const getProductStats = createServerFn({ method: "GET" })
 
 const addProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(addProductSchema)
+  .validator(addProductSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const product = data.product;
@@ -67,7 +67,7 @@ const addProduct = createServerFn({ method: "POST" })
 
 const updateProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateProductSchema)
+  .validator(updateProductSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { productId, ...rest } = data;
@@ -77,7 +77,7 @@ const updateProduct = createServerFn({ method: "POST" })
 
 const deleteProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(deleteProductSchema)
+  .validator(deleteProductSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { productId } = data;
@@ -86,7 +86,7 @@ const deleteProduct = createServerFn({ method: "POST" })
 
 const linkTagToProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(linkTagSchema)
+  .validator(linkTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { tagId, productId } = data;
@@ -95,7 +95,7 @@ const linkTagToProduct = createServerFn({ method: "POST" })
 
 const unlinkTagFromProduct = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(linkTagSchema)
+  .validator(linkTagSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { tagId, productId } = data;
@@ -104,7 +104,7 @@ const unlinkTagFromProduct = createServerFn({ method: "POST" })
 
 const addProductAlias = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(addProductAliasSchema)
+  .validator(addProductAliasSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { productId, name } = data;
@@ -113,7 +113,7 @@ const addProductAlias = createServerFn({ method: "POST" })
 
 const updateProductAlias = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateProductAliasSchema)
+  .validator(updateProductAliasSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { aliasId, name } = data;
@@ -122,7 +122,7 @@ const updateProductAlias = createServerFn({ method: "POST" })
 
 const deleteProductAlias = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(deleteProductAliasSchema)
+  .validator(deleteProductAliasSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { aliasId } = data;

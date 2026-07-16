@@ -12,7 +12,7 @@ import {
 
 const getTransactions = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getTransactionsSchema)
+  .validator(getTransactionsSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { year, month } = data;
@@ -21,7 +21,7 @@ const getTransactions = createServerFn({ method: "GET" })
 
 const getTransaction = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getTransactionSchema)
+  .validator(getTransactionSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const transactionId = data.transactionId;
@@ -30,7 +30,7 @@ const getTransaction = createServerFn({ method: "GET" })
 
 const getTransactionKpis = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getTransactionsSchema)
+  .validator(getTransactionsSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await transactionService.getTransactionKpis(userId, data);
@@ -38,7 +38,7 @@ const getTransactionKpis = createServerFn({ method: "GET" })
 
 const saveTransaction = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(saveTransactionSchema)
+  .validator(saveTransactionSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await transactionService.saveTransaction({
@@ -55,7 +55,7 @@ const saveTransaction = createServerFn({ method: "POST" })
 
 const deleteTransaction = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(deleteTransactionSchema)
+  .validator(deleteTransactionSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { transactionId } = data;
@@ -64,7 +64,7 @@ const deleteTransaction = createServerFn({ method: "POST" })
 
 const updateTransaction = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateTransactionSchema)
+  .validator(updateTransactionSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { transactionId, ...updateData } = data;
@@ -80,7 +80,7 @@ const updateTransaction = createServerFn({ method: "POST" })
 
 const linkTagToEntry = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(linkTagToEntrySchema)
+  .validator(linkTagToEntrySchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { transactionId, entryId, tagId } = data;
@@ -94,7 +94,7 @@ const linkTagToEntry = createServerFn({ method: "POST" })
 
 const unlinkTagFromEntry = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(linkTagToEntrySchema)
+  .validator(linkTagToEntrySchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { transactionId, entryId, tagId } = data;

@@ -9,7 +9,7 @@ import { integrationService } from "./integration.service";
 
 const createIntegrationToken = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(createIntegrationTokenSchema)
+  .validator(createIntegrationTokenSchema)
   .handler(async ({ context, data }) => {
     return await integrationService.createToken(context.user.id, data.name);
   });
@@ -22,14 +22,14 @@ const listIntegrationTokens = createServerFn({ method: "GET" })
 
 const listIntegrationRequestLogs = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(listIntegrationRequestLogsSchema)
+  .validator(listIntegrationRequestLogsSchema)
   .handler(async ({ context, data }) => {
     return await integrationService.listRequestLogs(context.user.id, data);
   });
 
 const revokeIntegrationToken = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(revokeIntegrationTokenSchema)
+  .validator(revokeIntegrationTokenSchema)
   .handler(async ({ context, data }) => {
     return await integrationService.revokeToken(context.user.id, data.tokenId);
   });

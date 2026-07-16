@@ -18,7 +18,7 @@ const getRecurrings = createServerFn({ method: "GET" })
 
 const getRecurring = createServerFn({ method: "GET" })
   .middleware([authenticated])
-  .inputValidator(getRecurringSchema)
+  .validator(getRecurringSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { recurringId } = data;
@@ -27,7 +27,7 @@ const getRecurring = createServerFn({ method: "GET" })
 
 const createRecurring = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(createRecurringSchema)
+  .validator(createRecurringSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     return await recurringService.createRecurring(userId, {
@@ -43,7 +43,7 @@ const createRecurring = createServerFn({ method: "POST" })
 
 const updateRecurring = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(updateRecurringSchema)
+  .validator(updateRecurringSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { recurringId, ...updateData } = data;
@@ -52,7 +52,7 @@ const updateRecurring = createServerFn({ method: "POST" })
 
 const deleteRecurring = createServerFn({ method: "POST" })
   .middleware([authenticated])
-  .inputValidator(deleteRecurringSchema)
+  .validator(deleteRecurringSchema)
   .handler(async ({ context, data }) => {
     const userId = context.user.id;
     const { recurringId } = data;
@@ -60,7 +60,7 @@ const deleteRecurring = createServerFn({ method: "POST" })
   });
 
 const processRecurringJob = createServerFn({ method: "POST" })
-  .inputValidator(processRecurringJobSchema)
+  .validator(processRecurringJobSchema)
   .handler(async ({ data }) => {
     return await recurringService.processRecurringJob(data.jobToken);
   });
