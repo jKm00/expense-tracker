@@ -11,6 +11,11 @@ config({
   path: [path.join(appRoot, ".env.local"), path.join(appRoot, ".env")],
 });
 
+const minDate = new Date("2025-01-01");
+const maxDate = new Date("2026-07-25");
+const targetMonthlyIncome = { min: 25000, max: 60000 };
+const targetExpenseRatio = { min: 0.82, max: 0.95 };
+
 // Seeded random number generator for deterministic output
 class SeededRandom {
   private seed: number;
@@ -48,12 +53,60 @@ class SeededRandom {
     return this.next() < probability;
   }
 
+  decimal(min: number, max: number, decimals = 2) {
+    const factor = 10 ** decimals;
+    return Math.round((min + this.next() * (max - min)) * factor) / factor;
+  }
+
   date(minDate: Date, maxDate: Date): Date {
     const min = minDate.getTime();
     const max = maxDate.getTime();
     return new Date(min + this.next() * (max - min));
   }
 }
+
+const toMoney = (value: number) => Math.round(value * 100) / 100;
+
+const getMonthsInRange = (startDate: Date, endDate: Date) => {
+  const months: Array<{ start: Date; end: Date }> = [];
+  const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+  while (current <= endDate) {
+    const monthStart = new Date(current.getFullYear(), current.getMonth(), 1);
+    const monthEnd = new Date(
+      current.getFullYear(),
+      current.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    months.push({
+      start: new Date(Math.max(monthStart.getTime(), startDate.getTime())),
+      end: new Date(Math.min(monthEnd.getTime(), endDate.getTime())),
+    });
+
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  return months;
+};
+
+const splitAmount = (amount: number, parts: number, rng: SeededRandom) => {
+  const weights = Array.from({ length: parts }, () => rng.decimal(0.5, 1.8));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const amounts = weights.map((weight) =>
+    toMoney((amount * weight) / totalWeight),
+  );
+  const drift = toMoney(
+    amount - amounts.reduce((sum, value) => sum + value, 0),
+  );
+  amounts[amounts.length - 1] = toMoney(amounts[amounts.length - 1] + drift);
+
+  return amounts;
+};
 
 const main = async () => {
   const userId = process.argv[2];
@@ -244,9 +297,6 @@ const main = async () => {
     "#f43f5e",
   ];
 
-  const minDate = new Date("2025-01-01");
-  const maxDate = new Date("2026-06-07");
-
   console.log("Creating tags...");
   const tags: (typeof schema.tags.$inferSelect)[] = [];
   const tagMap = new Map<string, typeof schema.tags.$inferSelect>();
@@ -364,18 +414,23 @@ const main = async () => {
     "Side Hustle": ["Business"],
   };
 
+  const requiredProductNames = productNames.income;
   for (let i = 0; i < 100; i++) {
-    const category = rng.weighted([
-      { weight: 0.4, value: "groceries" },
-      { weight: 0.15, value: "electronics" },
-      { weight: 0.15, value: "home" },
-      { weight: 0.1, value: "entertainment" },
-      { weight: 0.1, value: "transport" },
-      { weight: 0.05, value: "dining" },
-      { weight: 0.05, value: "income" },
-    ]) as keyof typeof productNames;
+    const productName =
+      requiredProductNames[i] ??
+      (() => {
+        const category = rng.weighted([
+          { weight: 0.4, value: "groceries" },
+          { weight: 0.15, value: "electronics" },
+          { weight: 0.15, value: "home" },
+          { weight: 0.1, value: "entertainment" },
+          { weight: 0.1, value: "transport" },
+          { weight: 0.08, value: "dining" },
+          { weight: 0.02, value: "income" },
+        ]) as keyof typeof productNames;
 
-    const productName = rng.pick(productNames[category]);
+        return rng.pick(productNames[category]);
+      })();
     const [product] = await db
       .insert(schema.products)
       .values({
@@ -402,64 +457,44 @@ const main = async () => {
 
   console.log("Creating transactions and entries...");
   let totalEntries = 0;
+  let totalTransactions = 0;
+  const incomeProductNames = new Set(productNames.income);
+  const incomeProducts = products.filter((product) =>
+    incomeProductNames.has(product.name),
+  );
+  const expenseProducts = products.filter(
+    (product) => !incomeProductNames.has(product.name),
+  );
 
-  for (let i = 0; i < 200; i++) {
-    const transactionDate = rng.date(minDate, maxDate);
-    const source = rng.weighted([
-      { weight: 0.7, value: "manual" },
-      { weight: 0.2, value: "recurring" },
-      { weight: 0.1, value: "scan" },
-    ]) as "manual" | "recurring" | "scan";
-
-    // Determine number of entries for this transaction
-    const entryCount = rng.weighted([
-      { weight: 0.4, value: rng.int(1, 2) },
-      { weight: 0.3, value: rng.int(3, 5) },
-      { weight: 0.2, value: rng.int(6, 8) },
-      { weight: 0.1, value: rng.int(9, 10) },
-    ]);
-
-    // Calculate total price from entries
-    let totalPrice = 0;
-    const entryData = [];
-
-    for (let j = 0; j < entryCount; j++) {
-      const price = rng.weighted([
-        { weight: 0.6, value: rng.int(200, 3000) / 100 },
-        { weight: 0.3, value: rng.int(3000, 10000) / 100 },
-        { weight: 0.1, value: rng.int(10000, 50000) / 100 },
-      ]);
-
-      const quantity = rng.weighted([
-        { weight: 0.6, value: 1 },
-        { weight: 0.3, value: rng.int(2, 5) },
-        { weight: 0.1, value: rng.int(6, 20) },
-      ]);
-
-      const type = rng.weighted([
-        { weight: 0.9, value: "expense" },
-        { weight: 0.1, value: "income" },
-      ]) as "expense" | "income";
-
-      const itemTotal = price * quantity;
-      totalPrice += type === "income" ? itemTotal : -itemTotal;
-
-      entryData.push({
-        productId: rng.pick(products).id,
-        price: price.toFixed(2),
-        quantity,
-        type,
-      });
-    }
+  const createTransaction = async ({
+    transactionDate,
+    store,
+    description,
+    source,
+    entryData,
+  }: {
+    transactionDate: Date;
+    store: string | null;
+    description: string | null;
+    source: "manual" | "recurring" | "scan";
+    entryData: Array<{
+      productId: string;
+      price: string;
+      quantity: number;
+      type: "expense" | "income";
+    }>;
+  }) => {
+    const totalPrice = entryData.reduce((sum, entry) => {
+      const itemTotal = Number(entry.price) * entry.quantity;
+      return sum + (entry.type === "income" ? itemTotal : -itemTotal);
+    }, 0);
 
     const [transaction] = await db
       .insert(schema.transactions)
       .values({
         userId,
-        store: rng.pick(stores),
-        description: rng.boolean(0.6)
-          ? `Transaction #${i + 1} - ${rng.pick(stores)}`
-          : null,
+        store,
+        description,
         source,
         totalPrice: totalPrice.toFixed(2),
         date: transactionDate,
@@ -468,13 +503,94 @@ const main = async () => {
       })
       .returning();
 
-    // Insert entries
     for (const entry of entryData) {
       await db.insert(schema.entries).values({
         transactionId: transaction.id,
         ...entry,
       });
       totalEntries++;
+    }
+
+    totalTransactions++;
+  };
+
+  const months = getMonthsInRange(minDate, maxDate);
+  for (const month of months) {
+    const monthLabel = month.start.toLocaleString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+    const monthlyIncome = toMoney(
+      rng.int(targetMonthlyIncome.min, targetMonthlyIncome.max),
+    );
+    const sideIncome = rng.boolean(0.35)
+      ? toMoney(Math.min(rng.int(2500, 9000), monthlyIncome - 22000))
+      : 0;
+    const salaryIncome = toMoney(monthlyIncome - sideIncome);
+
+    await createTransaction({
+      transactionDate: rng.date(month.start, month.end),
+      store: "Employer",
+      description: `Salary - ${monthLabel}`,
+      source: "recurring",
+      entryData: [
+        {
+          productId: rng.pick(incomeProducts).id,
+          price: salaryIncome.toFixed(2),
+          quantity: 1,
+          type: "income",
+        },
+      ],
+    });
+
+    if (sideIncome > 0) {
+      await createTransaction({
+        transactionDate: rng.date(month.start, month.end),
+        store: "Client Payment",
+        description: `Additional income - ${monthLabel}`,
+        source: "manual",
+        entryData: [
+          {
+            productId: rng.pick(incomeProducts).id,
+            price: sideIncome.toFixed(2),
+            quantity: 1,
+            type: "income",
+          },
+        ],
+      });
+    }
+
+    const monthlyExpenses = toMoney(
+      monthlyIncome *
+        rng.decimal(targetExpenseRatio.min, targetExpenseRatio.max),
+    );
+    const expenseAmounts = splitAmount(monthlyExpenses, rng.int(12, 20), rng);
+
+    for (const expenseAmount of expenseAmounts) {
+      const entryAmounts = splitAmount(
+        expenseAmount,
+        expenseAmount > 1000 ? rng.int(1, 4) : rng.int(1, 2),
+        rng,
+      );
+
+      await createTransaction({
+        transactionDate: rng.date(month.start, month.end),
+        store: rng.pick(stores),
+        description: rng.boolean(0.75)
+          ? `${rng.pick(stores)} purchase - ${monthLabel}`
+          : null,
+        source: rng.weighted([
+          { weight: 0.75, value: "manual" },
+          { weight: 0.15, value: "scan" },
+          { weight: 0.1, value: "recurring" },
+        ]) as "manual" | "recurring" | "scan",
+        entryData: entryAmounts.map((amount) => ({
+          productId: rng.pick(expenseProducts).id,
+          price: amount.toFixed(2),
+          quantity: 1,
+          type: "expense",
+        })),
+      });
     }
   }
 
@@ -519,7 +635,7 @@ const main = async () => {
   console.log("📊 Summary:");
   console.log(`  - 26 tags`);
   console.log(`  - 100 products (with tag associations)`);
-  console.log(`  - 200 transactions`);
+  console.log(`  - ${totalTransactions} transactions`);
   console.log(`  - ${totalEntries} entries (transaction line items)`);
   console.log(`  - 10 recurring entries`);
 };
