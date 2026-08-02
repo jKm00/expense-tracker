@@ -59,3 +59,28 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  verify-scan-api:
+    name: Verify scan API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build scan API
+        run: pnpm build:scan-api
+
+      - name: Test scan API
+        run: pnpm test:scan-api
