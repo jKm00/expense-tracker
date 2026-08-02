@@ -4,9 +4,15 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormField, FormFieldLabel } from "@/components/custom/form";
 import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductWithTag } from "@/features/products/products.models";
+import { integrationQueries } from "@/features/integrations/integration.queries";
+import { IntegrationTokenMetadata } from "@/features/integrations/integration.models";
+import { FullTransaction } from "@/features/transactions/transactions.models";
+import { transactionQueries } from "@/features/transactions/transactions.queries";
+import { getCheckoutLinkSuggestion, getSelectableCheckoutTransactions, hasActiveIntegrationTokens } from "@/features/shopping/components/shopping-checkout.utils";
 import { ReceiptScanLine, ReceiptScanMatchResult } from "../receipt-scanning.models";
 import { receiptScanningMutations } from "../receipt-scanning.mutations";
 import {
@@ -19,7 +25,7 @@ import { formatAmount } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { AlertTriangle, FileImage, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, Check, FileImage, Link2, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { validateReceiptFile } from "../receipt-scanning.utils";
 import { receiptScanningQueries } from "../receipt-scanning.queries";
@@ -54,6 +60,21 @@ function fromDateInputValue(value: string) {
 
 function formatCalculatedAmount(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+function getActiveTokens(data: [unknown, IntegrationTokenMetadata[]] | undefined) {
+  if (!data || data[0] || !data[1]) return [];
+  return data[1];
+}
+
+function getTransactions(data: [unknown, FullTransaction[]] | undefined) {
+  if (!data || data[0] || !data[1]) return [];
+  return data[1];
+}
+
+function formatTransactionOption(transaction: FullTransaction) {
+  const title = transaction.store || transaction.description || "Transaction";
+  return `${format(transaction.date, "HH:mm")} ${title} · ${formatAmount(transaction.totalPrice)}`;
 }
 
 function makeBlankLine(): EditableScanLine {
@@ -116,6 +137,7 @@ export function ReceiptScanReview({
   const [date, setDate] = useState(targetTransaction ? new Date(targetTransaction.date) : new Date());
   const [fileError, setFileError] = useState<string | null>(null);
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState("");
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const scanQuery = useQuery({
     ...receiptScanningQueries.getScanOptions(activeScanId ?? ""),
@@ -130,6 +152,14 @@ export function ReceiptScanReview({
     enabled: scanQuery.data?.[1]?.status === "completed",
   });
   const usageQuery = useQuery(receiptScanningQueries.listScansOptions());
+  const integrationTokenQuery = useQuery({
+    ...integrationQueries.getIntegrationTokensOptions(),
+    enabled: mode === "shopping-checkout",
+  });
+  const checkoutTransactionQuery = useQuery({
+    ...transactionQueries.getTransactionsOptions(date.getFullYear(), date.getMonth()),
+    enabled: mode === "shopping-checkout",
+  });
 
   const receiptTotal = scanResult?.receipt.total ? Number(scanResult.receipt.total) : null;
   const reviewedTotal = useMemo(
@@ -152,6 +182,23 @@ export function ReceiptScanReview({
   const dailyLimitReached = Boolean(usage && usage.remaining <= 0);
   const showScanProgress = Boolean(activeScanId) && activeScan?.status !== "completed";
   const showPreparingReview = Boolean(activeScanId) && activeScan?.status === "completed" && !matchQuery.data?.[1];
+  const checkoutTransactions = useMemo(
+    () => getTransactions(checkoutTransactionQuery.data),
+    [checkoutTransactionQuery.data],
+  );
+  const checkoutSelectableTransactions = useMemo(
+    () => getSelectableCheckoutTransactions(checkoutTransactions, date),
+    [checkoutTransactions, date],
+  );
+  const checkoutHasIntegration = hasActiveIntegrationTokens(getActiveTokens(integrationTokenQuery.data));
+  const suggestedCheckoutTransaction = useMemo(
+    () => checkoutHasIntegration ? getCheckoutLinkSuggestion(checkoutSelectableTransactions, date) : undefined,
+    [checkoutHasIntegration, checkoutSelectableTransactions, date],
+  );
+  const selectedCheckoutTransaction = useMemo(
+    () => checkoutSelectableTransactions.find((transaction) => transaction.id === selectedTransactionId),
+    [checkoutSelectableTransactions, selectedTransactionId],
+  );
 
   useEffect(() => {
     if (!initialScanResult || initialScanAppliedRef.current) {
@@ -181,6 +228,15 @@ export function ReceiptScanReview({
       setActiveScanId(null);
     }
   }, [scanQuery.data]);
+
+  useEffect(() => {
+    if (
+      selectedTransactionId.length > 0 &&
+      !checkoutSelectableTransactions.some((transaction) => transaction.id === selectedTransactionId)
+    ) {
+      setSelectedTransactionId("");
+    }
+  }, [checkoutSelectableTransactions, selectedTransactionId]);
 
   function applyScanResult(data: ReceiptScanMatchResult) {
     setScanResult(data);
@@ -332,6 +388,7 @@ export function ReceiptScanReview({
       store,
       description,
       date,
+      transactionId: selectedTransactionId || undefined,
       keepUncheckedItems: true,
       entries,
     };
@@ -627,6 +684,64 @@ export function ReceiptScanReview({
               <Plus className="size-3.5" />
               Add entry
             </Button>
+
+            {mode === "shopping-checkout" && (
+              <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Link2 className="size-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Link transaction <span className="text-muted-foreground">(Optional)</span></h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Leave empty to create a new transaction, or link a recent transaction to update it.</p>
+                </div>
+
+                {selectedCheckoutTransaction ? (
+                  <div className="flex items-start justify-between gap-3 rounded-lg border bg-background/70 p-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Linked transaction selected</p>
+                      <p className="text-xs text-muted-foreground">{formatTransactionOption(selectedCheckoutTransaction)}</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedTransactionId("")}>Clear</Button>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="text-sm font-medium">A new transaction will be created</p>
+                    <p className="text-xs text-muted-foreground">Use the smart suggestion or choose a transaction manually to update an existing one.</p>
+                  </div>
+                )}
+
+                {suggestedCheckoutTransaction && (
+                  <button
+                    type="button"
+                    className={`w-full rounded-xl border px-4 py-4 text-left transition-all ${selectedTransactionId === suggestedCheckoutTransaction.id ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background hover:bg-muted/30"}`}
+                    onClick={() => setSelectedTransactionId(suggestedCheckoutTransaction.id)}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="inline-flex items-center gap-2 text-sm font-medium"><Sparkles className="size-4 text-muted-foreground" /> Smart suggestion</div>
+                        <p className="text-xs text-muted-foreground">{formatTransactionOption(suggestedCheckoutTransaction)}</p>
+                      </div>
+                      <div className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors ${selectedTransactionId === suggestedCheckoutTransaction.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-transparent"}`}>
+                        <Check className="size-3.5" />
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                <FormField>
+                  <FormFieldLabel>{checkoutHasIntegration ? "Or choose another transaction" : "Select a transaction"}</FormFieldLabel>
+                  <Select value={selectedTransactionId || "new"} onValueChange={(value) => setSelectedTransactionId(value === "new" ? "" : value)}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">Create a new transaction</SelectItem>
+                      {checkoutSelectableTransactions.map((transaction) => (
+                        <SelectItem key={transaction.id} value={transaction.id}>{formatTransactionOption(transaction)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">

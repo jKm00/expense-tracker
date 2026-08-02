@@ -81,6 +81,7 @@ export const completeReceiptCheckoutScanSchema = z.object({
   store: z.string().trim().max(160).optional(),
   description: z.string().trim().max(500).optional(),
   date: z.date(),
+  transactionId: z.string().optional(),
   keepUncheckedItems: z.boolean().default(true),
   entries: z.array(receiptScanSubmitEntrySchema).min(1),
 });

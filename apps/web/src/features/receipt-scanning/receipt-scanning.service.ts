@@ -209,33 +209,25 @@ async function completeCheckoutScan(
 ) {
   try {
     const entries = await resolveEntries(userId, data.entries);
-    const [transactionError, transaction] = await transactionService.saveTransaction({
-      transaction: {
-        userId,
-        store: data.store,
-        description: data.description,
-        date: data.date,
-        source: "shopping",
-        needsReview: false,
-      },
-      entries,
-    });
-
-    if (transactionError || !transaction) {
-      throw new Error("SCAN_TRANSACTION_CREATE_FAILED");
-    }
-
-    await saveMappings(userId, entries);
-
     const shoppingItemIds = Array.from(
       new Set(data.entries.flatMap((entry) => entry.shoppingItemId ? [entry.shoppingItemId] : [])),
     );
-    for (const shoppingItemId of shoppingItemIds) {
-      const [removeError] = await shoppingService.removeShoppingItem(userId, shoppingItemId);
-      if (removeError) {
-        throw new Error("SCAN_SHOPPING_ITEM_CLEANUP_FAILED");
-      }
+    const checkoutEntries = entries.map(({ receiptItemName, ...entry }) => entry);
+    const [transactionError, transaction] = await shoppingService.completeShopping(userId, {
+      store: data.store,
+      description: data.description,
+      date: data.date,
+      transactionId: data.transactionId,
+      keepUncheckedItems: data.keepUncheckedItems,
+      shoppingItemIds,
+      entries: checkoutEntries,
+    });
+
+    if (transactionError || !transaction) {
+      throw new Error("SCAN_CHECKOUT_COMPLETE_FAILED");
     }
+
+    await saveMappings(userId, entries);
 
     return ok(transaction);
   } catch (error) {
