@@ -57,10 +57,13 @@ AWS_SCAN_API_TOKEN="<same value as local.tfvars api_token>"
 
 Bootstrap creates the Terraform state bucket. Run once per account.
 
+Use a separate Terraform workspace per environment. The bootstrap root uses local state, so the dev and prod accounts must not share the same bootstrap workspace.
+
 Dev:
 
 ```sh
 AWS_PROFILE=edv-dev terraform -chdir=infra/bootstrap init
+AWS_PROFILE=edv-dev terraform -chdir=infra/bootstrap workspace select -or-create=true dev
 AWS_PROFILE=edv-dev terraform -chdir=infra/bootstrap apply -var='environment=dev'
 ```
 
@@ -68,6 +71,7 @@ Prod:
 
 ```sh
 terraform -chdir=infra/bootstrap init
+terraform -chdir=infra/bootstrap workspace select -or-create=true prod
 terraform -chdir=infra/bootstrap apply \
   -var='environment=prod' \
   -var='create_github_oidc_role=true' \
