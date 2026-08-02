@@ -1,7 +1,7 @@
 {
   "name": "expense-tracker",
   "private": true,
-  "packageManager": "pnpm@11.13.1",
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "pnpm --filter @expense-tracker/web dev",
     "build": "pnpm --filter @expense-tracker/web build",
