@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter @expense-tracker/web dev",
     "build": "pnpm --filter @expense-tracker/web build",
+    "build:scan-api": "pnpm --filter @expense-tracker/scan-api build",
     "job": "pnpm --filter @expense-tracker/job start",
     "db:generate": "pnpm --filter @expense-tracker/web db:generate",
     "db:migrate": "pnpm --filter @expense-tracker/web db:migrate",
@@ -14,6 +15,7 @@
     "db:seed": "pnpm --filter @expense-tracker/web db:seed",
     "db:reset": "pnpm --filter @expense-tracker/web db:reset",
     "test:web": "pnpm --filter @expense-tracker/web test",
+    "test:scan-api": "pnpm --filter @expense-tracker/scan-api test",
     "test:job": "pnpm --filter @expense-tracker/job test"
   }
 }
