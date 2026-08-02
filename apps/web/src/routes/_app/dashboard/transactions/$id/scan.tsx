@@ -12,6 +12,7 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
+import { ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
 import { takePendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -40,7 +41,7 @@ function RouteComponent() {
           Replace this transaction's entries with reviewed receipt lines.
         </PageHeaderDescription>
       </PageHeader>
-      <Suspense>
+      <Suspense fallback={<ScanLoadingState />}>
         <ScanExistingTransactionContent />
       </Suspense>
     </div>

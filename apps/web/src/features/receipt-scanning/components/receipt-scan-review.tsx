@@ -23,6 +23,7 @@ import { AlertTriangle, FileImage, Loader2, Plus, RotateCcw, Sparkles, Trash2, U
 import { useEffect, useMemo, useRef, useState } from "react";
 import { validateReceiptFile } from "../receipt-scanning.utils";
 import { receiptScanningQueries } from "../receipt-scanning.queries";
+import { DailyUsageIndicator, ScanPreparingReviewState, ScanProgressState } from "./scan-states";
 
 type EditableScanLine = Omit<ReceiptScanLine, "product"> & {
   product: { id: string | null; name: string } | null;
@@ -128,6 +129,7 @@ export function ReceiptScanReview({
     ...receiptScanningQueries.matchScanOptions(activeScanId ?? ""),
     enabled: scanQuery.data?.[1]?.status === "completed",
   });
+  const usageQuery = useQuery(receiptScanningQueries.listScansOptions());
 
   const receiptTotal = scanResult?.receipt.total ? Number(scanResult.receipt.total) : null;
   const reviewedTotal = useMemo(
@@ -145,6 +147,11 @@ export function ReceiptScanReview({
     transactionMutation.isPending ||
     transactionReplacementMutation.isPending ||
     checkoutMutation.isPending;
+  const activeScan = scanQuery.data?.[1];
+  const usage = usageQuery.data?.[1]?.usage;
+  const dailyLimitReached = Boolean(usage && usage.remaining <= 0);
+  const showScanProgress = Boolean(activeScanId) && activeScan?.status !== "completed";
+  const showPreparingReview = Boolean(activeScanId) && activeScan?.status === "completed" && !matchQuery.data?.[1];
 
   useEffect(() => {
     if (!initialScanResult || initialScanAppliedRef.current) {
@@ -193,6 +200,10 @@ export function ReceiptScanReview({
     setFileError(null);
     if (!online) {
       setFileError("Receipt scanning requires an internet connection.");
+      return;
+    }
+    if (dailyLimitReached) {
+      setFileError("Daily scan limit reached. Try again after the limit resets.");
       return;
     }
     const validationError = validateReceiptFile(file);
@@ -393,11 +404,11 @@ export function ReceiptScanReview({
                   {activeScanId ? "Processing receipt..." : "Uploading receipt..."}
                 </span>
               }
-              disabled={!online || uploadMutation.isPending || Boolean(activeScanId)}
+              disabled={!online || uploadMutation.isPending || Boolean(activeScanId) || dailyLimitReached}
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="size-3.5" />
-              {scanResult ? "Scan another receipt" : "Upload receipt image or PDF"}
+              {dailyLimitReached ? "Limit reached" : scanResult ? "Scan another receipt" : "Upload receipt image or PDF"}
             </LoaderButton>
             {scanResult && (
               <Button
@@ -420,6 +431,7 @@ export function ReceiptScanReview({
               <Link to={fallbackHref}>Use manual form</Link>
             </Button>
           </div>
+          <DailyUsageIndicator usage={usage} loading={usageQuery.isLoading} />
           {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
           {!scanResult && <p className="text-sm text-muted-foreground">Upload a receipt and review the extracted entries before saving.</p>}
           {fileError && <p className="text-sm text-destructive">{fileError}</p>}
@@ -430,6 +442,12 @@ export function ReceiptScanReview({
           ) : null}
         </CardContent>
       </Card>
+
+      {showScanProgress && (
+        <ScanProgressState status={activeScan?.status === "processing" ? "processing" : "upload_pending"} />
+      )}
+
+      {showPreparingReview && <ScanPreparingReviewState />}
 
       {scanResult && (
         <Card>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DailyUsageIndicator } from "@/features/receipt-scanning/components/scan-states";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
 import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
 import { AwsScanSummary } from "@/features/receipt-scanning/receipt-scanning.models";
@@ -42,6 +43,12 @@ function statusBadgeVariant(status: AwsScanSummary["status"]) {
   return "secondary" as const;
 }
 
+function modeLabel(mode: AwsScanSummary["mode"]) {
+  if (mode === "transaction-replacement") return "Replace transaction";
+  if (mode === "shopping-checkout") return "Shopping checkout";
+  return "New transaction";
+}
+
 function ScanHistorySkeleton() {
   return (
     <div className="space-y-2">
@@ -59,56 +66,6 @@ function ScanHistorySkeleton() {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function DailyUsageIndicator({ usage, loading }: { usage?: { used: number; limit: number; remaining: number; resetsAt: string }; loading: boolean }) {
-  if (loading) {
-    return (
-      <div className="rounded-xl border bg-background/60 p-3">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-        <Skeleton className="h-2 w-full rounded-full" />
-      </div>
-    );
-  }
-
-  if (!usage) {
-    return (
-      <div className="rounded-xl border bg-background/60 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">Daily scan limit</p>
-            <p className="text-xs text-muted-foreground">Usage will appear after the scan API is redeployed.</p>
-          </div>
-          <Badge variant="outline">5/day</Badge>
-        </div>
-      </div>
-    );
-  }
-
-  const percent = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
-  const exhausted = usage.remaining <= 0;
-  const almostFull = !exhausted && usage.remaining === 1;
-  const resetTime = new Date(usage.resetsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  return (
-    <div className={`rounded-xl border p-3 ${exhausted ? "border-destructive/30 bg-destructive/5" : almostFull ? "border-amber-500/30 bg-amber-500/10" : "bg-background/60"}`}>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium">Daily scan limit</p>
-          <p className="text-xs text-muted-foreground">
-            {exhausted ? "Limit reached" : `${usage.remaining} ${usage.remaining === 1 ? "scan" : "scans"} left today`} · resets at {resetTime}
-          </p>
-        </div>
-        <Badge variant={exhausted ? "destructive" : almostFull ? "secondary" : "outline"}>{usage.used}/{usage.limit}</Badge>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
-        <div className={`h-full rounded-full transition-all ${exhausted ? "bg-destructive" : almostFull ? "bg-amber-500" : "bg-primary"}`} style={{ width: `${percent}%` }} />
-      </div>
     </div>
   );
 }
@@ -271,7 +228,10 @@ function RouteComponent() {
                           <p className="text-xs text-muted-foreground">{new Date(scan.createdAt).toLocaleString()} · {scan.resultSummary?.itemCount ?? 0} items</p>
                         </div>
                       </div>
-                      <Badge variant={statusBadgeVariant(scan.status)}>{statusLabel(scan.status)}</Badge>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant={statusBadgeVariant(scan.status)}>{statusLabel(scan.status)}</Badge>
+                        <Badge variant="outline">{modeLabel(scan.mode)}</Badge>
+                      </div>
                     </div>
                   </Link>
                   <AlertDialog>

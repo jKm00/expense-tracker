@@ -12,6 +12,7 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
+import { ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -37,7 +38,7 @@ function RouteComponent() {
           Scan a receipt to fill checkout entries, then review before completion.
         </PageHeaderDescription>
       </PageHeader>
-      <Suspense>
+      <Suspense fallback={<ScanLoadingState />}>
         <ScanCheckoutContent />
       </Suspense>
     </div>
