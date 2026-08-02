@@ -62,7 +62,7 @@ describe("checkout link helpers", () => {
     ).toBe(true);
   });
 
-  it("returns the latest same-day needs review transaction as suggestion", () => {
+  it("returns the latest same-day or previous-day needs review transaction as suggestion", () => {
     const date = new Date("2024-01-15T12:00:00Z");
     const older = makeTransaction({
       id: "tx-1",
@@ -74,6 +74,11 @@ describe("checkout link helpers", () => {
       needsReview: true,
       date: new Date("2024-01-15T10:00:00Z"),
     });
+    const previousDay = makeTransaction({
+      id: "tx-previous",
+      needsReview: true,
+      date: new Date("2024-01-14T22:00:00Z"),
+    });
     const otherDay = makeTransaction({
       id: "tx-3",
       needsReview: true,
@@ -81,19 +86,20 @@ describe("checkout link helpers", () => {
     });
 
     expect(
-      getCheckoutLinkSuggestion([older, latest, otherDay] as any, date)?.id,
+      getCheckoutLinkSuggestion([older, latest, previousDay, otherDay] as any, date)?.id,
     ).toBe("tx-2");
   });
 
-  it("returns same-day transactions for manual selection", () => {
+  it("returns same-day and previous-day transactions for manual selection", () => {
     const date = new Date("2024-01-15T12:00:00Z");
     const sameDay = makeTransaction({ id: "tx-1", date: new Date("2024-01-15T10:00:00Z") });
-    const otherDay = makeTransaction({ id: "tx-2", date: new Date("2024-01-16T10:00:00Z") });
+    const previousDay = makeTransaction({ id: "tx-2", date: new Date("2024-01-14T22:00:00Z") });
+    const otherDay = makeTransaction({ id: "tx-3", date: new Date("2024-01-16T10:00:00Z") });
 
     expect(
-      getSelectableCheckoutTransactions([sameDay, otherDay] as any, date).map(
+      getSelectableCheckoutTransactions([sameDay, previousDay, otherDay] as any, date).map(
         (transaction) => transaction.id,
       ),
-    ).toEqual(["tx-1"]);
+    ).toEqual(["tx-1", "tx-2"]);
   });
 });

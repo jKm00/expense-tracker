@@ -24,7 +24,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { formatAmount } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { AlertTriangle, Check, FileImage, Link2, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { validateReceiptFile } from "../receipt-scanning.utils";
@@ -70,6 +70,10 @@ function getActiveTokens(data: [unknown, IntegrationTokenMetadata[]] | undefined
 function getTransactions(data: [unknown, FullTransaction[]] | undefined) {
   if (!data || data[0] || !data[1]) return [];
   return data[1];
+}
+
+function dedupeTransactions(transactions: FullTransaction[]) {
+  return Array.from(new Map(transactions.map((transaction) => [transaction.id, transaction])).values());
 }
 
 function formatTransactionOption(transaction: FullTransaction) {
@@ -152,6 +156,10 @@ export function ReceiptScanReview({
     enabled: scanQuery.data?.[1]?.status === "completed",
   });
   const usageQuery = useQuery(receiptScanningQueries.listScansOptions());
+  const previousDay = subDays(date, 1);
+  const previousDayUsesDifferentMonth =
+    previousDay.getFullYear() !== date.getFullYear() ||
+    previousDay.getMonth() !== date.getMonth();
   const integrationTokenQuery = useQuery({
     ...integrationQueries.getIntegrationTokensOptions(),
     enabled: mode === "shopping-checkout",
@@ -159,6 +167,10 @@ export function ReceiptScanReview({
   const checkoutTransactionQuery = useQuery({
     ...transactionQueries.getTransactionsOptions(date.getFullYear(), date.getMonth()),
     enabled: mode === "shopping-checkout",
+  });
+  const previousMonthCheckoutTransactionQuery = useQuery({
+    ...transactionQueries.getTransactionsOptions(previousDay.getFullYear(), previousDay.getMonth()),
+    enabled: mode === "shopping-checkout" && previousDayUsesDifferentMonth,
   });
 
   const receiptTotal = scanResult?.receipt.total ? Number(scanResult.receipt.total) : null;
@@ -183,8 +195,11 @@ export function ReceiptScanReview({
   const showScanProgress = Boolean(activeScanId) && activeScan?.status !== "completed";
   const showPreparingReview = Boolean(activeScanId) && activeScan?.status === "completed" && !matchQuery.data?.[1];
   const checkoutTransactions = useMemo(
-    () => getTransactions(checkoutTransactionQuery.data),
-    [checkoutTransactionQuery.data],
+    () => dedupeTransactions([
+      ...getTransactions(checkoutTransactionQuery.data),
+      ...getTransactions(previousMonthCheckoutTransactionQuery.data),
+    ]),
+    [checkoutTransactionQuery.data, previousMonthCheckoutTransactionQuery.data],
   );
   const checkoutSelectableTransactions = useMemo(
     () => getSelectableCheckoutTransactions(checkoutTransactions, date),
@@ -199,6 +214,7 @@ export function ReceiptScanReview({
     () => checkoutSelectableTransactions.find((transaction) => transaction.id === selectedTransactionId),
     [checkoutSelectableTransactions, selectedTransactionId],
   );
+  const hasCheckoutLinkableTransactions = checkoutSelectableTransactions.length > 0;
 
   useEffect(() => {
     if (!initialScanResult || initialScanAppliedRef.current) {
@@ -685,7 +701,7 @@ export function ReceiptScanReview({
               Add entry
             </Button>
 
-            {mode === "shopping-checkout" && (
+            {mode === "shopping-checkout" && hasCheckoutLinkableTransactions && (
               <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">

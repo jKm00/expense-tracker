@@ -30,7 +30,7 @@ import { FullTransaction } from "@/features/transactions/transactions.models";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/utils/format";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import {
   Check,
   ChevronDownIcon,
@@ -117,6 +117,10 @@ function getTransactions(data: [unknown, FullTransaction[]] | undefined) {
   }
 
   return data[1];
+}
+
+function dedupeTransactions(transactions: FullTransaction[]) {
+  return Array.from(new Map(transactions.map((transaction) => [transaction.id, transaction])).values());
 }
 
 const CREATE_NEW_TRANSACTION_VALUE = "__create_new_transaction__";
@@ -223,6 +227,17 @@ export function ShoppingCheckoutForm({
       date.getMonth(),
     ),
   );
+  const previousDay = subDays(date, 1);
+  const previousDayUsesDifferentMonth =
+    previousDay.getFullYear() !== date.getFullYear() ||
+    previousDay.getMonth() !== date.getMonth();
+  const { data: previousMonthTransactionResult } = useQuery({
+    ...transactionQueries.getTransactionsOptions(
+      previousDay.getFullYear(),
+      previousDay.getMonth(),
+    ),
+    enabled: previousDayUsesDifferentMonth,
+  });
 
   const isMobile = useBreakpoint(BREAKPOINTS.md);
 
@@ -231,8 +246,11 @@ export function ShoppingCheckoutForm({
     [integrationTokenResult],
   );
   const transactions = useMemo(
-    () => getTransactions(transactionResult),
-    [transactionResult],
+    () => dedupeTransactions([
+      ...getTransactions(transactionResult),
+      ...getTransactions(previousMonthTransactionResult),
+    ]),
+    [previousMonthTransactionResult, transactionResult],
   );
   const hasIntegration = hasActiveIntegrationTokens(integrationTokens);
   const selectableTransactions = useMemo(
@@ -253,6 +271,7 @@ export function ShoppingCheckoutForm({
       ),
     [selectableTransactions, selectedTransactionId],
   );
+  const hasLinkableTransactions = selectableTransactions.length > 0;
 
   const entryErrors = useMemo(
     () =>
@@ -718,6 +737,7 @@ export function ShoppingCheckoutForm({
         </div>
       </section>
 
+      {hasLinkableTransactions && (
       <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -814,13 +834,8 @@ export function ShoppingCheckoutForm({
             }
           />
         </FormField>
-
-        {selectableTransactions.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No transactions found for {format(date, "PPP")}.
-          </p>
-        ) : null}
       </section>
+      )}
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <div className="space-y-1">
