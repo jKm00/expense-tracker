@@ -5,7 +5,7 @@ import {
   CompleteReceiptCheckoutScanDTO,
   CompleteReceiptTransactionReplacementScanDTO,
   CompleteReceiptTransactionScanDTO,
-  ExtractReceiptDTO,
+  CreateScanUploadDTO,
 } from "./receipt-scanning.dtos";
 import { receiptScanningController } from "./receipt-scanning.controller";
 import { TRANSACTION_QUERY_KEY } from "../transactions/transactions.queries";
@@ -13,20 +13,31 @@ import { SHOPPING_QUERY_KEY } from "../shopping/shopping.queries";
 import { PRODUCT_QUERY_KEY } from "../products/products.queries";
 import { RECEIPT_SCANNING_QUERY_KEY } from "./receipt-scanning.queries";
 
-function extractReceipt() {
+function createScanUpload() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: ExtractReceiptDTO) => {
+    mutationFn: async (data: CreateScanUploadDTO) => {
       assertOnline();
-      return await receiptScanningController.extractReceipt({ data });
+      return await receiptScanningController.createScanUpload({ data });
     },
     onError: () => {
-      toast.error("Something unexpected happened while scanning the receipt. Please try again!");
+      toast.error("Something unexpected happened while starting the scan. Please try again!");
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: [RECEIPT_SCANNING_QUERY_KEY, "usage"] });
+      qc.invalidateQueries({ queryKey: [RECEIPT_SCANNING_QUERY_KEY, "list"] });
     },
+  });
+}
+
+function deleteScan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (scanId: string) => {
+      assertOnline();
+      return await receiptScanningController.deleteScan({ data: { scanId } });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: [RECEIPT_SCANNING_QUERY_KEY] }),
   });
 }
 
@@ -107,7 +118,8 @@ function completeTransactionReplacementScan() {
 }
 
 export const receiptScanningMutations = {
-  extractReceipt,
+  createScanUpload,
+  deleteScan,
   completeTransactionScan,
   completeCheckoutScan,
   completeTransactionReplacementScan,

@@ -41,7 +41,7 @@ function RouteComponent() {
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/transactions/scan">
+            <Link to="/dashboard/scans">
               <FileImage className="size-4" />
               <span className="hidden sm:inline">Scan receipt</span>
             </Link>

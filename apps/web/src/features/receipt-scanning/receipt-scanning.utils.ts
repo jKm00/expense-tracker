@@ -1,11 +1,10 @@
 export const MAX_RECEIPT_FILE_SIZE = 10 * 1024 * 1024;
 
 export function validateReceiptFile(file: File) {
-  const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-  const isImage = file.type.startsWith("image/");
+  const supportedType = ["image/jpeg", "image/png", "application/pdf"].includes(file.type);
 
-  if (!isImage && !isPdf) {
-    return "Choose an image or PDF receipt file.";
+  if (!supportedType) {
+    return "Choose a JPEG, PNG, or PDF receipt file.";
   }
 
   if (file.size > MAX_RECEIPT_FILE_SIZE) {

@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
+  FileImage,
   ShoppingBag,
   PackageIcon,
   RepeatIcon,
@@ -30,6 +31,11 @@ const navSections = [
         label: "Transactions",
         href: "/dashboard/transactions",
         icon: ReceiptTextIcon,
+      },
+      {
+        label: "Scan",
+        href: "/dashboard/scans",
+        icon: FileImage,
       },
       {
         label: "Analytics",

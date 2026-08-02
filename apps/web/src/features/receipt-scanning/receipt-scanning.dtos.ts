@@ -21,25 +21,21 @@ export const extractedReceiptSchema = z.object({
   items: z.array(extractedReceiptItemSchema).min(1),
 });
 
-export const scanModeSchema = z.enum(["transaction", "shopping-checkout"]);
+export const scanModeSchema = z.enum(["transaction", "transaction-replacement", "shopping-checkout"]);
 
-const receiptFileDataUrlSchema = z
-  .string()
-  .max(14_000_000)
-  .refine(
-    (value) =>
-      value.startsWith("data:image/") ||
-      value.startsWith("data:application/pdf"),
-    "Receipt file must be an image or PDF",
-  );
-
-export const extractReceiptSchema = z.object({
-  imageDataUrl: receiptFileDataUrlSchema,
-  mode: scanModeSchema,
-  checkedProductIds: z.array(z.string()).default([]),
+export const createScanUploadSchema = z.object({
+  fileName: z.string().trim().min(1).max(240),
+  contentType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
+  sizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
+  mode: scanModeSchema.default("transaction"),
 });
 
-export type ExtractReceiptDTO = z.infer<typeof extractReceiptSchema>;
+export type CreateScanUploadDTO = z.infer<typeof createScanUploadSchema>;
+
+export const getScanSchema = z.object({ scanId: z.string().min(1) });
+export const listScansSchema = z.object({ cursor: z.string().optional(), limit: z.number().int().min(1).max(50).default(20) });
+
+export const matchAwsScanSchema = z.object({ scanId: z.string().min(1) });
 
 export const receiptScanProductSchema = z.object({
   id: z.string().nullable(),

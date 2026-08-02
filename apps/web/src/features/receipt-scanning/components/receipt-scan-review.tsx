@@ -9,7 +9,6 @@ import { LoaderButton } from "@/components/custom/loader.button";
 import { ProductWithTag } from "@/features/products/products.models";
 import { ReceiptScanLine, ReceiptScanMatchResult } from "../receipt-scanning.models";
 import { receiptScanningMutations } from "../receipt-scanning.mutations";
-import { receiptScanningQueries } from "../receipt-scanning.queries";
 import {
   CompleteReceiptCheckoutScanDTO,
   CompleteReceiptTransactionReplacementScanDTO,
@@ -22,7 +21,8 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { AlertTriangle, FileImage, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fileToDataUrl, validateReceiptFile } from "../receipt-scanning.utils";
+import { validateReceiptFile } from "../receipt-scanning.utils";
+import { receiptScanningQueries } from "../receipt-scanning.queries";
 
 type EditableScanLine = Omit<ReceiptScanLine, "product"> & {
   product: { id: string | null; name: string } | null;
@@ -101,17 +101,12 @@ export function ReceiptScanReview({
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
   const initialScanAppliedRef = useRef(false);
   const online = useOnlineStatus();
-  const extractMutation = receiptScanningMutations.extractReceipt();
-  const { data: scanUsageResult } = useQuery(receiptScanningQueries.getScanUsageOptions());
+  const uploadMutation = receiptScanningMutations.createScanUpload();
   const transactionMutation = receiptScanningMutations.completeTransactionScan();
   const transactionReplacementMutation =
     receiptScanningMutations.completeTransactionReplacementScan();
   const checkoutMutation = receiptScanningMutations.completeCheckoutScan();
   const isReplacingTransaction = mode === "transaction" && Boolean(targetTransaction);
-  const scanUsage = scanUsageResult?.[1] ?? null;
-  const isScanLimitReached = scanUsage?.remaining === 0;
-  const remainingScans = scanUsage?.remaining ?? 5;
-  const scanLimit = scanUsage?.limit ?? 5;
 
   const [scanResult, setScanResult] = useState<ReceiptScanMatchResult | null>(null);
   const [lines, setLines] = useState<EditableScanLine[]>([]);
@@ -119,7 +114,20 @@ export function ReceiptScanReview({
   const [description, setDescription] = useState(targetTransaction?.description ?? "");
   const [date, setDate] = useState(targetTransaction ? new Date(targetTransaction.date) : new Date());
   const [fileError, setFileError] = useState<string | null>(null);
+  const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const scanQuery = useQuery({
+    ...receiptScanningQueries.getScanOptions(activeScanId ?? ""),
+    enabled: Boolean(activeScanId),
+    refetchInterval: (query) => {
+      const data = query.state.data?.[1];
+      return data?.status === "upload_pending" || data?.status === "processing" ? 2000 : false;
+    },
+  });
+  const matchQuery = useQuery({
+    ...receiptScanningQueries.matchScanOptions(activeScanId ?? ""),
+    enabled: scanQuery.data?.[1]?.status === "completed",
+  });
 
   const receiptTotal = scanResult?.receipt.total ? Number(scanResult.receipt.total) : null;
   const reviewedTotal = useMemo(
@@ -147,6 +155,26 @@ export function ReceiptScanReview({
     applyScanResult(initialScanResult);
   }, [initialScanResult]);
 
+  useEffect(() => {
+    const [error, data] = matchQuery.data ?? [];
+    if (error) {
+      setFileError(error.message);
+      return;
+    }
+    if (data) {
+      applyScanResult(data);
+      setActiveScanId(null);
+    }
+  }, [matchQuery.data]);
+
+  useEffect(() => {
+    const scan = scanQuery.data?.[1];
+    if (scan?.status === "failed") {
+      setFileError(scan.failureMessage ?? "Receipt processing failed. Please try again.");
+      setActiveScanId(null);
+    }
+  }, [scanQuery.data]);
+
   function applyScanResult(data: ReceiptScanMatchResult) {
     setScanResult(data);
     setLines(toEditableLines(data));
@@ -161,39 +189,45 @@ export function ReceiptScanReview({
     setSubmitAttempted(false);
   }
 
-  function extractReceipt(imageDataUrl: string) {
-    extractMutation.mutate(
-      { imageDataUrl, mode, checkedProductIds: [] },
-      {
-        onSuccess: (result) => {
-          const [error, data] = result;
-          if (error) {
-            setFileError(error.message);
-            return;
-          }
-
-          applyScanResult(data);
-        },
-      },
-    );
-  }
-
   async function handleFile(file: File) {
     setFileError(null);
-
     if (!online) {
       setFileError("Receipt scanning requires an internet connection.");
       return;
     }
-
     const validationError = validateReceiptFile(file);
     if (validationError) {
       setFileError(validationError);
       return;
     }
 
-    const imageDataUrl = await fileToDataUrl(file);
-    extractReceipt(imageDataUrl);
+    const uploadMode = targetTransaction ? "transaction-replacement" : mode;
+    uploadMutation.mutate(
+      {
+        fileName: file.name,
+        contentType: file.type as "image/jpeg" | "image/png" | "application/pdf",
+        sizeBytes: file.size,
+        mode: uploadMode,
+      },
+      {
+        onSuccess: async ([error, data]) => {
+          if (error) {
+            setFileError(error.message);
+            return;
+          }
+          const response = await fetch(data.uploadUrl, {
+            method: "PUT",
+            headers: data.uploadHeaders,
+            body: file,
+          });
+          if (!response.ok) {
+            setFileError("Upload failed. Please try again.");
+            return;
+          }
+          setActiveScanId(data.scanId);
+        },
+      },
+    );
   }
 
   function updateLine(index: number, updater: (line: EditableScanLine) => EditableScanLine) {
@@ -333,45 +367,33 @@ export function ReceiptScanReview({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <FileImage className="size-4" />
-            Receipt image
+            Receipt scan
             <Badge variant="secondary">Beta</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isScanLimitReached ? "border-destructive/30 bg-destructive/5" : "bg-muted/30"}`}>
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Remaining scans today</p>
-              <p className="text-sm text-muted-foreground">
-                Successful scans and scans currently being analyzed count. Failed extractions do not.
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <span className={`text-lg font-medium tabular-nums ${isScanLimitReached ? "text-destructive" : "text-foreground"}`}>{remainingScans}</span>
-              <span className="text-sm text-muted-foreground">/{scanLimit}</span>
-            </div>
-          </div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void handleFile(file);
-              event.currentTarget.value = "";
-            }}
-          />
           <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleFile(file);
+                event.currentTarget.value = "";
+              }}
+            />
             <LoaderButton
               type="button"
-              isLoading={extractMutation.isPending}
+              isLoading={uploadMutation.isPending || Boolean(activeScanId)}
               loadingText={
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="size-3.5 animate-spin" />
-                  Analyzing receipt...
+                  {activeScanId ? "Processing receipt..." : "Uploading receipt..."}
                 </span>
               }
-              disabled={!online || extractMutation.isPending || isScanLimitReached}
+              disabled={!online || uploadMutation.isPending || Boolean(activeScanId)}
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="size-3.5" />
@@ -399,7 +421,7 @@ export function ReceiptScanReview({
             </Button>
           </div>
           {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
-          {isScanLimitReached && <p className="text-sm text-destructive">You have reached the 5 receipt extraction attempts limit for today.</p>}
+          {!scanResult && <p className="text-sm text-muted-foreground">Upload a receipt and review the extracted entries before saving.</p>}
           {fileError && <p className="text-sm text-destructive">{fileError}</p>}
           {scanResult?.receipt.warnings.length ? (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">

@@ -48,7 +48,7 @@ function RouteComponent() {
           </PageHeaderDescription>
           <PageHeaderActions>
             <Button asChild size="sm" variant="outline">
-              <Link to="/dashboard/transactions/scan" aria-label="Scan receipt">
+              <Link to="/dashboard/scans" aria-label="Scan receipt">
                 <FileImage className="size-4" />
                 <span className="max-md:sr-only">Scan receipt</span>
               </Link>
