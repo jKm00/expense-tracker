@@ -3,7 +3,7 @@
 deploy:
 	pnpm --filter @expense-tracker/scan-api build
 	terraform -chdir=infra/environments/dev init
-	terraform -chdir=infra/environments/dev apply -auto-approve -var-file=local.tfvars
+	terraform -chdir=infra/environments/dev apply -var-file=local.tfvars
 
 destroy:
 	terraform -chdir=infra/environments/dev init
