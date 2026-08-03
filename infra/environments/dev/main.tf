@@ -28,17 +28,17 @@ locals {
 }
 
 module "scan_service" {
-  source                      = "../../modules/scan-service"
-  project                     = "expense-tracker"
-  environment                 = "dev"
-  aws_region                  = local.aws_region
-  api_token                   = var.api_token
-  allowed_origins             = ["http://localhost:3000"]
-  lambda_artifacts_dir        = "../../../apps/scan-api/dist/lambdas"
-  force_destroy_bucket        = true
-  enable_pitr                 = false
-  log_retention_days          = 7
-  worker_reserved_concurrency = -1
+  source                     = "../../modules/scan-service"
+  project                    = "expense-tracker"
+  environment                = "dev"
+  aws_region                 = local.aws_region
+  api_token                  = var.api_token
+  allowed_origins            = ["http://localhost:3000"]
+  lambda_artifacts_dir       = "../../../apps/scan-api/dist/lambdas"
+  force_destroy_bucket       = true
+  enable_pitr                = false
+  log_retention_days         = 7
+  worker_maximum_concurrency = 2
 }
 
 output "scan_api_url" {

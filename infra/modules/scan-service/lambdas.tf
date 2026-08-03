@@ -13,16 +13,15 @@ resource "aws_cloudwatch_log_group" "lambda" {
 }
 
 resource "aws_lambda_function" "handler" {
-  for_each                       = local.handlers
-  function_name                  = "${local.name_prefix}-${each.value}"
-  role                           = aws_iam_role.lambda[each.key].arn
-  handler                        = "${each.value}.handler"
-  runtime                        = var.lambda_runtime
-  filename                       = data.archive_file.lambda[each.key].output_path
-  source_code_hash               = data.archive_file.lambda[each.key].output_base64sha256
-  timeout                        = each.key == "worker" ? 60 : each.key == "authorizer" ? 5 : 10
-  memory_size                    = each.key == "worker" ? 512 : 256
-  reserved_concurrent_executions = each.key == "worker" ? var.worker_reserved_concurrency : null
+  for_each         = local.handlers
+  function_name    = "${local.name_prefix}-${each.value}"
+  role             = aws_iam_role.lambda[each.key].arn
+  handler          = "${each.value}.handler"
+  runtime          = var.lambda_runtime
+  filename         = data.archive_file.lambda[each.key].output_path
+  source_code_hash = data.archive_file.lambda[each.key].output_base64sha256
+  timeout          = each.key == "worker" ? 60 : each.key == "authorizer" ? 5 : 10
+  memory_size      = each.key == "worker" ? 512 : 256
 
   environment {
     variables = {
@@ -44,4 +43,8 @@ resource "aws_lambda_event_source_mapping" "worker" {
   event_source_arn = aws_sqs_queue.scan_events.arn
   function_name    = aws_lambda_function.handler["worker"].arn
   batch_size       = 5
+
+  scaling_config {
+    maximum_concurrency = var.worker_maximum_concurrency
+  }
 }
