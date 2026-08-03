@@ -195,6 +195,7 @@ function TagContent() {
         mostUsedTagName={kpis.mostUsedTagName}
       />
       <Input
+        aria-label="Search tags"
         placeholder="Search..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}

@@ -12,10 +12,11 @@ function LoaderButton({
   isLoading,
   loadingText,
   children,
+  disabled,
   ...props
 }: LoaderButtonProps) {
   return (
-    <Button {...props}>
+    <Button {...props} disabled={disabled || isLoading}>
       <div
         className="grid items-center justify-items-center"
         style={{ gridTemplateAreas: "stack" }}

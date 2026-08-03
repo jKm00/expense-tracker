@@ -22,9 +22,11 @@ import { transactionMutations } from "../transactions.mutations";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 export function SimpleTransactionForm({ products }: { products: Product[] }) {
   const mutation = transactionMutations.saveTransaction();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -33,16 +35,21 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
     formState: { errors },
     handleSubmit,
     reset,
+    watch,
   } = useForm({
     defaultValues: {
       quantity: "1",
     },
     resolver: zodResolver(saveEntrySchema),
   });
+  const selectedProduct = watch("product");
+  const price = watch("price");
+  const canSubmit = Boolean(selectedProduct && price);
 
   const onSubmit = (type: EntryType) => {
     setValue("type", type);
     handleSubmit((data) => {
+      setSubmitError(null);
       mutation.mutate(
         {
           source: "manual",
@@ -53,11 +60,15 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
           onSuccess: (res) => {
             const [error] = res;
             if (error) {
+              setSubmitError(error.message);
               toast.error(error.message);
             } else {
               toast.success("Transaction saved");
               reset();
             }
+          },
+          onError: () => {
+            setSubmitError("Transaction could not be saved. Check your connection and try again.");
           },
         },
       );
@@ -122,6 +133,7 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
               className="h-11 md:h-9 border-expense/30 text-expense hover:bg-expense/10 hover:text-expense"
               type="button"
               isLoading={mutation.isPending}
+              disabled={!canSubmit || mutation.isPending}
             >
               <Minus className="size-4" />
               Expense
@@ -132,11 +144,19 @@ export function SimpleTransactionForm({ products }: { products: Product[] }) {
               className="h-11 md:h-9 border-income/30 text-income hover:bg-income/10 hover:text-income"
               type="button"
               isLoading={mutation.isPending}
+              disabled={!canSubmit || mutation.isPending}
             >
               <Plus className="size-4" />
               Income
             </LoaderButton>
           </div>
+          {!canSubmit ? (
+            <p className="text-xs text-muted-foreground">
+              Select a product and enter a price to save this transaction.
+            </p>
+          ) : submitError ? (
+            <p className="text-xs text-destructive">{submitError}</p>
+          ) : null}
         </form>
       </CardContent>
     </Card>

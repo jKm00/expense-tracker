@@ -28,6 +28,7 @@ export function NewProductForm() {
   const mutation = productMutations.createProduct();
 
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const tags = useMemo(() => (tagsResult ? tagsResult : []), [tagsResult]);
   const unselectedTags = useMemo(
@@ -38,12 +39,16 @@ export function NewProductForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
   });
+  const productName = watch("name");
+  const canSubmit = Boolean(productName?.trim());
 
   const onSubmit = handleSubmit((data) => {
+    setSubmitError(null);
     mutation.mutate(
       {
         product: {
@@ -67,12 +72,16 @@ export function NewProductForm() {
               default:
                 message = `Unexpected error: ${reason satisfies never}`;
             }
+            setSubmitError(message);
             toast.error(message);
           } else {
             navigate({
               to: "/dashboard/products",
             });
           }
+        },
+        onError: () => {
+          setSubmitError("Product could not be saved. Check your connection and try again.");
         },
       },
     );
@@ -113,6 +122,7 @@ export function NewProductForm() {
                   <TagBadge
                     key={tag.id}
                     tag={tag}
+                    aria-label={`Remove ${tag.name} from product`}
                     onClick={() => removeTag(tag)}
                     className="cursor-pointer"
                     variant="secondary"
@@ -139,6 +149,7 @@ export function NewProductForm() {
                   <TagBadge
                     key={tag.id}
                     tag={tag}
+                    aria-label={`Add ${tag.name} to product`}
                     onClick={() => addTag(tag)}
                     className="cursor-pointer"
                     variant="secondary"
@@ -156,11 +167,18 @@ export function NewProductForm() {
           type="submit"
           size="sm"
           isLoading={mutation.isPending}
-          disabled={mutation.isPending}
+          disabled={!canSubmit || mutation.isPending}
           className="w-full"
         >
           Add product
         </LoaderButton>
+        {!canSubmit ? (
+          <p className="text-xs text-muted-foreground">
+            Product name is required before you can add it.
+          </p>
+        ) : submitError ? (
+          <p className="text-xs text-destructive">{submitError}</p>
+        ) : null}
       </div>
     </Form>
   );

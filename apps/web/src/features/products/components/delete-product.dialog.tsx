@@ -87,7 +87,7 @@ export function DeleteProductDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Keep product</AlertDialogCancel>
           <LoaderButton
             variant="destructive"
             size="sm"
@@ -95,7 +95,7 @@ export function DeleteProductDialog({
             disabled={mutation.isPending}
             onClick={handleDelete}
           >
-            Delete
+            Delete product
           </LoaderButton>
         </AlertDialogFooter>
       </AlertDialogContent>

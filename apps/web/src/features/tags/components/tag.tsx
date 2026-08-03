@@ -15,15 +15,34 @@ export function TagBadge({
   children,
   ...props
 }: TagBadgeProps) {
+  const style = {
+    color: tag.color || undefined,
+    borderColor: tag.color ? `${tag.color}40` : undefined,
+    backgroundColor: tag.color ? `${tag.color}10` : undefined,
+  };
+
+  if (props.onClick) {
+    const actionProps = props as React.ComponentProps<"button">;
+
+    return (
+      <Badge
+        asChild
+        variant={variant}
+        className={cn("select-none", className)}
+        style={style}
+      >
+        <button type="button" {...actionProps}>
+          {children}
+        </button>
+      </Badge>
+    );
+  }
+
   return (
     <Badge
       variant={variant}
       className={cn("select-none", className)}
-      style={{
-        color: tag.color || undefined,
-        borderColor: tag.color ? `${tag.color}40` : undefined,
-        backgroundColor: tag.color ? `${tag.color}10` : undefined,
-      }}
+      style={style}
       {...props}
     >
       {children}

@@ -78,7 +78,7 @@ export function DeleteRecurringDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Keep recurring transaction</AlertDialogCancel>
           <LoaderButton
             variant="destructive"
             size="sm"
@@ -86,7 +86,7 @@ export function DeleteRecurringDialog({
             disabled={mutation.isPending}
             onClick={handleDelete}
           >
-            Delete
+            Delete recurring transaction
           </LoaderButton>
         </AlertDialogFooter>
       </AlertDialogContent>

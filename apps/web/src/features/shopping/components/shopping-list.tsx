@@ -88,23 +88,16 @@ export function ShoppingListView({
             return (
               <div
                 key={item.id}
-                role="button"
-                tabIndex={0}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-muted/50 sm:px-4 sm:py-3",
                   index !== list.items.length - 1 && "border-b border-border",
                   checked && "bg-muted/20",
                 )}
                 onClick={() => handleToggleItem(item.id, !checked)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleToggleItem(item.id, !checked);
-                  }
-                }}
               >
                 <Checkbox
                   checked={checked}
+                  aria-label={`${checked ? "Uncheck" : "Check"} ${item.product.name}`}
                   onCheckedChange={(nextChecked) =>
                     handleToggleItem(item.id, nextChecked === true)
                   }
@@ -127,7 +120,7 @@ export function ShoppingListView({
                   type="button"
                   variant="ghost"
                   size="icon-xs"
-                  aria-label="Remove item"
+                  aria-label={`Remove ${item.product.name}`}
                   onClick={(event) => {
                     event.stopPropagation();
                     handleRemoveItem(item.id);

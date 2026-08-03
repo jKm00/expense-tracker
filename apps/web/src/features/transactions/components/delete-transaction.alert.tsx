@@ -80,14 +80,14 @@ export function DeleteTransactionDialog({
           <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="size-5 text-destructive" />
           </div>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone and will permanently delete the
             transaction!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Keep transaction</AlertDialogCancel>
           <LoaderButton
             variant="destructive"
             size="sm"
@@ -95,7 +95,7 @@ export function DeleteTransactionDialog({
             disabled={mutation.isPending}
             onClick={handleDelete}
           >
-            Delete
+            Delete transaction
           </LoaderButton>
         </AlertDialogFooter>
       </AlertDialogContent>

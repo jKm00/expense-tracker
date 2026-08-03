@@ -244,6 +244,7 @@ function EntryTagsDialog({
                   <TagBadge
                     key={tag.id}
                     tag={tag}
+                    aria-label={`Remove ${tag.name} from this item`}
                     onClick={() => {
                       if (!disabled) {
                         handleUnlinkTag(tag);
@@ -271,6 +272,7 @@ function EntryTagsDialog({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search tags"
               placeholder="Search tags..."
               className="mb-3"
             />
@@ -296,6 +298,7 @@ function EntryTagsDialog({
                   <TagBadge
                     key={tag.id}
                     tag={tag}
+                    aria-label={`Add ${tag.name} to this item`}
                     onClick={() => {
                       if (!disabled) {
                         handleLinkTag(tag);

@@ -68,6 +68,7 @@ export function EditRecurringForm({
 
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -106,6 +107,7 @@ export function EditRecurringForm({
   const mutation = recurringMutations.updateRecurring();
 
   const onSubmit = handleSubmit((data) => {
+    setSubmitError(null);
     mutation.mutate(
       { recurringId: recurring.id, ...data },
       {
@@ -141,10 +143,14 @@ export function EditRecurringForm({
               default:
                 message = `Unexpected error: ${reason satisfies never}. Please try again!`;
             }
+            setSubmitError(message);
             toast.error(message);
           } else {
             toast.success("Recurring transaction updated!");
           }
+        },
+        onError: () => {
+          setSubmitError("Recurring transaction could not be saved. Check your connection and try again.");
         },
       },
     );
@@ -347,6 +353,9 @@ export function EditRecurringForm({
             >
               Save changes
             </LoaderButton>
+            {submitError ? (
+              <p className="text-xs text-destructive">{submitError}</p>
+            ) : null}
           </div>
         </Form>
       </CardContent>
