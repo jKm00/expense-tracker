@@ -1,4 +1,4 @@
-name: Deploy Scan API Prod
+name: Deploy
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy prod scan API
+    name: Test and deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,12 @@ jobs:
 
       - name: Test web
         run: pnpm test:web
+
+      - name: Build job
+        run: pnpm --filter @expense-tracker/job build
+
+      - name: Test job
+        run: pnpm test:job
 
       - name: Build scan API
         run: pnpm build:scan-api

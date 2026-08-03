@@ -68,9 +68,9 @@ variable "file_url_ttl_seconds" {
   default = 900
 }
 
-variable "worker_reserved_concurrency" {
+variable "worker_maximum_concurrency" {
   type    = number
-  default = 2
+  default = 5
 }
 
 locals {

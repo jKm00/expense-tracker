@@ -224,10 +224,11 @@ Old usage items have `expiresAt` and are removed later by DynamoDB TTL. Expiry d
 
 ## Web Routes
 
-- `/dashboard/scans` - upload, usage indicator, scan history, delete scans.
-- `/dashboard/scans/$scanId` - polling/progress, scan result review, view original file.
-- `/dashboard/transactions/$id/scan` - replace an existing transaction using a receipt scan.
-- Transaction creation and edit pages link into these scan flows.
+- `/dashboard/scans` - scan history and delete scans.
+- `/dashboard/scans/$scanId` - scan status/history detail, view original file, continue completed scans as a new transaction.
+- `/dashboard/transactions/new?method=scan` - create a transaction with optional receipt scanning inside the transaction form.
+- `/dashboard/transactions/$id/edit?method=scan` - replace an existing transaction's entries from a receipt scan inside the edit form.
+- `/dashboard/shopping/checkout?method=scan` - complete shopping checkout with optional receipt scanning inside checkout.
 
 ## Deployment
 
@@ -239,7 +240,7 @@ AWS_PROFILE=edv-dev make deploy
 
 Prod:
 
-- Runs from `.github/workflows/deploy-scan-prod.yml` on pushes to `main`.
+- Runs from `.github/workflows/deploy.yml` on pushes to `main`.
 - Uses GitHub OIDC to assume `AWS_PROD_ROLE_ARN`.
 - Uses GitHub secret `AWS_SCAN_API_TOKEN` for Terraform `api_token`.
 
