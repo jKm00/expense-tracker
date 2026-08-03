@@ -27,7 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
 import { AlertTriangle, Check, FileImage, Link2, Loader2, Plus, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { validateReceiptFile } from "../receipt-scanning.utils";
+import { formatReceiptScanStartError, RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE, validateReceiptFile } from "../receipt-scanning.utils";
 import { receiptScanningQueries } from "../receipt-scanning.queries";
 import { DailyUsageIndicator, ScanPreparingReviewState, ScanProgressState } from "./scan-states";
 
@@ -295,20 +295,27 @@ export function ReceiptScanReview({
       {
         onSuccess: async ([error, data]) => {
           if (error) {
-            setFileError(error.message);
+            setFileError(formatReceiptScanStartError(error.message));
             return;
           }
-          const response = await fetch(data.uploadUrl, {
-            method: "PUT",
-            headers: data.uploadHeaders,
-            body: file,
-          });
+          let response: Response;
+          try {
+            response = await fetch(data.uploadUrl, {
+              method: "PUT",
+              headers: data.uploadHeaders,
+              body: file,
+            });
+          } catch {
+            setFileError(RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE);
+            return;
+          }
           if (!response.ok) {
-            setFileError("Upload failed. Please try again.");
+            setFileError(RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE);
             return;
           }
           setActiveScanId(data.scanId);
         },
+        onError: (error) => setFileError(formatReceiptScanStartError(error)),
       },
     );
   }
@@ -452,7 +459,6 @@ export function ReceiptScanReview({
           <CardTitle className="flex items-center gap-2 text-base">
             <FileImage className="size-4" />
             Receipt scan
-            <Badge variant="secondary">Beta</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">

@@ -6,6 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, CheckCircle2, FileSearch, Loader2, ReceiptText, RefreshCcw, ScanLine, UploadCloud, WandSparkles } from "lucide-react";
 import type { ComponentType } from "react";
 
+export function ScanBetaBadge() {
+  return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Beta</Badge>;
+}
+
 export function ScanLoadingState() {
   return (
     <Card className="relative overflow-hidden">

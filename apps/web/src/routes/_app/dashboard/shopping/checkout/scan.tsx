@@ -12,7 +12,7 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
-import { ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
+import { ScanBetaBadge, ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -33,7 +33,7 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle>Scan Checkout Receipt</PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Scan Checkout Receipt <ScanBetaBadge /></span></PageHeaderTitle>
         <PageHeaderDescription>
           Scan a receipt to fill checkout entries, then review before completion.
         </PageHeaderDescription>

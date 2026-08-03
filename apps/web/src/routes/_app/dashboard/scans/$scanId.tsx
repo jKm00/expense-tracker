@@ -3,7 +3,7 @@ import { PageHeader, PageHeaderBackButton, PageHeaderDescription, PageHeaderTitl
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
-import { ScanErrorState, ScanLoadingState, ScanPreparingReviewState, ScanProgressState } from "@/features/receipt-scanning/components/scan-states";
+import { ScanBetaBadge, ScanErrorState, ScanLoadingState, ScanPreparingReviewState, ScanProgressState } from "@/features/receipt-scanning/components/scan-states";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
 import { receiptScanningQueries } from "@/features/receipt-scanning/receipt-scanning.queries";
 import { productQueries } from "@/features/products/products.queries";
@@ -50,7 +50,7 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle>Receipt Scan</PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scan <ScanBetaBadge /></span></PageHeaderTitle>
         <PageHeaderDescription>Review processing status and create a transaction when extraction completes.</PageHeaderDescription>
       </PageHeader>
 

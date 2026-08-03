@@ -18,7 +18,7 @@ function RouteComponent() {
       description: "Upload and review receipts",
       href: "/dashboard/scans",
       icon: FileImage,
-      version: undefined,
+      version: "beta",
     },
     {
       label: "Products",
@@ -84,8 +84,7 @@ function RouteComponent() {
                     </p>
                     {item.version ? (
                       <Badge
-                        variant="outline"
-                        className="h-5 rounded-md px-1.5 text-[10px]"
+                        className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
                       >
                         {item.version.toUpperCase()}
                       </Badge>
@@ -117,8 +116,7 @@ function RouteComponent() {
                   </p>
                   {item.version ? (
                     <Badge
-                      variant="outline"
-                      className="h-5 rounded-md px-1.5 text-[10px]"
+                      className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
                     >
                       {item.version.toUpperCase()}
                     </Badge>

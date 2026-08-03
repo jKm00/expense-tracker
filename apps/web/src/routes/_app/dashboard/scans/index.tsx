@@ -18,11 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DailyUsageIndicator } from "@/features/receipt-scanning/components/scan-states";
+import { DailyUsageIndicator, ScanBetaBadge } from "@/features/receipt-scanning/components/scan-states";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
 import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
 import { AwsScanSummary } from "@/features/receipt-scanning/receipt-scanning.models";
-import { validateReceiptFile } from "@/features/receipt-scanning/receipt-scanning.utils";
+import { formatReceiptScanStartError, RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE, validateReceiptFile } from "@/features/receipt-scanning/receipt-scanning.utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Clock3, FileImage, History, Loader2, ReceiptText, RefreshCcw, Sparkles, Trash2, Upload, UploadCloud } from "lucide-react";
@@ -117,16 +117,23 @@ function RouteComponent() {
       {
         onSuccess: async ([error, data]) => {
           if (error) {
-            setFileError(error.message);
+            setFileError(formatReceiptScanStartError(error.message));
             return;
           }
-          const upload = await fetch(data.uploadUrl, { method: "PUT", headers: data.uploadHeaders, body: file });
+          let upload: Response;
+          try {
+            upload = await fetch(data.uploadUrl, { method: "PUT", headers: data.uploadHeaders, body: file });
+          } catch {
+            setFileError(RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE);
+            return;
+          }
           if (!upload.ok) {
-            setFileError("Upload failed. Please try again.");
+            setFileError(RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE);
             return;
           }
           navigate({ to: "/dashboard/scans/$scanId", params: { scanId: data.scanId } });
         },
+        onError: (error) => setFileError(formatReceiptScanStartError(error)),
       },
     );
   }
@@ -151,7 +158,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
-        <PageHeaderTitle>Receipt Scans</PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scans <ScanBetaBadge /></span></PageHeaderTitle>
         <PageHeaderDescription>Upload receipt files, track processing, and turn completed scans into transactions.</PageHeaderDescription>
       </PageHeader>
 

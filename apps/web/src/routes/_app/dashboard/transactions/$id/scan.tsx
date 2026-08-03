@@ -12,7 +12,7 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { ReceiptScanReview } from "@/features/receipt-scanning/components/receipt-scan-review";
-import { ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
+import { ScanBetaBadge, ScanLoadingState } from "@/features/receipt-scanning/components/scan-states";
 import { takePendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -36,7 +36,7 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle>Scan Receipt</PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Scan Receipt <ScanBetaBadge /></span></PageHeaderTitle>
         <PageHeaderDescription>
           Replace this transaction's entries with reviewed receipt lines.
         </PageHeaderDescription>
