@@ -188,6 +188,7 @@ function RecurringContent() {
         />
       </div>
       <Input
+        aria-label="Search recurring entries"
         placeholder="Search..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}

@@ -36,6 +36,7 @@ export function EditTagDialog({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mutation = tagsMutations.updateTag();
   const {
@@ -70,6 +71,7 @@ export function EditTagDialog({
   }, [color]);
 
   const onSubmit = handleSubmit((data) => {
+    setSubmitError(null);
     mutation.mutate(data, {
       onSuccess: (res) => {
         const [err] = res;
@@ -96,11 +98,15 @@ export function EditTagDialog({
             default:
               message = `Unexpected error: ${reason satisfies never}. Please try again!`;
           }
+          setSubmitError(message);
           toast.error(message);
         } else {
           toast.success("Tag updated!");
           handleOpenChange(false);
         }
+      },
+      onError: () => {
+        setSubmitError("Tag could not be saved. Check your connection and try again.");
       },
     });
   });
@@ -110,6 +116,7 @@ export function EditTagDialog({
     if (!isOpen) {
       await wait(100);
       reset({ tagId: tag.id, name: tag.name, color: tag.color ?? undefined });
+      setSubmitError(null);
     }
   }
 
@@ -157,6 +164,7 @@ export function EditTagDialog({
                 />
                 <Button
                   type="button"
+                  aria-label="Generate tag color"
                   onClick={handleRandomizeColor}
                   variant="outline"
                   size="icon"
@@ -181,6 +189,9 @@ export function EditTagDialog({
               Save changes
             </LoaderButton>
           </DialogFooter>
+          {submitError ? (
+            <p className="mt-3 text-xs text-destructive">{submitError}</p>
+          ) : null}
         </Form>
       </DialogContent>
     </Dialog>

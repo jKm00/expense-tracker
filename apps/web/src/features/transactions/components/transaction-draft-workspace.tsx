@@ -293,6 +293,26 @@ function toReceiptSubmitEntry(entry: DraftEntry) {
   };
 }
 
+function formatDraftSubmitError(error: { reason?: string; message?: string }) {
+  if (error.message) return error.message;
+
+  switch (error.reason) {
+    case "TRANSACTION_NOT_FOUND":
+      return "This transaction no longer exists. Go back and choose another transaction.";
+    case "TRANSACTION_UNAUTHORIZED":
+      return "You do not have permission to save this transaction.";
+    case "PRODUCT_NOT_FOUND":
+      return "One of the selected products could not be found. Review the items and try again.";
+    case "PRODUCT_UNAUTHORIZED":
+      return "You do not have permission to use one of the selected products.";
+    case "UNEXPECTED_DB_ERROR":
+    case "TRANSACTION_DB_ERROR":
+      return "The transaction could not be saved because of a database error. Please try again.";
+    default:
+      return "The transaction could not be saved. Please review the form and try again.";
+  }
+}
+
 function LineEditorDialog({
   entry,
   tags,
@@ -495,6 +515,11 @@ function LineEditorDialog({
             >
               Save item
             </Button>
+            {!canSave ? (
+              <p className="w-full text-xs text-muted-foreground">
+                Select a product, quantity, and price before saving this item.
+              </p>
+            ) : null}
           </DialogFooter>
         ) : (
           <DialogFooter className="grid grid-cols-2">
@@ -518,6 +543,11 @@ function LineEditorDialog({
               <Plus className="size-3.5" />
               Income
             </Button>
+            {!canSave ? (
+              <p className="col-span-2 text-xs text-muted-foreground">
+                Select a product, quantity, and price before saving this item.
+              </p>
+            ) : null}
           </DialogFooter>
         )}
       </DialogContent>
@@ -632,7 +662,7 @@ function EntryRows({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Remove item"
+              aria-label={`Remove ${entry.product?.name || entry.receiptItemName || "item"}`}
               onClick={() => onRemove(entry.id)}
             >
               <X className="size-3.5" />
@@ -805,6 +835,7 @@ export function TransactionDraftWorkspace(props: Props) {
     null,
   );
   const [fileError, setFileError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DraftEntry | null>(null);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
@@ -823,6 +854,7 @@ export function TransactionDraftWorkspace(props: Props) {
     setScanResult(null);
     setActiveScanId(props.initialScanId ?? null);
     setFileError(null);
+    setSubmitError(null);
     setSubmitAttempted(false);
     setEntries(initialEntries);
     setStore(props.kind === "edit" ? (props.transaction.store ?? "") : "");
@@ -1133,6 +1165,16 @@ export function TransactionDraftWorkspace(props: Props) {
     setSubmitAttempted(true);
     if (entries.length === 0 || hasInvalidEntries) return;
 
+    setSubmitError(null);
+
+    const handleError = (error: { reason?: string; message?: string }) => {
+      setSubmitError(formatDraftSubmitError(error));
+    };
+
+    const handleUnexpectedError = () => {
+      setSubmitError("The transaction could not be saved. Check your connection and try again.");
+    };
+
     if (props.kind === "new") {
       if (hasCompletedScanDraft) {
         scanTransactionMutation.mutate(
@@ -1143,12 +1185,18 @@ export function TransactionDraftWorkspace(props: Props) {
             entries: entries.map(toReceiptSubmitEntry),
           },
           {
-            onSuccess: ([error, transaction]) =>
-              !error &&
+            onSuccess: ([error, transaction]) => {
+              if (error) {
+                handleError(error);
+                return;
+              }
+
               navigate({
                 to: "/dashboard/transactions/$id",
                 params: { id: transaction.id },
-              }),
+              });
+            },
+            onError: handleUnexpectedError,
           },
         );
         return;
@@ -1162,12 +1210,18 @@ export function TransactionDraftWorkspace(props: Props) {
           entries: entries.map(toSubmitEntry),
         },
         {
-          onSuccess: ([error, transaction]) =>
-            !error &&
+          onSuccess: ([error, transaction]) => {
+            if (error) {
+              handleError(error);
+              return;
+            }
+
             navigate({
               to: "/dashboard/transactions/$id",
               params: { id: transaction.id },
-            }),
+            });
+          },
+          onError: handleUnexpectedError,
         },
       );
       return;
@@ -1182,12 +1236,18 @@ export function TransactionDraftWorkspace(props: Props) {
             entries: entries.map(toReceiptSubmitEntry),
           },
           {
-            onSuccess: ([error, transaction]) =>
-              !error &&
+            onSuccess: ([error, transaction]) => {
+              if (error) {
+                handleError(error);
+                return;
+              }
+
               navigate({
                 to: "/dashboard/transactions/$id",
                 params: { id: transaction.id },
-              }),
+              });
+            },
+            onError: handleUnexpectedError,
           },
         );
         return;
@@ -1201,12 +1261,18 @@ export function TransactionDraftWorkspace(props: Props) {
           entries: entries.map(toSubmitEntry),
         },
         {
-          onSuccess: ([error, transaction]) =>
-            !error &&
+          onSuccess: ([error, transaction]) => {
+            if (error) {
+              handleError(error);
+              return;
+            }
+
             navigate({
               to: "/dashboard/transactions/$id",
               params: { id: transaction.id },
-            }),
+            });
+          },
+          onError: handleUnexpectedError,
         },
       );
       return;
@@ -1233,12 +1299,18 @@ export function TransactionDraftWorkspace(props: Props) {
           entries: entries.map(toReceiptSubmitEntry),
         },
         {
-          onSuccess: ([error, transaction]) =>
-            !error &&
+          onSuccess: ([error, transaction]) => {
+            if (error) {
+              handleError(error);
+              return;
+            }
+
             navigate({
               to: "/dashboard/transactions/$id",
               params: { id: transaction.id },
-            }),
+            });
+          },
+          onError: handleUnexpectedError,
         },
       );
       return;
@@ -1258,12 +1330,18 @@ export function TransactionDraftWorkspace(props: Props) {
         entries: entries.map(toSubmitEntry),
       },
       {
-        onSuccess: ([error, transaction]) =>
-          !error &&
+        onSuccess: ([error, transaction]) => {
+          if (error) {
+            handleError(error);
+            return;
+          }
+
           navigate({
             to: "/dashboard/transactions/$id",
             params: { id: transaction.id },
-          }),
+          });
+        },
+        onError: handleUnexpectedError,
       },
     );
   }
@@ -1807,6 +1885,11 @@ export function TransactionDraftWorkspace(props: Props) {
                   Review summary
                 </Button>
               </div>
+              {entries.length === 0 ? (
+                <p className="w-full text-xs text-muted-foreground">
+                  Add at least one item before reviewing checkout.
+                </p>
+              ) : null}
               <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>
                   Total: <span className="font-medium text-foreground tabular-nums">{formatAmount(-reviewedTotal, { sign: true })}</span>
@@ -1838,6 +1921,15 @@ export function TransactionDraftWorkspace(props: Props) {
               >
                 {submitLabel}
               </LoaderButton>
+              {submitError ? (
+                <p className="w-full text-sm text-destructive sm:text-right">
+                  {submitError}
+                </p>
+              ) : entries.length === 0 ? (
+                <p className="w-full text-xs text-muted-foreground sm:text-right">
+                  Add at least one item before saving this transaction.
+                </p>
+              ) : null}
             </CardFooter>
           )}
         </Card>
@@ -1922,6 +2014,15 @@ export function TransactionDraftWorkspace(props: Props) {
             >
               {submitLabel}
             </LoaderButton>
+            {submitError ? (
+              <p className="w-full text-sm text-destructive sm:text-right">
+                {submitError}
+              </p>
+            ) : entries.length === 0 ? (
+              <p className="w-full text-xs text-muted-foreground sm:text-right">
+                Add at least one item before completing checkout.
+              </p>
+            ) : null}
           </CardFooter>
         </Card>
       ) : null}

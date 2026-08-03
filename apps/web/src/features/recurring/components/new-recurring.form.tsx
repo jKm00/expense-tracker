@@ -50,6 +50,7 @@ export function NewRecurringForm() {
 
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -70,8 +71,12 @@ export function NewRecurringForm() {
 
   const startDate = watch("start");
   const endDate = watch("end");
+  const product = watch("product");
+  const price = watch("price");
+  const canSubmit = Boolean(product && price);
 
   const onSubmit = handleSubmit((data) => {
+    setSubmitError(null);
     mutation.mutate(data, {
       onSuccess: (res) => {
         const [error] = res;
@@ -102,19 +107,23 @@ export function NewRecurringForm() {
               default:
                 message = `Unexpected error: ${reason satisfies never}`;
             }
+          setSubmitError(message);
           toast.error(message);
         } else {
           navigate({ to: "/dashboard/recurring" });
         }
+      },
+      onError: () => {
+        setSubmitError("Recurring transaction could not be saved. Check your connection and try again.");
       },
     });
   });
 
   function handleProductSelect(product: Product) {
     if (product.id.length === 0) {
-      setValue("product", { id: null, name: product.name });
+      setValue("product", { id: null, name: product.name }, { shouldValidate: true });
     } else {
-      setValue("product", { id: product.id, name: product.name });
+      setValue("product", { id: product.id, name: product.name }, { shouldValidate: true });
     }
   }
 
@@ -273,11 +282,18 @@ export function NewRecurringForm() {
           type="submit"
           size="sm"
           isLoading={mutation.isPending}
-          disabled={mutation.isPending}
+          disabled={!canSubmit || mutation.isPending}
           className="w-full"
         >
           Create recurring transaction
         </LoaderButton>
+        {!canSubmit ? (
+          <p className="text-xs text-muted-foreground">
+            Select a product and enter a price to create this recurring transaction.
+          </p>
+        ) : submitError ? (
+          <p className="text-xs text-destructive">{submitError}</p>
+        ) : null}
       </div>
     </Form>
   );

@@ -66,6 +66,7 @@ export function MonthSelect({
         variant="outline"
         size="icon"
         className="size-8 shrink-0"
+        aria-label="Previous month"
         onClick={handlePrevMonth}
       >
         <ChevronLeft className="size-3.5" />
@@ -98,6 +99,7 @@ export function MonthSelect({
         variant="outline"
         size="icon"
         className="size-8 shrink-0"
+        aria-label="Next month"
         onClick={handleNextMonth}
       >
         <ChevronRight className="size-3.5" />

@@ -277,6 +277,7 @@ function ProductsContent() {
         />
       </div>
       <Input
+        aria-label="Search products"
         placeholder="Search..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}

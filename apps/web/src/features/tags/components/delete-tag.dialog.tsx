@@ -99,7 +99,7 @@ export function DeleteTagDialog({
           <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="size-5 text-destructive" />
           </div>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Delete this tag?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete the tag and unlink it from{" "}
             {tag.products.length}{" "}
@@ -118,7 +118,7 @@ export function DeleteTagDialog({
           </div>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Keep tag</AlertDialogCancel>
           <LoaderButton
             variant="destructive"
             size="sm"
@@ -128,7 +128,7 @@ export function DeleteTagDialog({
             }
             onClick={handleDelete}
           >
-            Delete
+            Delete tag
           </LoaderButton>
         </AlertDialogFooter>
       </AlertDialogContent>

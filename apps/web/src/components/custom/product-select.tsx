@@ -220,6 +220,7 @@ export function ProductSelect({
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            aria-label="Search products"
             placeholder="Search for product..."
             className="h-8 text-xs"
           />

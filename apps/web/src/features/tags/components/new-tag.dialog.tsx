@@ -28,6 +28,7 @@ import { tagUtils } from "../tags.utils";
 
 export function NewTagDialog() {
   const [open, setOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mutation = tagsMutations.createTag();
   const {
@@ -42,6 +43,8 @@ export function NewTagDialog() {
   });
 
   const color = watch("color") || undefined;
+  const tagName = watch("name");
+  const canSubmit = Boolean(tagName?.trim());
   const hexValues = useMemo(() => {
     if (!color) return { border: undefined, bg: undefined, text: undefined };
 
@@ -53,6 +56,7 @@ export function NewTagDialog() {
   }, [color]);
 
   const onSubmit = handleSubmit((data) => {
+    setSubmitError(null);
     mutation.mutate(data, {
       onSuccess: (res) => {
         const [error] = res;
@@ -68,23 +72,28 @@ export function NewTagDialog() {
             default:
               message = `Something went wrong saving the tag ${reason satisfies never}. Please try again`;
           }
+          setSubmitError(message);
           toast.error(message);
         } else {
           handleOpenChange(false);
           toast.success("Tag created!");
         }
       },
+      onError: () => {
+        setSubmitError("Tag could not be saved. Check your connection and try again.");
+      },
     });
   });
 
   async function handleOpenChange(isOpen: boolean) {
-    setOpen(isOpen);
-    if (!isOpen) {
+      setOpen(isOpen);
+      if (!isOpen) {
       // Wait so UI does not reset before dialog is closed
       await wait(100);
-      resetField("name");
-      resetField("color");
-    }
+        resetField("name");
+        resetField("color");
+        setSubmitError(null);
+      }
   }
 
   function handleRandomizeColor() {
@@ -133,6 +142,7 @@ export function NewTagDialog() {
               />
               <Button
                 type="button"
+                aria-label="Generate tag color"
                 onClick={handleRandomizeColor}
                 variant="outline"
                 size="icon"
@@ -152,11 +162,18 @@ export function NewTagDialog() {
               type="submit"
               size="sm"
               isLoading={mutation.isPending}
-              disabled={mutation.isPending}
+              disabled={!canSubmit || mutation.isPending}
             >
               Add tag
             </LoaderButton>
           </DialogFooter>
+          {!canSubmit ? (
+            <p className="text-xs text-muted-foreground">
+              Tag name is required before you can add it.
+            </p>
+          ) : submitError ? (
+            <p className="text-xs text-destructive">{submitError}</p>
+          ) : null}
         </form>
       </DialogContent>
     </Dialog>
