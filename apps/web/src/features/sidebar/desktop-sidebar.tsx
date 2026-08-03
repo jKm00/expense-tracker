@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HomeIcon,
   ReceiptTextIcon,
+  FileImage,
   ShoppingBag,
   PackageIcon,
   RepeatIcon,
@@ -30,6 +31,12 @@ const navSections = [
         label: "Transactions",
         href: "/dashboard/transactions",
         icon: ReceiptTextIcon,
+      },
+      {
+        label: "Scan",
+        href: "/dashboard/scans",
+        icon: FileImage,
+        beta: true,
       },
       {
         label: "Analytics",
@@ -197,8 +204,7 @@ export function DesktopSidebar({
                       </Badge>
                     ) : item.beta ? (
                       <Badge
-                        variant="secondary"
-                        className="h-5 rounded-md px-1.5 text-[10px]"
+                        className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
                       >
                         BETA
                       </Badge>

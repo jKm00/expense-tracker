@@ -1,7 +1,7 @@
 import { ShoppingListWithItems } from "../shopping.models";
 import { IntegrationTokenMetadata } from "@/features/integrations/integration.models";
 import { FullTransaction } from "@/features/transactions/transactions.models";
-import { isSameDay } from "date-fns";
+import { isSameDay, subDays } from "date-fns";
 
 export type CheckoutEntry = {
   shoppingItemId?: string;
@@ -44,9 +44,10 @@ export function getCheckoutLinkSuggestion(
   transactions: FullTransaction[],
   date: Date,
 ) {
+  const previousDay = subDays(date, 1);
   return transactions
     .filter((transaction) => transaction.needsReview)
-    .filter((transaction) => isSameDay(transaction.date, date))
+    .filter((transaction) => isSameDay(transaction.date, date) || isSameDay(transaction.date, previousDay))
     .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
 }
 
@@ -54,7 +55,8 @@ export function getSelectableCheckoutTransactions(
   transactions: FullTransaction[],
   date: Date,
 ) {
+  const previousDay = subDays(date, 1);
   return transactions
-    .filter((transaction) => isSameDay(transaction.date, date))
+    .filter((transaction) => isSameDay(transaction.date, date) || isSameDay(transaction.date, previousDay))
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 }

@@ -14,10 +14,7 @@ import {
   products,
   productTags,
 } from "@/features/products/products.schema";
-import {
-  receiptItemMappings,
-  receiptScanAttempts,
-} from "@/features/receipt-scanning/receipt-scanning.schema";
+import { receiptItemMappings } from "@/features/receipt-scanning/receipt-scanning.schema";
 import {
   shoppingListItems,
   shoppingLists,
@@ -52,7 +49,6 @@ export const relations = defineRelations(
     integrationRequestLogs,
     // Receipt scanning
     receiptItemMappings,
-    receiptScanAttempts,
     // Transactions
     transactions,
     entries,
@@ -70,7 +66,6 @@ export const relations = defineRelations(
       integrationEvents: r.many.integrationEvents(),
       integrationRequestLogs: r.many.integrationRequestLogs(),
       receiptItemMappings: r.many.receiptItemMappings(),
-      receiptScanAttempts: r.many.receiptScanAttempts(),
     },
     session: {
       user: r.one.user({
@@ -238,12 +233,6 @@ export const relations = defineRelations(
       product: r.one.products({
         from: r.receiptItemMappings.productId,
         to: r.products.id,
-      }),
-    },
-    receiptScanAttempts: {
-      user: r.one.user({
-        from: r.receiptScanAttempts.userId,
-        to: r.user.id,
       }),
     },
   }),

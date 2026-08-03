@@ -13,3 +13,6 @@ count.txt
 todos.json
 .worktrees/
 test-results/
+.terraform/
+*.tfstate
+*.tfstate.*

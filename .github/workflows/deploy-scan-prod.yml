@@ -1,0 +1,62 @@
+name: Deploy Scan API Prod
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy prod scan API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build web
+        run: pnpm build
+
+      - name: Test web
+        run: pnpm test:web
+
+      - name: Build scan API
+        run: pnpm build:scan-api
+
+      - name: Test scan API
+        run: pnpm test:scan-api
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PROD_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+
+      - name: Terraform init
+        run: terraform -chdir=infra/environments/prod init
+
+      - name: Terraform apply
+        run: terraform -chdir=infra/environments/prod apply -auto-approve -var='api_token=${{ secrets.AWS_SCAN_API_TOKEN }}'
+
+      - name: Print scan API URL
+        run: terraform -chdir=infra/environments/prod output scan_api_url

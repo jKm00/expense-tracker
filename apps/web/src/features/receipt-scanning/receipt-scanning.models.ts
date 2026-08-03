@@ -1,13 +1,10 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import {
   receiptItemMappings,
-  receiptScanAttempts,
 } from "./receipt-scanning.schema";
 
 export type ReceiptItemMapping = InferSelectModel<typeof receiptItemMappings>;
 export type NewReceiptItemMapping = InferInsertModel<typeof receiptItemMappings>;
-export type ReceiptScanAttempt = InferSelectModel<typeof receiptScanAttempts>;
-export type NewReceiptScanAttempt = InferInsertModel<typeof receiptScanAttempts>;
 
 export type ExtractedReceiptItem = {
   name: string;
@@ -52,4 +49,48 @@ export type ReceiptScanLine = {
 export type ReceiptScanMatchResult = {
   receipt: ExtractedReceipt;
   lines: ReceiptScanLine[];
+  parsedDate?: Date;
+};
+
+export type AwsScanStatus = "upload_pending" | "processing" | "completed" | "failed";
+export type AwsScanMode = "transaction" | "transaction-replacement" | "shopping-checkout";
+
+export type AwsScanSummary = {
+  scanId: string;
+  status: AwsScanStatus;
+  mode: AwsScanMode;
+  fileName: string;
+  contentType: "image/jpeg" | "image/png" | "application/pdf";
+  sizeBytes: number;
+  createdAt: string;
+  updatedAt: string;
+  resultSummary?: { store?: string; date?: string; total?: string; itemCount: number };
+  failureCode?: string;
+  failureMessage?: string;
+};
+
+export type AwsScanUsage = {
+  used: number;
+  limit: number;
+  remaining: number;
+  resetsAt: string;
+};
+
+export type AwsScanListResult = {
+  items: AwsScanSummary[];
+  nextCursor?: string;
+  usage?: AwsScanUsage;
+};
+
+export type AwsScan = AwsScanSummary & {
+  objectKey: string;
+  userId: string;
+  result?: ExtractedReceipt;
+};
+
+export type CreateScanUploadResult = {
+  scanId: string;
+  uploadUrl: string;
+  uploadHeaders: Record<string, string>;
+  expiresAt: number;
 };

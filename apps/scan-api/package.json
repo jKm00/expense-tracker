@@ -1,0 +1,27 @@
+{
+  "name": "@expense-tracker/scan-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.940.0",
+    "@aws-sdk/client-s3": "^3.940.0",
+    "@aws-sdk/client-textract": "^3.940.0",
+    "@aws-sdk/lib-dynamodb": "^3.940.0",
+    "@aws-sdk/s3-request-presigner": "^3.940.0",
+    "@aws-sdk/util-dynamodb": "^3.940.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.152",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.27.0",
+    "tsx": "^4.0.0",
+    "typescript": "5.7.2",
+    "vitest": "^3.2.1"
+  }
+}

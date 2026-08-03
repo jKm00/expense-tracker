@@ -6,21 +6,26 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
-  PageHeaderActions,
   PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { NewTransactionForm } from "@/features/transactions/components/new-transaction.form";
+import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileImage } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { Suspense } from "react";
+import z from "zod";
+
+const transactionMethodSearchSchema = z.object({
+  method: z.enum(["manual", "scan"]).default("manual"),
+  scanId: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_app/dashboard/transactions/new")({
+  validateSearch: zodValidator(transactionMethodSearchSchema),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productQueries.getProductsOptions()),
@@ -37,25 +42,19 @@ function RouteComponent() {
         <PageHeaderBackButton />
         <PageHeaderTitle>New Transaction</PageHeaderTitle>
         <PageHeaderDescription>
-          Document a new transaction
+          Document a new transaction manually or from a receipt scan
         </PageHeaderDescription>
-        <PageHeaderActions>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/transactions/scan">
-              <FileImage className="size-4" />
-              <span className="hidden sm:inline">Scan receipt</span>
-            </Link>
-          </Button>
-        </PageHeaderActions>
       </PageHeader>
       <Suspense>
-        <NewProductForm />
+        <NewTransactionContent />
       </Suspense>
     </div>
   );
 }
 
-function NewProductForm() {
+function NewTransactionContent() {
+  const navigate = useNavigate();
+  const { method, scanId } = Route.useSearch();
   const {
     data: [expectedError, products],
     error: unexpectedError,
@@ -119,5 +118,16 @@ function NewProductForm() {
     );
   }
 
-  return <NewTransactionForm products={products} tags={tags || []} />;
+  return (
+    <TransactionDraftWorkspace
+      kind="new"
+      method={method}
+      initialScanId={scanId}
+      products={products}
+      tags={tags || []}
+      onMethodChange={(nextMethod: DraftMethod) => {
+        navigate({ to: "/dashboard/transactions/new", search: { method: nextMethod } });
+      }}
+    />
+  );
 }

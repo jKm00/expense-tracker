@@ -9,34 +9,23 @@ import {
   PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
-  PageHeaderActions,
 } from "@/components/custom/page-header";
-import { LoaderButton } from "@/components/custom/loader.button";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { productQueries } from "@/features/products/products.queries";
-import { setPendingTransactionScan } from "@/features/receipt-scanning/receipt-scan-session";
-import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
-import { receiptScanningQueries } from "@/features/receipt-scanning/receipt-scanning.queries";
-import { fileToDataUrl, validateReceiptFile } from "@/features/receipt-scanning/receipt-scanning.utils";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
+import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
-import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FileImage, Loader2, Upload } from "lucide-react";
-import { Suspense, useRef, useState } from "react";
+import { zodValidator } from "@tanstack/zod-adapter";
+import { Suspense } from "react";
+import z from "zod";
+
+const transactionMethodSearchSchema = z.object({
+  method: z.enum(["manual", "scan"]).default("manual"),
+});
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
+  validateSearch: zodValidator(transactionMethodSearchSchema),
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(
@@ -52,19 +41,14 @@ export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
         <PageHeaderTitle>Edit Transaction</PageHeaderTitle>
         <PageHeaderDescription>
-          Modify transaction details
+          Modify transaction details manually or replace entries from a receipt scan
         </PageHeaderDescription>
-        <PageHeaderActions>
-          <ScanReceiptAction transactionId={id} />
-        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <EditTransactionFormWrapper />
@@ -73,141 +57,10 @@ function RouteComponent() {
   );
 }
 
-function ScanReceiptAction({ transactionId }: { transactionId: string }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
-  const online = useOnlineStatus();
-  const extractMutation = receiptScanningMutations.extractReceipt();
-  const { data: scanUsageResult } = useQuery(receiptScanningQueries.getScanUsageOptions());
-  const [open, setOpen] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  const {
-    data: [expectedTransactionError, transaction],
-    error: unexpectedTransactionError,
-  } = useSuspenseQuery(transactionQueries.getTransactionOptions(transactionId));
-
-  if (unexpectedTransactionError || expectedTransactionError) {
-    return null;
-  }
-
-  const canScan =
-    transaction.source !== "recurring" &&
-    transaction.entries.every((entry) => entry.type === "expense");
-  const scanUsage = scanUsageResult?.[1] ?? null;
-  const isScanLimitReached = scanUsage?.remaining === 0;
-  const remainingScans = scanUsage?.remaining ?? 5;
-  const scanLimit = scanUsage?.limit ?? 5;
-
-  if (!canScan) {
-    return null;
-  }
-
-  async function handleFile(file: File) {
-    setFileError(null);
-
-    if (!online) {
-      setFileError("Receipt scanning requires an internet connection.");
-      return;
-    }
-
-    const validationError = validateReceiptFile(file);
-    if (validationError) {
-      setFileError(validationError);
-      return;
-    }
-
-    try {
-      const imageDataUrl = await fileToDataUrl(file);
-      extractMutation.mutate(
-        { imageDataUrl, mode: "transaction", checkedProductIds: [] },
-        {
-          onSuccess: (result) => {
-            const [error, data] = result;
-            if (error) {
-              setFileError(error.message);
-              return;
-            }
-
-            setPendingTransactionScan(transactionId, data);
-            setOpen(false);
-            navigate({
-              to: "/dashboard/transactions/$id/scan",
-              params: { id: transactionId },
-            });
-          },
-        },
-      );
-    } catch {
-      setFileError("Could not read the receipt file. Please try again.");
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" aria-label="Scan receipt">
-          <FileImage className="size-4" />
-          <span className="max-md:sr-only">Scan receipt</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Scan Receipt
-            <Badge variant="secondary">Beta</Badge>
-          </DialogTitle>
-          <DialogDescription>
-            Upload an image or PDF receipt. After analysis, you will review the extracted entries before replacing this transaction.
-          </DialogDescription>
-        </DialogHeader>
-        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isScanLimitReached ? "border-destructive/30 bg-destructive/5" : "bg-muted/30"}`}>
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Remaining scans today</p>
-            <p className="text-sm text-muted-foreground">
-              Successful scans and scans currently being analyzed count. Failed extractions do not.
-            </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span className={`text-lg font-medium tabular-nums ${isScanLimitReached ? "text-destructive" : "text-foreground"}`}>{remainingScans}</span>
-            <span className="text-sm text-muted-foreground">/{scanLimit}</span>
-          </div>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) void handleFile(file);
-            event.currentTarget.value = "";
-          }}
-        />
-        <LoaderButton
-          type="button"
-          isLoading={extractMutation.isPending}
-          loadingText={
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="size-3.5 animate-spin" />
-              Analyzing receipt...
-            </span>
-          }
-          disabled={!online || extractMutation.isPending || isScanLimitReached}
-          onClick={() => inputRef.current?.click()}
-        >
-          <Upload className="size-3.5" />
-          Upload receipt image or PDF
-        </LoaderButton>
-        {!online && <p className="text-sm text-muted-foreground">Receipt scanning is unavailable while offline.</p>}
-        {isScanLimitReached && <p className="text-sm text-destructive">You have reached the 5 receipt extraction attempts limit for today.</p>}
-        {fileError && <p className="text-sm text-destructive">{fileError}</p>}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function EditTransactionFormWrapper() {
   const { id } = Route.useParams();
+  const { method } = Route.useSearch();
+  const navigate = useNavigate();
 
   const {
     data: [expectedProductError, products],
@@ -310,11 +163,31 @@ function EditTransactionFormWrapper() {
     );
   }
 
+  const canScan =
+    transaction.source !== "recurring" &&
+    transaction.entries.every((entry) => entry.type === "expense");
+
+  if (method === "scan" && !canScan) {
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>Receipt scan unavailable</ExpectedErrorTitle>
+        <ExpectedErrorMessage>
+          Receipt scanning can only replace non-recurring transactions with expense entries.
+        </ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
   return (
-    <EditTransactionForm
+    <TransactionDraftWorkspace
+      kind="edit"
+      method={canScan ? method : "manual"}
       products={products}
       tags={tags || []}
       transaction={transaction}
+      onMethodChange={(nextMethod: DraftMethod) => {
+        navigate({ to: "/dashboard/transactions/$id/edit", params: { id }, search: { method: nextMethod } });
+      }}
     />
   );
 }

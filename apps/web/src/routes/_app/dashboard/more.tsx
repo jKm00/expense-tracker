@@ -5,7 +5,7 @@ import {
 } from "@/components/custom/page-header";
 import { Badge } from "@/components/ui/badge";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Package, Plug, Repeat, Tag, User } from "lucide-react";
+import { ArrowRight, FileImage, Package, Plug, Repeat, Tag, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -13,6 +13,13 @@ export const Route = createFileRoute("/_app/dashboard/more")({
 
 function RouteComponent() {
   const mainMenuItems = [
+    {
+      label: "Scan",
+      description: "Upload and review receipts",
+      href: "/dashboard/scans",
+      icon: FileImage,
+      version: "beta",
+    },
     {
       label: "Products",
       description: "Manage your product catalog",
@@ -77,8 +84,7 @@ function RouteComponent() {
                     </p>
                     {item.version ? (
                       <Badge
-                        variant="outline"
-                        className="h-5 rounded-md px-1.5 text-[10px]"
+                        className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
                       >
                         {item.version.toUpperCase()}
                       </Badge>
@@ -110,8 +116,7 @@ function RouteComponent() {
                   </p>
                   {item.version ? (
                     <Badge
-                      variant="outline"
-                      className="h-5 rounded-md px-1.5 text-[10px]"
+                      className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
                     >
                       {item.version.toUpperCase()}
                     </Badge>

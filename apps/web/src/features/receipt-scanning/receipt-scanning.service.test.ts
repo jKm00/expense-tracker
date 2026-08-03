@@ -1,39 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-const attempts: any[] = [];
-
-vi.mock("./receipt-scanning.repo", () => ({
-  receiptScanningRepo: {
-    withTransaction: vi.fn(async (callback) => callback({ tx: true })),
-    lockDailyAttempts: vi.fn(),
-    getExtractionAttemptsSince: vi.fn(async (_userId: string, since: Date) =>
-      attempts.filter((attempt) => attempt.createdAt >= since),
-    ),
-    saveAttempt: vi.fn(async (attempt) => {
-      const saved = {
-        id: `attempt-${attempts.length + 1}`,
-        itemCount: null,
-        durationMs: null,
-        errorCategory: null,
-        createdAt: new Date(),
-        ...attempt,
-      };
-      attempts.push(saved);
-      return [saved];
-    }),
-    updateAttempt: vi.fn(async (attemptId, data) => {
-      const attempt = attempts.find((row) => row.id === attemptId);
-      if (!attempt) return [];
-      Object.assign(attempt, data);
-      return [attempt];
-    }),
-    getMappingsByNames: vi.fn(async () => []),
-  },
-}));
-
-vi.mock("./receipt-openai.adapter", () => ({
-  extractReceiptWithOpenAI: vi.fn(),
-}));
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { makeProduct } from "../__test-fixtures__";
 
 vi.mock("../products/products.service", () => ({
   productService: {
@@ -46,7 +12,7 @@ vi.mock("../products/products.service", () => ({
 vi.mock("../shopping/shopping.service", () => ({
   shoppingService: {
     getShoppingList: vi.fn(),
-    removeShoppingItem: vi.fn(),
+    completeShopping: vi.fn(),
   },
 }));
 
@@ -58,6 +24,12 @@ vi.mock("../transactions/transactions.service", () => ({
   },
 }));
 
+vi.mock("./receipt-scanning.repo", () => ({
+  receiptScanningRepo: {
+    getMappingsByNames: vi.fn(),
+  },
+}));
+
 vi.mock("./receipt-mappings.service", () => ({
   receiptMappingsService: {
     upsertMapping: vi.fn(),
@@ -65,143 +37,117 @@ vi.mock("./receipt-mappings.service", () => ({
 }));
 
 import { productService } from "../products/products.service";
+import { shoppingService } from "../shopping/shopping.service";
+import { receiptScanningRepo } from "./receipt-scanning.repo";
 import { receiptScanningService } from "./receipt-scanning.service";
-import { extractReceiptWithOpenAI } from "./receipt-openai.adapter";
 
 const mockProductService = vi.mocked(productService);
-const mockExtractReceiptWithOpenAI = vi.mocked(extractReceiptWithOpenAI);
+const mockShoppingService = vi.mocked(shoppingService);
+const mockReceiptScanningRepo = vi.mocked(receiptScanningRepo);
 
-function makeAttempt(overrides: Partial<any>) {
+function makeReceipt(overrides: Partial<Record<string, unknown>> = {}) {
   return {
-    id: `attempt-${attempts.length + 1}`,
-    userId: "user-1",
-    provider: "openai",
-    status: "success",
-    itemCount: null,
-    durationMs: null,
-    errorCategory: null,
-    createdAt: new Date(),
-    ...overrides,
-  };
-}
-
-function makeProduct(overrides: Partial<any> = {}) {
-  return {
-    id: "product-1",
-    userId: "user-1",
-    name: "Milk",
-    deletedAt: null,
-    tags: [],
-    aliases: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    store: "Store",
+    date: "2026-08-03",
+    total: "20.00",
+    confidence: 0.95,
+    warnings: [],
+    items: [
+      {
+        name: "PEPSI MAX 4X1.5L",
+        quantity: "1",
+        unitPrice: "20.00",
+        lineTotal: "20.00",
+        confidence: 0.9,
+      },
+    ],
     ...overrides,
   };
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date("2026-06-27T12:00:00.000Z"));
   vi.clearAllMocks();
-  attempts.length = 0;
-  mockProductService.getProducts.mockResolvedValue([null, [makeProduct()]] as any);
-  mockExtractReceiptWithOpenAI.mockResolvedValue({
-    store: "Store",
-    date: "2026-06-27",
-    confidence: 1,
-    warnings: [],
-    items: [
+  mockProductService.getProducts.mockResolvedValue([null, [makeProduct({ id: "product-1", name: "Pepsi", aliases: [] })]] as any);
+  mockReceiptScanningRepo.getMappingsByNames.mockResolvedValue([] as any);
+  mockShoppingService.getShoppingList.mockResolvedValue([null, { id: "list-1", items: [] }] as any);
+});
+
+describe("receiptScanningService.matchExtractedReceipt", () => {
+  it("matches extracted receipt items with stored receipt mappings", async () => {
+    const product = makeProduct({ id: "product-1", name: "Pepsi", aliases: [] });
+    mockProductService.getProducts.mockResolvedValue([null, [product]] as any);
+    mockReceiptScanningRepo.getMappingsByNames.mockResolvedValue([
       {
-        name: "Milk",
-        quantity: "1",
-        unitPrice: "10.00",
-        lineTotal: "10.00",
-        confidence: 1,
+        id: "mapping-1",
+        userId: "user-1",
+        productId: "product-1",
+        itemName: "PEPSI MAX 4X1.5L",
+        normalizedItemName: "pepsi max 4x15l",
+        confirmationCount: 1,
+        lastConfirmedAt: new Date("2026-01-01"),
+        createdAt: new Date("2026-01-01"),
+        updatedAt: new Date("2026-01-01"),
       },
-    ],
-  });
-});
+    ] as any);
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-describe("receiptScanningService quota", () => {
-  it("counts success and non-stale in_progress attempts only", async () => {
-    attempts.push(
-      makeAttempt({ id: "success", status: "success" }),
-      makeAttempt({ id: "active", status: "in_progress" }),
-      makeAttempt({
-        id: "stale",
-        status: "in_progress",
-        createdAt: new Date("2026-06-27T11:44:59.000Z"),
-      }),
-      makeAttempt({ id: "failed", status: "failed" }),
-      makeAttempt({ id: "rate-limited", status: "rate_limited" }),
-      makeAttempt({ id: "rejected", status: "rejected" }),
-    );
-
-    const [error, usage] = await receiptScanningService.getScanUsage("user-1");
-
-    expect(error).toBeNull();
-    expect(usage).toEqual({ used: 2, limit: 5, remaining: 3 });
-  });
-
-  it("reserves an in_progress attempt before extracting and marks it success", async () => {
-    const [error, result] = await receiptScanningService.extractReceipt("user-1", {
-      imageDataUrl: "data:image/png;base64,abc",
+    const [error, result] = await receiptScanningService.matchExtractedReceipt("user-1", {
+      receipt: makeReceipt(),
       mode: "transaction",
     });
 
     expect(error).toBeNull();
-    expect(result?.lines).toHaveLength(1);
-    expect(attempts).toHaveLength(1);
-    expect(attempts[0]).toMatchObject({
-      status: "success",
-      itemCount: 1,
-      errorCategory: null,
-    });
-    expect(mockExtractReceiptWithOpenAI).toHaveBeenCalledOnce();
+    expect(mockReceiptScanningRepo.getMappingsByNames).toHaveBeenCalledWith("user-1", ["pepsi max 4x15l"]);
+    expect(result?.lines[0].product).toEqual({ id: "product-1", name: "Pepsi" });
+    expect(result?.parsedDate).toEqual(new Date("2026-08-03"));
   });
 
-  it("logs rate_limited and skips extraction when success plus active attempts reach the limit", async () => {
-    attempts.push(
-      makeAttempt({ id: "success-1", status: "success" }),
-      makeAttempt({ id: "success-2", status: "success" }),
-      makeAttempt({ id: "success-3", status: "success" }),
-      makeAttempt({ id: "success-4", status: "success" }),
-      makeAttempt({ id: "active", status: "in_progress" }),
-    );
+  it("uses checked shopping items when matching checkout scans", async () => {
+    const product = makeProduct({ id: "product-1", name: "Pepsi", aliases: [] });
+    mockProductService.getProducts.mockResolvedValue([null, [product]] as any);
+    mockShoppingService.getShoppingList.mockResolvedValue([
+      null,
+      {
+        id: "list-1",
+        items: [
+          {
+            id: "shopping-item-1",
+            shoppingListId: "list-1",
+            productId: "product-1",
+            checked: true,
+            createdAt: new Date("2026-01-01"),
+            updatedAt: new Date("2026-01-01"),
+            product,
+          },
+        ],
+      },
+    ] as any);
 
-    const [error, result] = await receiptScanningService.extractReceipt("user-1", {
-      imageDataUrl: "data:image/png;base64,abc",
+    const [error, result] = await receiptScanningService.matchExtractedReceipt("user-1", {
+      receipt: makeReceipt({ items: [{ name: "Pepsi", quantity: "1", unitPrice: "20.00", lineTotal: "20.00", confidence: 0.9 }] }),
+      mode: "shopping-checkout",
+    });
+
+    expect(error).toBeNull();
+    expect(mockShoppingService.getShoppingList).toHaveBeenCalledWith("user-1");
+    expect(result?.lines[0]).toMatchObject({
+      product: { id: "product-1", name: "Pepsi" },
+      shoppingItemId: "shopping-item-1",
+      suggestions: [],
+    });
+  });
+
+  it("returns an expected error when products cannot be loaded", async () => {
+    mockProductService.getProducts.mockResolvedValue([{ reason: "PRODUCTS_FAILED", message: "Nope" }, null] as any);
+
+    const [error, result] = await receiptScanningService.matchExtractedReceipt("user-1", {
+      receipt: makeReceipt(),
       mode: "transaction",
     });
 
     expect(result).toBeNull();
-    expect(error?.reason).toBe("SCAN_RATE_LIMITED");
-    expect(attempts.at(-1)).toMatchObject({
-      status: "rate_limited",
-      errorCategory: "rate_limit",
+    expect(error).toMatchObject({
+      reason: "SCAN_PRODUCTS_LOAD_FAILED",
+      message: "Could not load products for receipt matching.",
     });
-    expect(mockExtractReceiptWithOpenAI).not.toHaveBeenCalled();
-  });
-
-  it("marks provider errors failed and does not count them in usage", async () => {
-    mockExtractReceiptWithOpenAI.mockRejectedValue(new Error("OPENAI_HTTP_500"));
-
-    const [error, result] = await receiptScanningService.extractReceipt("user-1", {
-      imageDataUrl: "data:image/png;base64,abc",
-      mode: "transaction",
-    });
-    const [, usage] = await receiptScanningService.getScanUsage("user-1");
-
-    expect(result).toBeNull();
-    expect(error?.reason).toBe("SCAN_EXTRACTION_FAILED");
-    expect(attempts[0]).toMatchObject({
-      status: "failed",
-      errorCategory: "provider_http",
-    });
-    expect(usage?.used).toBe(0);
   });
 });
