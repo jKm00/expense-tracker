@@ -167,11 +167,7 @@ export function NewTagDialog() {
               Add tag
             </LoaderButton>
           </DialogFooter>
-          {!canSubmit ? (
-            <p className="text-xs text-muted-foreground">
-              Tag name is required before you can add it.
-            </p>
-          ) : submitError ? (
+          {submitError ? (
             <p className="text-xs text-destructive">{submitError}</p>
           ) : null}
         </form>
