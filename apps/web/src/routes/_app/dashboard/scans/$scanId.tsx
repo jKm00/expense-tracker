@@ -98,7 +98,7 @@ function RouteComponent() {
           <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
             <Button type="button" variant="outline" onClick={viewOriginal}><ExternalLink className="size-3.5" /> View original</Button>
             <Button asChild>
-              <Link to="/dashboard/transactions/new" search={{ method: "scan", scanId }}>
+              <Link to="/dashboard/transactions/new" search={{ scanId }}>
                 <FileImage className="size-3.5" /> Continue as new transaction
               </Link>
             </Button>

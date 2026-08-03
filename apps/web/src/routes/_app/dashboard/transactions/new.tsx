@@ -12,20 +12,19 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
+import { TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { Suspense } from "react";
 import z from "zod";
 
-const transactionMethodSearchSchema = z.object({
-  method: z.enum(["manual", "scan"]).default("manual"),
+const newTransactionSearchSchema = z.object({
   scanId: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_app/dashboard/transactions/new")({
-  validateSearch: zodValidator(transactionMethodSearchSchema),
+  validateSearch: zodValidator(newTransactionSearchSchema),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productQueries.getProductsOptions()),
@@ -53,8 +52,7 @@ function RouteComponent() {
 }
 
 function NewTransactionContent() {
-  const navigate = useNavigate();
-  const { method, scanId } = Route.useSearch();
+  const { scanId } = Route.useSearch();
   const {
     data: [expectedError, products],
     error: unexpectedError,
@@ -121,13 +119,9 @@ function NewTransactionContent() {
   return (
     <TransactionDraftWorkspace
       kind="new"
-      method={method}
       initialScanId={scanId}
       products={products}
       tags={tags || []}
-      onMethodChange={(nextMethod: DraftMethod) => {
-        navigate({ to: "/dashboard/transactions/new", search: { method: nextMethod } });
-      }}
     />
   );
 }

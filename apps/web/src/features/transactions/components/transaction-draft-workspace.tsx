@@ -86,7 +86,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-export type DraftMethod = "manual" | "scan";
 type CheckoutStep = "destination" | "details" | "items" | "summary";
 
 type DraftProduct = { id: string | null; name: string };
@@ -114,8 +113,6 @@ const CHECKOUT_STEPS: Array<{ id: CheckoutStep; label: string }> = [
 ];
 
 type BaseProps = {
-  method: DraftMethod;
-  onMethodChange: (method: DraftMethod) => void;
   products: ProductWithTag[];
   tags: Tag[];
   initialScanId?: string;
