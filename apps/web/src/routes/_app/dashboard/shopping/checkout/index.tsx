@@ -6,27 +6,33 @@ import {
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
 import {
   PageHeader,
-  PageHeaderActions,
   PageHeaderBackButton,
   PageHeaderDescription,
   PageHeaderTitle,
 } from "@/components/custom/page-header";
-import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/products.queries";
-import { ShoppingCheckoutForm } from "@/features/shopping/components/shopping-checkout.form";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
+import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
+import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileImage } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { Suspense } from "react";
+import z from "zod";
+
+const checkoutMethodSearchSchema = z.object({
+  method: z.enum(["manual", "scan"]).default("manual"),
+});
 
 export const Route = createFileRoute("/_app/dashboard/shopping/checkout/")({
+  validateSearch: zodValidator(checkoutMethodSearchSchema),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
         shoppingQueries.getShoppingListOptions(),
       ),
       context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
+      context.queryClient.prefetchQuery(tagsQueries.getTagsOptions()),
     ]);
   },
   component: RouteComponent,
@@ -41,16 +47,8 @@ function RouteComponent() {
           <span className="inline-flex items-center gap-2">Checkout</span>
         </PageHeaderTitle>
         <PageHeaderDescription>
-          Turn checked shopping items into a transaction
+          Turn checked shopping items into a transaction manually or from a receipt scan
         </PageHeaderDescription>
-        <PageHeaderActions>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/shopping/checkout/scan">
-              <FileImage className="size-4" />
-              <span className="hidden sm:inline">Scan receipt</span>
-            </Link>
-          </Button>
-        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <CheckoutContent />
@@ -60,6 +58,8 @@ function RouteComponent() {
 }
 
 function CheckoutContent() {
+  const navigate = useNavigate();
+  const { method } = Route.useSearch();
   const {
     data: [shoppingError, shoppingList],
     error: unexpectedShoppingError,
@@ -68,8 +68,12 @@ function CheckoutContent() {
     data: [productsError, products],
     error: unexpectedProductsError,
   } = useSuspenseQuery(productQueries.getProductsOptions());
+  const {
+    data: [tagsError, tags],
+    error: unexpectedTagsError,
+  } = useSuspenseQuery(tagsQueries.getTagsOptions());
 
-  if (unexpectedShoppingError || unexpectedProductsError) {
+  if (unexpectedShoppingError || unexpectedProductsError || unexpectedTagsError) {
     return <UnexpectedError />;
   }
 
@@ -121,6 +125,17 @@ function CheckoutContent() {
     );
   }
 
+  if (tagsError) {
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>Could not load tags</ExpectedErrorTitle>
+        <ExpectedErrorMessage>
+          Something went wrong trying to load tags for checkout. Please try again!
+        </ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
   const checkedCount = shoppingList.items.filter((item) => item.checked).length;
 
   if (checkedCount === 0) {
@@ -134,5 +149,16 @@ function CheckoutContent() {
     );
   }
 
-  return <ShoppingCheckoutForm list={shoppingList} products={products} />;
+  return (
+    <TransactionDraftWorkspace
+      kind="checkout"
+      method={method}
+      shoppingList={shoppingList}
+      products={products}
+      tags={tags || []}
+      onMethodChange={(nextMethod: DraftMethod) => {
+        navigate({ to: "/dashboard/shopping/checkout", search: { method: nextMethod } });
+      }}
+    />
+  );
 }

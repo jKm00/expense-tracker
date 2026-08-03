@@ -1,9 +1,9 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, CheckCircle2, FileSearch, Loader2, ReceiptText, RefreshCcw, ScanLine, UploadCloud, WandSparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSearch, Loader2, RefreshCcw, ScanLine, UploadCloud } from "lucide-react";
 import type { ComponentType } from "react";
 
 export function ScanBetaBadge() {
@@ -11,76 +11,15 @@ export function ScanBetaBadge() {
 }
 
 export function ScanLoadingState() {
-  return (
-    <Card className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <FileSearch className="size-4" />
-          Opening scan
-        </CardTitle>
-        <CardDescription>Fetching the receipt status and review data.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-        </div>
-        <ReviewSkeleton />
-      </CardContent>
-    </Card>
-  );
+  return <ScanStageTracker stage="opening" />;
 }
 
 export function ScanProgressState({ status }: { status: "upload_pending" | "processing" }) {
-  const waitingForUpload = status === "upload_pending";
-  return (
-    <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
-      <div className="pointer-events-none absolute -right-20 -top-24 size-56 rounded-full bg-primary/10 blur-3xl" />
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          {waitingForUpload ? <UploadCloud className="size-4" /> : <WandSparkles className="size-4" />}
-          {waitingForUpload ? "Waiting for the file" : "Reading the receipt"}
-          <Badge variant="secondary">In progress</Badge>
-        </CardTitle>
-        <CardDescription>
-          {waitingForUpload
-            ? "The upload is being handed off to the scanner. This usually only takes a moment."
-            : "Textract is finding the store, totals, and line items before we prepare the review form."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ProgressStep done label="Upload created" icon={UploadCloud} />
-          <ProgressStep active={!waitingForUpload} label="Extract details" icon={ScanLine} />
-          <ProgressStep label="Review entries" icon={CheckCircle2} />
-        </div>
-        <div className="rounded-2xl border bg-background/60 p-4">
-          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            {waitingForUpload ? "Waiting for S3 to confirm the receipt..." : "Preparing line items for review..."}
-          </div>
-          <ReviewSkeleton compact />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <ScanStageTracker stage={status === "upload_pending" ? "upload" : "extract"} />;
 }
 
 export function ScanPreparingReviewState() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base"><ReceiptText className="size-4" /> Preparing review</CardTitle>
-        <CardDescription>Matching receipt lines to your products.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Building the editable transaction form...</div>
-        <ReviewSkeleton />
-      </CardContent>
-    </Card>
-  );
+  return <ScanStageTracker stage="prepare" />;
 }
 
 export function ScanErrorState({ title, message, onRetry, onBack }: { title: string; message: string; onRetry?: () => void; onBack: () => void }) {
@@ -151,43 +90,54 @@ export function DailyUsageIndicator({ usage, loading }: { usage?: { used: number
   );
 }
 
-function ProgressStep({ done, active, label, icon: Icon }: { done?: boolean; active?: boolean; label: string; icon: ComponentType<{ className?: string }> }) {
-  return (
-    <div className={`rounded-xl border p-3 ${active ? "border-primary/40 bg-primary/5" : done ? "bg-muted/40" : "bg-background/60"}`}>
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <span className={`flex size-7 items-center justify-center rounded-full ${active ? "bg-primary text-primary-foreground" : done ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
-          <Icon className="size-3.5" />
-        </span>
-        {label}
-      </div>
-    </div>
-  );
-}
+type ScanStage = "opening" | "upload" | "extract" | "prepare";
 
-function ReviewSkeleton({ compact = false }: { compact?: boolean }) {
+const SCAN_STAGES: Array<{ id: Exclude<ScanStage, "opening">; label: string; description: string; icon: ComponentType<{ className?: string }> }> = [
+  { id: "upload", label: "Upload", description: "Sending the receipt to the scanner.", icon: UploadCloud },
+  { id: "extract", label: "Read", description: "Finding store, totals, and lines.", icon: ScanLine },
+  { id: "prepare", label: "Prepare", description: "Matching products for review.", icon: CheckCircle2 },
+];
+
+function ScanStageTracker({ stage }: { stage: ScanStage }) {
+  const activeIndex = stage === "opening" ? 0 : SCAN_STAGES.findIndex((item) => item.id === stage);
+  const activeStage = stage === "opening" ? { label: "Opening scan", description: "Fetching the latest scan status.", icon: FileSearch } : SCAN_STAGES[activeIndex];
+  const ActiveIcon = activeStage.icon;
+
   return (
-    <div className="space-y-4">
-      {!compact && (
-        <div className="grid gap-3 md:grid-cols-2">
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
-        </div>
-      )}
-      <div className="space-y-3">
-        {Array.from({ length: compact ? 2 : 4 }).map((_, index) => (
-          <div key={index} className="rounded-xl border p-3">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="size-8 rounded-lg" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-[1fr_90px_120px_120px]">
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
+    <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <div className="pointer-events-none absolute -right-16 -top-20 size-44 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <ActiveIcon className="size-5" />
+            </span>
+            <div>
+              <p className="font-medium">{activeStage.label}</p>
+              <p className="text-sm text-muted-foreground">{activeStage.description}</p>
             </div>
           </div>
-        ))}
+          <Badge variant="secondary" className="gap-1.5"><Loader2 className="size-3 animate-spin" /> Working</Badge>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SCAN_STAGES.map((item, index) => {
+            const Icon = item.icon;
+            const done = stage !== "opening" && index < activeIndex;
+            const active = index === activeIndex;
+            return (
+              <div key={item.id} className={`rounded-xl border p-3 ${active ? "border-primary/40 bg-primary/5" : done ? "bg-emerald-500/5" : "bg-background/70"}`}>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <span className={`flex size-7 items-center justify-center rounded-full ${active ? "bg-primary text-primary-foreground" : done ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                    {done ? <CheckCircle2 className="size-3.5" /> : <Icon className="size-3.5" />}
+                  </span>
+                  {item.label}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{done ? "Done" : active ? item.description : "Waiting"}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

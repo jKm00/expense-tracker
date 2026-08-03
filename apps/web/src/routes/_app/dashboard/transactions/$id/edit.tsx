@@ -9,19 +9,23 @@ import {
   PageHeaderBackButton,
   PageHeaderTitle,
   PageHeaderDescription,
-  PageHeaderActions,
 } from "@/components/custom/page-header";
-import { Button } from "@/components/ui/button";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { EditTransactionForm } from "@/features/transactions/components/edit-transaction.form";
+import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FileImage } from "lucide-react";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { Suspense } from "react";
+import z from "zod";
+
+const transactionMethodSearchSchema = z.object({
+  method: z.enum(["manual", "scan"]).default("manual"),
+});
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
+  validateSearch: zodValidator(transactionMethodSearchSchema),
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(
@@ -37,19 +41,14 @@ export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
         <PageHeaderTitle>Edit Transaction</PageHeaderTitle>
         <PageHeaderDescription>
-          Modify transaction details
+          Modify transaction details manually or replace entries from a receipt scan
         </PageHeaderDescription>
-        <PageHeaderActions>
-          <ScanReceiptAction transactionId={id} />
-        </PageHeaderActions>
       </PageHeader>
       <Suspense>
         <EditTransactionFormWrapper />
@@ -58,40 +57,10 @@ function RouteComponent() {
   );
 }
 
-function ScanReceiptAction({ transactionId }: { transactionId: string }) {
-  const navigate = useNavigate();
-  const {
-    data: [expectedTransactionError, transaction],
-    error: unexpectedTransactionError,
-  } = useSuspenseQuery(transactionQueries.getTransactionOptions(transactionId));
-
-  if (unexpectedTransactionError || expectedTransactionError) {
-    return null;
-  }
-
-  const canScan =
-    transaction.source !== "recurring" &&
-    transaction.entries.every((entry) => entry.type === "expense");
-
-  if (!canScan) {
-    return null;
-  }
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      aria-label="Scan receipt"
-      onClick={() => navigate({ to: "/dashboard/transactions/$id/scan", params: { id: transactionId } })}
-    >
-      <FileImage className="size-4" />
-      <span className="max-md:sr-only">Scan receipt</span>
-    </Button>
-  );
-}
-
 function EditTransactionFormWrapper() {
   const { id } = Route.useParams();
+  const { method } = Route.useSearch();
+  const navigate = useNavigate();
 
   const {
     data: [expectedProductError, products],
@@ -194,11 +163,31 @@ function EditTransactionFormWrapper() {
     );
   }
 
+  const canScan =
+    transaction.source !== "recurring" &&
+    transaction.entries.every((entry) => entry.type === "expense");
+
+  if (method === "scan" && !canScan) {
+    return (
+      <ExpectedError>
+        <ExpectedErrorTitle>Receipt scan unavailable</ExpectedErrorTitle>
+        <ExpectedErrorMessage>
+          Receipt scanning can only replace non-recurring transactions with expense entries.
+        </ExpectedErrorMessage>
+      </ExpectedError>
+    );
+  }
+
   return (
-    <EditTransactionForm
+    <TransactionDraftWorkspace
+      kind="edit"
+      method={canScan ? method : "manual"}
       products={products}
       tags={tags || []}
       transaction={transaction}
+      onMethodChange={(nextMethod: DraftMethod) => {
+        navigate({ to: "/dashboard/transactions/$id/edit", params: { id }, search: { method: nextMethod } });
+      }}
     />
   );
 }
