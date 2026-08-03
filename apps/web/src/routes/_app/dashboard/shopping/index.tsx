@@ -215,11 +215,6 @@ function ShoppingContent() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {!hasCheckedItems && totalCount > 0 ? (
-            <p className="basis-full text-xs text-muted-foreground sm:text-right">
-              Check at least one item to start checkout.
-            </p>
-          ) : null}
         </div>
       </div>
       <ShoppingListView list={shoppingList} products={products} />
