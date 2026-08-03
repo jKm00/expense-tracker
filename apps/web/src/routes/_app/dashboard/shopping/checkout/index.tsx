@@ -12,20 +12,13 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { shoppingQueries } from "@/features/shopping/shopping.queries";
-import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
+import { TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { tagsQueries } from "@/features/tags/tags.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { zodValidator } from "@tanstack/zod-adapter";
+import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import z from "zod";
-
-const checkoutMethodSearchSchema = z.object({
-  method: z.enum(["manual", "scan"]).default("manual"),
-});
 
 export const Route = createFileRoute("/_app/dashboard/shopping/checkout/")({
-  validateSearch: zodValidator(checkoutMethodSearchSchema),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
@@ -58,8 +51,6 @@ function RouteComponent() {
 }
 
 function CheckoutContent() {
-  const navigate = useNavigate();
-  const { method } = Route.useSearch();
   const {
     data: [shoppingError, shoppingList],
     error: unexpectedShoppingError,
@@ -152,13 +143,9 @@ function CheckoutContent() {
   return (
     <TransactionDraftWorkspace
       kind="checkout"
-      method={method}
       shoppingList={shoppingList}
       products={products}
       tags={tags || []}
-      onMethodChange={(nextMethod: DraftMethod) => {
-        navigate({ to: "/dashboard/shopping/checkout", search: { method: nextMethod } });
-      }}
     />
   );
 }

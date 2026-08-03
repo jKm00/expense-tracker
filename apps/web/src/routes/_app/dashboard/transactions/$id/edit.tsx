@@ -12,20 +12,13 @@ import {
 } from "@/components/custom/page-header";
 import { productQueries } from "@/features/products/products.queries";
 import { tagsQueries } from "@/features/tags/tags.queries";
-import { DraftMethod, TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
+import { TransactionDraftWorkspace } from "@/features/transactions/components/transaction-draft-workspace";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { zodValidator } from "@tanstack/zod-adapter";
+import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import z from "zod";
-
-const transactionMethodSearchSchema = z.object({
-  method: z.enum(["manual", "scan"]).default("manual"),
-});
 
 export const Route = createFileRoute("/_app/dashboard/transactions/$id/edit")({
-  validateSearch: zodValidator(transactionMethodSearchSchema),
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(
@@ -59,8 +52,6 @@ function RouteComponent() {
 
 function EditTransactionFormWrapper() {
   const { id } = Route.useParams();
-  const { method } = Route.useSearch();
-  const navigate = useNavigate();
 
   const {
     data: [expectedProductError, products],
@@ -163,31 +154,12 @@ function EditTransactionFormWrapper() {
     );
   }
 
-  const canScan =
-    transaction.source !== "recurring" &&
-    transaction.entries.every((entry) => entry.type === "expense");
-
-  if (method === "scan" && !canScan) {
-    return (
-      <ExpectedError>
-        <ExpectedErrorTitle>Receipt scan unavailable</ExpectedErrorTitle>
-        <ExpectedErrorMessage>
-          Receipt scanning can only replace non-recurring transactions with expense entries.
-        </ExpectedErrorMessage>
-      </ExpectedError>
-    );
-  }
-
   return (
     <TransactionDraftWorkspace
       kind="edit"
-      method={canScan ? method : "manual"}
       products={products}
       tags={tags || []}
       transaction={transaction}
-      onMethodChange={(nextMethod: DraftMethod) => {
-        navigate({ to: "/dashboard/transactions/$id/edit", params: { id }, search: { method: nextMethod } });
-      }}
     />
   );
 }

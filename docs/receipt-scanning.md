@@ -226,9 +226,10 @@ Old usage items have `expiresAt` and are removed later by DynamoDB TTL. Expiry d
 
 - `/dashboard/scans` - scan history and delete scans.
 - `/dashboard/scans/$scanId` - scan status/history detail, view original file, continue completed scans as a new transaction.
-- `/dashboard/transactions/new?method=scan` - create a transaction with optional receipt scanning inside the transaction form.
-- `/dashboard/transactions/$id/edit?method=scan` - replace an existing transaction's entries from a receipt scan inside the edit form.
-- `/dashboard/shopping/checkout?method=scan` - complete shopping checkout with optional receipt scanning inside checkout.
+- `/dashboard/transactions/new` - create a transaction with optional receipt scanning inside the transaction form.
+- `/dashboard/transactions/new?scanId=<id>` - continue a completed history scan as a new transaction.
+- `/dashboard/transactions/$id/edit` - edit a transaction and optionally replace its entries from a receipt scan.
+- `/dashboard/shopping/checkout` - complete shopping checkout with optional receipt scanning inside checkout.
 
 ## Deployment
 
