@@ -761,6 +761,15 @@ export function TransactionDraftWorkspace(props: Props) {
   const navigate = useNavigate();
   const online = useOnlineStatus();
   const inputRef = useRef<HTMLInputElement>(null);
+  const draftKey =
+    props.kind === "edit"
+      ? `edit:${props.transaction.id}`
+      : props.kind === "checkout"
+        ? `checkout:${props.shoppingList.id}`
+        : `new:${props.initialScanId ?? ""}`;
+  const currentDraftKey = useRef(draftKey);
+  const appliedScanId = useRef<string | null>(null);
+  const prefilledCheckoutTransactionId = useRef<string | null>(null);
   const uploadMutation = receiptScanningMutations.createScanUpload();
   const transactionMutation = transactionMutations.saveTransaction();
   const updateTransactionMutation = transactionMutations.updateTransaction();
@@ -776,7 +785,7 @@ export function TransactionDraftWorkspace(props: Props) {
     if (props.kind === "checkout")
       return entriesFromShoppingList(props.shoppingList);
     return [];
-  }, [props]);
+  }, [draftKey]);
 
   const [entries, setEntries] = useState<DraftEntry[]>(initialEntries);
   const [store, setStore] = useState(
@@ -807,8 +816,23 @@ export function TransactionDraftWorkspace(props: Props) {
   const [selectedTransactionId, setSelectedTransactionId] = useState("");
 
   useEffect(() => {
+    if (currentDraftKey.current === draftKey) return;
+    currentDraftKey.current = draftKey;
+    appliedScanId.current = null;
+    prefilledCheckoutTransactionId.current = null;
+    setScanResult(null);
+    setActiveScanId(props.initialScanId ?? null);
+    setFileError(null);
+    setSubmitAttempted(false);
     setEntries(initialEntries);
-  }, [initialEntries]);
+    setStore(props.kind === "edit" ? (props.transaction.store ?? "") : "");
+    setDescription(
+      props.kind === "edit" ? (props.transaction.description ?? "") : "",
+    );
+    setDate(
+      props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
+    );
+  }, [draftKey, initialEntries, props]);
 
   const usageQuery = useQuery(receiptScanningQueries.listScansOptions());
   const scanQuery = useQuery({
@@ -955,8 +979,11 @@ export function TransactionDraftWorkspace(props: Props) {
       setFileError(error.message);
       return;
     }
-    if (data) applyScanResult(data);
-  }, [matchQuery.data]);
+    if (data && activeScanId && appliedScanId.current !== activeScanId) {
+      appliedScanId.current = activeScanId;
+      applyScanResult(data);
+    }
+  }, [activeScanId, matchQuery.data]);
 
   useEffect(() => {
     const scan = scanQuery.data?.[1];
@@ -977,6 +1004,7 @@ export function TransactionDraftWorkspace(props: Props) {
     ) {
       setSelectedTransactionId("");
       setCheckoutDestination("new");
+      prefilledCheckoutTransactionId.current = null;
     }
   }, [
     checkoutDestination,
@@ -986,6 +1014,10 @@ export function TransactionDraftWorkspace(props: Props) {
 
   useEffect(() => {
     if (props.kind !== "checkout" || !selectedCheckoutTransaction) return;
+    if (prefilledCheckoutTransactionId.current === selectedCheckoutTransaction.id) {
+      return;
+    }
+    prefilledCheckoutTransactionId.current = selectedCheckoutTransaction.id;
     setStore(selectedCheckoutTransaction.store ?? "");
     setDescription(selectedCheckoutTransaction.description ?? "");
     setDate(new Date(selectedCheckoutTransaction.date));
@@ -1006,6 +1038,7 @@ export function TransactionDraftWorkspace(props: Props) {
   }
 
   function resetScanDraft() {
+    appliedScanId.current = null;
     setScanResult(null);
     setActiveScanId(null);
     setFileError(null);
@@ -1074,6 +1107,7 @@ export function TransactionDraftWorkspace(props: Props) {
             setFileError(RECEIPT_SCAN_FILE_UPLOAD_FAILED_MESSAGE);
             return;
           }
+          appliedScanId.current = null;
           setActiveScanId(data.scanId);
         },
         onError: (error) => setFileError(formatReceiptScanStartError(error)),
@@ -1352,6 +1386,7 @@ export function TransactionDraftWorkspace(props: Props) {
               onClick={() => {
                 setCheckoutDestination("new");
                 setSelectedTransactionId("");
+                prefilledCheckoutTransactionId.current = null;
                 setStore("");
                 setDescription("");
                 setDate(new Date());
