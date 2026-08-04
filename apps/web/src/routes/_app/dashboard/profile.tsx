@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/auth/auth.provider";
 import { authClient } from "@/features/auth/auth-client";
 import { ThemePicker } from "@/features/themes";
+import { DataPortabilityCard } from "@/features/data-portability/data-portability.card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -104,6 +105,8 @@ function RouteComponent() {
           <ThemePicker />
         </CardContent>
       </Card>
+
+      <DataPortabilityCard />
     </div>
   );
 }
