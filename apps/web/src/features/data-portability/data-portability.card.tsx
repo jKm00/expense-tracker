@@ -191,7 +191,7 @@ export function DataPortabilityCard() {
               <BetaBadge enabled={true} />
             </div>
             <CardDescription>
-              Export or import your expense tracker data as JSON
+              Export your expense tracker data as JSON
             </CardDescription>
           </div>
         </div>
