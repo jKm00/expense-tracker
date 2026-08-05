@@ -17,6 +17,7 @@ import { ok } from "@/utils/result";
 import { err } from "@/features/logger/logger.result";
 import { getLogger } from "@/features/logger/logger.context";
 import { and, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
+import { isDataImportEnabled } from "./data-portability.config";
 import type {
   DataPortabilityData,
   DataPortabilityExport,
@@ -488,6 +489,13 @@ async function exportData(userId: string, period: ExportPeriod) {
 async function previewImport(userId: string, payload: DataPortabilityExport) {
   getLogger().addAttrs({ dataPortabilityAction: "previewImport" });
 
+  if (!isDataImportEnabled()) {
+    return err({
+      reason: "DATA_IMPORT_DISABLED" as const,
+      message: "Data import is only available on development servers",
+    });
+  }
+
   try {
     const [sizeError] = validateImportSize(payload);
     if (sizeError) return err(sizeError);
@@ -504,6 +512,13 @@ async function previewImport(userId: string, payload: DataPortabilityExport) {
 
 async function applyImport(userId: string, payload: DataPortabilityExport) {
   getLogger().addAttrs({ dataPortabilityAction: "applyImport" });
+
+  if (!isDataImportEnabled()) {
+    return err({
+      reason: "DATA_IMPORT_DISABLED" as const,
+      message: "Data import is only available on development servers",
+    });
+  }
 
   try {
     const [sizeError] = validateImportSize(payload);

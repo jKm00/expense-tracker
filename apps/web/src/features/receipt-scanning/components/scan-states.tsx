@@ -6,10 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, CheckCircle2, FileSearch, Loader2, RefreshCcw, ScanLine, UploadCloud } from "lucide-react";
 import type { ComponentType } from "react";
 
-export function ScanBetaBadge() {
-  return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Beta</Badge>;
-}
-
 export function ScanLoadingState() {
   return <ScanStageTracker stage="opening" />;
 }

@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BetaBadge } from "@/components/custom/beta-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { writeSidebarCollapsedCookie } from "./sidebar-preferences";
@@ -195,19 +196,18 @@ export function DesktopSidebar({
                     )}
                   >
                     <span className="truncate">{item.label}</span>
-                    {item.alpha ? (
+                    {"alpha" in item && item.alpha ? (
                       <Badge
                         variant="secondary"
                         className="h-5 rounded-md px-1.5 text-[10px]"
                       >
                         ALPHA
                       </Badge>
-                    ) : item.beta ? (
-                      <Badge
-                        className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
-                      >
-                        BETA
-                      </Badge>
+                    ) : "beta" in item && item.beta ? (
+                      <BetaBadge
+                        enabled={true}
+                        className="h-5 rounded-md px-1.5 text-[10px] uppercase"
+                      />
                     ) : null}
                   </span>
                 </Link>

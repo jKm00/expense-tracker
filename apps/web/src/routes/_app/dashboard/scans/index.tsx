@@ -1,4 +1,5 @@
 import { EmptyState, EmptyStateAction, EmptyStateMessage } from "@/components/custom/empty-state";
+import { BetaBadge } from "@/components/custom/beta-badge";
 import { PageHeader, PageHeaderDescription, PageHeaderTitle } from "@/components/custom/page-header";
 import {
   AlertDialog,
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DailyUsageIndicator, ScanBetaBadge } from "@/features/receipt-scanning/components/scan-states";
+import { DailyUsageIndicator } from "@/features/receipt-scanning/components/scan-states";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
 import { receiptScanningMutations } from "@/features/receipt-scanning/receipt-scanning.mutations";
 import { AwsScanSummary } from "@/features/receipt-scanning/receipt-scanning.models";
@@ -158,7 +159,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
-        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scans <ScanBetaBadge /></span></PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scans <BetaBadge enabled={true} /></span></PageHeaderTitle>
         <PageHeaderDescription>Upload receipt files, track processing, and turn completed scans into transactions.</PageHeaderDescription>
       </PageHeader>
 
