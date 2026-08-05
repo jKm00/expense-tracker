@@ -1,11 +1,12 @@
 import { UnexpectedError } from "@/components/custom/errors/unexpected-error";
+import { BetaBadge } from "@/components/custom/beta-badge";
 import { PageHeader, PageHeaderBackButton, PageHeaderDescription, PageHeaderTitle } from "@/components/custom/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScanBetaBadge, ScanErrorState } from "@/features/receipt-scanning/components/scan-states";
+import { ScanErrorState } from "@/features/receipt-scanning/components/scan-states";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
 import { receiptScanningQueries } from "@/features/receipt-scanning/receipt-scanning.queries";
 import { formatAmount } from "@/utils/format";
@@ -46,7 +47,7 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader>
         <PageHeaderBackButton />
-        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scan <ScanBetaBadge /></span></PageHeaderTitle>
+        <PageHeaderTitle><span className="inline-flex items-center gap-2">Receipt Scan <BetaBadge enabled={true} /></span></PageHeaderTitle>
         <PageHeaderDescription>Review processing status and create a transaction when extraction completes.</PageHeaderDescription>
       </PageHeader>
 

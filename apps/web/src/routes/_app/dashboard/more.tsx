@@ -3,7 +3,7 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { Badge } from "@/components/ui/badge";
+import { BetaBadge } from "@/components/custom/beta-badge";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, FileImage, Package, Plug, Repeat, Tag, User } from "lucide-react";
 
@@ -82,12 +82,11 @@ function RouteComponent() {
                     <p className="text-sm font-medium text-foreground">
                       {item.label}
                     </p>
-                    {item.version ? (
-                      <Badge
-                        className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
-                      >
-                        {item.version.toUpperCase()}
-                      </Badge>
+                    {"version" in item && item.version ? (
+                      <BetaBadge
+                        enabled={true}
+                        className="h-5 rounded-md px-1.5 text-[10px] uppercase"
+                      />
                     ) : null}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -114,12 +113,11 @@ function RouteComponent() {
                   <p className="text-sm font-medium text-foreground">
                     {item.label}
                   </p>
-                  {item.version ? (
-                    <Badge
-                      className="h-5 rounded-md bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary/90"
-                    >
-                      {item.version.toUpperCase()}
-                    </Badge>
+                  {"version" in item && item.version ? (
+                    <BetaBadge
+                      enabled={true}
+                      className="h-5 rounded-md px-1.5 text-[10px] uppercase"
+                    />
                   ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">

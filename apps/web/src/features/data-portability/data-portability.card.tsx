@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { BetaBadge } from "@/components/custom/beta-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,17 +11,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ANALYTICS_PREFERENCES_QUERY_KEY } from "@/features/analytics/analytics.queries";
-import { PRODUCT_QUERY_KEY } from "@/features/products/products.queries";
-import { RECURRING_QUERY_KEY } from "@/features/recurring/recurring.queries";
-import { TAG_QUERY_KEY } from "@/features/tags/tags.queries";
-import { TRANSACTION_QUERY_KEY } from "@/features/transactions/transactions.queries";
-import { assertOnline } from "@/lib/offline-guard";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Database, Download, FileJson, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  Database,
+  Download,
+  FileJson,
+  Upload,
+} from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
-import { toast } from "sonner";
-import { dataPortabilityController } from "./data-portability.controller";
+import { isDataImportEnabled } from "./data-portability.config";
+import { dataPortabilityMutations } from "./data-portability.mutations";
 import type {
   DataPortabilityExport,
   ExportPeriod,
@@ -39,32 +39,6 @@ function getDefaultFromDate() {
   return toDateInputValue(date);
 }
 
-function getDefaultToDate() {
-  return toDateInputValue(new Date());
-}
-
-function buildFilename(period: ExportPeriod) {
-  if (period.type === "all") {
-    return `expense-tracker-export-all-${getDefaultToDate()}.json`;
-  }
-
-  return `expense-tracker-export-${period.from.slice(0, 10)}_to_${period.to.slice(0, 10)}.json`;
-}
-
-function downloadJson(payload: DataPortabilityExport, filename: string) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
 function getTotal(counts: Record<string, number>) {
   return Object.values(counts).reduce((total, value) => total + value, 0);
 }
@@ -80,7 +54,11 @@ function SummaryCounts({ summary }: { summary: ImportSummary }) {
       <SummaryBadge label="Create" value={created} />
       <SummaryBadge label="Skip" value={skipped} />
       <SummaryBadge label="Conflicts" value={conflicts} />
-      <SummaryBadge label="Errors" value={errors} variant={errors > 0 ? "destructive" : "secondary"} />
+      <SummaryBadge
+        label="Errors"
+        value={errors}
+        variant={errors > 0 ? "destructive" : "secondary"}
+      />
     </div>
   );
 }
@@ -116,7 +94,8 @@ function ReportList({ summary }: { summary: ImportSummary }) {
       <ul className="space-y-1 text-sm text-muted-foreground">
         {items.map((item, index) => (
           <li key={`${item.type}-${item.id}-${index}`}>
-            <span className="font-medium text-foreground">{item.type}</span> {item.name ?? item.id}: {item.reason}
+            <span className="font-medium text-foreground">{item.type}</span>{" "}
+            {item.name ?? item.id}: {item.reason}
           </li>
         ))}
       </ul>
@@ -125,91 +104,22 @@ function ReportList({ summary }: { summary: ImportSummary }) {
 }
 
 export function DataPortabilityCard() {
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [periodType, setPeriodType] = useState<"all" | "range">("all");
   const [fromDate, setFromDate] = useState(getDefaultFromDate);
-  const [toDate, setToDate] = useState(getDefaultToDate);
-  const [importPayload, setImportPayload] = useState<DataPortabilityExport | null>(null);
-  const [previewSummary, setPreviewSummary] = useState<ImportSummary | null>(null);
+  const [toDate, setToDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [importPayload, setImportPayload] =
+    useState<DataPortabilityExport | null>(null);
+  const [previewSummary, setPreviewSummary] = useState<ImportSummary | null>(
+    null,
+  );
   const [importError, setImportError] = useState<string | null>(null);
 
-  const exportMutation = useMutation({
-    mutationFn: async (period: ExportPeriod) => {
-      assertOnline();
-      return await dataPortabilityController.exportData({ data: period });
-    },
-    onSuccess: (result, period) => {
-      const [error, payload] = result as [
-        { message: string } | null,
-        DataPortabilityExport | null,
-      ];
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (!payload) return;
-
-      downloadJson(payload, buildFilename(period));
-      toast.success("Export downloaded");
-    },
-    onError: () => {
-      toast.error("Failed to export your data. Please try again.");
-    },
-  });
-
-  const previewMutation = useMutation({
-    mutationFn: async (payload: DataPortabilityExport) => {
-      assertOnline();
-      return await dataPortabilityController.previewImport({ data: { payload } });
-    },
-    onSuccess: (result, payload) => {
-      const [error, summary] = result as [{ message: string } | null, ImportSummary | null];
-      if (error) {
-        setImportError(error.message);
-        setPreviewSummary(null);
-        return;
-      }
-
-      if (!summary) return;
-
-      setImportPayload(payload);
-      setPreviewSummary(summary);
-      setImportError(null);
-    },
-    onError: () => {
-      setImportError("The file is not a valid expense tracker export.");
-      setPreviewSummary(null);
-    },
-  });
-
-  const applyMutation = useMutation({
-    mutationFn: async (payload: DataPortabilityExport) => {
-      assertOnline();
-      return await dataPortabilityController.applyImport({ data: { payload } });
-    },
-    onSuccess: (result) => {
-      const [error, summary] = result as [{ message: string } | null, ImportSummary | null];
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (!summary) return;
-
-      setPreviewSummary(summary);
-      queryClient.invalidateQueries({ queryKey: [TRANSACTION_QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [TAG_QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [RECURRING_QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [ANALYTICS_PREFERENCES_QUERY_KEY] });
-      toast.success("Import complete");
-    },
-    onError: () => {
-      toast.error("Failed to import your data. Please try again.");
-    },
-  });
+  const exportMutation = dataPortabilityMutations.useExportData();
+  const previewMutation = dataPortabilityMutations.usePreviewImport();
+  const applyMutation = dataPortabilityMutations.useApplyImport();
 
   const period: ExportPeriod =
     periodType === "all"
@@ -225,21 +135,48 @@ export function DataPortabilityCard() {
     if (!file) return;
 
     if (file.size > MAX_IMPORT_BYTES) {
-      setImportError("Import file is larger than 10 MB. Export a smaller period or use a smaller file.");
+      setImportError(
+        "Import file is larger than 10 MB. Export a smaller period or use a smaller file.",
+      );
       return;
     }
 
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as DataPortabilityExport;
-      previewMutation.mutate(parsed);
+      previewMutation.mutate(parsed, {
+        onSuccess: (result, payload) => {
+          const [error, summary] = result as [
+            { message: string } | null,
+            ImportSummary | null,
+          ];
+          if (error) {
+            setImportError(error.message);
+            setPreviewSummary(null);
+            return;
+          }
+
+          if (!summary) return;
+
+          setImportPayload(payload);
+          setPreviewSummary(summary);
+          setImportError(null);
+        },
+        onError: () => {
+          setImportError("The file is not a valid expense tracker export.");
+          setPreviewSummary(null);
+        },
+      });
     } catch {
       setImportError("The selected file is not valid JSON.");
     }
   }
 
   const canExport = period.type === "all" || fromDate <= toDate;
-  const canApply = Boolean(importPayload && previewSummary && previewSummary.errors.length === 0);
+  const canApply = Boolean(
+    importPayload && previewSummary && previewSummary.errors.length === 0,
+  );
+  const importEnabled = isDataImportEnabled();
 
   return (
     <Card>
@@ -249,8 +186,13 @@ export function DataPortabilityCard() {
             <Database className="size-4 text-muted-foreground" />
           </div>
           <div>
-            <CardTitle>Data portability</CardTitle>
-            <CardDescription>Export or import your expense tracker data as JSON</CardDescription>
+            <div className="flex items-center gap-2">
+              <CardTitle>Data portability</CardTitle>
+              <BetaBadge enabled={true} />
+            </div>
+            <CardDescription>
+              Export or import your expense tracker data as JSON
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -267,7 +209,9 @@ export function DataPortabilityCard() {
                 id="export-period"
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 value={periodType}
-                onChange={(event) => setPeriodType(event.target.value as "all" | "range")}
+                onChange={(event) =>
+                  setPeriodType(event.target.value as "all" | "range")
+                }
               >
                 <option value="all">All time</option>
                 <option value="range">Date range</option>
@@ -303,74 +247,95 @@ export function DataPortabilityCard() {
             </Button>
           </div>
           {!canExport && (
-            <p className="text-sm text-destructive">From date must be before or equal to to date.</p>
-          )}
-        </section>
-
-        <section className="space-y-3 border-t pt-6">
-          <div className="flex items-center gap-2">
-            <Upload className="size-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium">Import data</h3>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="import-file">JSON export file</Label>
-            <Input
-              ref={fileInputRef}
-              id="import-file"
-              type="file"
-              accept="application/json,.json"
-              onChange={handleFileChange}
-            />
-            <p className="text-xs text-muted-foreground">
-              Upload an expense tracker JSON export up to 10 MB. The app previews changes before writing anything.
+            <p className="text-sm text-destructive">
+              From date must be before or equal to to date.
             </p>
-          </div>
-
-          {previewMutation.isPending && (
-            <Alert>
-              <FileJson className="size-4" />
-              <AlertTitle>Validating import</AlertTitle>
-              <AlertDescription>Checking the file and calculating what will be created or skipped.</AlertDescription>
-            </Alert>
-          )}
-
-          {importError && (
-            <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
-              <AlertTitle>Import cannot be previewed</AlertTitle>
-              <AlertDescription>{importError}</AlertDescription>
-            </Alert>
-          )}
-
-          {previewSummary && (
-            <div className="space-y-3">
-              <SummaryCounts summary={previewSummary} />
-              <ReportList summary={previewSummary} />
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button
-                  type="button"
-                  disabled={!canApply || applyMutation.isPending}
-                  onClick={() => importPayload && applyMutation.mutate(importPayload)}
-                >
-                  <Upload className="size-4" />
-                  {applyMutation.isPending ? "Importing..." : "Confirm import"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setImportPayload(null);
-                    setPreviewSummary(null);
-                    setImportError(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  Clear file
-                </Button>
-              </div>
-            </div>
           )}
         </section>
+
+        {importEnabled && (
+          <section className="space-y-3 border-t pt-6">
+            <div className="flex items-center gap-2">
+              <Upload className="size-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Import data</h3>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="import-file">JSON export file</Label>
+              <Input
+                ref={fileInputRef}
+                id="import-file"
+                type="file"
+                accept="application/json,.json"
+                onChange={handleFileChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload an expense tracker JSON export up to 10 MB. The app
+                previews changes before writing anything.
+              </p>
+            </div>
+
+            {previewMutation.isPending && (
+              <Alert>
+                <FileJson className="size-4" />
+                <AlertTitle>Validating import</AlertTitle>
+                <AlertDescription>
+                  Checking the file and calculating what will be created or
+                  skipped.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {importError && (
+              <Alert variant="destructive">
+                <AlertTriangle className="size-4" />
+                <AlertTitle>Import cannot be previewed</AlertTitle>
+                <AlertDescription>{importError}</AlertDescription>
+              </Alert>
+            )}
+
+            {previewSummary && (
+              <div className="space-y-3">
+                <SummaryCounts summary={previewSummary} />
+                <ReportList summary={previewSummary} />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Button
+                    type="button"
+                    disabled={!canApply || applyMutation.isPending}
+                    onClick={() => {
+                      if (!importPayload) return;
+                      applyMutation.mutate(importPayload, {
+                        onSuccess: (result) => {
+                          const [, summary] = result as [
+                            { message: string } | null,
+                            ImportSummary | null,
+                          ];
+                          if (summary) setPreviewSummary(summary);
+                        },
+                      });
+                    }}
+                  >
+                    <Upload className="size-4" />
+                    {applyMutation.isPending
+                      ? "Importing..."
+                      : "Confirm import"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setImportPayload(null);
+                      setPreviewSummary(null);
+                      setImportError(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                  >
+                    Clear file
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </CardContent>
     </Card>
   );

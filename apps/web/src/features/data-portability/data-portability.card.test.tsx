@@ -15,12 +15,20 @@ vi.mock("./data-portability.controller", () => ({
   dataPortabilityController: mockController,
 }));
 
+vi.mock("./data-portability.config", () => ({
+  isDataImportEnabled: vi.fn(() => true),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
   },
 }));
+
+import { isDataImportEnabled } from "./data-portability.config";
+
+const mockedIsDataImportEnabled = vi.mocked(isDataImportEnabled);
 
 const now = "2026-01-01T00:00:00.000Z";
 
@@ -74,9 +82,22 @@ function makeSummary(): ImportSummary {
   };
 }
 
+function selectImportFile(payload: DataPortabilityExport) {
+  const input = screen.getByLabelText(/json export file/i);
+  const file = new File([JSON.stringify(payload)], "export.json", {
+    type: "application/json",
+  });
+  Object.defineProperty(file, "text", {
+    value: vi.fn().mockResolvedValue(JSON.stringify(payload)),
+  });
+
+  fireEvent.change(input, { target: { files: [file] } });
+}
+
 describe("DataPortabilityCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedIsDataImportEnabled.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -90,15 +111,7 @@ describe("DataPortabilityCard", () => {
     mockController.applyImport.mockResolvedValue([null, summary]);
     renderCard();
 
-    const input = screen.getByLabelText(/json export file/i);
-    const file = new File([JSON.stringify(payload)], "export.json", {
-      type: "application/json",
-    });
-    Object.defineProperty(file, "text", {
-      value: vi.fn().mockResolvedValue(JSON.stringify(payload)),
-    });
-
-    fireEvent.change(input, { target: { files: [file] } });
+    selectImportFile(payload);
 
     await waitFor(() => {
       expect(mockController.previewImport).toHaveBeenCalledWith({
@@ -114,5 +127,14 @@ describe("DataPortabilityCard", () => {
     await waitFor(() => {
       expect(mockController.applyImport).toHaveBeenCalledWith({ data: { payload } });
     });
+  });
+
+  it("keeps the export section visible when import is disabled", () => {
+    mockedIsDataImportEnabled.mockReturnValue(false);
+    renderCard();
+
+    expect(screen.getByText("Export data")).toBeTruthy();
+    expect(screen.queryByText("Import data")).toBeNull();
+    expect(screen.queryByLabelText(/json export file/i)).toBeNull();
   });
 });
