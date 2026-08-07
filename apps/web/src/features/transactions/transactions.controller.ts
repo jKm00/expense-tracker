@@ -72,6 +72,7 @@ const updateTransaction = createServerFn({ method: "POST" })
       transaction: {
         store: updateData.store,
         description: updateData.description,
+        source: updateData.source,
         date: updateData.date,
       },
       entries: updateData.entries,
