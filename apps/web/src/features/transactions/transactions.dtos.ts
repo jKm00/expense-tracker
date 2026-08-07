@@ -53,6 +53,7 @@ export const updateTransactionSchema = z.object({
   transactionId: z.string(),
   store: z.string().optional(),
   description: z.string().optional(),
+  source: z.enum(transactionSources),
   date: z.date(),
   entries: updateEntrySchema
     .array()

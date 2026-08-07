@@ -36,6 +36,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ProductWithTag } from "@/features/products/products.models";
 import { receiptScanningController } from "@/features/receipt-scanning/receipt-scanning.controller";
@@ -60,7 +67,10 @@ import { Tag } from "@/features/tags/tags.models";
 import { shoppingMutations } from "@/features/shopping/shopping.mutations";
 import { ShoppingListWithItems } from "@/features/shopping/shopping.models";
 import { getSelectableCheckoutTransactions } from "@/features/shopping/components/shopping-checkout.utils";
-import { FullTransaction } from "@/features/transactions/transactions.models";
+import {
+  FullTransaction,
+  type TransactionSource,
+} from "@/features/transactions/transactions.models";
 import { transactionMutations } from "@/features/transactions/transactions.mutations";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -110,6 +120,14 @@ const CHECKOUT_STEPS: Array<{ id: CheckoutStep; label: string }> = [
   { id: "details", label: "Details" },
   { id: "items", label: "Items" },
   { id: "summary", label: "Summary" },
+];
+
+const SOURCE_OPTIONS: Array<{ value: TransactionSource; label: string }> = [
+  { value: "manual", label: "Manual" },
+  { value: "recurring", label: "Recurring" },
+  { value: "scan", label: "Scan" },
+  { value: "integration", label: "Integration" },
+  { value: "shopping", label: "Shopping" },
 ];
 
 type BaseProps = {
@@ -827,6 +845,9 @@ export function TransactionDraftWorkspace(props: Props) {
   const [date, setDate] = useState(
     props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
   );
+  const [source, setSource] = useState<TransactionSource>(
+    props.kind === "edit" ? props.transaction.source : "manual",
+  );
   const [checkoutSuggestionDate] = useState(() => new Date());
   const [activeScanId, setActiveScanId] = useState<string | null>(
     props.initialScanId ?? null,
@@ -863,6 +884,9 @@ export function TransactionDraftWorkspace(props: Props) {
     );
     setDate(
       props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
+    );
+    setSource(
+      props.kind === "edit" ? props.transaction.source : "manual",
     );
   }, [draftKey, initialEntries, props]);
 
@@ -1082,6 +1106,9 @@ export function TransactionDraftWorkspace(props: Props) {
     setDate(
       props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
     );
+    setSource(
+      props.kind === "edit" ? props.transaction.source : "manual",
+    );
   }
 
   async function handleFile(file: File) {
@@ -1257,6 +1284,7 @@ export function TransactionDraftWorkspace(props: Props) {
           transactionId: props.transaction.id,
           store,
           description,
+          source,
           date,
           entries: entries.map(toSubmitEntry),
         },
@@ -1756,6 +1784,26 @@ export function TransactionDraftWorkspace(props: Props) {
                 />
               </FormField>
             </div>
+            {props.kind === "edit" ? (
+              <FormField>
+                <FormFieldLabel>Source</FormFieldLabel>
+                <Select
+                  value={source}
+                  onValueChange={(value) => setSource(value as TransactionSource)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            ) : null}
             <FormField>
               <FormFieldLabel>
                 Description{" "}
