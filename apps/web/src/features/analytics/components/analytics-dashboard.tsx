@@ -4,7 +4,6 @@ import { FullTransaction } from "@/features/transactions/transactions.models";
 import { RecurringWithProduct } from "@/features/recurring/recurring.models";
 import {
   calculateAnalyticsMetrics,
-  calculateFixedTotalsFromRecurrings,
   calculateFixedTotalsFromTransactions,
   calculateVariableTotals,
   buildDailyExpensesData,
@@ -135,21 +134,14 @@ export function AnalyticsDashboard({
     [transactions, comparisonTransactions, month, year],
   );
 
-  const fixedTotals = useMemo(
-    () => calculateFixedTotalsFromRecurrings(recurrings),
-    [recurrings],
-  );
-
   const fixedVariableMetrics = useMemo(() => {
+    const { fixedIncome, fixedExpenses } = calculateFixedTotalsFromTransactions(
+      transactions,
+    );
     const { variableIncome, variableExpenses } =
       calculateVariableTotals(transactions);
-    return {
-      fixedIncome: fixedTotals.fixedIncome,
-      fixedExpenses: fixedTotals.fixedExpenses,
-      variableIncome,
-      variableExpenses,
-    };
-  }, [fixedTotals, transactions]);
+    return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
+  }, [transactions]);
 
   const comparisonFixedVariableMetrics = useMemo(() => {
     const { fixedIncome, fixedExpenses } = calculateFixedTotalsFromTransactions(
