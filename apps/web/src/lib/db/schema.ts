@@ -7,3 +7,4 @@ export * from "@/features/recurring/recurring.schema";
 export * from "@/features/integrations/integration.schema";
 export * from "@/features/shopping/shopping.schema";
 export * from "@/features/receipt-scanning/receipt-scanning.schema";
+export * from "@/features/themes/themes.schema";

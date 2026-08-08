@@ -1,15 +1,17 @@
 import * as React from "react";
 
-export type ThemePaletteId =
-  | "default"
-  | "mocha"
-  | "sage"
-  | "clay"
-  | "ocean"
-  | "doom"
-  | "synth"
-  | "terminal";
-export type ThemeMode = "light" | "dark";
+import { themesController } from "./themes.controller";
+import {
+  THEME_PALETTE_IDS,
+  isThemeMode,
+  isThemePaletteId,
+  type ThemeMode,
+  type ThemePaletteId,
+} from "./themes.constants";
+import type { ThemePreference } from "./themes.models";
+
+export type { ThemeMode, ThemePaletteId } from "./themes.constants";
+export { isThemeMode, isThemePaletteId } from "./themes.constants";
 
 export type ThemePalette = {
   id: ThemePaletteId;
@@ -129,7 +131,6 @@ export const THEME_PALETTES = [
 const PALETTE_STORAGE_KEY = "expense-tracker-theme-palette";
 const MODE_STORAGE_KEY = "expense-tracker-theme-mode";
 const LEGACY_THEME_STORAGE_KEY = "expense-tracker-theme";
-const PALETTE_IDS = THEME_PALETTES.map((theme) => theme.id);
 const META_COLORS = Object.fromEntries(
   THEME_PALETTES.map((theme) => [theme.id, theme.metaColor])
 );
@@ -149,26 +150,19 @@ type ThemeProviderProps = {
   defaultTheme?: string;
   attribute?: string;
   enableSystem?: boolean;
+  serverTheme?: ThemePreference | null;
 };
 
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
-
-function isPaletteId(value: string | null | undefined): value is ThemePaletteId {
-  return PALETTE_IDS.includes(value as ThemePaletteId);
-}
-
-function isThemeMode(value: string | null | undefined): value is ThemeMode {
-  return value === "light" || value === "dark";
-}
 
 function getInitialPalette(): ThemePaletteId {
   if (typeof window === "undefined") return "default";
 
   const palette = window.localStorage.getItem(PALETTE_STORAGE_KEY);
-  if (isPaletteId(palette)) return palette;
+  if (isThemePaletteId(palette)) return palette;
 
   const legacyTheme = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
-  return isPaletteId(legacyTheme) ? legacyTheme : "default";
+  return isThemePaletteId(legacyTheme) ? legacyTheme : "default";
 }
 
 function getInitialMode(defaultTheme: string): ThemeMode {
@@ -192,7 +186,7 @@ function applyTheme(paletteId: ThemePaletteId, mode: ThemeMode) {
   root.classList.remove(
     "light",
     "dark",
-    ...PALETTE_IDS.map((id) => `theme-${id}`)
+    ...THEME_PALETTE_IDS.map((id) => `theme-${id}`)
   );
   root.classList.add(mode, `theme-${palette.id}`);
   root.dataset.theme = palette.id;
@@ -207,21 +201,46 @@ function applyTheme(paletteId: ThemePaletteId, mode: ThemeMode) {
 export function ThemeProvider({
   children,
   defaultTheme = "dark",
+  serverTheme = null,
 }: ThemeProviderProps) {
   const [palette, setPaletteState] =
-    React.useState<ThemePaletteId>(getInitialPalette);
-  const [mode, setModeState] = React.useState<ThemeMode>(() =>
-    getInitialMode(defaultTheme)
-  );
+    React.useState<ThemePaletteId>(() => {
+      if (serverTheme && isThemePaletteId(serverTheme.palette)) {
+        return serverTheme.palette;
+      }
+      return getInitialPalette();
+    });
+  const [mode, setModeState] = React.useState<ThemeMode>(() => {
+    if (serverTheme && isThemeMode(serverTheme.mode)) {
+      return serverTheme.mode;
+    }
+    return getInitialMode(defaultTheme);
+  });
+
+  const adoptedServerThemeRef = React.useRef(false);
+
+  // Adopt the server theme once it becomes available (e.g. after login) without
+  // overriding a theme the user has already changed in this session.
+  React.useEffect(() => {
+    if (adoptedServerThemeRef.current || !serverTheme) return;
+    adoptedServerThemeRef.current = true;
+    setPaletteState(serverTheme.palette);
+    setModeState(serverTheme.mode);
+  }, [serverTheme]);
 
   React.useEffect(() => {
     applyTheme(palette, mode);
     window.localStorage.setItem(PALETTE_STORAGE_KEY, palette);
     window.localStorage.setItem(MODE_STORAGE_KEY, mode);
-  }, [palette, mode]);
+
+    if (!adoptedServerThemeRef.current) return;
+    if (serverTheme?.palette === palette && serverTheme?.mode === mode) return;
+
+    themesController.updateTheme({ data: { palette, mode } }).catch(() => {});
+  }, [palette, mode, serverTheme]);
 
   const setPalette = React.useCallback((nextPalette: ThemePaletteId) => {
-    setPaletteState(isPaletteId(nextPalette) ? nextPalette : "default");
+    setPaletteState(isThemePaletteId(nextPalette) ? nextPalette : "default");
   }, []);
 
   const setMode = React.useCallback((nextMode: ThemeMode) => {
@@ -248,15 +267,26 @@ export function ThemeScript() {
   const script = `
     (function() {
       try {
-        var paletteIds = ${JSON.stringify(PALETTE_IDS)};
+        var paletteIds = ${JSON.stringify(THEME_PALETTE_IDS)};
         var metaColors = ${JSON.stringify(META_COLORS)};
-        var palette = window.localStorage.getItem(${JSON.stringify(PALETTE_STORAGE_KEY)});
-        var mode = window.localStorage.getItem(${JSON.stringify(MODE_STORAGE_KEY)});
+        var initial = window.__INITIAL_THEME__;
+        var palette = initial && paletteIds.indexOf(initial.palette) !== -1 ? initial.palette : null;
+        var mode = initial && (initial.mode === "light" || initial.mode === "dark") ? initial.mode : null;
+        if (palette === null) {
+          var storedPalette = window.localStorage.getItem(${JSON.stringify(PALETTE_STORAGE_KEY)});
+          if (paletteIds.indexOf(storedPalette) !== -1) palette = storedPalette;
+        }
+        if (mode === null) {
+          var storedMode = window.localStorage.getItem(${JSON.stringify(MODE_STORAGE_KEY)});
+          if (storedMode === "light" || storedMode === "dark") mode = storedMode;
+        }
         var legacyTheme = window.localStorage.getItem(${JSON.stringify(LEGACY_THEME_STORAGE_KEY)});
-        if (paletteIds.indexOf(palette) === -1) palette = paletteIds.indexOf(legacyTheme) === -1 ? "default" : legacyTheme;
-        if (mode !== "light" && mode !== "dark") mode = legacyTheme === "light" ? "light" : "dark";
+        if (palette === null && paletteIds.indexOf(legacyTheme) !== -1) palette = legacyTheme;
+        if (mode === null && legacyTheme === "light") mode = "light";
+        if (palette === null) palette = "default";
+        if (mode === null) mode = "dark";
         var root = document.documentElement;
-        root.classList.remove("light", "dark"${PALETTE_IDS.map((id) => `, "theme-${id}"`).join("")});
+        root.classList.remove("light", "dark"${THEME_PALETTE_IDS.map((id) => `, "theme-${id}"`).join("")});
         root.classList.add(mode, "theme-" + palette);
         root.dataset.theme = palette;
         root.dataset.themeMode = mode;

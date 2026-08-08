@@ -9,6 +9,7 @@ import z from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { FeatureFlagsProvider } from "@/features/feature-flags/feature-flags.provider";
 import { featureFlagController } from "@/features/feature-flags/feature-flags.controller";
+import { themesController } from "@/features/themes/themes.controller";
 
 const appSearchSchema = z.object({
   month: z.number().optional(),
@@ -26,10 +27,13 @@ export const Route = createFileRoute("/_app")({
       });
     }
 
+    const [, theme] = await themesController.getTheme();
+
     return {
       user: session.user,
       sidebarCollapsed: await getSidebarCollapsedPreference(),
       featureFlags: await featureFlagController.getFeatureFlags(),
+      theme,
     };
   },
   validateSearch: zodValidator(appSearchSchema),
