@@ -350,6 +350,7 @@ function LineEditorDialog({
   onOpenChange: (open: boolean) => void;
   onSave: (entry: DraftEntry) => void;
 }) {
+  const dialogContentRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<DraftEntry | null>(entry);
   const [total, setTotal] = useState(
     entry ? formatCalculatedAmount(getLineTotal(entry)) : "",
@@ -416,7 +417,7 @@ function LineEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent ref={dialogContentRef}>
         <DialogHeader>
           <DialogTitle>
             {draft.receiptItemName || "Transaction item"}
@@ -529,6 +530,7 @@ function LineEditorDialog({
               value={selectedTags}
               placeholder="Add entry tags"
               className="w-full"
+              portalContainer={dialogContentRef}
               onChange={(nextTags) =>
                 setDraft({ ...draft, tagIds: nextTags.map((tag) => tag.id) })
               }

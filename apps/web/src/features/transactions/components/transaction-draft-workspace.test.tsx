@@ -160,6 +160,44 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("TransactionDraftWorkspace product tags", () => {
+  it.each(["row", "badge"] as const)(
+    "selects entry tags by clicking the %s inside the item dialog",
+    async (target) => {
+      render(<TransactionDraftWorkspace kind="new" products={products} tags={tags} />);
+      fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+      selectProduct("Milk");
+      setPrice();
+
+      const dialog = screen.getByRole("dialog", { name: "Transaction item" });
+      const input = editor().getByPlaceholderText("Add entry tags");
+      fireEvent.keyDown(input, { key: "ArrowDown" });
+      const list = await screen.findByRole("listbox");
+      expect(dialog.contains(list)).toBe(true);
+      const row = within(list).getByRole("option", { name: entryTag.name });
+      const element = target === "badge" ? within(row).getByText(entryTag.name) : row;
+      expect(window.getComputedStyle(element).pointerEvents).toBe("auto");
+      fireEvent(element, new MouseEvent("pointerdown", { bubbles: true, button: 0 }));
+      fireEvent.mouseDown(element);
+      fireEvent.mouseUp(element);
+      fireEvent.click(element);
+
+      expectEntryTags(entryTag.name);
+      expect(screen.getByRole("dialog", { name: "Transaction item" })).toBe(dialog);
+      fireEvent.input(input, {
+        target: { value: bakery.name }, inputType: "insertText",
+      });
+      await screen.findByRole("option", { name: bakery.name });
+      fireEvent.keyDown(input, { key: "ArrowDown" });
+      fireEvent.keyDown(input, { key: "Enter" });
+      expectEntryTags(entryTag.name, bakery.name);
+      fireEvent.click(editor().getByRole("button", { name: "Expense" }));
+      fireEvent.click(screen.getByRole("button", { name: "Create transaction" }));
+      expect(mocks.save.mock.calls[0][0].entries[0].tagIds).toEqual([
+        entryTag.id, bakery.id,
+      ]);
+    },
+  );
+
   it("filters only the selected product's tags from entry tag options", async () => {
     render(<TransactionDraftWorkspace kind="new" products={products} tags={tags} />);
     fireEvent.click(screen.getByRole("button", { name: "Add item" }));
