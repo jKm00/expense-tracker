@@ -63,6 +63,7 @@ import {
   ScanProgressState,
 } from "@/features/receipt-scanning/components/scan-states";
 import { TagSelect } from "@/features/tags/components/tag.select";
+import { TagBadge } from "@/features/tags/components/tag";
 import { Tag } from "@/features/tags/tags.models";
 import { shoppingMutations } from "@/features/shopping/shopping.mutations";
 import { ShoppingListWithItems } from "@/features/shopping/shopping.models";
@@ -98,7 +99,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type CheckoutStep = "destination" | "details" | "items" | "summary";
 
-type DraftProduct = { id: string | null; name: string };
+type DraftProduct = { id: string | null; name: string; tags?: Tag[] };
 
 type DraftEntry = {
   id: string;
@@ -246,6 +247,7 @@ function entriesFromTransaction(transaction: FullTransaction): DraftEntry[] {
     product: {
       id: entry.products?.id ?? null,
       name: entry.products?.name ?? "",
+      tags: entry.products?.tags,
     },
     quantity: String(entry.quantity),
     price: String(entry.price),
@@ -290,7 +292,7 @@ function toSubmitEntry(entry: DraftEntry) {
   return {
     ...(entry.existingEntryId ? { id: entry.existingEntryId } : {}),
     ...(entry.shoppingItemId ? { shoppingItemId: entry.shoppingItemId } : {}),
-    product: entry.product!,
+    product: { id: entry.product!.id, name: entry.product!.name },
     quantity: entry.quantity,
     price: entry.price,
     type: entry.type,
@@ -303,7 +305,7 @@ function toReceiptSubmitEntry(entry: DraftEntry) {
     receiptItemName:
       entry.receiptItemName || entry.product?.name || "Manual item",
     ...(entry.shoppingItemId ? { shoppingItemId: entry.shoppingItemId } : {}),
-    product: entry.product!,
+    product: { id: entry.product!.id, name: entry.product!.name },
     quantity: entry.quantity,
     price: entry.price,
     type: "expense" as const,
@@ -403,6 +405,9 @@ function LineEditorDialog({
   const quantity = parsePositiveNumber(draft.quantity);
   const price = parsePositiveNumber(draft.price);
   const canSave = Boolean(draft.product && quantity && price);
+  const productTags =
+    products.find((product) => product.id === draft.product?.id)?.tags ??
+    draft.product?.tags;
 
   function saveAs(type: "expense" | "income") {
     onSave({ ...draft, type });
@@ -444,6 +449,15 @@ function LineEditorDialog({
                 )
               }
             />
+            {productTags?.length ? (
+              <div className="flex flex-wrap gap-1">
+                {productTags.map((tag) => (
+                  <TagBadge key={tag.id} tag={tag}>
+                    {tag.name}
+                  </TagBadge>
+                ))}
+              </div>
+            ) : null}
             {!draft.product && draft.suggestions?.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {draft.suggestions.map((suggestion) => (
@@ -504,12 +518,13 @@ function LineEditorDialog({
 
           <FormField>
             <FormFieldLabel>
-              Tags <span className="text-muted-foreground">(optional)</span>
+              Entry tags{" "}
+              <span className="text-muted-foreground">(optional)</span>
             </FormFieldLabel>
             <TagSelect
               tags={tags}
               value={selectedTags}
-              placeholder="Add tags"
+              placeholder="Add entry tags"
               className="w-full"
               onChange={(nextTags) =>
                 setDraft({ ...draft, tagIds: nextTags.map((tag) => tag.id) })
@@ -885,9 +900,7 @@ export function TransactionDraftWorkspace(props: Props) {
     setDate(
       props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
     );
-    setSource(
-      props.kind === "edit" ? props.transaction.source : "manual",
-    );
+    setSource(props.kind === "edit" ? props.transaction.source : "manual");
   }, [draftKey, initialEntries, props]);
 
   const usageQuery = useQuery(receiptScanningQueries.listScansOptions());
@@ -985,7 +998,10 @@ export function TransactionDraftWorkspace(props: Props) {
   const checkoutSelectableTransactions = useMemo(
     () =>
       props.kind === "checkout"
-        ? getSelectableCheckoutTransactions(checkoutTransactions, checkoutSuggestionDate)
+        ? getSelectableCheckoutTransactions(
+            checkoutTransactions,
+            checkoutSuggestionDate,
+          )
         : [],
     [checkoutSuggestionDate, checkoutTransactions, props.kind],
   );
@@ -1062,15 +1078,13 @@ export function TransactionDraftWorkspace(props: Props) {
       setCheckoutDestination("new");
       prefilledCheckoutTransactionId.current = null;
     }
-  }, [
-    checkoutDestination,
-    checkoutTransactions,
-    selectedTransactionId,
-  ]);
+  }, [checkoutDestination, checkoutTransactions, selectedTransactionId]);
 
   useEffect(() => {
     if (props.kind !== "checkout" || !selectedCheckoutTransaction) return;
-    if (prefilledCheckoutTransactionId.current === selectedCheckoutTransaction.id) {
+    if (
+      prefilledCheckoutTransactionId.current === selectedCheckoutTransaction.id
+    ) {
       return;
     }
     prefilledCheckoutTransactionId.current = selectedCheckoutTransaction.id;
@@ -1106,9 +1120,7 @@ export function TransactionDraftWorkspace(props: Props) {
     setDate(
       props.kind === "edit" ? new Date(props.transaction.date) : new Date(),
     );
-    setSource(
-      props.kind === "edit" ? props.transaction.source : "manual",
-    );
+    setSource(props.kind === "edit" ? props.transaction.source : "manual");
   }
 
   async function handleFile(file: File) {
@@ -1199,7 +1211,9 @@ export function TransactionDraftWorkspace(props: Props) {
     };
 
     const handleUnexpectedError = () => {
-      setSubmitError("The transaction could not be saved. Check your connection and try again.");
+      setSubmitError(
+        "The transaction could not be saved. Check your connection and try again.",
+      );
     };
 
     if (props.kind === "new") {
@@ -1578,7 +1592,9 @@ export function TransactionDraftWorkspace(props: Props) {
                                 <Badge
                                   variant={suggested ? "default" : "secondary"}
                                 >
-                                  {suggested ? "Recommended" : getCheckoutMatchLabel(transaction, score)}
+                                  {suggested
+                                    ? "Recommended"
+                                    : getCheckoutMatchLabel(transaction, score)}
                                 </Badge>
                                 {suggested && transaction.needsReview ? (
                                   <Badge variant="secondary">
@@ -1653,7 +1669,8 @@ export function TransactionDraftWorkspace(props: Props) {
               <FileImage className="size-4" /> Optional receipt scan
             </CardTitle>
             <CardDescription>
-              Upload a receipt to replace the current draft with scanned lines, or keep entering items manually.
+              Upload a receipt to replace the current draft with scanned lines,
+              or keep entering items manually.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -1789,7 +1806,9 @@ export function TransactionDraftWorkspace(props: Props) {
                 <FormFieldLabel>Source</FormFieldLabel>
                 <Select
                   value={source}
-                  onValueChange={(value) => setSource(value as TransactionSource)}
+                  onValueChange={(value) =>
+                    setSource(value as TransactionSource)
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -1940,9 +1959,14 @@ export function TransactionDraftWorkspace(props: Props) {
               ) : null}
               <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>
-                  Total: <span className="font-medium text-foreground tabular-nums">{formatAmount(-reviewedTotal, { sign: true })}</span>
+                  Total:{" "}
+                  <span className="font-medium text-foreground tabular-nums">
+                    {formatAmount(-reviewedTotal, { sign: true })}
+                  </span>
                 </p>
-                <p className="text-xs">Unchecked shopping-list items will be kept.</p>
+                <p className="text-xs">
+                  Unchecked shopping-list items will be kept.
+                </p>
               </div>
             </CardFooter>
           ) : (
