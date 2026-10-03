@@ -1,85 +1,82 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("featureFlagService", () => {
-  const ORIGINAL_ENV = process.env;
-
   beforeEach(() => {
     vi.resetModules();
-    process.env = { ...ORIGINAL_ENV };
   });
 
   afterEach(() => {
-    process.env = ORIGINAL_ENV;
+    vi.doUnmock("./feature-flags.constants");
   });
 
   describe("isEnabled", () => {
     it("returns false when env is missing", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: undefined },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: undefined },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false when env var is empty string", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false for literal 'false'", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "false" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "false" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns false for literal '0'", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "0" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "0" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns true for literal 'true'", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "true" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "true" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("returns true for literal '1'", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "1" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "1" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("is case-insensitive for true/false/0/1", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "TRUE" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "TRUE" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(true);
     });
 
     it("returns false when no context is provided for allow-list", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "test@user.com" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(featureFlagService.isEnabled("example")).toBe(false);
     });
 
     it("returns true for single user in allow-list", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "test@user.com" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -90,8 +87,8 @@ describe("featureFlagService", () => {
     });
 
     it("returns true for user among many in allow-list", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "test@user.com, another@user.com" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "test@user.com, another@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -102,8 +99,8 @@ describe("featureFlagService", () => {
     });
 
     it("returns false for user not in allow-list", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "test@user.com" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "test@user.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -114,8 +111,8 @@ describe("featureFlagService", () => {
     });
 
     it("trims spaces around user identifiers", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "  alice@x.com ,   bob@x.com  " },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "  alice@x.com ,   bob@x.com  " },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -126,8 +123,8 @@ describe("featureFlagService", () => {
     });
 
     it("matches allow-listed user identifiers case-insensitively", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "Alice@X.com" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "Alice@X.com" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -138,8 +135,8 @@ describe("featureFlagService", () => {
     });
 
     it("rejects unknown literal", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: { EXAMPLE: "enabled" },
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: { example: "enabled" },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
       expect(
@@ -152,10 +149,11 @@ describe("featureFlagService", () => {
 
   describe("getAll", () => {
     it("returns every configured feature flag for the current user", async () => {
-      vi.doMock("@/config/env", () => ({
-        env: {
-          EXAMPLE: "true",
-          SCORING_SYSTEM: "allowed@user.com",
+      vi.doMock("./feature-flags.constants", () => ({
+        featureFlags: {
+          example: "true",
+          allowListedFeature: "allowed@user.com",
+          disabledFeature: "false",
         },
       }));
       const { featureFlagService } = await import("./feature-flags.service.ts");
@@ -164,7 +162,16 @@ describe("featureFlagService", () => {
         featureFlagService.getAll({ userIdentifier: "allowed@user.com" }),
       ).toEqual({
         example: true,
-        scoringSystem: true,
+        allowListedFeature: true,
+        disabledFeature: false,
+      });
+
+      expect(
+        featureFlagService.getAll({ userIdentifier: "other@user.com" }),
+      ).toEqual({
+        example: true,
+        allowListedFeature: false,
+        disabledFeature: false,
       });
     });
   });
