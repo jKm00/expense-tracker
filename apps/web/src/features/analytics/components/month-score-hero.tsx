@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from "lucide-react";
-import { BetaBadge } from "@/components/custom/beta-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MonthScoreMetricContribution,
@@ -35,10 +34,6 @@ export function MonthScoreHero({
           <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <BetaBadge
-                  enabled={true}
-                  className="h-4 px-1.5 text-[10px] font-semibold tracking-wide uppercase shadow-sm"
-                />
                 <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   Month score
                 </p>
@@ -97,10 +92,6 @@ export function MonthScoreHero({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <BetaBadge
-                  enabled={true}
-                  className="h-4 px-1.5 text-[10px] font-semibold tracking-wide uppercase shadow-sm"
-                />
                 <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   Month score
                 </p>
@@ -123,7 +114,9 @@ export function MonthScoreHero({
                   )}
                 >
                   <DeltaIcon className="size-3.5" />
-                  <span>{formatScoreDelta(score.delta)} pts vs {compareMonthLabel}</span>
+                  <span>
+                    {formatScoreDelta(score.delta)} pts vs {compareMonthLabel}
+                  </span>
                 </div>
               </div>
             </div>

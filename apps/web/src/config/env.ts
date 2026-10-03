@@ -8,5 +8,4 @@ export const env = {
   AWS_SCAN_API_TOKEN: process.env.AWS_SCAN_API_TOKEN || "",
   // Feature Flags
   EXAMPLE: process.env.EXAMPLE || "false",
-  SCORING_SYSTEM: process.env.SCORING_SYSTEM || "false",
 } as const;

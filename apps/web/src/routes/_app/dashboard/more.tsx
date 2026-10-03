@@ -1,11 +1,19 @@
+import { BetaBadge } from "@/components/custom/beta-badge";
 import {
   PageHeader,
   PageHeaderTitle,
   PageHeaderDescription,
 } from "@/components/custom/page-header";
-import { BetaBadge } from "@/components/custom/beta-badge";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, FileImage, Package, Plug, Repeat, Tag, User } from "lucide-react";
+import {
+  ArrowRight,
+  FileImage,
+  Package,
+  Plug,
+  Repeat,
+  Tag,
+  User,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
   component: RouteComponent,
@@ -18,7 +26,7 @@ function RouteComponent() {
       description: "Upload and review receipts",
       href: "/dashboard/scans",
       icon: FileImage,
-      version: "beta",
+      version: undefined,
     },
     {
       label: "Products",

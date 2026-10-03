@@ -1,6 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { BetaBadge } from "@/components/custom/beta-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -188,7 +187,6 @@ export function DataPortabilityCard() {
           <div>
             <div className="flex items-center gap-2">
               <CardTitle>Data portability</CardTitle>
-              <BetaBadge enabled={true} />
             </div>
             <CardDescription>
               Export your expense tracker data as JSON

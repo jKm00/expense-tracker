@@ -30,16 +30,12 @@ import {
 } from "./analytics-insights";
 import { analyticsMutations } from "@/features/analytics/analytics.mutations";
 import { AnalyticsPreferences } from "@/features/analytics/analytics.models";
-import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 import { ProductWithTag } from "@/features/products/products.models";
 import { Tag } from "@/features/tags/tags.models";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  EmptyState,
-  EmptyStateMessage,
-} from "@/components/custom/empty-state";
+import { EmptyState, EmptyStateMessage } from "@/components/custom/empty-state";
 import {
   Card,
   CardContent,
@@ -103,15 +99,14 @@ export function AnalyticsDashboard({
     null,
   );
   const [isMobileFocusOpen, setIsMobileFocusOpen] = useState(false);
-  const [mobileSearchType, setMobileSearchType] = useState<FocusTarget["type"] | null>(
-    null,
-  );
+  const [mobileSearchType, setMobileSearchType] = useState<
+    FocusTarget["type"] | null
+  >(null);
   const dailySectionRef = useRef<HTMLDivElement>(null);
   const tagSectionRef = useRef<HTMLDivElement>(null);
   const productSectionRef = useRef<HTMLDivElement>(null);
   const hasActiveDrilldown = focusTarget !== null || dayFocusTarget !== null;
   const updateExclusionsMutation = analyticsMutations.updateExclusions();
-  const { scoringSystem } = useFeatureFlags();
   const excludedTagIds = analyticsPreferences?.excludedTagIds ?? [];
   const excludedProductIds = analyticsPreferences?.excludedProductIds ?? [];
 
@@ -135,9 +130,8 @@ export function AnalyticsDashboard({
   );
 
   const fixedVariableMetrics = useMemo(() => {
-    const { fixedIncome, fixedExpenses } = calculateFixedTotalsFromTransactions(
-      transactions,
-    );
+    const { fixedIncome, fixedExpenses } =
+      calculateFixedTotalsFromTransactions(transactions);
     const { variableIncome, variableExpenses } =
       calculateVariableTotals(transactions);
     return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
@@ -153,33 +147,27 @@ export function AnalyticsDashboard({
     return { fixedIncome, fixedExpenses, variableIncome, variableExpenses };
   }, [comparisonTransactions]);
 
-  const monthScore = useMemo(
-    () => {
-      if (!scoringSystem) return null;
-
-      return calculateMonthScore({
-        metrics,
-        comparisonMetrics,
-        fixedVariableMetrics,
-        comparisonFixedVariableMetrics,
-        month,
-        year,
-        compareMonth,
-        compareYear,
-      });
-    },
-    [
-      compareMonth,
-      compareYear,
-      comparisonFixedVariableMetrics,
+  const monthScore = useMemo(() => {
+    return calculateMonthScore({
+      metrics,
       comparisonMetrics,
       fixedVariableMetrics,
-      metrics,
+      comparisonFixedVariableMetrics,
       month,
-      scoringSystem,
       year,
-    ],
-  );
+      compareMonth,
+      compareYear,
+    });
+  }, [
+    compareMonth,
+    compareYear,
+    comparisonFixedVariableMetrics,
+    comparisonMetrics,
+    fixedVariableMetrics,
+    metrics,
+    month,
+    year,
+  ]);
 
   const expenseEntries = useMemo(
     () => buildExpenseEntries(transactions),
@@ -202,13 +190,14 @@ export function AnalyticsDashboard({
     [expenseEntries],
   );
   const tagConfigOptions = useMemo(
-    () => buildChartExclusionOptions(
-      tags,
-      unfilteredTagInsights,
-      unfilteredTagInsights.some((tag) => tag.id === "untagged")
-        ? [{ id: "untagged", name: "Untagged" }]
-        : [],
-    ),
+    () =>
+      buildChartExclusionOptions(
+        tags,
+        unfilteredTagInsights,
+        unfilteredTagInsights.some((tag) => tag.id === "untagged")
+          ? [{ id: "untagged", name: "Untagged" }]
+          : [],
+      ),
     [tags, unfilteredTagInsights],
   );
   const tagSearchOptions = useMemo(
@@ -216,13 +205,14 @@ export function AnalyticsDashboard({
     [tags, unfilteredTagInsights],
   );
   const productConfigOptions = useMemo(
-    () => buildChartExclusionOptions(
-      products,
-      unfilteredProductInsights,
-      unfilteredProductInsights
-        .filter((product) => product.id === "unknown")
-        .map((product) => ({ id: product.id, name: product.name })),
-    ),
+    () =>
+      buildChartExclusionOptions(
+        products,
+        unfilteredProductInsights,
+        unfilteredProductInsights
+          .filter((product) => product.id === "unknown")
+          .map((product) => ({ id: product.id, name: product.name })),
+      ),
     [products, unfilteredProductInsights],
   );
   const productSearchOptions = useMemo(
@@ -231,7 +221,8 @@ export function AnalyticsDashboard({
   );
   const hiddenTagCount = excludedTagIds.length;
   const hiddenProductCount = excludedProductIds.length;
-  const allTagsHidden = unfilteredTagInsights.length > 0 && tagInsights.length === 0;
+  const allTagsHidden =
+    unfilteredTagInsights.length > 0 && tagInsights.length === 0;
   const allProductsHidden =
     unfilteredProductInsights.length > 0 && productInsights.length === 0;
 
@@ -364,7 +355,10 @@ export function AnalyticsDashboard({
   }
 
   async function saveTagExclusions(ids: string[]) {
-    const result = await updateExclusionsMutation.mutateAsync({ type: "tag", ids });
+    const result = await updateExclusionsMutation.mutateAsync({
+      type: "tag",
+      ids,
+    });
     const [error] = result;
     if (error) {
       toast.error("Could not save tag chart configuration. Please try again.");
@@ -384,7 +378,9 @@ export function AnalyticsDashboard({
     });
     const [error] = result;
     if (error) {
-      toast.error("Could not save product chart configuration. Please try again.");
+      toast.error(
+        "Could not save product chart configuration. Please try again.",
+      );
       return false;
     }
 
@@ -424,7 +420,10 @@ export function AnalyticsDashboard({
             comparisonTransactionCount={comparisonTransactions.length}
           />
 
-          <div ref={dailySectionRef} className="grid gap-4 @5xl/main:grid-cols-2">
+          <div
+            ref={dailySectionRef}
+            className="grid gap-4 @5xl/main:grid-cols-2"
+          >
             <CumulativeSpendingChart
               dailyData={dailyChartData}
               isEmpty={transactions.length === 0}
@@ -558,7 +557,8 @@ function DrilldownEmptyState() {
           <div className="space-y-1.5">
             <CardTitle>Nothing selected</CardTitle>
             <CardDescription>
-              Click a daily bar, tag block, or product block to pin its details here.
+              Click a daily bar, tag block, or product block to pin its details
+              here.
             </CardDescription>
           </div>
           <div className="rounded-xl border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
@@ -583,7 +583,10 @@ function MobileDayTransactionsSheet({
 }) {
   return (
     <Sheet open={open && !!target} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[88svh] overflow-y-auto rounded-t-2xl px-0 pb-4">
+      <SheetContent
+        side="bottom"
+        className="max-h-[88svh] overflow-y-auto rounded-t-2xl px-0 pb-4"
+      >
         <SheetHeader className="pr-12 text-left">
           <SheetTitle>Daily transactions</SheetTitle>
           <SheetDescription>
@@ -614,7 +617,8 @@ function DayTransactionsPanel({
     0,
   );
   const date = dayjs(new Date(target.year, target.month, target.day));
-  const periodLabel = target.series === "current" ? "Current period" : "Previous period";
+  const periodLabel =
+    target.series === "current" ? "Current period" : "Previous period";
 
   return (
     <Card className="h-fit">
@@ -696,7 +700,10 @@ function DayTransactionsPanel({
 function calculateExpenseSubtotal(transaction: FullTransaction) {
   return transaction.entries
     .filter((entry) => entry.type === "expense")
-    .reduce((sum, entry) => sum + Math.abs(Number(entry.price)) * entry.quantity, 0);
+    .reduce(
+      (sum, entry) => sum + Math.abs(Number(entry.price)) * entry.quantity,
+      0,
+    );
 }
 
 function formatMoney(value: number) {
