@@ -522,7 +522,10 @@ function LineEditorDialog({
               <span className="text-muted-foreground">(optional)</span>
             </FormFieldLabel>
             <TagSelect
-              tags={tags}
+              tags={tags.filter(
+                (tag) =>
+                  !productTags?.some((productTag) => productTag.id === tag.id),
+              )}
               value={selectedTags}
               placeholder="Add entry tags"
               className="w-full"

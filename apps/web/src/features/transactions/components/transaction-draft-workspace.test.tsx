@@ -141,6 +141,18 @@ function expectEntryTags(...names: string[]) {
   }
 }
 
+async function expectEntryTagOptions(...excluded: string[]) {
+  const input = editor().getByPlaceholderText("Add entry tags");
+  fireEvent.keyDown(input, { key: "ArrowDown" });
+  const list = within(await screen.findByRole("listbox"));
+  for (const tag of tags) {
+    expect(Boolean(list.queryByRole("option", { name: tag.name }))).toBe(
+      !excluded.includes(tag.name),
+    );
+  }
+  fireEvent.pointerDown(editor().getByText("Quantity"));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.queryData.clear();
@@ -148,6 +160,47 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("TransactionDraftWorkspace product tags", () => {
+  it("filters only the selected product's tags from entry tag options", async () => {
+    render(<TransactionDraftWorkspace kind="new" products={products} tags={tags} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+    await expectEntryTagOptions();
+
+    selectProduct("Milk");
+    await expectEntryTagOptions(dairy.name);
+
+    selectProduct("Bread", "Milk");
+    await expectEntryTagOptions(bakery.name);
+
+    selectProduct("Water", "Bread");
+    await expectEntryTagOptions();
+
+    selectProduct("Fresh fruit", "Water", true);
+    await expectEntryTagOptions();
+    expectEntryTags();
+  });
+
+  it("preserves recorded entry tags even when they also belong to the product", async () => {
+    const recorded = transaction(milk);
+    recorded.entries[0].tags = [dairy, entryTag];
+    render(<TransactionDraftWorkspace kind="edit" transaction={recorded} products={products} tags={tags} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Milk 1 x/ }));
+
+    expectEntryTags(dairy.name, entryTag.name);
+    await expectEntryTagOptions(dairy.name);
+    expectEntryTags(dairy.name, entryTag.name);
+    fireEvent.input(editor().getByPlaceholderText("Add entry tags"), {
+      target: { value: bakery.name }, inputType: "insertText",
+    });
+    fireEvent.click(await screen.findByRole("option", { name: bakery.name }));
+    expectEntryTags(dairy.name, entryTag.name, bakery.name);
+    fireEvent.click(editor().getByRole("button", { name: "Expense" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update transaction" }));
+
+    expect(mocks.update.mock.calls[0][0].entries[0].tagIds).toEqual([
+      dairy.id, entryTag.id, bakery.id,
+    ]);
+  });
+
   it("updates read-only product tags on selection without changing entry tags through save and submit", async () => {
     render(<TransactionDraftWorkspace kind="new" products={products} tags={tags} />);
     fireEvent.click(screen.getByRole("button", { name: "Add item" }));
@@ -214,12 +267,13 @@ describe("TransactionDraftWorkspace product tags", () => {
     { name: "current product tags instead of saved tags", available: products, expected: ["Dairy"] },
     { name: "archived product tags from the saved transaction", available: [bread], expected: [oldTag.name] },
     { name: "an empty current tag list instead of saved tags", available: [product(milk.id, milk.name)], expected: [] },
-  ])("prefills edits using $name without leaking tags into the product DTO", ({ available, expected }) => {
+  ])("prefills edits using $name without leaking tags into the product DTO", async ({ available, expected }) => {
     const savedProduct = { ...milk, name: "Milk before rename", tags: [oldTag], deletedAt: date };
     render(<TransactionDraftWorkspace kind="edit" transaction={transaction(savedProduct)} products={available} tags={tags} />);
     fireEvent.click(screen.getByRole("button", { name: /^Milk before rename 1 x/ }));
 
     expectProductTags(...expected);
+    await expectEntryTagOptions(...expected);
     expectEntryTags(entryTag.name);
     fireEvent.click(editor().getByRole("button", { name: "Expense" }));
     fireEvent.click(screen.getByRole("button", { name: "Update transaction" }));
@@ -257,6 +311,7 @@ describe("TransactionDraftWorkspace product tags", () => {
         fireEvent.click(editor().getByRole("button", { name: "Milk" }));
       }
       expectProductTags(...(mode === "unavailable" ? [] : ["Dairy"]));
+      await expectEntryTagOptions(...(mode === "unavailable" ? [] : ["Dairy"]));
       expectEntryTags();
       fireEvent.click(editor().getByRole("button", { name: "Save item" }));
       fireEvent.click(screen.getByRole("button", { name: "Create transaction" }));
@@ -270,7 +325,7 @@ describe("TransactionDraftWorkspace product tags", () => {
     },
   );
 
-  it("shows product tags for prefilled shopping items without submitting them as entry tags", () => {
+  it("shows product tags for prefilled shopping items without submitting them as entry tags", async () => {
     const shoppingList: ShoppingListWithItems = {
       id: "list-1", userId: "user-1", createdAt: date, updatedAt: date,
       items: [{
@@ -284,6 +339,7 @@ describe("TransactionDraftWorkspace product tags", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Milk 1 x/ }));
 
     expectProductTags("Dairy");
+    await expectEntryTagOptions(dairy.name);
     expectEntryTags();
     setPrice();
     fireEvent.click(editor().getByRole("button", { name: "Expense" }));
