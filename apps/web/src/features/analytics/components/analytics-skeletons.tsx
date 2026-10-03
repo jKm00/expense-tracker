@@ -80,14 +80,10 @@ function DriverNoteSkeleton() {
   );
 }
 
-export function AnalyticsContentSkeleton({
-  showMonthScore = false,
-}: {
-  showMonthScore?: boolean;
-}) {
+export function AnalyticsContentSkeleton() {
   return (
     <div className="space-y-6 @container">
-      {showMonthScore && <MonthScoreHeroSkeleton />}
+      <MonthScoreHeroSkeleton />
 
       {/* 1. Hero KPIs */}
       <section className="grid gap-3 @md:grid-cols-3">

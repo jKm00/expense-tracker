@@ -37,7 +37,6 @@ const navSections = [
         label: "Scan",
         href: "/dashboard/scans",
         icon: FileImage,
-        beta: true,
       },
       {
         label: "Analytics",

@@ -17,7 +17,6 @@ import { MonthSelect } from "@/components/custom/month-select";
 import { AnalyticsContentSkeleton } from "@/features/analytics/components/analytics-skeletons";
 import { AnalyticsLoader } from "@/features/analytics/components/analytics-loader";
 import { CompareSelect } from "@/features/analytics/components/compare.select";
-import { useFeatureFlags } from "@/features/feature-flags/feature-flags.provider";
 
 const anaylyticsSchema = z.object({
   comparison: z.enum(["year", "month"]).optional(),
@@ -46,9 +45,7 @@ export const Route = createFileRoute("/_app/dashboard/analytics")({
     );
 
     // Prefetch recurring entries for the recurring expenses chart
-    context.queryClient.prefetchQuery(
-      recurringQueries.getRecurringsOptions(),
-    );
+    context.queryClient.prefetchQuery(recurringQueries.getRecurringsOptions());
     context.queryClient.prefetchQuery(analyticsQueries.getPreferencesOptions());
     context.queryClient.prefetchQuery(productQueries.getProductsOptions());
     context.queryClient.prefetchQuery(tagsQueries.getTagsOptions());
@@ -58,8 +55,6 @@ export const Route = createFileRoute("/_app/dashboard/analytics")({
 });
 
 function RouteComponent() {
-  const { scoringSystem } = useFeatureFlags();
-
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -79,7 +74,7 @@ function RouteComponent() {
         </div>
       </div>
 
-      <Suspense fallback={<AnalyticsContentSkeleton showMonthScore={scoringSystem} />}>
+      <Suspense fallback={<AnalyticsContentSkeleton />}>
         <AnalyticsLoader />
       </Suspense>
     </div>
