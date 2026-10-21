@@ -155,7 +155,7 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
           </p>
         ) : (
           <div
-            className={`max-h-48 overflow-y-auto rounded-lg border border-border ${shortcutsEnabled ? "" : "opacity-50"}`}
+            className={`relative max-h-48 overflow-y-auto rounded-lg border border-border ${shortcutsEnabled ? "" : "opacity-50"}`}
           >
             {shortcuts.map((shortcut) => (
               <label
