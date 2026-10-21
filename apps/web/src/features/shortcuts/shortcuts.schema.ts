@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   numeric,
   pgTable,
   primaryKey,
@@ -23,6 +24,7 @@ export const shortcuts = pgTable(
     store: text("store"),
     type: entryType().notNull(),
     // NULL means the price is asked for every time the shortcut is run
+    position: integer("position").notNull().default(0),
     price: numeric("price", { precision: 10, scale: 2 }),
     showOnHome: boolean("show_on_home").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),

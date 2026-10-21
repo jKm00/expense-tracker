@@ -8,6 +8,7 @@ vi.mock("./shortcuts.repo", () => ({
     update: vi.fn(),
     softDelete: vi.fn(),
     setShowOnHome: vi.fn(),
+    reorder: vi.fn(),
   },
 }));
 
@@ -36,6 +37,7 @@ function makeShortcut(
     type: "expense",
     price: "25.00",
     showOnHome: false,
+    position: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -147,6 +149,25 @@ describe("shortcutService", () => {
         expect.objectContaining({ name: "Canteen", price: null }),
         ["p1", "p2"],
       );
+    });
+  });
+
+  describe("reorderShortcuts", () => {
+    it("saves the given order for owned shortcuts", async () => {
+      repo.getAll.mockResolvedValue([
+        makeShortcut({ id: "a" }),
+        makeShortcut({ id: "b" }),
+      ]);
+      const [error] = await shortcutService.reorderShortcuts("u1", ["b", "a"]);
+      expect(error).toBeNull();
+      expect(repo.reorder).toHaveBeenCalledWith("u1", ["b", "a"]);
+    });
+
+    it("rejects ids the user does not own", async () => {
+      repo.getAll.mockResolvedValue([makeShortcut({ id: "a" })]);
+      const [error] = await shortcutService.reorderShortcuts("u1", ["x"]);
+      expect(error?.reason).toBe("SHORTCUT_NOT_FOUND");
+      expect(repo.reorder).not.toHaveBeenCalled();
     });
   });
 

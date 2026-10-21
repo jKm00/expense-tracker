@@ -27,6 +27,11 @@ export const updateShortcutSchema = z.object({
 });
 export type UpdateShortcutDTO = z.infer<typeof updateShortcutSchema>;
 
+export const reorderShortcutsSchema = z.object({
+  shortcutIds: z.array(z.string()).max(200),
+});
+export type ReorderShortcutsDTO = z.infer<typeof reorderShortcutsSchema>;
+
 export const deleteShortcutSchema = z.object({
   shortcutId: z.string(),
 });
