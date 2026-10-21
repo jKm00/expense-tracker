@@ -53,16 +53,6 @@ async function getShortcut(userId: string, shortcutId: string) {
   }
 }
 
-async function assertProductOwnership(userId: string, productIds: string[]) {
-  for (const productId of productIds) {
-    const [productError] = await productService.getProduct(userId, productId);
-    if (productError) {
-      return err(productError);
-    }
-  }
-  return ok(null);
-}
-
 function toRow(data: ShortcutInput) {
   return {
     name: data.name,
@@ -81,7 +71,10 @@ async function createShortcut(userId: string, data: ShortcutInput) {
   });
 
   const productIds = [...new Set(data.productIds)];
-  const [productError] = await assertProductOwnership(userId, productIds);
+  const [productError] = await productService.assertProductsOwned(
+    userId,
+    productIds,
+  );
   if (productError) {
     return err(productError);
   }
@@ -114,13 +107,17 @@ async function updateShortcut(
   }
 
   const productIds = [...new Set(data.productIds)];
-  const [productError] = await assertProductOwnership(userId, productIds);
+  const [productError] = await productService.assertProductsOwned(
+    userId,
+    productIds,
+  );
   if (productError) {
     return err(productError);
   }
 
   try {
     const updated = await shortcutRepo.update(
+      userId,
       shortcutId,
       toRow(data),
       productIds,
@@ -143,7 +140,7 @@ async function deleteShortcut(userId: string, shortcutId: string) {
   }
 
   try {
-    const [deleted] = await shortcutRepo.softDelete(shortcutId);
+    const [deleted] = await shortcutRepo.softDelete(userId, shortcutId);
     return ok(deleted);
   } catch {
     return err({
