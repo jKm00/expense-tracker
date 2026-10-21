@@ -5,7 +5,7 @@ vi.mock("./home.repo", () => ({
 }));
 
 vi.mock("../shortcuts/shortcuts.repo", () => ({
-  shortcutRepo: { setShowOnHome: vi.fn() },
+  shortcutRepo: { setShowOnHome: vi.fn(), reorder: vi.fn() },
 }));
 
 vi.mock("../shortcuts/shortcuts.service", () => ({
@@ -55,11 +55,13 @@ describe("homeService", () => {
       const [error] = await homeService.saveHomeConfig("u1", {
         widgets,
         shortcutIds: ["s1"],
+        shortcutOrder: ["s2", "s1"],
       });
 
       expect(error).toBeNull();
       expect(homeRepo.saveWidgets).toHaveBeenCalledWith("u1", widgets);
       expect(shortcutRepo.setShowOnHome).toHaveBeenCalledWith("u1", ["s1"]);
+      expect(shortcutRepo.reorder).toHaveBeenCalledWith("u1", ["s2", "s1"]);
     });
 
     it("rejects shortcuts the user does not own", async () => {
@@ -71,6 +73,7 @@ describe("homeService", () => {
       const [error] = await homeService.saveHomeConfig("u1", {
         widgets,
         shortcutIds: ["other"],
+        shortcutOrder: [],
       });
 
       expect(error?.reason).toBe("HOME_INVALID_SHORTCUT");

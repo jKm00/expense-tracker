@@ -58,6 +58,9 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
   const shortcuts = shortcutsResult ?? [];
 
   const [widgets, setWidgets] = useState<HomeWidget[]>(savedWidgets ?? []);
+  const [shortcutOrder, setShortcutOrder] = useState<string[]>(
+    shortcuts.map((s) => s.id),
+  );
   const [shortcutIds, setShortcutIds] = useState<string[]>(
     shortcuts.filter((s) => s.showOnHome).map((s) => s.id),
   );
@@ -68,6 +71,14 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
     const next = [...widgets];
     [next[index], next[target]] = [next[target], next[index]];
     setWidgets(next);
+  }
+
+  function moveShortcut(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= shortcutOrder.length) return;
+    const next = [...shortcutOrder];
+    [next[index], next[target]] = [next[target], next[index]];
+    setShortcutOrder(next);
   }
 
   function toggleWidget(type: HomeWidgetType, enabled: boolean) {
@@ -82,7 +93,7 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
 
   function handleSave() {
     mutation.mutate(
-      { widgets, shortcutIds },
+      { widgets, shortcutIds, shortcutOrder },
       {
         onSuccess: ([error]) => {
           if (error) {
@@ -147,7 +158,7 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
 
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">
-          Shortcuts to show
+          Shortcuts to show (top to bottom)
         </p>
         {shortcuts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -157,20 +168,46 @@ function CustomizeForm({ onSaved }: { onSaved: () => void }) {
           <div
             className={`relative max-h-48 overflow-y-auto rounded-lg border border-border ${shortcutsEnabled ? "" : "opacity-50"}`}
           >
-            {shortcuts.map((shortcut) => (
-              <label
-                key={shortcut.id}
-                className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-muted/50"
-              >
-                <Checkbox
-                  checked={shortcutIds.includes(shortcut.id)}
-                  onCheckedChange={(checked) =>
-                    toggleShortcut(shortcut.id, checked === true)
-                  }
-                />
-                {shortcut.name}
-              </label>
-            ))}
+            {shortcutOrder.map((id, index) => {
+              const shortcut = shortcuts.find((s) => s.id === id);
+              if (!shortcut) return null;
+              return (
+                <div
+                  key={id}
+                  className="flex items-center gap-1 pr-1 hover:bg-muted/50"
+                >
+                  <label className="flex min-h-11 flex-1 cursor-pointer items-center gap-3 px-3 py-2 text-sm">
+                    <Checkbox
+                      checked={shortcutIds.includes(id)}
+                      onCheckedChange={(checked) =>
+                        toggleShortcut(id, checked === true)
+                      }
+                    />
+                    {shortcut.name}
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Move ${shortcut.name} up`}
+                    disabled={index === 0}
+                    onClick={() => moveShortcut(index, -1)}
+                  >
+                    <ArrowUp className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Move ${shortcut.name} down`}
+                    disabled={index === shortcutOrder.length - 1}
+                    onClick={() => moveShortcut(index, 1)}
+                  >
+                    <ArrowDown className="size-4" />
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
         {!shortcutsEnabled && shortcuts.length > 0 && (

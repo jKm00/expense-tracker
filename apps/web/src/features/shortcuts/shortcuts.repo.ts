@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { products, shortcutProducts, shortcuts } from "@/lib/db/schema";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, max } from "drizzle-orm";
 import {
   NewShortcut,
   Shortcut,
@@ -54,7 +54,7 @@ async function getAll(userId: string) {
     .select()
     .from(shortcuts)
     .where(and(eq(shortcuts.userId, userId), isNull(shortcuts.deletedAt)))
-    .orderBy(desc(shortcuts.createdAt));
+    .orderBy(asc(shortcuts.position), asc(shortcuts.createdAt));
 
   return await attachProducts(rows);
 }
@@ -76,7 +76,14 @@ async function getOne(shortcutId: string) {
 
 async function save(data: NewShortcut, productIds: string[]) {
   return await db.transaction(async (tx) => {
-    const [row] = await tx.insert(shortcuts).values(data).returning();
+    const [last] = await tx
+      .select({ value: max(shortcuts.position) })
+      .from(shortcuts)
+      .where(eq(shortcuts.userId, data.userId));
+    const [row] = await tx
+      .insert(shortcuts)
+      .values({ ...data, position: (last?.value ?? -1) + 1 })
+      .returning();
     await tx
       .insert(shortcutProducts)
       .values(productIds.map((productId) => ({ shortcutId: row.id, productId })));
@@ -126,7 +133,19 @@ async function setShowOnHome(userId: string, shortcutIds: string[]) {
   });
 }
 
+async function reorder(userId: string, shortcutIds: string[]) {
+  await db.transaction(async (tx) => {
+    for (const [position, id] of shortcutIds.entries()) {
+      await tx
+        .update(shortcuts)
+        .set({ position })
+        .where(and(eq(shortcuts.id, id), eq(shortcuts.userId, userId)));
+    }
+  });
+}
+
 export const shortcutRepo = {
+  reorder,
   setShowOnHome,
   getAll,
   getOne,

@@ -6,6 +6,7 @@ import { SHORTCUT_QUERY_KEY } from "./shortcuts.queries";
 import {
   CreateShortcutDTO,
   DeleteShortcutDTO,
+  ReorderShortcutsDTO,
   UpdateShortcutDTO,
 } from "./shortcuts.dtos";
 
@@ -60,7 +61,25 @@ function deleteShortcut() {
   });
 }
 
+function reorderShortcuts() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ReorderShortcutsDTO) => {
+      assertOnline();
+      return await shortcutController.reorderShortcuts({ data });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: [SHORTCUT_QUERY_KEY] });
+    },
+    onError: () => {
+      toast.error("Failed to reorder shortcuts. Please try again!");
+    },
+  });
+}
+
 export const shortcutMutations = {
+  reorderShortcuts,
   createShortcut,
   updateShortcut,
   deleteShortcut,

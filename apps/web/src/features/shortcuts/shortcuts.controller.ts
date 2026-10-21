@@ -5,6 +5,7 @@ import {
   createShortcutSchema,
   deleteShortcutSchema,
   getShortcutSchema,
+  reorderShortcutsSchema,
   updateShortcutSchema,
 } from "./shortcuts.dtos";
 
@@ -50,7 +51,18 @@ const deleteShortcut = createServerFn({ method: "POST" })
     );
   });
 
+const reorderShortcuts = createServerFn({ method: "POST" })
+  .middleware([authenticated])
+  .validator(reorderShortcutsSchema)
+  .handler(async ({ context, data }) => {
+    return await shortcutService.reorderShortcuts(
+      context.user.id,
+      data.shortcutIds,
+    );
+  });
+
 export const shortcutController = {
+  reorderShortcuts,
   getShortcuts,
   getShortcut,
   createShortcut,

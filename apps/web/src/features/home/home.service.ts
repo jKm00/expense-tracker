@@ -25,7 +25,15 @@ async function getHomeWidgets(userId: string) {
 
 async function saveHomeConfig(
   userId: string,
-  { widgets, shortcutIds }: { widgets: HomeWidget[]; shortcutIds: string[] },
+  {
+    widgets,
+    shortcutIds,
+    shortcutOrder,
+  }: {
+    widgets: HomeWidget[];
+    shortcutIds: string[];
+    shortcutOrder: string[];
+  },
 ) {
   getLogger().addAttrs({
     homeAction: "saveHomeConfig",
@@ -41,7 +49,7 @@ async function saveHomeConfig(
   }
 
   const ownedIds = new Set(owned.map((s) => s.id));
-  if (shortcutIds.some((id) => !ownedIds.has(id))) {
+  if ([...shortcutIds, ...shortcutOrder].some((id) => !ownedIds.has(id))) {
     return err({
       reason: "HOME_INVALID_SHORTCUT" as const,
       message: "One or more shortcuts could not be found",
@@ -51,6 +59,7 @@ async function saveHomeConfig(
   try {
     await homeRepo.saveWidgets(userId, widgets);
     await shortcutRepo.setShowOnHome(userId, shortcutIds);
+    await shortcutRepo.reorder(userId, [...new Set(shortcutOrder)]);
     return ok(widgets);
   } catch {
     return err({

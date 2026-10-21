@@ -15,7 +15,8 @@ export const saveHomeConfigSchema = z.object({
         new Set(widgets.map((w) => w.type)).size === homeWidgetTypes.length,
       "Each widget must be listed exactly once",
     ),
-  shortcutIds: z.array(z.string()).max(100),
+  shortcutIds: z.array(z.string()).max(200),
+  shortcutOrder: z.array(z.string()).max(200),
 });
 
 export type SaveHomeConfigDTO = z.infer<typeof saveHomeConfigSchema>;

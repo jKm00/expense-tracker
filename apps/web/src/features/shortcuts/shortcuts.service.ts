@@ -153,7 +153,39 @@ async function deleteShortcut(userId: string, shortcutId: string) {
   }
 }
 
+async function reorderShortcuts(userId: string, shortcutIds: string[]) {
+  getLogger().addAttrs({
+    shortcutAction: "reorderShortcuts",
+    shortcutCount: shortcutIds.length,
+  });
+
+  const [shortcutsError, owned] = await getShortcuts(userId);
+  if (shortcutsError) {
+    return err(shortcutsError);
+  }
+
+  const ownedIds = new Set(owned.map((s) => s.id));
+  const uniqueIds = [...new Set(shortcutIds)];
+  if (uniqueIds.some((id) => !ownedIds.has(id))) {
+    return err({
+      reason: "SHORTCUT_NOT_FOUND" as const,
+      message: "One or more shortcuts could not be found",
+    });
+  }
+
+  try {
+    await shortcutRepo.reorder(userId, uniqueIds);
+    return ok(uniqueIds);
+  } catch {
+    return err({
+      reason: "SHORTCUT_DB_ERROR" as const,
+      message: "Failed to reorder shortcuts",
+    });
+  }
+}
+
 export const shortcutService = {
+  reorderShortcuts,
   getShortcuts,
   getShortcut,
   createShortcut,
