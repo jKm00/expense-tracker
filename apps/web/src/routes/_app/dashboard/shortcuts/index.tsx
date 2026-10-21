@@ -18,6 +18,7 @@ import {
 } from "@/components/custom/page-header";
 import { SkeletonList } from "@/components/custom/skeletons/skeleton-list";
 import { Button } from "@/components/ui/button";
+import { ReorderShortcutsDialog } from "@/features/shortcuts/components/reorder-shortcuts.dialog";
 import { ShortcutList } from "@/features/shortcuts/components/shortcut-list";
 import { shortcutQueries } from "@/features/shortcuts/shortcuts.queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ function RouteComponent() {
           Tap a shortcut to log a transaction you make often
         </PageHeaderDescription>
         <PageHeaderActions>
+          <ReorderAction />
           <Button asChild size="sm" variant="outline">
             <Link to="/dashboard/shortcuts/new">
               <Plus className="size-4" />
@@ -102,4 +104,11 @@ function ShortcutsContent() {
   }
 
   return <ShortcutList items={items} />;
+}
+
+function ReorderAction() {
+  const {
+    data: [, items],
+  } = useSuspenseQuery(shortcutQueries.getShortcutsOptions());
+  return <ReorderShortcutsDialog items={items ?? []} />;
 }
