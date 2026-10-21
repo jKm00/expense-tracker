@@ -22,6 +22,7 @@ import { Route as AppDashboardIntegrationsRouteImport } from './routes/_app/dash
 import { Route as AppDashboardAnalyticsRouteImport } from './routes/_app/dashboard/analytics'
 import { Route as AppDashboardTransactionsIndexRouteImport } from './routes/_app/dashboard/transactions/index'
 import { Route as AppDashboardTagsIndexRouteImport } from './routes/_app/dashboard/tags/index'
+import { Route as AppDashboardShortcutsIndexRouteImport } from './routes/_app/dashboard/shortcuts/index'
 import { Route as AppDashboardShoppingIndexRouteImport } from './routes/_app/dashboard/shopping/index'
 import { Route as AppDashboardScansIndexRouteImport } from './routes/_app/dashboard/scans/index'
 import { Route as AppDashboardRecurringIndexRouteImport } from './routes/_app/dashboard/recurring/index'
@@ -29,6 +30,7 @@ import { Route as AppDashboardProductsIndexRouteImport } from './routes/_app/das
 import { Route as ApiInternalRecurringRunRouteImport } from './routes/api/internal/recurring/run'
 import { Route as AppDashboardTransactionsNewRouteImport } from './routes/_app/dashboard/transactions/new'
 import { Route as AppDashboardTagsTagIdRouteImport } from './routes/_app/dashboard/tags/$tagId'
+import { Route as AppDashboardShortcutsNewRouteImport } from './routes/_app/dashboard/shortcuts/new'
 import { Route as AppDashboardScansScanIdRouteImport } from './routes/_app/dashboard/scans/$scanId'
 import { Route as AppDashboardRecurringNewRouteImport } from './routes/_app/dashboard/recurring/new'
 import { Route as AppDashboardProductsNewRouteImport } from './routes/_app/dashboard/products/new'
@@ -37,6 +39,7 @@ import { Route as AppDashboardShoppingCheckoutIndexRouteImport } from './routes/
 import { Route as AppDashboardRecurringIdIndexRouteImport } from './routes/_app/dashboard/recurring/$id/index'
 import { Route as AppDashboardProductsIdIndexRouteImport } from './routes/_app/dashboard/products/$id/index'
 import { Route as AppDashboardTransactionsIdEditRouteImport } from './routes/_app/dashboard/transactions/$id/edit'
+import { Route as AppDashboardShortcutsIdEditRouteImport } from './routes/_app/dashboard/shortcuts/$id/edit'
 import { Route as AppDashboardRecurringIdEditRouteImport } from './routes/_app/dashboard/recurring/$id/edit'
 
 const AuthRoute = AuthRouteImport.update({
@@ -105,6 +108,12 @@ const AppDashboardTagsIndexRoute = AppDashboardTagsIndexRouteImport.update({
   path: '/dashboard/tags/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDashboardShortcutsIndexRoute =
+  AppDashboardShortcutsIndexRouteImport.update({
+    id: '/dashboard/shortcuts/',
+    path: '/dashboard/shortcuts/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardShoppingIndexRoute =
   AppDashboardShoppingIndexRouteImport.update({
     id: '/dashboard/shopping/',
@@ -144,6 +153,12 @@ const AppDashboardTagsTagIdRoute = AppDashboardTagsTagIdRouteImport.update({
   path: '/dashboard/tags/$tagId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDashboardShortcutsNewRoute =
+  AppDashboardShortcutsNewRouteImport.update({
+    id: '/dashboard/shortcuts/new',
+    path: '/dashboard/shortcuts/new',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardScansScanIdRoute = AppDashboardScansScanIdRouteImport.update({
   id: '/dashboard/scans/$scanId',
   path: '/dashboard/scans/$scanId',
@@ -190,6 +205,12 @@ const AppDashboardTransactionsIdEditRoute =
     path: '/dashboard/transactions/$id/edit',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDashboardShortcutsIdEditRoute =
+  AppDashboardShortcutsIdEditRouteImport.update({
+    id: '/dashboard/shortcuts/$id/edit',
+    path: '/dashboard/shortcuts/$id/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardRecurringIdEditRoute =
   AppDashboardRecurringIdEditRouteImport.update({
     id: '/dashboard/recurring/$id/edit',
@@ -210,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/scans/$scanId': typeof AppDashboardScansScanIdRoute
+  '/dashboard/shortcuts/new': typeof AppDashboardShortcutsNewRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
@@ -217,9 +239,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/dashboard/scans/': typeof AppDashboardScansIndexRoute
   '/dashboard/shopping/': typeof AppDashboardShoppingIndexRoute
+  '/dashboard/shortcuts/': typeof AppDashboardShortcutsIndexRoute
   '/dashboard/tags/': typeof AppDashboardTagsIndexRoute
   '/dashboard/transactions/': typeof AppDashboardTransactionsIndexRoute
   '/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
+  '/dashboard/shortcuts/$id/edit': typeof AppDashboardShortcutsIdEditRoute
   '/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
   '/dashboard/products/$id/': typeof AppDashboardProductsIdIndexRoute
   '/dashboard/recurring/$id/': typeof AppDashboardRecurringIdIndexRoute
@@ -239,6 +263,7 @@ export interface FileRoutesByTo {
   '/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/dashboard/scans/$scanId': typeof AppDashboardScansScanIdRoute
+  '/dashboard/shortcuts/new': typeof AppDashboardShortcutsNewRoute
   '/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
@@ -246,9 +271,11 @@ export interface FileRoutesByTo {
   '/dashboard/recurring': typeof AppDashboardRecurringIndexRoute
   '/dashboard/scans': typeof AppDashboardScansIndexRoute
   '/dashboard/shopping': typeof AppDashboardShoppingIndexRoute
+  '/dashboard/shortcuts': typeof AppDashboardShortcutsIndexRoute
   '/dashboard/tags': typeof AppDashboardTagsIndexRoute
   '/dashboard/transactions': typeof AppDashboardTransactionsIndexRoute
   '/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
+  '/dashboard/shortcuts/$id/edit': typeof AppDashboardShortcutsIdEditRoute
   '/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
   '/dashboard/products/$id': typeof AppDashboardProductsIdIndexRoute
   '/dashboard/recurring/$id': typeof AppDashboardRecurringIdIndexRoute
@@ -271,6 +298,7 @@ export interface FileRoutesById {
   '/_app/dashboard/products/new': typeof AppDashboardProductsNewRoute
   '/_app/dashboard/recurring/new': typeof AppDashboardRecurringNewRoute
   '/_app/dashboard/scans/$scanId': typeof AppDashboardScansScanIdRoute
+  '/_app/dashboard/shortcuts/new': typeof AppDashboardShortcutsNewRoute
   '/_app/dashboard/tags/$tagId': typeof AppDashboardTagsTagIdRoute
   '/_app/dashboard/transactions/new': typeof AppDashboardTransactionsNewRoute
   '/api/internal/recurring/run': typeof ApiInternalRecurringRunRoute
@@ -278,9 +306,11 @@ export interface FileRoutesById {
   '/_app/dashboard/recurring/': typeof AppDashboardRecurringIndexRoute
   '/_app/dashboard/scans/': typeof AppDashboardScansIndexRoute
   '/_app/dashboard/shopping/': typeof AppDashboardShoppingIndexRoute
+  '/_app/dashboard/shortcuts/': typeof AppDashboardShortcutsIndexRoute
   '/_app/dashboard/tags/': typeof AppDashboardTagsIndexRoute
   '/_app/dashboard/transactions/': typeof AppDashboardTransactionsIndexRoute
   '/_app/dashboard/recurring/$id/edit': typeof AppDashboardRecurringIdEditRoute
+  '/_app/dashboard/shortcuts/$id/edit': typeof AppDashboardShortcutsIdEditRoute
   '/_app/dashboard/transactions/$id/edit': typeof AppDashboardTransactionsIdEditRoute
   '/_app/dashboard/products/$id/': typeof AppDashboardProductsIdIndexRoute
   '/_app/dashboard/recurring/$id/': typeof AppDashboardRecurringIdIndexRoute
@@ -302,6 +332,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
     | '/dashboard/scans/$scanId'
+    | '/dashboard/shortcuts/new'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
     | '/api/internal/recurring/run'
@@ -309,9 +340,11 @@ export interface FileRouteTypes {
     | '/dashboard/recurring/'
     | '/dashboard/scans/'
     | '/dashboard/shopping/'
+    | '/dashboard/shortcuts/'
     | '/dashboard/tags/'
     | '/dashboard/transactions/'
     | '/dashboard/recurring/$id/edit'
+    | '/dashboard/shortcuts/$id/edit'
     | '/dashboard/transactions/$id/edit'
     | '/dashboard/products/$id/'
     | '/dashboard/recurring/$id/'
@@ -331,6 +364,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/new'
     | '/dashboard/recurring/new'
     | '/dashboard/scans/$scanId'
+    | '/dashboard/shortcuts/new'
     | '/dashboard/tags/$tagId'
     | '/dashboard/transactions/new'
     | '/api/internal/recurring/run'
@@ -338,9 +372,11 @@ export interface FileRouteTypes {
     | '/dashboard/recurring'
     | '/dashboard/scans'
     | '/dashboard/shopping'
+    | '/dashboard/shortcuts'
     | '/dashboard/tags'
     | '/dashboard/transactions'
     | '/dashboard/recurring/$id/edit'
+    | '/dashboard/shortcuts/$id/edit'
     | '/dashboard/transactions/$id/edit'
     | '/dashboard/products/$id'
     | '/dashboard/recurring/$id'
@@ -362,6 +398,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/products/new'
     | '/_app/dashboard/recurring/new'
     | '/_app/dashboard/scans/$scanId'
+    | '/_app/dashboard/shortcuts/new'
     | '/_app/dashboard/tags/$tagId'
     | '/_app/dashboard/transactions/new'
     | '/api/internal/recurring/run'
@@ -369,9 +406,11 @@ export interface FileRouteTypes {
     | '/_app/dashboard/recurring/'
     | '/_app/dashboard/scans/'
     | '/_app/dashboard/shopping/'
+    | '/_app/dashboard/shortcuts/'
     | '/_app/dashboard/tags/'
     | '/_app/dashboard/transactions/'
     | '/_app/dashboard/recurring/$id/edit'
+    | '/_app/dashboard/shortcuts/$id/edit'
     | '/_app/dashboard/transactions/$id/edit'
     | '/_app/dashboard/products/$id/'
     | '/_app/dashboard/recurring/$id/'
@@ -481,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardTagsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/shortcuts/': {
+      id: '/_app/dashboard/shortcuts/'
+      path: '/dashboard/shortcuts'
+      fullPath: '/dashboard/shortcuts/'
+      preLoaderRoute: typeof AppDashboardShortcutsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/shopping/': {
       id: '/_app/dashboard/shopping/'
       path: '/dashboard/shopping'
@@ -528,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/tags/$tagId'
       fullPath: '/dashboard/tags/$tagId'
       preLoaderRoute: typeof AppDashboardTagsTagIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard/shortcuts/new': {
+      id: '/_app/dashboard/shortcuts/new'
+      path: '/dashboard/shortcuts/new'
+      fullPath: '/dashboard/shortcuts/new'
+      preLoaderRoute: typeof AppDashboardShortcutsNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard/scans/$scanId': {
@@ -586,6 +639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardTransactionsIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard/shortcuts/$id/edit': {
+      id: '/_app/dashboard/shortcuts/$id/edit'
+      path: '/dashboard/shortcuts/$id/edit'
+      fullPath: '/dashboard/shortcuts/$id/edit'
+      preLoaderRoute: typeof AppDashboardShortcutsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/recurring/$id/edit': {
       id: '/_app/dashboard/recurring/$id/edit'
       path: '/dashboard/recurring/$id/edit'
@@ -605,15 +665,18 @@ interface AppRouteChildren {
   AppDashboardProductsNewRoute: typeof AppDashboardProductsNewRoute
   AppDashboardRecurringNewRoute: typeof AppDashboardRecurringNewRoute
   AppDashboardScansScanIdRoute: typeof AppDashboardScansScanIdRoute
+  AppDashboardShortcutsNewRoute: typeof AppDashboardShortcutsNewRoute
   AppDashboardTagsTagIdRoute: typeof AppDashboardTagsTagIdRoute
   AppDashboardTransactionsNewRoute: typeof AppDashboardTransactionsNewRoute
   AppDashboardProductsIndexRoute: typeof AppDashboardProductsIndexRoute
   AppDashboardRecurringIndexRoute: typeof AppDashboardRecurringIndexRoute
   AppDashboardScansIndexRoute: typeof AppDashboardScansIndexRoute
   AppDashboardShoppingIndexRoute: typeof AppDashboardShoppingIndexRoute
+  AppDashboardShortcutsIndexRoute: typeof AppDashboardShortcutsIndexRoute
   AppDashboardTagsIndexRoute: typeof AppDashboardTagsIndexRoute
   AppDashboardTransactionsIndexRoute: typeof AppDashboardTransactionsIndexRoute
   AppDashboardRecurringIdEditRoute: typeof AppDashboardRecurringIdEditRoute
+  AppDashboardShortcutsIdEditRoute: typeof AppDashboardShortcutsIdEditRoute
   AppDashboardTransactionsIdEditRoute: typeof AppDashboardTransactionsIdEditRoute
   AppDashboardProductsIdIndexRoute: typeof AppDashboardProductsIdIndexRoute
   AppDashboardRecurringIdIndexRoute: typeof AppDashboardRecurringIdIndexRoute
@@ -630,15 +693,18 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardProductsNewRoute: AppDashboardProductsNewRoute,
   AppDashboardRecurringNewRoute: AppDashboardRecurringNewRoute,
   AppDashboardScansScanIdRoute: AppDashboardScansScanIdRoute,
+  AppDashboardShortcutsNewRoute: AppDashboardShortcutsNewRoute,
   AppDashboardTagsTagIdRoute: AppDashboardTagsTagIdRoute,
   AppDashboardTransactionsNewRoute: AppDashboardTransactionsNewRoute,
   AppDashboardProductsIndexRoute: AppDashboardProductsIndexRoute,
   AppDashboardRecurringIndexRoute: AppDashboardRecurringIndexRoute,
   AppDashboardScansIndexRoute: AppDashboardScansIndexRoute,
   AppDashboardShoppingIndexRoute: AppDashboardShoppingIndexRoute,
+  AppDashboardShortcutsIndexRoute: AppDashboardShortcutsIndexRoute,
   AppDashboardTagsIndexRoute: AppDashboardTagsIndexRoute,
   AppDashboardTransactionsIndexRoute: AppDashboardTransactionsIndexRoute,
   AppDashboardRecurringIdEditRoute: AppDashboardRecurringIdEditRoute,
+  AppDashboardShortcutsIdEditRoute: AppDashboardShortcutsIdEditRoute,
   AppDashboardTransactionsIdEditRoute: AppDashboardTransactionsIdEditRoute,
   AppDashboardProductsIdIndexRoute: AppDashboardProductsIdIndexRoute,
   AppDashboardRecurringIdIndexRoute: AppDashboardRecurringIdIndexRoute,
