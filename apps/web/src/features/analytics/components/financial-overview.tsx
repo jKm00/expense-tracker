@@ -1,92 +1,78 @@
 import { FullTransaction } from "@/features/transactions/transactions.models";
 import { calculateAnalyticsMetrics } from "@/features/analytics/analytics.calculations";
-import { calculateComparisonDelta } from "@/features/analytics/analytics.utils";
 import { formatAmountNoDecimals } from "@/utils/format";
-import { KpiCard } from "@/features/analytics/components/kpi-card";
-import { Scale, TrendingUp, TrendingDown } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
 type FinancialOverviewProps = {
   transactions: FullTransaction[];
-  comparisonTransactions?: FullTransaction[];
 };
 
-export function FinancialOverview({
-  transactions,
-  comparisonTransactions,
-}: FinancialOverviewProps) {
+export function FinancialOverview({ transactions }: FinancialOverviewProps) {
   const metrics = useMemo(
     () => calculateAnalyticsMetrics(transactions),
     [transactions],
   );
 
-  const comparisonMetrics = useMemo(
-    () =>
-      comparisonTransactions
-        ? calculateAnalyticsMetrics(comparisonTransactions)
-        : undefined,
-    [comparisonTransactions],
-  );
-
-  const netBalanceDelta = useMemo(
-    () =>
-      comparisonMetrics
-        ? calculateComparisonDelta(
-            metrics.netBalance,
-            comparisonMetrics.netBalance,
-            "up",
-          )
-        : undefined,
-    [metrics.netBalance, comparisonMetrics?.netBalance],
-  );
-
-  const totalIncomeDelta = useMemo(
-    () =>
-      comparisonMetrics
-        ? calculateComparisonDelta(
-            metrics.totalIncome,
-            comparisonMetrics.totalIncome,
-            "up",
-          )
-        : undefined,
-    [metrics.totalIncome, comparisonMetrics?.totalIncome],
-  );
-
-  const totalExpensesDelta = useMemo(
-    () =>
-      comparisonMetrics
-        ? calculateComparisonDelta(
-            metrics.totalExpenses,
-            comparisonMetrics.totalExpenses,
-            "down",
-          )
-        : undefined,
-    [metrics.totalExpenses, comparisonMetrics?.totalExpenses],
-  );
-
   return (
-    <section className="grid gap-3 grid-cols-2">
-      <div className="col-span-2">
-        <KpiCard
-          title="Balance"
+    <Card size="sm">
+      <CardContent className="grid grid-cols-3 gap-3 py-1">
+        <OverviewStat
+          label="Balance"
           value={formatAmountNoDecimals(metrics.netBalance, { sign: true })}
-          icon={Scale}
-          delta={netBalanceDelta}
-          color={metrics.netBalance < 0 ? "expense" : "income"}
+          className={metrics.netBalance < 0 ? "text-expense" : "text-income"}
         />
-      </div>
-      <KpiCard
-        title="Income"
-        value={formatAmountNoDecimals(metrics.totalIncome)}
-        icon={TrendingUp}
-        delta={totalIncomeDelta}
-      />
-      <KpiCard
-        title="Expenses"
-        value={formatAmountNoDecimals(metrics.totalExpenses)}
-        icon={TrendingDown}
-        delta={totalExpensesDelta}
-      />
-    </section>
+        <OverviewStat
+          label="Income"
+          value={formatAmountNoDecimals(metrics.totalIncome)}
+        />
+        <OverviewStat
+          label="Expenses"
+          value={formatAmountNoDecimals(metrics.totalExpenses)}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function FinancialOverviewSkeleton() {
+  return (
+    <Card size="sm">
+      <CardContent className="grid grid-cols-3 gap-3 py-1">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+            <div className="h-5 w-16 animate-pulse rounded bg-muted" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function OverviewStat({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "truncate text-base leading-tight font-semibold tracking-tight",
+          className,
+        )}
+      >
+        {value}
+      </p>
+    </div>
   );
 }

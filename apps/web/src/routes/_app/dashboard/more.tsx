@@ -13,6 +13,7 @@ import {
   Repeat,
   Tag,
   User,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard/more")({
@@ -41,6 +42,13 @@ function RouteComponent() {
       href: "/dashboard/recurring",
       icon: Repeat,
       version: undefined,
+    },
+    {
+      label: "Shortcuts",
+      description: "One-tap transactions",
+      href: "/dashboard/shortcuts",
+      icon: Zap,
+      version: "beta",
     },
     {
       label: "Tags",

@@ -2,9 +2,16 @@ import {
   PageHeader,
   PageHeaderTitle,
   PageHeaderDescription,
+  PageHeaderActions,
 } from "@/components/custom/page-header";
-import { KpiCardSkeleton } from "@/features/analytics/components/analytics-skeletons";
-import { FinancialOverview } from "@/features/analytics/components/financial-overview";
+import {
+  FinancialOverview,
+  FinancialOverviewSkeleton,
+} from "@/features/analytics/components/financial-overview";
+import { CustomizeHomeDialog } from "@/features/home/components/customize-home.dialog";
+import { ShortcutsWidget } from "@/features/home/components/shortcuts-widget";
+import { homeQueries } from "@/features/home/home.queries";
+import { shortcutQueries } from "@/features/shortcuts/shortcuts.queries";
 import { productQueries } from "@/features/products/products.queries";
 import { transactionQueries } from "@/features/transactions/transactions.queries";
 import { SimpleTransactionForm } from "@/features/transactions/components/simple-transaction.form";
@@ -16,19 +23,14 @@ import { Suspense } from "react";
 export const Route = createFileRoute("/_app/dashboard/")({
   loader: async ({ context }) => {
     const now = new Date();
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     await Promise.all([
       context.queryClient.prefetchQuery(productQueries.getProductsOptions()),
+      context.queryClient.prefetchQuery(shortcutQueries.getShortcutsOptions()),
+      context.queryClient.prefetchQuery(homeQueries.getHomeWidgetsOptions()),
       context.queryClient.prefetchQuery(
         transactionQueries.getTransactionsOptions(
           now.getFullYear(),
           now.getMonth(),
-        ),
-      ),
-      context.queryClient.prefetchQuery(
-        transactionQueries.getTransactionsOptions(
-          prevMonth.getFullYear(),
-          prevMonth.getMonth(),
         ),
       ),
     ]);
@@ -45,8 +47,13 @@ function RouteComponent() {
       <PageHeader>
         <PageHeaderTitle>Hey, {firstName}</PageHeaderTitle>
         <PageHeaderDescription>
-          Quickly log a transaction below.
+          Your month at a glance.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Suspense fallback={null}>
+            <CustomizeHomeDialog />
+          </Suspense>
+        </PageHeaderActions>
       </PageHeader>
 
       <Suspense fallback={<FinancialOverviewSkeleton />}>
@@ -54,7 +61,7 @@ function RouteComponent() {
       </Suspense>
 
       <Suspense>
-        <HomeContent />
+        <HomeWidgets />
       </Suspense>
     </div>
   );
@@ -62,7 +69,6 @@ function RouteComponent() {
 
 function FinancialOverviewSection() {
   const now = new Date();
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
   const {
     data: [_, transactions],
@@ -73,34 +79,30 @@ function FinancialOverviewSection() {
     ),
   );
 
+  return <FinancialOverview transactions={transactions || []} />;
+}
+
+function HomeWidgets() {
   const {
-    data: [__, prevTransactions],
-  } = useSuspenseQuery(
-    transactionQueries.getTransactionsOptions(
-      prevMonth.getFullYear(),
-      prevMonth.getMonth(),
-    ),
-  );
+    data: [_, widgets],
+  } = useSuspenseQuery(homeQueries.getHomeWidgetsOptions());
 
   return (
-    <FinancialOverview
-      transactions={transactions || []}
-      comparisonTransactions={prevTransactions || []}
-    />
+    <>
+      {(widgets ?? [])
+        .filter((widget) => widget.enabled)
+        .map((widget) =>
+          widget.type === "quick_log" ? (
+            <QuickLogWidget key={widget.type} />
+          ) : (
+            <ShortcutsWidget key={widget.type} />
+          ),
+        )}
+    </>
   );
 }
 
-function FinancialOverviewSkeleton() {
-  return (
-    <section className="grid gap-3 grid-cols-3">
-      <KpiCardSkeleton />
-      <KpiCardSkeleton />
-      <KpiCardSkeleton />
-    </section>
-  );
-}
-
-function HomeContent() {
+function QuickLogWidget() {
   const {
     data: [_, products],
   } = useSuspenseQuery(productQueries.getProductsOptions());

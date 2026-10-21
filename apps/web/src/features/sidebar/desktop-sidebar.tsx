@@ -14,6 +14,7 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth.provider";
@@ -55,6 +56,12 @@ const navSections = [
     items: [
       { label: "Products", href: "/dashboard/products", icon: PackageIcon },
       { label: "Recurring", href: "/dashboard/recurring", icon: RepeatIcon },
+      {
+        label: "Shortcuts",
+        href: "/dashboard/shortcuts",
+        icon: Zap,
+        beta: true,
+      },
       { label: "Tags", href: "/dashboard/tags", icon: Tag },
     ],
   },
