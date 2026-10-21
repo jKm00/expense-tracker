@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ShortcutWithProducts } from "../shortcuts.models";
 import { useRunShortcut } from "./use-run-shortcut";
@@ -26,20 +25,20 @@ export function RunShortcutDialog({
 }) {
   const { run, isPending } = useRunShortcut();
   const askProduct = shortcut.products.length > 1;
-  const [productId, setProductId] = useState(
-    askProduct ? "" : shortcut.products[0]?.id ?? "",
-  );
   const [price, setPrice] = useState(shortcut.price ?? "");
   const normalizedPrice = price.trim().replace(",", ".");
   const priceValid = PRICE_PATTERN.test(normalizedPrice);
-  const canSubmit = Boolean(productId) && priceValid;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
+  function execute(productId: string) {
+    if (!priceValid || !productId || isPending) return;
     run(shortcut, { productId, price: normalizedPrice }, () =>
       onOpenChange(false),
     );
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!askProduct) execute(shortcut.products[0]?.id ?? "");
   }
 
   return (
@@ -49,36 +48,11 @@ export function RunShortcutDialog({
           <DialogTitle>{shortcut.name}</DialogTitle>
           <DialogDescription>
             {askProduct
-              ? "Choose a product and enter the price."
+              ? "Enter the price, then tap a product to save."
               : "Enter the price."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {askProduct && (
-            <div
-              role="radiogroup"
-              aria-label="Product"
-              className="grid grid-cols-2 gap-2"
-            >
-              {shortcut.products.map((product) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={productId === product.id}
-                  onClick={() => setProductId(product.id)}
-                  className={cn(
-                    "min-h-11 rounded-lg border px-3 py-2 text-sm transition-colors",
-                    productId === product.id
-                      ? "border-primary bg-primary/10 font-medium"
-                      : "border-border hover:bg-muted/50",
-                  )}
-                >
-                  {product.name}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="space-y-1.5">
             <Label
               htmlFor="shortcut-price"
@@ -96,14 +70,34 @@ export function RunShortcutDialog({
               className="h-11 md:h-9 text-base md:text-sm px-3"
             />
           </div>
+          {askProduct ? (
+            <div
+              role="group"
+              aria-label="Products"
+              className="grid grid-cols-2 gap-2"
+            >
+              {shortcut.products.map((product) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  disabled={!priceValid || isPending}
+                  onClick={() => execute(product.id)}
+                  className="min-h-11 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {product.name}
+                </button>
+              ))}
+            </div>
+          ) : (
           <LoaderButton
             type="submit"
             className="w-full"
             isLoading={isPending}
-            disabled={!canSubmit || isPending}
+            disabled={!priceValid || isPending}
           >
             Save transaction
           </LoaderButton>
+          )}
         </form>
       </DialogContent>
     </Dialog>
