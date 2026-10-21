@@ -246,6 +246,34 @@ async function getProduct(userId: string, productId: string) {
   return ok(product);
 }
 
+async function assertProductsOwned(userId: string, productIds: string[]) {
+  getLogger().addAttrs({
+    productAction: "assertProductsOwned",
+    productIdsCount: productIds.length,
+  });
+
+  if (productIds.length === 0) {
+    return ok(null);
+  }
+
+  try {
+    const ownedIds = new Set(await productRepo.getOwnedIds(userId, productIds));
+    const missing = productIds.find((id) => !ownedIds.has(id));
+    if (missing) {
+      return err({
+        reason: "PRODUCT_NOT_FOUND" as const,
+        message: `Product with id ${missing} not found`,
+      });
+    }
+    return ok(null);
+  } catch (error) {
+    return err({
+      reason: "PRODUCT_DB_ERROR" as const,
+      message: `Failed to verify products for user ${userId}`,
+    });
+  }
+}
+
 async function getProductTagRows(userId: string, productIds: string[]) {
   const logger = getLogger();
   logger.addAttrs({
@@ -676,6 +704,7 @@ export const productService = {
   listProducts,
   getProductKpis,
   getProduct,
+  assertProductsOwned,
   getProductTagRows,
   getProductStats,
   addProduct,

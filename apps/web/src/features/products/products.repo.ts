@@ -129,6 +129,14 @@ async function getOne(id: string) {
   });
 }
 
+async function getOwnedIds(userId: string, productIds: string[]) {
+  const rows = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.userId, userId), inArray(products.id, productIds)));
+  return rows.map((row) => row.id);
+}
+
 async function getTagRows(
   userId: string,
   productIds: string[],
@@ -257,6 +265,7 @@ export const productRepo = {
   getPage,
   getKpis,
   getOne,
+  getOwnedIds,
   getTagRows,
   getStats,
   save,

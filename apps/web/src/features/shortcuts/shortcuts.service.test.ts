@@ -14,7 +14,7 @@ vi.mock("./shortcuts.repo", () => ({
 
 vi.mock("../products/products.service", () => ({
   productService: {
-    getProduct: vi.fn(),
+    assertProductsOwned: vi.fn(),
   },
 }));
 
@@ -95,13 +95,16 @@ describe("shortcutService", () => {
 
   describe("createShortcut", () => {
     it("saves with de-duplicated product ids and a null price to ask", async () => {
-      products.getProduct.mockResolvedValue([null, {} as never]);
+      products.assertProductsOwned.mockResolvedValue([null, null] as never);
       repo.save.mockResolvedValue(makeShortcut() as never);
 
       const [error] = await shortcutService.createShortcut("u1", input);
 
       expect(error).toBeNull();
-      expect(products.getProduct).toHaveBeenCalledTimes(2);
+      expect(products.assertProductsOwned).toHaveBeenCalledWith("u1", [
+        "p1",
+        "p2",
+      ]);
       expect(repo.save).toHaveBeenCalledWith(
         expect.objectContaining({ userId: "u1", price: null, store: null }),
         ["p1", "p2"],
@@ -109,19 +112,19 @@ describe("shortcutService", () => {
     });
 
     it("does not save when a product is not owned by the user", async () => {
-      products.getProduct.mockResolvedValue([
-        { reason: "PRODUCT_UNAUTHORIZED", message: "no" },
+      products.assertProductsOwned.mockResolvedValue([
+        { reason: "PRODUCT_NOT_FOUND", message: "no" },
         null,
       ] as never);
 
       const [error] = await shortcutService.createShortcut("u1", input);
 
-      expect(error?.reason).toBe("PRODUCT_UNAUTHORIZED");
+      expect(error?.reason).toBe("PRODUCT_NOT_FOUND");
       expect(repo.save).not.toHaveBeenCalled();
     });
 
     it("returns SHORTCUT_DB_ERROR when saving fails", async () => {
-      products.getProduct.mockResolvedValue([null, {} as never]);
+      products.assertProductsOwned.mockResolvedValue([null, null] as never);
       repo.save.mockRejectedValue(new Error("boom"));
       const [error] = await shortcutService.createShortcut("u1", input);
       expect(error?.reason).toBe("SHORTCUT_DB_ERROR");
@@ -138,13 +141,14 @@ describe("shortcutService", () => {
 
     it("updates the shortcut and its products", async () => {
       repo.getOne.mockResolvedValue(makeShortcut());
-      products.getProduct.mockResolvedValue([null, {} as never]);
+      products.assertProductsOwned.mockResolvedValue([null, null] as never);
       repo.update.mockResolvedValue(makeShortcut() as never);
 
       const [error] = await shortcutService.updateShortcut("u1", "s1", input);
 
       expect(error).toBeNull();
       expect(repo.update).toHaveBeenCalledWith(
+        "u1",
         "s1",
         expect.objectContaining({ name: "Canteen", price: null }),
         ["p1", "p2"],
@@ -177,7 +181,7 @@ describe("shortcutService", () => {
       repo.softDelete.mockResolvedValue([makeShortcut()] as never);
       const [error] = await shortcutService.deleteShortcut("u1", "s1");
       expect(error).toBeNull();
-      expect(repo.softDelete).toHaveBeenCalledWith("s1");
+      expect(repo.softDelete).toHaveBeenCalledWith("u1", "s1");
     });
 
     it("does not delete another user's shortcut", async () => {

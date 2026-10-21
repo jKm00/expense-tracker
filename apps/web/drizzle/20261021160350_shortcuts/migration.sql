@@ -12,6 +12,7 @@ CREATE TABLE "shortcuts" (
 	"store" text,
 	"type" "entry_type" NOT NULL,
 	"price" numeric(10,2),
+	"position" integer DEFAULT 0 NOT NULL,
 	"show_on_home" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,

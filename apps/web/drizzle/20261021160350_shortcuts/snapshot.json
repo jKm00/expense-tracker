@@ -2337,6 +2337,19 @@
       "table": "shortcuts"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "position",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "shortcuts"
+    },
+    {
       "type": "numeric(10,2)",
       "typeSchema": null,
       "notNull": false,

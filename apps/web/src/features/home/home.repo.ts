@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { homeWidgets } from "@/lib/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
+import { shortcutRepo } from "../shortcuts/shortcuts.repo";
 import { HomeWidget } from "./home.models";
 
 async function getWidgets(userId: string): Promise<HomeWidget[]> {
@@ -11,21 +12,38 @@ async function getWidgets(userId: string): Promise<HomeWidget[]> {
     .orderBy(asc(homeWidgets.position));
 }
 
-async function saveWidgets(userId: string, widgets: HomeWidget[]) {
+async function saveConfig(
+  userId: string,
+  config: {
+    widgets: HomeWidget[];
+    shortcutIds: string[];
+    shortcutOrder: string[];
+  },
+) {
   await db.transaction(async (tx) => {
-    for (const [position, widget] of widgets.entries()) {
-      await tx
-        .insert(homeWidgets)
-        .values({ userId, ...widget, position })
-        .onConflictDoUpdate({
-          target: [homeWidgets.userId, homeWidgets.type],
-          set: { position, enabled: widget.enabled, updatedAt: new Date() },
-        });
-    }
+    await tx
+      .insert(homeWidgets)
+      .values(
+        config.widgets.map((widget, position) => ({
+          userId,
+          ...widget,
+          position,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [homeWidgets.userId, homeWidgets.type],
+        set: {
+          position: sql`excluded.position`,
+          enabled: sql`excluded.enabled`,
+          updatedAt: new Date(),
+        },
+      });
+    await shortcutRepo.setShowOnHomeInTx(tx, userId, config.shortcutIds);
+    await shortcutRepo.reorderInTx(tx, userId, config.shortcutOrder);
   });
 }
 
 export const homeRepo = {
   getWidgets,
-  saveWidgets,
+  saveConfig,
 };

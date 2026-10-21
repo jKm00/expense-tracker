@@ -1,7 +1,6 @@
 import { ok } from "@/utils/result";
 import { err } from "../logger/logger.result";
 import { getLogger } from "../logger/logger.context";
-import { shortcutRepo } from "../shortcuts/shortcuts.repo";
 import { shortcutService } from "../shortcuts/shortcuts.service";
 import { homeRepo } from "./home.repo";
 import { defaultHomeWidgets, HomeWidget } from "./home.models";
@@ -57,9 +56,11 @@ async function saveHomeConfig(
   }
 
   try {
-    await homeRepo.saveWidgets(userId, widgets);
-    await shortcutRepo.setShowOnHome(userId, shortcutIds);
-    await shortcutRepo.reorder(userId, [...new Set(shortcutOrder)]);
+    await homeRepo.saveConfig(userId, {
+      widgets,
+      shortcutIds,
+      shortcutOrder: [...new Set(shortcutOrder)],
+    });
     return ok(widgets);
   } catch {
     return err({
