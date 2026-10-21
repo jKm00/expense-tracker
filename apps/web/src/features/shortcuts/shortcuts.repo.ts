@@ -61,11 +61,11 @@ async function getAll(userId: string) {
   return await attachProducts(rows);
 }
 
-async function getOne(shortcutId: string) {
+async function getOne(userId: string, shortcutId: string) {
   const [row] = await db
     .select()
     .from(shortcuts)
-    .where(eq(shortcuts.id, shortcutId))
+    .where(and(eq(shortcuts.id, shortcutId), eq(shortcuts.userId, userId)))
     .limit(1);
 
   if (!row) {

@@ -29,18 +29,11 @@ async function getShortcut(userId: string, shortcutId: string) {
   getLogger().addAttrs({ shortcutAction: "getShortcut", shortcutId });
 
   try {
-    const item = await shortcutRepo.getOne(shortcutId);
+    const item = await shortcutRepo.getOne(userId, shortcutId);
     if (!item || item.deletedAt) {
       return err({
         reason: "SHORTCUT_NOT_FOUND" as const,
         message: `Shortcut with id ${shortcutId} not found`,
-      });
-    }
-
-    if (item.userId !== userId) {
-      return err({
-        reason: "SHORTCUT_UNAUTHORIZED" as const,
-        message: `User ${userId} does not have access to shortcut ${shortcutId}`,
       });
     }
 

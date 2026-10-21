@@ -86,10 +86,10 @@ describe("shortcutService", () => {
       );
     });
 
-    it("returns SHORTCUT_UNAUTHORIZED for another user's shortcut", async () => {
-      repo.getOne.mockResolvedValue(makeShortcut({ userId: "other" }));
-      const [error] = await shortcutService.getShortcut("u1", "s1");
-      expect(error?.reason).toBe("SHORTCUT_UNAUTHORIZED");
+    it("looks the shortcut up scoped to the user", async () => {
+      repo.getOne.mockResolvedValue(makeShortcut());
+      await shortcutService.getShortcut("u1", "s1");
+      expect(repo.getOne).toHaveBeenCalledWith("u1", "s1");
     });
   });
 
@@ -133,9 +133,9 @@ describe("shortcutService", () => {
 
   describe("updateShortcut", () => {
     it("rejects updates to another user's shortcut", async () => {
-      repo.getOne.mockResolvedValue(makeShortcut({ userId: "other" }));
+      repo.getOne.mockResolvedValue(null);
       const [error] = await shortcutService.updateShortcut("u1", "s1", input);
-      expect(error?.reason).toBe("SHORTCUT_UNAUTHORIZED");
+      expect(error?.reason).toBe("SHORTCUT_NOT_FOUND");
       expect(repo.update).not.toHaveBeenCalled();
     });
 
@@ -185,9 +185,9 @@ describe("shortcutService", () => {
     });
 
     it("does not delete another user's shortcut", async () => {
-      repo.getOne.mockResolvedValue(makeShortcut({ userId: "other" }));
+      repo.getOne.mockResolvedValue(null);
       const [error] = await shortcutService.deleteShortcut("u1", "s1");
-      expect(error?.reason).toBe("SHORTCUT_UNAUTHORIZED");
+      expect(error?.reason).toBe("SHORTCUT_NOT_FOUND");
       expect(repo.softDelete).not.toHaveBeenCalled();
     });
   });

@@ -65,10 +65,6 @@ function EditShortcutContent() {
         title = "Shortcut not found";
         message = "The shortcut you are trying to edit does not exist.";
         break;
-      case "SHORTCUT_UNAUTHORIZED":
-        title = "Unauthorized";
-        message = "You do not have permission to edit this shortcut.";
-        break;
       case "SHORTCUT_DB_ERROR":
         title = "Database error";
         message =
