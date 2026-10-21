@@ -14,6 +14,11 @@ import {
   products,
   productTags,
 } from "@/features/products/products.schema";
+import { homeWidgets } from "@/features/home/home.schema";
+import {
+  shortcutProducts,
+  shortcuts,
+} from "@/features/shortcuts/shortcuts.schema";
 import { receiptItemMappings } from "@/features/receipt-scanning/receipt-scanning.schema";
 import {
   shoppingListItems,
@@ -53,6 +58,11 @@ export const relations = defineRelations(
     transactions,
     entries,
     entryTags,
+    // Shortcuts
+    shortcuts,
+    shortcutProducts,
+    // Home
+    homeWidgets,
   },
   (r) => ({
     user: {
@@ -66,6 +76,8 @@ export const relations = defineRelations(
       integrationEvents: r.many.integrationEvents(),
       integrationRequestLogs: r.many.integrationRequestLogs(),
       receiptItemMappings: r.many.receiptItemMappings(),
+      shortcuts: r.many.shortcuts(),
+      homeWidgets: r.many.homeWidgets(),
     },
     session: {
       user: r.one.user({
@@ -107,6 +119,10 @@ export const relations = defineRelations(
       receiptItemMappings: r.many.receiptItemMappings({
         from: r.products.id,
         to: r.receiptItemMappings.productId,
+      }),
+      shortcuts: r.many.shortcuts({
+        from: r.products.id.through(r.shortcutProducts.productId),
+        to: r.shortcuts.id.through(r.shortcutProducts.shortcutId),
       }),
     },
     shoppingLists: {
@@ -233,6 +249,22 @@ export const relations = defineRelations(
       product: r.one.products({
         from: r.receiptItemMappings.productId,
         to: r.products.id,
+      }),
+    },
+    shortcuts: {
+      user: r.one.user({
+        from: r.shortcuts.userId,
+        to: r.user.id,
+      }),
+      products: r.many.products({
+        from: r.shortcuts.id.through(r.shortcutProducts.shortcutId),
+        to: r.products.id.through(r.shortcutProducts.productId),
+      }),
+    },
+    homeWidgets: {
+      user: r.one.user({
+        from: r.homeWidgets.userId,
+        to: r.user.id,
       }),
     },
   }),
