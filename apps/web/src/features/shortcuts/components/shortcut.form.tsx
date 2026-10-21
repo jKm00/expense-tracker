@@ -168,7 +168,7 @@ export function ShortcutForm({ shortcut }: { shortcut?: ShortcutWithProducts }) 
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
           />
-          <div className="max-h-56 overflow-y-auto rounded-lg border border-border">
+          <div className="relative max-h-56 overflow-y-auto rounded-lg border border-border">
             {products.length === 0 ? (
               <p className="p-3 text-sm text-muted-foreground">
                 You have no products yet.{" "}
