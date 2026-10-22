@@ -62,7 +62,7 @@ jobs:
         run: terraform -chdir=infra/environments/prod init
 
       - name: Terraform apply
-        run: terraform -chdir=infra/environments/prod apply -auto-approve -var='api_token=${{ secrets.AWS_SCAN_API_TOKEN }}'
+        run: terraform -chdir=infra/environments/prod apply -auto-approve -var='api_token=${{ secrets.AWS_SCAN_API_TOKEN }}' -var='budget_alert_email=${{ secrets.AWS_BUDGET_ALERT_EMAIL }}'
 
       - name: Print scan API URL
         run: terraform -chdir=infra/environments/prod output scan_api_url
