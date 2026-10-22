@@ -158,7 +158,7 @@ async function reorderInTx(tx: Tx, userId: string, shortcutIds: string[]) {
   ];
 
   const positions = sql.join(
-    ordered.map((id, position) => sql`(${id}::uuid, ${position})`),
+    ordered.map((id, position) => sql`(${id}::uuid, ${position}::integer)`),
     sql`, `,
   );
   if (ordered.length > 0) {
