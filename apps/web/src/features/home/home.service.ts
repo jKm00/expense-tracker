@@ -62,7 +62,10 @@ async function saveHomeConfig(
       shortcutOrder: [...new Set(shortcutOrder)],
     });
     return ok(widgets);
-  } catch {
+  } catch (error) {
+    getLogger().error("Failed to save home configuration", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return err({
       reason: "HOME_DB_ERROR" as const,
       message: "Failed to save home configuration",
